@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ReactFlow, {
-  Controls,
-  Background,
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
@@ -10,10 +8,16 @@ import ReactFlow, {
   Connection,
   EdgeChange,
   NodeChange,
-  MiniMap,
+  Background,
+  BackgroundVariant,
 } from "reactflow";
+import { MiniMap } from "@reactflow/minimap";
+import { Controls } from "@reactflow/controls";
 
 import "reactflow/dist/style.css";
+import "@reactflow/minimap/dist/style.css";
+import "@reactflow/controls/dist/style.css";
+import "./App.css";
 
 // Acquire the VS Code API instance (only available in the webview context)
 declare const vscode: {
@@ -100,20 +104,20 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="container">
-      <div className="controls">
+    <div className="app-container">
+      <div className="controls-panel">
         <h4>Analysis Controls</h4>
-        <div>
+        <div className="control-item">
           <label htmlFor="filePathInput">Target File:</label>
           <input
             id="filePathInput"
             type="text"
             value={filePath}
             readOnly // Typically set by the command, not user input
-            style={{ width: "90%" }}
+            className="file-path-input"
           />
         </div>
-        <div>
+        <div className="control-item">
           <label htmlFor="maxDepthInput">Max Depth:</label>
           <input
             id="maxDepthInput"
@@ -121,9 +125,10 @@ const App: React.FC = () => {
             value={maxDepth}
             onChange={(e) => setMaxDepth(parseInt(e.target.value, 10) || 0)}
             min="1"
+            className="depth-input"
           />
         </div>
-        <div>
+        <div className="control-item">
           <label>
             <input
               type="checkbox"
@@ -133,9 +138,11 @@ const App: React.FC = () => {
             Show Minimap
           </label>
         </div>
-        <button onClick={handleRunAnalysis}>Run Analysis</button>
+        <button onClick={handleRunAnalysis} className="run-button">
+          Run Analysis
+        </button>
       </div>
-      <div className="results">
+      <div className="reactflow-wrapper">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -144,10 +151,11 @@ const App: React.FC = () => {
           onConnect={onConnect}
           fitView
           attributionPosition="top-right"
+          className="react-flow"
         >
           <Controls />
           {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
-          <Background gap={12} size={1} />
+          <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         </ReactFlow>
       </div>
     </div>

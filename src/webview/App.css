@@ -1,0 +1,154 @@
+/* src/webview/App.css */
+
+body,
+html,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden; /* Prevent scrolling of the whole page */
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+.controls-panel {
+  width: 250px; /* Fixed width for the control panel */
+  padding: 15px;
+  border-right: 1px solid var(--vscode-panel-border, #ccc);
+  background-color: var(--vscode-sideBar-background);
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Spacing between control items */
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  box-sizing: border-box;
+}
+
+.controls-panel h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--vscode-sideBarTitle-foreground);
+}
+
+.control-item {
+  display: flex;
+  flex-direction: column; /* Stack label and input */
+  gap: 5px; /* Space between label and input */
+}
+
+.control-item label {
+  font-size: 0.9em;
+  color: var(--vscode-foreground);
+}
+
+.control-item input[type="text"],
+.control-item input[type="number"] {
+  padding: 5px 8px;
+  border: 1px solid var(--vscode-input-border, #ccc);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border-radius: 3px;
+  width: 100%; /* Make inputs fill container */
+  box-sizing: border-box; /* Include padding/border in width */
+}
+
+.control-item input.file-path-input {
+  font-size: 0.8em; /* Smaller font for long paths */
+}
+
+.control-item input.depth-input {
+  width: 60px; /* Smaller width for number input */
+}
+
+.control-item input[type="checkbox"] {
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.control-item label input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.run-button {
+  padding: 8px 12px;
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: auto; /* Push button to the bottom */
+}
+
+.run-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.reactflow-wrapper {
+  flex-grow: 1; /* Take remaining space */
+  height: 100%; /* Fill vertical space */
+  overflow: hidden; /* Hide any potential overflow */
+  position: relative; /* Needed for absolute positioning of React Flow elements */
+}
+
+.react-flow {
+  height: 100%;
+  width: 100%;
+}
+
+/* Style React Flow elements to match VS Code theme */
+.react-flow__node {
+  background-color: var(--vscode-editorWidget-background);
+  color: var(--vscode-editorWidget-foreground);
+  border: 1px solid var(--vscode-editorWidget-border);
+  border-radius: 4px;
+  padding: 10px 15px;
+  font-size: 12px;
+}
+
+.react-flow__edge-path {
+  stroke: var(--vscode-editorWidget-foreground);
+  stroke-width: 1.5;
+}
+
+.react-flow__controls {
+  background-color: var(--vscode-editorWidget-background);
+  border: 1px solid var(--vscode-editorWidget-border);
+  box-shadow: none;
+  border-radius: 4px;
+}
+
+.react-flow__controls-button {
+  color: var(--vscode-icon-foreground);
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.react-flow__minimap {
+  background-color: var(--vscode-editorWidget-background);
+  border: 1px solid var(--vscode-editorWidget-border);
+}
+
+.react-flow__attribution {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: white;
+}
+
+/* Ensure minimap node colors are visible */
+.react-flow__minimap-node {
+  fill: var(--vscode-editor-selectionBackground);
+  stroke: none;
+}

@@ -4,6 +4,8 @@ import { glob } from "glob"; // Use glob for finding files matching patterns
 import * as path from "path";
 import { SidebarProvider } from "./SidebarProvider"; // Added
 import * as fs from "fs";
+import type { Node, Edge } from "reactflow"; // Import React Flow types
+import type { ComponentNode, FileNode, HookNode } from "./types"; // Import indexer types
 
 let indexerService: IndexerService;
 let outputChannel: vscode.OutputChannel;
@@ -375,43 +377,16 @@ export function activate(context: vscode.ExtensionContext) {
                   },
                   async (progress) => {
                     progress.report({ increment: 0 });
-                    // --- Placeholder for actual analysis logic ---
-                    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate work
-                    const results = {
-                      nodes: [
-                        {
-                          id: "1",
-                          position: { x: 50, y: 50 },
-                          data: { label: path.basename(targetPath) },
-                        },
-                        {
-                          id: "2",
-                          position: { x: 150, y: 150 },
-                          data: { label: "Simulated Dep 1" },
-                        },
-                        {
-                          id: "3",
-                          position: { x: -50, y: 150 },
-                          data: { label: "Simulated Dep 2" },
-                        },
-                      ],
-                      edges: [
-                        {
-                          id: "e1-2",
-                          source: "1",
-                          target: "2",
-                          animated: true,
-                        },
-                        {
-                          id: "e1-3",
-                          source: "1",
-                          target: "3",
-                          animated: true,
-                        },
-                      ],
-                      settings: message.settings, // Pass settings back if needed
-                    };
-                    // --- End Placeholder ---
+                    const maxDepth = message.settings?.maxDepth ?? 5; // Use default if not provided
+
+                    // --- Build the actual dependency graph ----
+                    const results = buildDependencyGraph(
+                      targetPath,
+                      maxDepth,
+                      indexerService
+                    );
+                    // --- End analysis logic ---
+
                     progress.report({ increment: 100 });
                     webviewPanel?.webview.postMessage({
                       command: "showResults",
@@ -439,6 +414,184 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(analyzeFileCommand);
+}
+
+/**
+ * Builds the dependency graph for a given file path.
+ *
+ * @param targetPath The starting file path for the analysis.
+ * @param maxDepth The maximum depth to traverse the dependency tree.
+ * @param indexerService The instance of the IndexerService containing the indexed data.
+ * @returns An object containing the nodes and edges for React Flow.
+ */
+function buildDependencyGraph(
+  targetPath: string,
+  maxDepth: number,
+  indexerService: IndexerService
+): { nodes: Node[]; edges: Edge[] } {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+  const visited = new Set<string>(); // Keep track of visited component/file/edge IDs
+  const queue: { filePath: string; depth: number; parentNodeId?: string }[] = [
+    { filePath: targetPath, depth: 0 },
+  ];
+  const nodePositions: { [id: string]: { x: number; y: number } } = {}; // Store positions to avoid overlaps
+  let currentY = 50;
+  const xSpacing = 250;
+  const ySpacing = 150;
+
+  const indexedData = indexerService.getIndexedData();
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || current.depth > maxDepth) {
+      continue;
+    }
+
+    const { filePath, depth, parentNodeId } = current;
+    const fileNode = indexedData.get(filePath);
+
+    if (!fileNode || visited.has(fileNode.id)) {
+      continue;
+    }
+
+    // --- Add Node for the File ---
+    const fileNodeId = `file::${fileNode.id}`;
+    if (!visited.has(fileNodeId)) {
+      visited.add(fileNodeId);
+      // Simple positioning logic (improve later if needed)
+      const position = { x: depth * xSpacing, y: currentY };
+      nodePositions[fileNodeId] = position;
+      nodes.push({
+        id: fileNodeId,
+        position: position,
+        data: { label: `${fileNode.name}` },
+        type: "input", // Mark entry files
+        style: { backgroundColor: "#1a3d5c", color: "white" },
+      });
+      currentY += ySpacing;
+
+      // Add edge from parent file/component if applicable
+      if (parentNodeId) {
+        const edgeId = `${parentNodeId}->${fileNodeId}`;
+        if (!visited.has(edgeId)) {
+          edges.push({
+            id: edgeId,
+            source: parentNodeId,
+            target: fileNodeId,
+            animated: true,
+          });
+          visited.add(edgeId);
+        }
+      }
+    }
+
+    // --- Add Nodes for Components in the File ---
+    const fileNodePosition = nodePositions[fileNodeId];
+    let componentYOffset = fileNodePosition
+      ? fileNodePosition.y + ySpacing / 2
+      : currentY; // Use file Y or currentY as fallback
+    for (const component of fileNode.components) {
+      const componentNodeId = `component::${component.id}`;
+      if (!visited.has(componentNodeId)) {
+        visited.add(componentNodeId);
+        const position = {
+          x: depth * xSpacing + xSpacing / 2,
+          y: componentYOffset,
+        }; // Indent slightly
+        nodePositions[componentNodeId] = position;
+        nodes.push({
+          id: componentNodeId,
+          position: position,
+          data: { label: component.name },
+          // parentNode: fileNodeId, // For potential hierarchy later
+          // extent: "parent",
+          style: { backgroundColor: "#004d40", color: "white" },
+        });
+        componentYOffset += ySpacing / 2;
+
+        // Add edge from file to component
+        const fileToCompEdgeId = `${fileNodeId}->${componentNodeId}`;
+        if (!visited.has(fileToCompEdgeId)) {
+          edges.push({
+            id: fileToCompEdgeId,
+            source: fileNodeId,
+            target: componentNodeId,
+          });
+          visited.add(fileToCompEdgeId);
+        }
+
+        // --- Process Rendered Components (Dependencies) ---
+        if (component.renderedComponents && depth < maxDepth) {
+          for (const rendered of component.renderedComponents) {
+            // Find the FileNode containing this rendered component
+            let renderedFileNode: FileNode | undefined;
+            let renderedComponentNode: ComponentNode | undefined;
+
+            // TODO: This lookup is inefficient. IndexerService should maybe store a component map.
+            for (const [fPath, fNode] of indexedData.entries()) {
+              const foundComp = fNode.components.find(
+                (c) => c.name === rendered.name
+              );
+              if (foundComp) {
+                // Basic check: does the import match? More robust checks needed.
+                const importsMatch = fNode.imports.some((imp) =>
+                  imp.namedBindings?.includes(rendered.name)
+                );
+                // Heuristic: Assume it's the right one if name matches and it's imported.
+                // A better approach would involve analyzing import paths relative to the current file.
+                if (importsMatch || fPath === filePath) {
+                  // Allow self-references
+                  renderedFileNode = fNode;
+                  renderedComponentNode = foundComp;
+                  break;
+                }
+              }
+            }
+
+            if (renderedFileNode && renderedComponentNode) {
+              const renderedFileId = `file::${renderedFileNode.id}`;
+              const renderedCompId = `component::${renderedComponentNode.id}`; // Target the component
+              const edgeId = `${componentNodeId}->${renderedCompId}`;
+
+              if (!visited.has(edgeId)) {
+                edges.push({
+                  id: edgeId,
+                  source: componentNodeId,
+                  target: renderedCompId,
+                  animated: true,
+                });
+                visited.add(edgeId);
+              }
+
+              // Add the dependency file to the queue if not visited
+              if (!visited.has(renderedFileId)) {
+                queue.push({
+                  filePath: renderedFileNode.filePath,
+                  depth: depth + 1,
+                  parentNodeId: componentNodeId, // Link from the rendering component
+                });
+              }
+              // Even if file visited, ensure component node exists if not visited
+              if (!visited.has(renderedCompId)) {
+                queue.push({
+                  filePath: renderedFileNode.filePath, // Process this file again to ensure node exists
+                  depth: depth + 1, // Keep depth correct
+                  parentNodeId: componentNodeId,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+    // TODO: Consider adding Hooks as nodes?
+  }
+
+  console.log(
+    `Graph built for ${targetPath}: ${nodes.length} nodes, ${edges.length} edges`
+  );
+  return { nodes, edges };
 }
 
 function getWebviewContent(

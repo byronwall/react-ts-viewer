@@ -1,70 +1,153 @@
-body {
+/* Reset and Base Styles */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  padding: 1em;
-  background-color: var(--vscode-sideBar-background);
-  color: var(--vscode-sideBar-foreground);
+  background-color: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #cccccc);
+  overflow: hidden; /* Prevent body scroll */
 }
 
+#root {
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column; /* Stack controls and results vertically */
+}
+
+/* Use VS Code theme variables */
+button {
+  background-color: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #ffffff);
+  border: none;
+  padding: 8px 15px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+input[type="text"],
+input[type="number"] {
+  background-color: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #cccccc);
+  border: 1px solid var(--vscode-input-border, #3c3c3c);
+  padding: 5px;
+  border-radius: 3px;
+  margin-left: 5px;
+}
+
+label {
+  display: flex; /* Align checkbox and label */
+  align-items: center;
+  margin-bottom: 5px; /* Space out labels */
+}
+
+input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+/* Container for the whole app */
 .container {
   display: flex;
-  flex-direction: column;
-  height: 100vh; /* Use viewport height */
-  box-sizing: border-box;
+  flex-direction: column; /* Stack controls above results */
+  height: 100%;
+  overflow: hidden; /* Prevent container scroll */
 }
 
+/* Controls Section */
 .controls {
-  padding-bottom: 1em;
-  border-bottom: 1px solid var(--vscode-editorGroup-border);
-  margin-bottom: 1em;
-}
-
-.controls label {
-  display: block;
-  margin-bottom: 0.5em;
-}
-
-.controls input[type="text"],
-.controls input[type="checkbox"] {
-  margin-bottom: 0.8em;
-}
-
-.controls button {
-  padding: 0.5em 1em;
-  background-color: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
-  border: none;
-  cursor: pointer;
-}
-
-.controls button:hover {
-  background-color: var(--vscode-button-hoverBackground);
-}
-
-.results {
-  flex-grow: 1; /* Take remaining height */
-  position: relative; /* Needed for react-flow */
-  border: 1px solid var(--vscode-editorGroup-border);
+  padding: 15px;
   background-color: var(
-    --vscode-editor-background
-  ); /* Use editor background for contrast */
+    --vscode-sideBar-background,
+    #252526
+  ); /* Match sidebar bg */
+  border-bottom: 1px solid var(--vscode-sideBar-border, #333333);
+  flex-shrink: 0; /* Prevent controls from shrinking */
 }
 
-/* Basic react-flow styles */
+.controls h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--vscode-sideBar-foreground, #cccccc);
+}
+
+.controls div {
+  margin-bottom: 10px;
+}
+
+/* Results/Graph Section */
+.results {
+  flex-grow: 1; /* Allow graph to fill remaining space */
+  height: 100%; /* Necessary for React Flow to size correctly */
+  overflow: hidden; /* Contained scroll/pan within React Flow */
+  background-color: var(
+    --vscode-editor-background,
+    #1e1e1e
+  ); /* Match editor bg */
+}
+
+/* Ensure React Flow takes up the container space */
+.react-flow {
+  width: 100%;
+  height: 100%;
+}
+
+/* Optional: Style specific React Flow elements */
 .react-flow__node {
-  background: var(--vscode-input-background);
-  color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-inputOption-activeBorder);
-  padding: 10px;
+  background-color: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #cccccc);
+  border: 1px solid var(--vscode-focusBorder, #007fd4);
   border-radius: 4px;
+  padding: 10px 15px;
   font-size: 12px;
   text-align: center;
 }
 
+/* Style for edges (example) */
 .react-flow__edge-path {
-  stroke: var(--vscode-editorLineNumber-foreground);
+  stroke: var(--vscode-editor-foreground, #cccccc);
+  stroke-width: 1.5;
 }
 
-.react-flow__attribution {
-  background: rgba(0, 0, 0, 0.05) !important; /* Override default */
+.react-flow__controls {
+  box-shadow: none; /* Remove default shadow */
+}
+.react-flow__controls button {
+  background-color: var(--vscode-input-background, #3c3c3c);
+  border: 1px solid var(--vscode-focusBorder, #007fd4);
+  border-bottom: none;
+}
+.react-flow__controls button:hover {
+  background-color: var(--vscode-editorWidget-background, #252526);
+}
+.react-flow__controls button path {
+  fill: var(--vscode-icon-foreground, #c5c5c5);
+}
+
+.react-flow__minimap {
+  background-color: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-sideBar-border, #333333);
+}
+
+.react-flow__node-minimap {
+  background-color: var(--vscode-input-background, #3c3c3c);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.react-flow__background {
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}
+
+.react-flow__background path {
+  fill: var(
+    --vscode-editorWidget-border,
+    #454545
+  ); /* Make dots slightly visible */
 }
