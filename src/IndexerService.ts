@@ -268,17 +268,37 @@ export class IndexerService {
             // Do not return true here, continue searching the rest of the function body
           }
 
-          // Find hook usages (CallExpressions like useState())
+          // Find hook usages (CallExpressions like useState(), api.useThing())
           if (Node.isCallExpression(descNode)) {
             const expression = descNode.getExpression();
+            let hookName: string | undefined;
+            let nameIdentifier: Node | undefined;
+
+            console.log(
+              `[Indexer] Checking CallExpression: ${expression.getText()}`
+            ); // DEBUG
+
             if (Node.isIdentifier(expression)) {
-              const hookName = expression.getText();
-              if (isHookName(hookName)) {
-                hooksUsed.push({
-                  hookName: hookName,
-                  location: getNodeLocation(expression), // Location of the hook call identifier
-                });
+              const potentialHookName = expression.getText();
+              if (isHookName(potentialHookName)) {
+                hookName = potentialHookName;
+                nameIdentifier = expression;
+                console.log(`  Found Identifier hook: ${hookName}`); // DEBUG
               }
+            } else if (Node.isPropertyAccessExpression(expression)) {
+              const potentialHookName = expression.getName(); // Get the last part (e.g., useQuery)
+              if (isHookName(potentialHookName)) {
+                hookName = expression.getText(); // Store the full expression text (e.g., api.task.useQuery)
+                nameIdentifier = expression.getNameNode(); // Location of the final identifier
+                console.log(`  Found PropAccess hook: ${hookName}`); // DEBUG
+              }
+            }
+
+            if (hookName && nameIdentifier) {
+              hooksUsed.push({
+                hookName: hookName,
+                location: getNodeLocation(nameIdentifier), // Location of the specific hook name identifier
+              });
             }
           }
 

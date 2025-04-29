@@ -43,9 +43,11 @@ export class FileTreeItem extends BaseTreeItem {
 // Represents a component in the tree
 export class ComponentTreeItem extends BaseTreeItem {
   constructor(public readonly componentNode: ComponentNode) {
+    const hasRenderedChildren = componentNode.renderedComponents?.length > 0;
+    const hasUsedHooks = componentNode.hooksUsed?.length > 0;
     super(
       componentNode.name,
-      componentNode.renderedComponents?.length > 0 // Expandable if it renders other components
+      hasRenderedChildren || hasUsedHooks // Expandable if it renders components OR uses hooks
         ? vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None,
       componentNode

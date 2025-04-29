@@ -63,21 +63,54 @@ export class SidebarProvider implements vscode.TreeDataProvider<TreeNode> {
       return Promise.resolve([...componentItems, ...hookItems]);
     }
 
-    // If asking for children of a Component node (to show rendered components)
+    // If asking for children of a Component node (to show rendered components AND used hooks)
     if (element instanceof ComponentTreeItem) {
       const componentNode = element.componentNode;
+      const children: vscode.TreeItem[] = [];
+
+      // 1. Add rendered components (if any)
       if (
         componentNode.renderedComponents &&
         componentNode.renderedComponents.length > 0
       ) {
-        // TODO: Resolve rendered component names to actual ComponentNodes for richer info?
-        // For now, just show the names as simple message items.
         const renderedItems = componentNode.renderedComponents
           .sort((a, b) => a.name.localeCompare(b.name))
-          .map((rendered) => new MessageTreeItem(rendered.name)); // Use MessageTreeItem for simplicity
-        // .map(rendered => new vscode.TreeItem(rendered.name)); // Simplest option
-        return Promise.resolve(renderedItems);
+          .map((rendered) => {
+            // Using MessageTreeItem for now, could be enhanced
+            const item = new MessageTreeItem(`Renders: ${rendered.name}`);
+            item.iconPath = new vscode.ThemeIcon("symbol-structure"); // Differentiate rendered
+            // Add command to jump to render location?
+            // item.command = { ... };
+            return item;
+          });
+        children.push(...renderedItems);
       }
+
+      // 2. Add used hooks (if any)
+      if (componentNode.hooksUsed && componentNode.hooksUsed.length > 0) {
+        const hookItems = componentNode.hooksUsed
+          .sort((a, b) => a.hookName.localeCompare(b.hookName))
+          .map((hookUse) => {
+            // Use MessageTreeItem to satisfy the TreeNode[] return type
+            const item = new MessageTreeItem(`Uses: ${hookUse.hookName}`);
+            item.iconPath = new vscode.ThemeIcon("symbol-variable"); // Icon for used hook
+            item.tooltip = `Hook Used: ${hookUse.hookName}\nClick to navigate`;
+            item.contextValue = "hookUsage"; // Context for potential actions
+            // Command to jump to the hook usage location
+            item.command = {
+              command: "vscode.open",
+              title: "Go to Hook Usage",
+              arguments: [
+                hookUse.location.uri,
+                { selection: hookUse.location.range },
+              ],
+            };
+            return item;
+          });
+        children.push(...hookItems);
+      }
+
+      return Promise.resolve(children as TreeNode[]);
     }
 
     // Hooks and Messages don't have children currently
