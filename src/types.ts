@@ -26,8 +26,9 @@ export interface FileNode extends BaseNode {
 export interface ComponentNode extends BaseNode {
   kind: "Component";
   filePath: string;
+  renderedComponents: { name: string; location: SymbolLocation }[]; // Added: Components rendered by this one
+  hooksUsed: HookUsage[]; // Added: Hooks used by this component
   // propsType?: PropDefinition[]; // Added later by analysis service
-  // hooksUsed?: HookUsage[]; // Added later by indexer
   // renderEdges?: RenderEdge[]; // Added later by analysis service
   isClassComponent: boolean;
   exported: boolean; // Is it directly exported from the file?
@@ -48,9 +49,9 @@ export interface VariableNode extends BaseNode {
 
 /** Represents the usage of a hook within a component or another hook. */
 export interface HookUsage {
-  hookId: string; // ID of the HookNode being used
-  location: SymbolLocation;
-  callIndex: number; // Order of execution within the component/hook
+  hookName: string; // Name of the hook being used (e.g., "useState", "useCustomHook")
+  location: SymbolLocation; // Location of the call expression
+  // callIndex?: number; // Order of execution (complex to determine accurately, add later)
   // arguments?: any[]; // Parsed arguments (complex, add later)
 }
 

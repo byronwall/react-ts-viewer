@@ -8,6 +8,9 @@ import {
   VariableStatement,
   Node,
   Identifier,
+  JsxOpeningElement,
+  JsxSelfClosingElement,
+  CallExpression,
 } from "ts-morph";
 import {
   ComponentNode,
@@ -15,8 +18,13 @@ import {
   FileNode,
   ImportData,
   SymbolLocation,
+  HookUsage,
 } from "./types";
 import * as path from "path";
+
+// Event emitter for index updates
+const _onDidIndexFile = new vscode.EventEmitter<string>(); // Emitter type
+export const onDidIndexFile = _onDidIndexFile.event; // Exposed event
 
 // Simple heuristic to check if a function/class name looks like a React component
 function isComponentName(name: string): boolean {
@@ -45,6 +53,10 @@ function getNodeLocation(node: Node): SymbolLocation {
 export class IndexerService {
   private project: Project;
   private indexedData: Map<string, FileNode> = new Map(); // Store indexed data
+
+  // Add an emitter for internal use within the class if preferred
+  private _onIndexUpdateEmitter = new vscode.EventEmitter<void>();
+  public readonly onIndexUpdate = this._onIndexUpdateEmitter.event;
 
   constructor() {
     // Initialize ts-morph project. Consider options like tsconfig path.
@@ -117,6 +129,7 @@ export class IndexerService {
     const hooks: HookNode[] = [];
     const imports: ImportData[] = [];
     const fileId = filePath; // Use filePath as unique ID for now
+    const renderedComponents: { name: string; location: SymbolLocation }[] = [];
 
     try {
       // Basic import parsing
@@ -171,6 +184,9 @@ export class IndexerService {
       // Store the result in the map
       this.indexedData.set(filePath, fileNode);
 
+      // Notify listeners that a file has been processed
+      this._onIndexUpdateEmitter.fire();
+
       return fileNode; // Return the full FileNode
     } catch (error) {
       console.error(`[IndexerService] Error parsing file ${filePath}:`, error);
@@ -190,6 +206,7 @@ export class IndexerService {
     let nameNode: Identifier | undefined;
     let isExported = false;
     let functionNode: Node | undefined = node; // The node representing the function body/class
+    const renderedComponents: { name: string; location: SymbolLocation }[] = [];
 
     if (Node.isFunctionDeclaration(node) || Node.isClassDeclaration(node)) {
       nameNode = node.getNameNode();
@@ -220,16 +237,52 @@ export class IndexerService {
     if (isComponentName(name)) {
       // Basic check: Does it return JSX?
       let hasJsx = false;
+      const hooksUsed: HookUsage[] = []; // Initialize hooksUsed for this component
+
       if (functionNode) {
         functionNode.forEachDescendant((descNode) => {
+          // Find rendered components (JSX elements)
           if (
             descNode.getKind() === SyntaxKind.JsxElement ||
             descNode.getKind() === SyntaxKind.JsxSelfClosingElement
           ) {
-            hasJsx = true;
-            return true; // Stop traversal for this node
+            hasJsx = true; // Mark if any JSX is found
+            let tagNameNode: Identifier | undefined;
+            if (Node.isJsxElement(descNode)) {
+              tagNameNode = descNode
+                .getOpeningElement()
+                .getTagNameNode() as Identifier;
+            } else if (Node.isJsxSelfClosingElement(descNode)) {
+              tagNameNode = descNode.getTagNameNode() as Identifier;
+            }
+
+            if (tagNameNode && Node.isIdentifier(tagNameNode)) {
+              const renderedComponentName = tagNameNode.getText();
+              if (isComponentName(renderedComponentName)) {
+                renderedComponents.push({
+                  name: renderedComponentName,
+                  location: getNodeLocation(tagNameNode),
+                });
+              }
+            }
+            // Do not return true here, continue searching the rest of the function body
           }
-          return undefined;
+
+          // Find hook usages (CallExpressions like useState())
+          if (Node.isCallExpression(descNode)) {
+            const expression = descNode.getExpression();
+            if (Node.isIdentifier(expression)) {
+              const hookName = expression.getText();
+              if (isHookName(hookName)) {
+                hooksUsed.push({
+                  hookName: hookName,
+                  location: getNodeLocation(expression), // Location of the hook call identifier
+                });
+              }
+            }
+          }
+
+          return undefined; // Continue traversal
         });
       }
 
@@ -243,6 +296,8 @@ export class IndexerService {
           filePath: filePath,
           isClassComponent: Node.isClassDeclaration(node),
           exported: isExported,
+          renderedComponents: renderedComponents,
+          hooksUsed: hooksUsed, // Assign the collected HookUsage objects
         });
       }
     } else if (isHookName(name)) {
@@ -289,6 +344,41 @@ export class IndexerService {
     // Only add if it looks like a React class component
     if (isReactClass || isComponentName(name)) {
       // Fallback to name check
+      const renderedComponents: { name: string; location: SymbolLocation }[] =
+        [];
+
+      // Find the render method
+      const renderMethod = cls.getMethod("render");
+      if (renderMethod) {
+        renderMethod.forEachDescendant((descNode) => {
+          if (
+            descNode.getKind() === SyntaxKind.JsxElement ||
+            descNode.getKind() === SyntaxKind.JsxSelfClosingElement
+          ) {
+            let tagNameNode: Identifier | undefined;
+            if (Node.isJsxElement(descNode)) {
+              tagNameNode = descNode
+                .getOpeningElement()
+                .getTagNameNode() as Identifier;
+            } else if (Node.isJsxSelfClosingElement(descNode)) {
+              tagNameNode = descNode.getTagNameNode() as Identifier;
+            }
+
+            if (tagNameNode && Node.isIdentifier(tagNameNode)) {
+              const renderedComponentName = tagNameNode.getText();
+              if (isComponentName(renderedComponentName)) {
+                renderedComponents.push({
+                  name: renderedComponentName,
+                  location: getNodeLocation(tagNameNode),
+                });
+              }
+            }
+            // Don't stop traversal here, find all JSX in render method
+          }
+          return undefined; // Continue traversal
+        });
+      }
+
       components.push({
         id: id,
         name: name,
@@ -297,9 +387,15 @@ export class IndexerService {
         filePath: filePath,
         isClassComponent: true,
         exported: cls.isExported(),
+        renderedComponents: renderedComponents,
+        hooksUsed: [], // Class components don't use hooks directly
       });
     }
   }
 
   // Add methods for resolving imports, finding relationships later
+
+  dispose() {
+    this._onIndexUpdateEmitter.dispose();
+  }
 }

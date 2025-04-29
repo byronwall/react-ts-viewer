@@ -94,18 +94,18 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "react-analysis-sidebar",
+          "id": "react-analysis-activitybar",
           "title": "React Analysis",
-          "icon": "$(symbol-structure)"
+          "icon": "resources/icon.svg"
         }
       ]
     },
     "views": {
-      "react-analysis-sidebar": [
+      "react-analysis-activitybar": [
         {
-          "id": "reactAnalysisTreeView",
+          "id": "reactAnalysisSidebar",
           "name": "Components & Hooks",
-          "when": "config.reactAnalysis.enabled"
+          "type": "tree"
         }
       ]
     },

@@ -2,9 +2,11 @@ import * as vscode from "vscode";
 import { IndexerService } from "./IndexerService";
 import { glob } from "glob"; // Use glob for finding files matching patterns
 import * as path from "path";
+import { SidebarProvider } from "./SidebarProvider"; // Added
 
 let indexerService: IndexerService;
 let outputChannel: vscode.OutputChannel;
+let sidebarProvider: SidebarProvider; // Added
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -16,6 +18,21 @@ export function activate(context: vscode.ExtensionContext) {
   outputChannel.appendLine("React TS Code Analysis extension activated.");
 
   indexerService = new IndexerService();
+
+  // --- Tree View Setup ---
+  sidebarProvider = new SidebarProvider(indexerService);
+  const treeView = vscode.window.createTreeView("reactAnalysisSidebar", {
+    treeDataProvider: sidebarProvider,
+  });
+  context.subscriptions.push(treeView);
+
+  // Refresh tree when index updates
+  const indexUpdateDisposable = indexerService.onIndexUpdate(() => {
+    sidebarProvider.refresh();
+  });
+  context.subscriptions.push(indexUpdateDisposable);
+  // Also refresh tree after full index completes (might catch edge cases)
+  // (Consider if this is redundant with per-file updates)
 
   // --- Command Registrations ---
 
@@ -242,6 +259,16 @@ export function activate(context: vscode.ExtensionContext) {
                 comp.isClassComponent ? "class" : "func"
               })`
             );
+            // Added: Show rendered components
+            if (comp.renderedComponents && comp.renderedComponents.length > 0) {
+              outputChannel.appendLine(`      Rendered:`);
+              comp.renderedComponents.forEach((rendered) => {
+                // Display location info (optional, could be verbose)
+                // const loc = rendered.location.range.start;
+                // outputChannel.appendLine(`        - ${rendered.name} (at line ${loc.line + 1})`);
+                outputChannel.appendLine(`        - ${rendered.name}`);
+              });
+            }
           });
         }
         if (fileNode.hooks.length > 0) {
@@ -285,6 +312,10 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
   if (outputChannel) {
     outputChannel.dispose();
+  }
+  // Dispose the indexer service emitter
+  if (indexerService) {
+    indexerService.dispose();
   }
   outputChannel.appendLine("React TS Code Analysis extension deactivated.");
   // Perform cleanup if necessary (e.g., dispose watchers, clear caches)
