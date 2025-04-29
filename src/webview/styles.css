@@ -1,0 +1,70 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  padding: 1em;
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-sideBar-foreground);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Use viewport height */
+  box-sizing: border-box;
+}
+
+.controls {
+  padding-bottom: 1em;
+  border-bottom: 1px solid var(--vscode-editorGroup-border);
+  margin-bottom: 1em;
+}
+
+.controls label {
+  display: block;
+  margin-bottom: 0.5em;
+}
+
+.controls input[type="text"],
+.controls input[type="checkbox"] {
+  margin-bottom: 0.8em;
+}
+
+.controls button {
+  padding: 0.5em 1em;
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.results {
+  flex-grow: 1; /* Take remaining height */
+  position: relative; /* Needed for react-flow */
+  border: 1px solid var(--vscode-editorGroup-border);
+  background-color: var(
+    --vscode-editor-background
+  ); /* Use editor background for contrast */
+}
+
+/* Basic react-flow styles */
+.react-flow__node {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-inputOption-activeBorder);
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.react-flow__edge-path {
+  stroke: var(--vscode-editorLineNumber-foreground);
+}
+
+.react-flow__attribution {
+  background: rgba(0, 0, 0, 0.05) !important; /* Override default */
+}

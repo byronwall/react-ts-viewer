@@ -26,7 +26,7 @@
     "onCommand:reactAnalysis.traceValueDestination",
     "onCommand:reactAnalysis.showIndexedSummary"
   ],
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
@@ -132,27 +132,39 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "vscode:prepublish": "npm run build",
+    "build": "npm run compile-ext && npm run build-webview",
+    "compile": "npm run compile-ext",
+    "compile-ext": "tsc -p ./",
+    "build-webview": "esbuild ./src/webview/main.tsx --bundle --outfile=./out/webview/bundle.js --format=iife --loader:.css=css --external:vscode",
+    "watch": "npm-run-all -p watch-ext watch-webview",
+    "watch-ext": "tsc -watch -p ./",
+    "watch-webview": "esbuild ./src/webview/main.tsx --bundle --outfile=./out/webview/bundle.js --format=iife --loader:.css=css --external:vscode --watch",
+    "pretest": "npm run compile-ext && npm run lint",
+    "lint": "eslint src --ext ts,tsx",
+    "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.80.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
-    "eslint": "^8.57.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
+    "@vscode/test-electron": "^2.3.9",
+    "@vscode/vsce": "^2.24.0",
+    "esbuild": "^0.x.x",
+    "eslint": "^8.57.0",
     "glob": "^10.3.12",
     "mocha": "^10.4.0",
-    "typescript": "^5.4.5",
-    "@vscode/test-electron": "^2.3.9",
-    "@vscode/vsce": "^2.24.0"
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "reactflow": "^11.11.3",
     "ts-morph": "^22.0.0"
   }
 }
