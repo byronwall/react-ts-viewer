@@ -1,0 +1,20 @@
+dist/**/
+.vscode/**
+src/**
+node_modules/**
+*.vsix
+.DS_Store
+
+# Git files
+.git
+.gitignore
+
+# Test files
+*.map
+*.test.*
+
+# Config files
+tsconfig.json
+.eslintrc.js
+**/tsconfig.json
+**/.eslintrc.js 
