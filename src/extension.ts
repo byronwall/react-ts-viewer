@@ -48,15 +48,33 @@ export function activate(context: vscode.ExtensionContext) {
 
           // Get include/exclude patterns from configuration
           const config = vscode.workspace.getConfiguration("reactAnalysis");
-          const includePatterns: string[] = config.get("entryPoints") || [];
-          // const excludePatterns: string[] = config.get('excludePatterns') || []; // Add exclude if needed
+          const entryPointPatterns: string[] = config.get("entryPoints") || [];
+          const excludeConfigPatterns: string[] =
+            config.get("excludePatterns") || [];
+
+          // Separate entry points into include and explicit exclude (those starting with !)
+          const includePatterns: string[] = [];
+          const explicitExcludePatterns: string[] = [];
+          for (const pattern of entryPointPatterns) {
+            if (pattern.startsWith("!")) {
+              explicitExcludePatterns.push(pattern.substring(1)); // Remove the leading !
+            } else {
+              includePatterns.push(pattern);
+            }
+          }
+
+          // Combine explicit excludes from entryPoints with general excludePatterns
+          const allExcludePatterns = [
+            ...explicitExcludePatterns,
+            ...excludeConfigPatterns,
+          ];
 
           if (includePatterns.length === 0) {
             vscode.window.showErrorMessage(
-              "React Analysis: No entry points configured in settings (reactAnalysis.entryPoints)."
+              "React Analysis: No include patterns found in reactAnalysis.entryPoints configuration."
             );
             outputChannel.appendLine(
-              "Error: reactAnalysis.entryPoints is not configured."
+              "Error: No include patterns configured in reactAnalysis.entryPoints."
             );
             return; // Return inside the inner if
           }
@@ -64,8 +82,9 @@ export function activate(context: vscode.ExtensionContext) {
           outputChannel.appendLine(
             `Include patterns: ${includePatterns.join(", ")}`
           );
-          // Log exclude patterns if used
-          // outputChannel.appendLine(`Exclude patterns: ${excludePatterns.join(', ')}`);
+          outputChannel.appendLine(
+            `Exclude patterns: ${allExcludePatterns.join(", ")}`
+          );
 
           await vscode.window.withProgress(
             {
@@ -76,20 +95,47 @@ export function activate(context: vscode.ExtensionContext) {
             async (progress) => {
               progress.report({ increment: 0, message: "Finding files..." });
 
+              // Combine default ignore with configured excludes
+              // const ignorePatterns = ["**/node_modules/**", ...excludePatterns]; // No longer needed for findFiles
+              // outputChannel.appendLine(`Ignore patterns: ${ignorePatterns.join(", ")}`);
+
               let filesParsed = 0;
               let componentsFound = 0;
               let hooksFound = 0;
               const startTime = Date.now();
 
               try {
-                // Use glob to find files based on patterns relative to the workspace root
-                const filePaths = await glob(includePatterns, {
-                  cwd: workspaceRoot,
-                  nodir: true, // Match files only, not directories
-                  absolute: true, // Get absolute paths
-                  ignore: ["**/node_modules/**"], // Basic ignore
-                  // TODO: Add more robust ignore pattern handling from config/gitignore?
-                });
+                // --- Use vscode.workspace.findFiles instead of glob ---
+                // Construct patterns suitable for findFiles
+                let includePattern: string; // Explicitly type as string
+                if (includePatterns.length > 1) {
+                  includePattern = `{${includePatterns.join(",")}}`;
+                } else {
+                  // Since we checked for length === 0 earlier, length must be 1 here.
+                  // Use non-null assertion as we know it's safe.
+                  includePattern = includePatterns[0]!;
+                }
+
+                const excludePattern =
+                  allExcludePatterns.length > 0
+                    ? allExcludePatterns.join(",") // Simply join with comma
+                    : undefined;
+                outputChannel.appendLine(
+                  `Using findFiles - Include: ${includePattern}`
+                );
+                outputChannel.appendLine(
+                  `Using findFiles - Exclude: ${excludePattern || "(none)"}`
+                );
+
+                const fileUris = await vscode.workspace.findFiles(
+                  includePattern,
+                  excludePattern
+                  // Can add maxResults and CancellationToken if needed
+                );
+
+                // Convert Uris to file paths
+                const filePaths = fileUris.map((uri) => uri.fsPath);
+                // --- End of findFiles usage ---
 
                 const totalFiles = filePaths.length;
                 outputChannel.appendLine(
@@ -170,17 +216,55 @@ export function activate(context: vscode.ExtensionContext) {
       let componentCount = 0;
       let hookCount = 0;
 
-      for (const fileNode of indexedData.values()) {
-        componentCount += fileNode.components.length;
-        hookCount += fileNode.hooks.length;
+      if (fileCount === 0) {
+        const msg =
+          "No data indexed yet. Run 'React Analysis: Index Workspace' first.";
+        outputChannel.appendLine(msg);
+        vscode.window.showInformationMessage(msg);
+        return;
       }
 
-      const summary = `Indexed Data Summary: ${fileCount} files, ${componentCount} components, ${hookCount} hooks found.`;
+      // Log detailed information to the output channel
+      outputChannel.appendLine("\n--- Indexed Data Details ---");
+      for (const [filePath, fileNode] of indexedData.entries()) {
+        const relativePath = vscode.workspace.asRelativePath(filePath, false); // Use VS Code API for relative path
+        outputChannel.appendLine(`\nFile: ${relativePath}`);
+        componentCount += fileNode.components.length;
+        hookCount += fileNode.hooks.length;
 
-      outputChannel.appendLine(summary);
-      vscode.window.showInformationMessage(summary);
+        if (fileNode.components.length > 0) {
+          outputChannel.appendLine(
+            `  Components (${fileNode.components.length}):`
+          );
+          fileNode.components.forEach((comp) => {
+            outputChannel.appendLine(
+              `    - ${comp.name} (${comp.exported ? "exported" : "local"}, ${
+                comp.isClassComponent ? "class" : "func"
+              })`
+            );
+          });
+        }
+        if (fileNode.hooks.length > 0) {
+          outputChannel.appendLine(`  Hooks (${fileNode.hooks.length}):`);
+          fileNode.hooks.forEach((hook) => {
+            outputChannel.appendLine(
+              `    - ${hook.name} (${hook.exported ? "exported" : "local"})`
+            );
+          });
+        }
+        if (fileNode.components.length === 0 && fileNode.hooks.length === 0) {
+          outputChannel.appendLine(`  (No components or hooks found)`);
+        }
+      }
+      outputChannel.appendLine("\n----------------------------");
 
-      // TODO: Enhance this command to show more details (e.g., list files/components)
+      const summary = `Indexed Data Summary: ${fileCount} files, ${componentCount} components, ${hookCount} hooks found. Details logged to Output channel.`;
+      vscode.window.showInformationMessage(summary); // Keep the summary message concise
+
+      // Ensure the output channel is visible
+      outputChannel.show(true);
+
+      // TODO: Enhance this command further (Quick Pick, Webview?)
     }
   );
 

@@ -23,7 +23,8 @@
     "onCommand:reactAnalysis.analyzeCurrentFile",
     "onCommand:reactAnalysis.showComponentGraph",
     "onCommand:reactAnalysis.traceValueOrigin",
-    "onCommand:reactAnalysis.traceValueDestination"
+    "onCommand:reactAnalysis.traceValueDestination",
+    "onCommand:reactAnalysis.showIndexedSummary"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -52,6 +53,10 @@
         "command": "reactAnalysis.traceValueDestination",
         "title": "React Analysis: Trace Value Destination",
         "category": "React Analysis"
+      },
+      {
+        "command": "reactAnalysis.showIndexedSummary",
+        "title": "React Analysis: Show Indexed Data Summary"
       }
     ],
     "configuration": {
