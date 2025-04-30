@@ -332,11 +332,17 @@ export function activate(context: vscode.ExtensionContext) {
       if (webviewPanel) {
         // If we already have a panel, reveal it
         webviewPanel.reveal(column);
+        outputChannel.appendLine(
+          `[Extension] Updating existing panel with file: ${filePath}`
+        );
         // Send the new file path to the existing webview
         webviewPanel.webview.postMessage({
           command: "setFile",
           filePath: filePath,
         });
+        outputChannel.appendLine(
+          `[Extension] Sent setFile message to existing panel for: ${filePath}`
+        );
       } else {
         // Otherwise, create a new panel
         webviewPanel = vscode.window.createWebviewPanel(
@@ -376,18 +382,74 @@ export function activate(context: vscode.ExtensionContext) {
                     cancellable: false,
                   },
                   async (progress) => {
-                    progress.report({ increment: 0 });
+                    progress.report({
+                      increment: 0,
+                      message: "Checking index...",
+                    }); // Updated progress
+
+                    // --- Check if file is indexed, parse if necessary ---
+                    const isIndexed = indexerService
+                      .getIndexedData()
+                      .has(targetPath);
+                    if (!isIndexed) {
+                      outputChannel.appendLine(
+                        `[Extension] File not indexed, parsing on demand: ${targetPath}`
+                      );
+                      progress.report({
+                        increment: 10,
+                        message: "Parsing file...",
+                      }); // Update progress
+                      try {
+                        const parseResult =
+                          indexerService.parseFile(targetPath);
+                        if (!parseResult) {
+                          outputChannel.appendLine(
+                            `[Extension] On-demand parsing failed for: ${targetPath}`
+                          );
+                          vscode.window.showErrorMessage(
+                            `React Analysis: Failed to parse ${path.basename(
+                              targetPath
+                            )}.`
+                          );
+                          return; // Stop if parsing fails
+                        }
+                        outputChannel.appendLine(
+                          `[Extension] On-demand parsing successful for: ${targetPath}`
+                        );
+                      } catch (error: any) {
+                        outputChannel.appendLine(
+                          `[Extension] Error during on-demand parsing for ${targetPath}: ${error.message}`
+                        );
+                        vscode.window.showErrorMessage(
+                          `React Analysis: Error parsing ${path.basename(
+                            targetPath
+                          )}. See Output.`
+                        );
+                        return; // Stop if parsing errors
+                      }
+                    } else {
+                      outputChannel.appendLine(
+                        `[Extension] File already indexed: ${targetPath}`
+                      );
+                    }
+                    // --- End check ---
+
+                    progress.report({
+                      increment: 30,
+                      message: "Building graph...",
+                    }); // Update progress
                     const maxDepth = message.settings?.maxDepth ?? 5; // Use default if not provided
 
                     // --- Build the actual dependency graph ----
+                    // Pass the potentially updated indexerService
                     const results = buildDependencyGraph(
                       targetPath,
                       maxDepth,
-                      indexerService
+                      indexerService // Pass the service instance
                     );
                     // --- End analysis logic ---
 
-                    progress.report({ increment: 100 });
+                    progress.report({ increment: 100, message: "Done!" }); // Final progress update
                     webviewPanel?.webview.postMessage({
                       command: "showResults",
                       data: results,
@@ -429,6 +491,9 @@ function buildDependencyGraph(
   maxDepth: number,
   indexerService: IndexerService
 ): { nodes: Node[]; edges: Edge[] } {
+  outputChannel.appendLine(
+    `[Graph] Building graph for: ${targetPath} (maxDepth: ${maxDepth})`
+  ); // Added Log
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const visited = new Set<string>(); // Keep track of visited component/file/edge IDs
@@ -441,23 +506,46 @@ function buildDependencyGraph(
   const ySpacing = 150;
 
   const indexedData = indexerService.getIndexedData();
+  outputChannel.appendLine(`[Graph] Index size: ${indexedData.size}`); // Added Log
 
   while (queue.length > 0) {
     const current = queue.shift();
-    if (!current || current.depth > maxDepth) {
+    if (!current) {
+      outputChannel.appendLine(
+        "[Graph] Queue shifted undefined, breaking loop."
+      ); // Added Log
+      break; // Should not happen with length check, but safe guard
+    }
+    if (current.depth > maxDepth) {
+      outputChannel.appendLine(
+        `[Graph] Skipping queue item due to depth: ${current.filePath} (depth ${current.depth} > ${maxDepth})`
+      ); // Added Log
       continue;
     }
 
+    outputChannel.appendLine(
+      `[Graph] Processing queue item: ${current.filePath} (depth ${
+        current.depth
+      }, parent: ${current.parentNodeId || "none"})`
+    ); // Added Log
     const { filePath, depth, parentNodeId } = current;
     const fileNode = indexedData.get(filePath);
 
-    if (!fileNode || visited.has(fileNode.id)) {
+    if (!fileNode) {
+      outputChannel.appendLine(`[Graph] File not found in index: ${filePath}`); // Added Log
       continue;
     }
 
-    // --- Add Node for the File ---
     const fileNodeId = `file::${fileNode.id}`;
-    if (!visited.has(fileNodeId)) {
+    if (visited.has(fileNodeId)) {
+      outputChannel.appendLine(
+        `[Graph] File node already visited: ${fileNodeId} (${fileNode.name})`
+      ); // Added Log
+      // Continue processing components even if file node visited, but don't re-add file node/edge
+    } else {
+      outputChannel.appendLine(
+        `[Graph] Adding File node: ${fileNodeId} (${fileNode.name}) at depth ${depth}`
+      ); // Added Log
       visited.add(fileNodeId);
       // Simple positioning logic (improve later if needed)
       const position = { x: depth * xSpacing, y: currentY };
@@ -475,6 +563,7 @@ function buildDependencyGraph(
       if (parentNodeId) {
         const edgeId = `${parentNodeId}->${fileNodeId}`;
         if (!visited.has(edgeId)) {
+          outputChannel.appendLine(`[Graph] Adding Edge: ${edgeId}`); // Added Log
           edges.push({
             id: edgeId,
             source: parentNodeId,
@@ -482,18 +571,29 @@ function buildDependencyGraph(
             animated: true,
           });
           visited.add(edgeId);
+        } else {
+          outputChannel.appendLine(`[Graph] Edge already visited: ${edgeId}`); // Added Log
         }
       }
     }
 
     // --- Add Nodes for Components in the File ---
+    outputChannel.appendLine(
+      `[Graph] Processing ${fileNode.components.length} components in ${fileNode.name}`
+    ); // Added Log
     const fileNodePosition = nodePositions[fileNodeId];
     let componentYOffset = fileNodePosition
       ? fileNodePosition.y + ySpacing / 2
       : currentY; // Use file Y or currentY as fallback
     for (const component of fileNode.components) {
       const componentNodeId = `component::${component.id}`;
+      outputChannel.appendLine(
+        `[Graph] Checking component: ${component.name} (ID: ${componentNodeId})`
+      ); // Added Log
       if (!visited.has(componentNodeId)) {
+        outputChannel.appendLine(
+          `[Graph] Adding Component node: ${componentNodeId} (${component.name})`
+        ); // Added Log
         visited.add(componentNodeId);
         const position = {
           x: depth * xSpacing + xSpacing / 2,
@@ -513,84 +613,226 @@ function buildDependencyGraph(
         // Add edge from file to component
         const fileToCompEdgeId = `${fileNodeId}->${componentNodeId}`;
         if (!visited.has(fileToCompEdgeId)) {
+          outputChannel.appendLine(
+            `[Graph] Adding Edge (File->Comp): ${fileToCompEdgeId}`
+          ); // Added Log
           edges.push({
             id: fileToCompEdgeId,
             source: fileNodeId,
             target: componentNodeId,
           });
           visited.add(fileToCompEdgeId);
+        } else {
+          outputChannel.appendLine(
+            `[Graph] Edge (File->Comp) already visited: ${fileToCompEdgeId}`
+          ); // Added Log
         }
+      } else {
+        outputChannel.appendLine(
+          `[Graph] Component node already visited: ${componentNodeId} (${component.name})`
+        ); // Added Log
+      }
 
-        // --- Process Rendered Components (Dependencies) ---
-        if (component.renderedComponents && depth < maxDepth) {
-          for (const rendered of component.renderedComponents) {
-            // Find the FileNode containing this rendered component
-            let renderedFileNode: FileNode | undefined;
-            let renderedComponentNode: ComponentNode | undefined;
+      // --- Process Rendered Components (Dependencies) ---
+      if (component.renderedComponents && depth < maxDepth) {
+        outputChannel.appendLine(
+          `[Graph] Processing ${component.renderedComponents.length} rendered components for ${component.name}`
+        ); // Added Log
+        for (const rendered of component.renderedComponents) {
+          outputChannel.appendLine(
+            `[Graph] Checking rendered: ${rendered.name}`
+          ); // Added Log
 
-            // TODO: This lookup is inefficient. IndexerService should maybe store a component map.
-            for (const [fPath, fNode] of indexedData.entries()) {
-              const foundComp = fNode.components.find(
-                (c) => c.name === rendered.name
-              );
-              if (foundComp) {
-                // Basic check: does the import match? More robust checks needed.
-                const importsMatch = fNode.imports.some((imp) =>
-                  imp.namedBindings?.includes(rendered.name)
-                );
-                // Heuristic: Assume it's the right one if name matches and it's imported.
-                // A better approach would involve analyzing import paths relative to the current file.
-                if (importsMatch || fPath === filePath) {
-                  // Allow self-references
-                  renderedFileNode = fNode;
-                  renderedComponentNode = foundComp;
+          let renderedFileNode: FileNode | undefined;
+          let renderedComponentNode: ComponentNode | undefined;
+          let resolvedDepPath: string | undefined; // Store the resolved path
+
+          // 1. Find the import declaration for the rendered component in the current file
+          const importDecl = fileNode.imports.find((imp) =>
+            imp.moduleSpecifier?.includes(rendered.name)
+          );
+
+          if (!importDecl) {
+            outputChannel.appendLine(
+              `[Graph] No import declaration found for '${rendered.name}' in ${fileNode.name}. Skipping.`
+            );
+            continue; // Cannot resolve without import info
+          }
+
+          outputChannel.appendLine(
+            `[Graph] Found import for '${rendered.name}' from '${importDecl.moduleSpecifier}'`
+          );
+
+          // 2. Resolve the import source to an absolute path
+          // TODO: Add robust path resolution (aliases, node_modules, extensions)
+          // Basic relative path resolution for now:
+          try {
+            resolvedDepPath = path.resolve(
+              path.dirname(filePath), // Directory of the current file
+              importDecl.moduleSpecifier
+            );
+
+            // Basic extension guessing (can be improved)
+            const possibleExtensions = [".tsx", ".ts", ".jsx", ".js"];
+            if (!fs.existsSync(resolvedDepPath)) {
+              let found = false;
+              for (const ext of possibleExtensions) {
+                const pathWithExt = resolvedDepPath + ext;
+                if (fs.existsSync(pathWithExt)) {
+                  resolvedDepPath = pathWithExt;
+                  found = true;
                   break;
+                }
+                const indexPath = path.join(resolvedDepPath, "index" + ext);
+                if (fs.existsSync(indexPath)) {
+                  resolvedDepPath = indexPath;
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
+                // Check node_modules if not found locally (basic check)
+                // This needs enhancement for proper Node resolution algorithm
+                try {
+                  resolvedDepPath = require.resolve(
+                    importDecl.moduleSpecifier,
+                    {
+                      paths: [path.dirname(filePath)],
+                    }
+                  );
+                  outputChannel.appendLine(
+                    `[Graph] Resolved '${importDecl.moduleSpecifier}' to node_modules path: ${resolvedDepPath}`
+                  );
+                  found = true;
+                } catch (resolveError) {
+                  outputChannel.appendLine(
+                    `[Graph] Could not resolve import source '${importDecl.moduleSpecifier}' to a file or node_module from ${filePath}. Error: ${resolveError}`
+                  );
+                  resolvedDepPath = undefined; // Ensure it's undefined
                 }
               }
             }
 
-            if (renderedFileNode && renderedComponentNode) {
-              const renderedFileId = `file::${renderedFileNode.id}`;
-              const renderedCompId = `component::${renderedComponentNode.id}`; // Target the component
-              const edgeId = `${componentNodeId}->${renderedCompId}`;
+            if (!resolvedDepPath) {
+              continue; // Skip if path resolution failed
+            }
 
-              if (!visited.has(edgeId)) {
-                edges.push({
-                  id: edgeId,
-                  source: componentNodeId,
-                  target: renderedCompId,
-                  animated: true,
-                });
-                visited.add(edgeId);
-              }
+            outputChannel.appendLine(
+              `[Graph] Resolved import source '${importDecl.moduleSpecifier}' to absolute path: ${resolvedDepPath}`
+            );
+          } catch (error: any) {
+            outputChannel.appendLine(
+              `[Graph] Error resolving path for import '${importDecl.moduleSpecifier}' in ${fileNode.name}: ${error.message}`
+            );
+            continue; // Skip if resolution fails
+          }
 
-              // Add the dependency file to the queue if not visited
-              if (!visited.has(renderedFileId)) {
-                queue.push({
-                  filePath: renderedFileNode.filePath,
-                  depth: depth + 1,
-                  parentNodeId: componentNodeId, // Link from the rendering component
-                });
+          // 3. Check if the resolved file is indexed, parse if necessary
+          if (!indexedData.has(resolvedDepPath)) {
+            outputChannel.appendLine(
+              `[Graph] Dependency file not indexed, parsing on demand: ${resolvedDepPath}`
+            );
+            try {
+              const parseResult = indexerService.parseFile(resolvedDepPath);
+              if (parseResult) {
+                outputChannel.appendLine(
+                  `[Graph] On-demand parsing successful for: ${resolvedDepPath}`
+                );
+                // Refresh indexedData map reference after potential update
+                // NOTE: getIndexedData() should return the updated map reference from the service
+                // (Assuming IndexerService updates its internal map correctly)
+                // No explicit refresh needed here if getIndexedData returns the live map.
+                // indexedData = indexerService.getIndexedData(); // Uncomment if service returns copies
+              } else {
+                outputChannel.appendLine(
+                  `[Graph] On-demand parsing failed or returned no data for: ${resolvedDepPath}`
+                );
+                // Optionally continue, maybe the component exists elsewhere?
+                // For now, we'll assume parsing is required for this path.
+                continue; // Skip if parsing failed for the resolved path
               }
-              // Even if file visited, ensure component node exists if not visited
-              if (!visited.has(renderedCompId)) {
-                queue.push({
-                  filePath: renderedFileNode.filePath, // Process this file again to ensure node exists
-                  depth: depth + 1, // Keep depth correct
-                  parentNodeId: componentNodeId,
-                });
-              }
+            } catch (error: any) {
+              outputChannel.appendLine(
+                `[Graph] Error during on-demand parsing for ${resolvedDepPath}: ${error.message}`
+              );
+              continue; // Skip if parsing errors
             }
           }
+
+          // 4. Get the FileNode and ComponentNode from the index (should exist now)
+          renderedFileNode = indexerService
+            .getIndexedData()
+            .get(resolvedDepPath);
+          if (renderedFileNode) {
+            renderedComponentNode = renderedFileNode.components.find(
+              (c) => c.name === rendered.name
+            );
+          }
+
+          // 5. If found, add edge and queue dependency
+          if (renderedFileNode && renderedComponentNode) {
+            const renderedFileId = `file::${renderedFileNode.id}`;
+            const renderedCompId = `component::${renderedComponentNode.id}`; // Target the component
+            const edgeId = `${componentNodeId}->${renderedCompId}`;
+            outputChannel.appendLine(
+              `[Graph] Successfully resolved dependency: ${component.name} -> ${renderedComponentNode.name} (File: ${renderedFileNode.name}, Edge ID: ${edgeId})`
+            ); // Updated Log
+
+            if (!visited.has(edgeId)) {
+              outputChannel.appendLine(
+                `[Graph] Adding Edge (Comp->Comp): ${edgeId}`
+              ); // Added Log
+              edges.push({
+                id: edgeId,
+                source: componentNodeId,
+                target: renderedCompId,
+                animated: true,
+              });
+              visited.add(edgeId);
+            } else {
+              outputChannel.appendLine(
+                `[Graph] Edge (Comp->Comp) already visited: ${edgeId}`
+              ); // Added Log
+            }
+
+            // Add the dependency file to the queue if its *file node* hasn't been visited
+            if (!visited.has(renderedFileId)) {
+              outputChannel.appendLine(
+                `[Graph] Queueing dependency file: ${
+                  renderedFileNode.filePath
+                } (Depth: ${depth + 1}, Parent: ${componentNodeId})`
+              ); // Added Log
+              queue.push({
+                filePath: renderedFileNode.filePath,
+                depth: depth + 1,
+                parentNodeId: componentNodeId, // Link from the rendering component
+              });
+            } else {
+              outputChannel.appendLine(
+                `[Graph] Dependency file node already visited, not queueing: ${renderedFileId} (${renderedFileNode.name})`
+              ); // Updated Log
+            }
+          } else {
+            outputChannel.appendLine(
+              `[Graph] Could not find component '${rendered.name}' in parsed file: ${resolvedDepPath}`
+            ); // Updated Log
+          }
         }
+      } else if (depth >= maxDepth) {
+        outputChannel.appendLine(
+          `[Graph] Max depth reached (${depth}), not processing rendered components for ${component.name}`
+        ); // Added Log
       }
     }
     // TODO: Consider adding Hooks as nodes?
   }
 
-  console.log(
-    `Graph built for ${targetPath}: ${nodes.length} nodes, ${edges.length} edges`
-  );
+  outputChannel.appendLine(
+    `[Graph] Build complete for ${targetPath}: ${nodes.length} nodes, ${edges.length} edges`
+  ); // Added Log
+  // console.log(
+  //   `Graph built for ${targetPath}: ${nodes.length} nodes, ${edges.length} edges`
+  // );
   return { nodes, edges };
 }
 
@@ -599,6 +841,9 @@ function getWebviewContent(
   webview: vscode.Webview,
   initialFilePath: string
 ): string {
+  outputChannel.appendLine(
+    `[Extension] getWebviewContent called with initialFilePath: ${initialFilePath}`
+  );
   // Get the paths to the required resources on disk
   const scriptPathOnDisk = vscode.Uri.joinPath(
     context.extensionUri,
@@ -610,7 +855,7 @@ function getWebviewContent(
     context.extensionUri,
     "out",
     "webview",
-    "styles.css"
+    "bundle.css"
   );
 
   // And convert them into URIs usable inside the webview
@@ -620,7 +865,11 @@ function getWebviewContent(
   // Use a nonce to only allow specific scripts to be run
   const nonce = getNonce();
 
-  const initialFilePathEscaped = initialFilePath.replace(/\//g, "\\");
+  // Safely embed the initial file path into the JavaScript string
+  const initialFilePathJson = JSON.stringify(initialFilePath);
+  outputChannel.appendLine(
+    `[Extension] Embedding initial path as JSON string: ${initialFilePathJson}`
+  );
 
   return `<!DOCTYPE html>
 		<html lang="en">
@@ -637,7 +886,7 @@ function getWebviewContent(
 				// Pass initial data to the webview
 				const vscode = acquireVsCodeApi();
 				const initialData = {
-					filePath: "${initialFilePathEscaped}" // Escape backslashes for JS string
+					filePath: ${initialFilePathJson} // Embed the JSON stringified path
 				};
 				vscode.setState(initialData);
 			</script>

@@ -18,6 +18,7 @@ import "reactflow/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "@reactflow/controls/dist/style.css";
 import "./App.css";
+import TreeView from "./TreeView"; // Import the TreeView component
 
 // Acquire the VS Code API instance (only available in the webview context)
 declare const vscode: {
@@ -142,21 +143,24 @@ const App: React.FC = () => {
           Run Analysis
         </button>
       </div>
-      <div className="reactflow-wrapper">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          fitView
-          attributionPosition="top-right"
-          className="react-flow"
-        >
-          <Controls />
-          {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
-          <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-        </ReactFlow>
+      <div className="main-content-area">
+        <div className="reactflow-wrapper">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            fitView
+            attributionPosition="top-right"
+            className="react-flow"
+          >
+            <Controls />
+            {showMiniMap && <MiniMap nodeStrokeWidth={3} zoomable pannable />}
+            <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+          </ReactFlow>
+        </div>
+        <TreeView nodes={nodes} />
       </div>
     </div>
   );

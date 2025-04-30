@@ -92,11 +92,19 @@ html,
   background-color: var(--vscode-button-hoverBackground);
 }
 
+.main-content-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column; /* Stack Flow and Tree vertically */
+  height: 100vh; /* Fill available height */
+}
+
 .reactflow-wrapper {
-  flex-grow: 1; /* Take remaining space */
-  height: 100%; /* Fill vertical space */
+  flex-grow: 1; /* Allow Flow area to grow */
+  min-height: 200px; /* Ensure it has some minimum height */
   overflow: hidden; /* Hide any potential overflow */
   position: relative; /* Needed for absolute positioning of React Flow elements */
+  border-bottom: 1px solid var(--vscode-panel-border, #ccc); /* Separator */
 }
 
 .react-flow {
@@ -151,4 +159,37 @@ html,
 .react-flow__minimap-node {
   fill: var(--vscode-editor-selectionBackground);
   stroke: none;
+}
+
+.tree-view-panel {
+  height: 200px; /* Fixed height for the tree view */
+  padding: 10px 15px;
+  overflow-y: auto; /* Allow scrolling */
+  background-color: var(--vscode-editor-background);
+  box-sizing: border-box;
+  color: var(--vscode-editor-foreground);
+}
+
+.tree-view-panel.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vscode-descriptionForeground);
+}
+
+.tree-view-panel h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--vscode-editor-foreground);
+}
+
+.tree-view-panel ul {
+  list-style: none;
+  padding-left: 15px;
+  margin: 0;
+}
+
+.tree-view-panel li {
+  padding: 2px 0;
+  font-size: 0.9em;
 }
