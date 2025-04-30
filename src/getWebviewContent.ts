@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { outputChannel } from "./extension";
+import { outputChannel } from "./initializeExtension";
 import { getNonce } from "./getNonce";
 
 export function getWebviewContent(

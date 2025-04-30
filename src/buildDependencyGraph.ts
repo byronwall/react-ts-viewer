@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import type { Node, Edge } from "reactflow";
 import * as vscode from "vscode";
-import { outputChannel, undefined } from "./extension";
+import { outputChannel } from "./initializeExtension";
 import { IndexerService } from "./IndexerService";
 import type { ComponentNode, FileNode } from "./types";
 
