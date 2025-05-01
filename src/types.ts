@@ -15,6 +15,13 @@ export interface BaseNode {
   location: SymbolLocation;
 }
 
+// Added: Represents an external dependency (file or library)
+export interface DependencyInfo {
+  name: string; // Name of the imported symbol or module path
+  source: string; // Module specifier (e.g., './utils', 'react')
+  location: SymbolLocation; // Location of the import usage (approximated for now)
+}
+
 export interface FileNode extends BaseNode {
   kind: "File";
   filePath: string;
@@ -28,6 +35,8 @@ export interface ComponentNode extends BaseNode {
   filePath: string;
   renderedComponents: { name: string; location: SymbolLocation }[]; // Added: Components rendered by this one
   hooksUsed: HookUsage[]; // Added: Hooks used by this component
+  fileDependencies: DependencyInfo[]; // Added
+  libraryDependencies: DependencyInfo[]; // Added
   // propsType?: PropDefinition[]; // Added later by analysis service
   // renderEdges?: RenderEdge[]; // Added later by analysis service
   isClassComponent: boolean;
@@ -37,7 +46,9 @@ export interface ComponentNode extends BaseNode {
 export interface HookNode extends BaseNode {
   kind: "Hook";
   filePath: string;
-  // hooksUsed?: HookUsage[]; // Added later by indexer
+  hooksUsed: HookUsage[]; // Added: Hooks used by this hook
+  fileDependencies: DependencyInfo[]; // Added
+  libraryDependencies: DependencyInfo[]; // Added
   exported: boolean;
 }
 

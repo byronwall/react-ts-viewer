@@ -6,11 +6,14 @@ import {
   FunctionDeclaration,
   ClassDeclaration,
   VariableStatement,
+  VariableDeclaration,
   Node,
   Identifier,
   JsxOpeningElement,
   JsxSelfClosingElement,
   CallExpression,
+  ImportDeclaration,
+  ImportSpecifier,
 } from "ts-morph";
 import {
   ComponentNode,
@@ -19,6 +22,7 @@ import {
   ImportData,
   SymbolLocation,
   HookUsage,
+  DependencyInfo,
 } from "./types";
 import * as path from "path";
 
@@ -50,9 +54,16 @@ function getNodeLocation(node: Node): SymbolLocation {
   };
 }
 
+// Helper function to check if a module specifier is likely an external library
+function isExternalLibrary(moduleSpecifier: string): boolean {
+  // Basic check: does not start with '.' or '/'
+  return !moduleSpecifier.startsWith(".") && !moduleSpecifier.startsWith("/");
+}
+
 export class IndexerService {
   private project: Project;
   private indexedData: Map<string, FileNode> = new Map(); // Store indexed data
+  private importResolverCache: Map<string, Map<string, ImportData>> = new Map(); // Cache resolved imports per file
 
   // Add an emitter for internal use within the class if preferred
   private _onIndexUpdateEmitter = new vscode.EventEmitter<void>();
@@ -104,60 +115,52 @@ export class IndexerService {
     return this.indexedData;
   }
 
-  /** Clears the indexed data. */
+  /** Clears the indexed data and caches. */
   clearIndex(): void {
     this.indexedData.clear();
+    this.importResolverCache.clear();
     // Optionally clear the ts-morph project too if needed
     // this.project = new Project({...}); // Recreate or clear files
+    this._onIndexUpdateEmitter.fire(); // Notify about the clear
   }
 
   /**
-   * Parses a single source file to extract basic component and hook information.
-   * This is a simplified POC version.
+   * Parses a single source file to extract component, hook, and dependency information.
    */
-  parseFile(
-    filePath: string
-  ):
-    | (Partial<FileNode> & { components: ComponentNode[]; hooks: HookNode[] })
-    | null {
+  parseFile(filePath: string): FileNode | null {
     const sourceFile = this.refreshSourceFile(filePath);
     if (!sourceFile) {
       return null;
     }
 
+    // Clear cached imports for this file before parsing
+    this.importResolverCache.delete(filePath);
+
     const components: ComponentNode[] = [];
     const hooks: HookNode[] = [];
-    const imports: ImportData[] = [];
-    const fileId = filePath; // Use filePath as unique ID for now
-    const renderedComponents: { name: string; location: SymbolLocation }[] = [];
+    const fileId = filePath;
+    const resolvedImports = this.resolveImports(sourceFile); // Use the helper
 
     try {
-      // Basic import parsing
-      sourceFile.getImportDeclarations().forEach((importDecl) => {
-        const moduleSpecifier = importDecl.getModuleSpecifierValue();
-        const location = getNodeLocation(importDecl);
-        const namedBindings = importDecl
-          .getNamedImports()
-          .map((spec) => spec.getName());
-        const namespaceImport = importDecl.getNamespaceImport()?.getText();
-        const defaultImport = importDecl.getDefaultImport()?.getText();
-        imports.push({
-          moduleSpecifier,
-          namedBindings,
-          namespaceImport,
-          defaultImport,
-          location,
-        });
-      });
-
       // Find top-level function declarations
       sourceFile.getFunctions().forEach((func) => {
-        this.processFunctionOrVariable(func, filePath, components, hooks);
+        this.processFunctionOrVariable(
+          func,
+          filePath,
+          components,
+          hooks,
+          resolvedImports
+        );
       });
 
       // Find top-level class declarations (potential class components)
       sourceFile.getClasses().forEach((cls) => {
-        this.processClassDeclaration(cls, filePath, components);
+        this.processClassDeclaration(
+          cls,
+          filePath,
+          components,
+          resolvedImports
+        );
       });
 
       // Find components/hooks declared via variables (e.g., const MyComponent = () => ...)
@@ -165,7 +168,14 @@ export class IndexerService {
         stmt.getDeclarations().forEach((decl) => {
           const initializer = decl.getInitializer();
           if (initializer) {
-            this.processFunctionOrVariable(decl, filePath, components, hooks);
+            // Pass the declaration node itself
+            this.processFunctionOrVariable(
+              decl,
+              filePath,
+              components,
+              hooks,
+              resolvedImports
+            );
           }
         });
       });
@@ -175,247 +185,327 @@ export class IndexerService {
         name: path.basename(filePath),
         kind: "File",
         filePath: filePath,
-        imports: imports,
+        imports: Array.from(resolvedImports.values()), // Get imports from the resolved map
         components: components,
         hooks: hooks,
-        location: getNodeLocation(sourceFile.getFirstChild() ?? sourceFile), // Approx location
+        location: getNodeLocation(sourceFile.getFirstChild() ?? sourceFile),
       };
 
       // Store the result in the map
       this.indexedData.set(filePath, fileNode);
-
-      // Notify listeners that a file has been processed
-      this._onIndexUpdateEmitter.fire();
-
-      return fileNode; // Return the full FileNode
+      this._onIndexUpdateEmitter.fire(); // Notify listeners
+      return fileNode;
     } catch (error) {
       console.error(`[IndexerService] Error parsing file ${filePath}:`, error);
-      // Optionally remove from index if parsing fails?
-      // this.indexedData.delete(filePath);
       return null;
     }
   }
 
-  // Helper to process potential component/hook declarations (Function, Variable)
+  // Helper to resolve imports for a given file, caching results
+  private resolveImports(sourceFile: SourceFile): Map<string, ImportData> {
+    const filePath = sourceFile.getFilePath();
+    if (this.importResolverCache.has(filePath)) {
+      return this.importResolverCache.get(filePath)!;
+    }
+
+    const resolvedImports = new Map<string, ImportData>();
+    const imports: ImportData[] = [];
+
+    sourceFile.getImportDeclarations().forEach((importDecl) => {
+      const moduleSpecifier = importDecl.getModuleSpecifierValue();
+      const location = getNodeLocation(importDecl);
+      const namedImports = importDecl.getNamedImports();
+      const namespaceImport = importDecl.getNamespaceImport()?.getText();
+      const defaultImport = importDecl.getDefaultImport(); // Get the Identifier node
+
+      const importData: ImportData = {
+        moduleSpecifier,
+        namedBindings: namedImports.map((spec) => spec.getName()),
+        namespaceImport,
+        defaultImport: defaultImport?.getText(),
+        location,
+        // resolvedPath: undefined, // We might resolve this later if needed
+      };
+      imports.push(importData);
+
+      // Map named imports
+      namedImports.forEach((spec) => {
+        resolvedImports.set(spec.getName(), importData);
+      });
+      // Map default import
+      if (defaultImport) {
+        resolvedImports.set(defaultImport.getText(), importData);
+      }
+      // TODO: Handle namespace imports if needed (less common for components/hooks)
+    });
+
+    this.importResolverCache.set(filePath, resolvedImports);
+    return resolvedImports;
+  }
+
+  // Helper to process potential component/hook declarations (Function, VariableDeclaration)
   private processFunctionOrVariable(
-    node: FunctionDeclaration | ClassDeclaration | Node, // More specific type needed for Variables
+    node: FunctionDeclaration | VariableDeclaration, // Updated type
     filePath: string,
     components: ComponentNode[],
-    hooks: HookNode[]
+    hooks: HookNode[],
+    resolvedImports: Map<string, ImportData> // Added
   ) {
     let nameNode: Identifier | undefined;
+    let bodyNode: Node | undefined; // Node containing the function body or initializer
     let isExported = false;
-    let functionNode: Node | undefined = node; // The node representing the function body/class
-    const renderedComponents: { name: string; location: SymbolLocation }[] = [];
 
-    if (Node.isFunctionDeclaration(node) || Node.isClassDeclaration(node)) {
+    if (Node.isFunctionDeclaration(node)) {
       nameNode = node.getNameNode();
+      bodyNode = node.getBody();
       isExported = node.isExported();
     } else if (Node.isVariableDeclaration(node)) {
       const nameId = node.getNameNode();
       if (Node.isIdentifier(nameId)) {
         nameNode = nameId;
+        bodyNode = node.getInitializer(); // e.g., the arrow function or function expression
+        // Check if the variable statement is exported
+        const varStmt = node.getVariableStatement();
+        isExported = varStmt?.isExported() ?? false;
       }
-      const initializer = node.getInitializer();
-      if (
-        Node.isArrowFunction(initializer) ||
-        Node.isFunctionExpression(initializer)
-      ) {
-        functionNode = initializer;
-      }
-      isExported =
-        node
-          .getFirstAncestorByKind(SyntaxKind.VariableStatement)
-          ?.isExported() ?? false;
     }
 
-    if (!nameNode) return;
+    if (!nameNode || !bodyNode) {
+      return; // Cannot process if name or body/initializer is missing
+    }
+
     const name = nameNode.getText();
     const location = getNodeLocation(nameNode); // Location of the name identifier
-    const id = `${filePath}:${name}`;
+    const bodyLocation = getNodeLocation(bodyNode); // Location of the function body/initializer
+
+    // Extract details from the body/initializer
+    const {
+      hooksUsed,
+      renderedComponents, // Keep renderedComponents extraction if it exists
+      fileDependencies,
+      libraryDependencies,
+    } = this.analyzeBody(bodyNode, resolvedImports);
 
     if (isComponentName(name)) {
-      // Basic check: Does it return JSX?
-      let hasJsx = false;
-      const hooksUsed: HookUsage[] = []; // Initialize hooksUsed for this component
-
-      if (functionNode) {
-        functionNode.forEachDescendant((descNode) => {
-          // Find rendered components (JSX elements)
-          if (
-            descNode.getKind() === SyntaxKind.JsxElement ||
-            descNode.getKind() === SyntaxKind.JsxSelfClosingElement
-          ) {
-            hasJsx = true; // Mark if any JSX is found
-            let tagNameNode: Identifier | undefined;
-            if (Node.isJsxElement(descNode)) {
-              tagNameNode = descNode
-                .getOpeningElement()
-                .getTagNameNode() as Identifier;
-            } else if (Node.isJsxSelfClosingElement(descNode)) {
-              tagNameNode = descNode.getTagNameNode() as Identifier;
-            }
-
-            if (tagNameNode && Node.isIdentifier(tagNameNode)) {
-              const renderedComponentName = tagNameNode.getText();
-              if (isComponentName(renderedComponentName)) {
-                renderedComponents.push({
-                  name: renderedComponentName,
-                  location: getNodeLocation(tagNameNode),
-                });
-              }
-            }
-            // Do not return true here, continue searching the rest of the function body
-          }
-
-          // Find hook usages (CallExpressions like useState(), api.useThing())
-          if (Node.isCallExpression(descNode)) {
-            const expression = descNode.getExpression();
-            let hookName: string | undefined;
-            let nameIdentifier: Node | undefined;
-
-            console.log(
-              `[Indexer] Checking CallExpression: ${expression.getText()}`
-            ); // DEBUG
-
-            if (Node.isIdentifier(expression)) {
-              const potentialHookName = expression.getText();
-              if (isHookName(potentialHookName)) {
-                hookName = potentialHookName;
-                nameIdentifier = expression;
-                console.log(`  Found Identifier hook: ${hookName}`); // DEBUG
-              }
-            } else if (Node.isPropertyAccessExpression(expression)) {
-              const potentialHookName = expression.getName(); // Get the last part (e.g., useQuery)
-              if (isHookName(potentialHookName)) {
-                hookName = expression.getText(); // Store the full expression text (e.g., api.task.useQuery)
-                nameIdentifier = expression.getNameNode(); // Location of the final identifier
-                console.log(`  Found PropAccess hook: ${hookName}`); // DEBUG
-              }
-            }
-
-            if (hookName && nameIdentifier) {
-              hooksUsed.push({
-                hookName: hookName,
-                location: getNodeLocation(nameIdentifier), // Location of the specific hook name identifier
-              });
-            }
-          }
-
-          return undefined; // Continue traversal
-        });
-      }
-
-      if (hasJsx || Node.isClassDeclaration(node)) {
-        // Assume class is a component for now
-        components.push({
-          id: id,
-          name: name,
-          kind: "Component",
-          location: location,
-          filePath: filePath,
-          isClassComponent: Node.isClassDeclaration(node),
-          exported: isExported,
-          renderedComponents: renderedComponents,
-          hooksUsed: hooksUsed, // Assign the collected HookUsage objects
-        });
-      }
+      components.push({
+        id: `${filePath}:${name}`,
+        name,
+        kind: "Component",
+        filePath,
+        location,
+        // Assume function components for now, need to detect class components separately
+        isClassComponent: false,
+        exported: isExported,
+        hooksUsed,
+        renderedComponents: renderedComponents || [], // Ensure it's an array
+        fileDependencies,
+        libraryDependencies,
+      });
     } else if (isHookName(name)) {
       hooks.push({
-        id: id,
-        name: name,
+        id: `${filePath}:${name}`,
+        name,
         kind: "Hook",
-        location: location,
-        filePath: filePath,
+        filePath,
+        location,
         exported: isExported,
+        hooksUsed,
+        fileDependencies,
+        libraryDependencies,
       });
     }
   }
 
-  // Helper specifically for Class Declarations (may be redundant with above but clearer)
+  // Helper for class components
   private processClassDeclaration(
     cls: ClassDeclaration,
     filePath: string,
-    components: ComponentNode[]
+    components: ComponentNode[],
+    resolvedImports: Map<string, ImportData> // Added
   ) {
     const nameNode = cls.getNameNode();
-    if (!nameNode) return;
+    if (!nameNode) return; // Skip anonymous classes
+
     const name = nameNode.getText();
+    if (!isComponentName(name)) return; // Skip if not a component name
+
     const location = getNodeLocation(nameNode);
-    const id = `${filePath}:${name}`;
+    const isExported = cls.isExported();
 
-    // Crude check: Does it extend React.Component or React.PureComponent?
-    const heritageClauses = cls.getHeritageClauses();
-    let isReactClass = false;
-    heritageClauses.forEach((clause) => {
-      clause.getTypeNodes().forEach((typeNode) => {
-        const text = typeNode.getText();
-        if (
-          text === "React.Component" ||
-          text === "Component" ||
-          text === "React.PureComponent" ||
-          text === "PureComponent"
-        ) {
-          isReactClass = true;
-        }
-      });
+    // TODO: Analyze class body for hooks (less common), rendered components, dependencies
+    // This requires parsing render() method, lifecycle methods etc.
+    // For now, initialize with empty arrays, similar to functional components.
+    const {
+      hooksUsed,
+      renderedComponents,
+      fileDependencies,
+      libraryDependencies,
+    } = this.analyzeBody(cls, resolvedImports); // Analyze the whole class for now
+
+    components.push({
+      id: `${filePath}:${name}`,
+      name,
+      kind: "Component",
+      filePath,
+      location,
+      isClassComponent: true, // Mark as class component
+      exported: isExported,
+      hooksUsed,
+      renderedComponents: renderedComponents || [],
+      fileDependencies,
+      libraryDependencies,
     });
-
-    // Only add if it looks like a React class component
-    if (isReactClass || isComponentName(name)) {
-      // Fallback to name check
-      const renderedComponents: { name: string; location: SymbolLocation }[] =
-        [];
-
-      // Find the render method
-      const renderMethod = cls.getMethod("render");
-      if (renderMethod) {
-        renderMethod.forEachDescendant((descNode) => {
-          if (
-            descNode.getKind() === SyntaxKind.JsxElement ||
-            descNode.getKind() === SyntaxKind.JsxSelfClosingElement
-          ) {
-            let tagNameNode: Identifier | undefined;
-            if (Node.isJsxElement(descNode)) {
-              tagNameNode = descNode
-                .getOpeningElement()
-                .getTagNameNode() as Identifier;
-            } else if (Node.isJsxSelfClosingElement(descNode)) {
-              tagNameNode = descNode.getTagNameNode() as Identifier;
-            }
-
-            if (tagNameNode && Node.isIdentifier(tagNameNode)) {
-              const renderedComponentName = tagNameNode.getText();
-              if (isComponentName(renderedComponentName)) {
-                renderedComponents.push({
-                  name: renderedComponentName,
-                  location: getNodeLocation(tagNameNode),
-                });
-              }
-            }
-            // Don't stop traversal here, find all JSX in render method
-          }
-          return undefined; // Continue traversal
-        });
-      }
-
-      components.push({
-        id: id,
-        name: name,
-        kind: "Component",
-        location: location,
-        filePath: filePath,
-        isClassComponent: true,
-        exported: cls.isExported(),
-        renderedComponents: renderedComponents,
-        hooksUsed: [], // Class components don't use hooks directly
-      });
-    }
   }
 
-  // Add methods for resolving imports, finding relationships later
+  // New helper function to analyze the body of a function, arrow function, or class
+  private analyzeBody(
+    bodyNode: Node,
+    resolvedImports: Map<string, ImportData>
+  ): {
+    hooksUsed: HookUsage[];
+    renderedComponents: { name: string; location: SymbolLocation }[]; // Keep this if needed
+    fileDependencies: DependencyInfo[];
+    libraryDependencies: DependencyInfo[];
+  } {
+    const hooksUsed: HookUsage[] = [];
+    const renderedComponents: { name: string; location: SymbolLocation }[] = [];
+    const fileDependencies = new Map<string, DependencyInfo>(); // Use Map to avoid duplicates
+    const libraryDependencies = new Map<string, DependencyInfo>(); // Use Map to avoid duplicates
+
+    // Find hook calls
+    bodyNode.getDescendantsOfKind(SyntaxKind.CallExpression).forEach((call) => {
+      const expression = call.getExpression();
+      if (Node.isIdentifier(expression)) {
+        const hookName = expression.getText();
+        if (isHookName(hookName)) {
+          hooksUsed.push({
+            hookName,
+            location: getNodeLocation(call),
+          });
+          // Also check if the hook itself is imported
+          const importData = resolvedImports.get(hookName);
+          if (importData) {
+            const depInfo: DependencyInfo = {
+              name: hookName,
+              source: importData.moduleSpecifier,
+              location: getNodeLocation(expression), // Location of the identifier usage
+            };
+            if (isExternalLibrary(importData.moduleSpecifier)) {
+              if (!libraryDependencies.has(importData.moduleSpecifier)) {
+                libraryDependencies.set(importData.moduleSpecifier, depInfo);
+              }
+            } else {
+              if (!fileDependencies.has(importData.moduleSpecifier)) {
+                fileDependencies.set(importData.moduleSpecifier, depInfo);
+              }
+            }
+          }
+        }
+      }
+      // TODO: Handle MemberAccessExpression (e.g., React.useState) if needed
+    });
+
+    // Find rendered components (JSX elements) - Keeping existing logic if present
+    bodyNode
+      .getDescendantsOfKind(SyntaxKind.JsxOpeningElement)
+      .forEach((jsx) => {
+        const tagName = jsx.getTagNameNode().getText();
+        // Basic check: If tag name starts with uppercase, assume it's a component
+        if (isComponentName(tagName)) {
+          renderedComponents.push({
+            name: tagName,
+            location: getNodeLocation(jsx.getTagNameNode()),
+          });
+          // Also check if the component is imported
+          const importData = resolvedImports.get(tagName);
+          if (importData) {
+            const depInfo: DependencyInfo = {
+              name: tagName,
+              source: importData.moduleSpecifier,
+              location: getNodeLocation(jsx.getTagNameNode()), // Location of the tag usage
+            };
+            if (isExternalLibrary(importData.moduleSpecifier)) {
+              if (!libraryDependencies.has(importData.moduleSpecifier)) {
+                libraryDependencies.set(importData.moduleSpecifier, depInfo);
+              }
+            } else {
+              if (!fileDependencies.has(importData.moduleSpecifier)) {
+                fileDependencies.set(importData.moduleSpecifier, depInfo);
+              }
+            }
+          }
+        }
+      });
+    bodyNode
+      .getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement)
+      .forEach((jsx) => {
+        const tagName = jsx.getTagNameNode().getText();
+        if (isComponentName(tagName)) {
+          renderedComponents.push({
+            name: tagName,
+            location: getNodeLocation(jsx.getTagNameNode()),
+          });
+          // Also check if the component is imported
+          const importData = resolvedImports.get(tagName);
+          if (importData) {
+            const depInfo: DependencyInfo = {
+              name: tagName,
+              source: importData.moduleSpecifier,
+              location: getNodeLocation(jsx.getTagNameNode()),
+            };
+            if (isExternalLibrary(importData.moduleSpecifier)) {
+              if (!libraryDependencies.has(importData.moduleSpecifier)) {
+                libraryDependencies.set(importData.moduleSpecifier, depInfo);
+              }
+            } else {
+              if (!fileDependencies.has(importData.moduleSpecifier)) {
+                fileDependencies.set(importData.moduleSpecifier, depInfo);
+              }
+            }
+          }
+        }
+      });
+
+    // Find other identifier usages that might be imports (simple approach)
+    // This is complex because an identifier could be a local variable, prop, etc.
+    // A more robust approach involves using the TypeScript Language Service or deeper type analysis.
+    // For now, we focus on hooks and components identified above.
+    // We could iterate through *all* identifiers and check resolvedImports, but it might be noisy.
+
+    return {
+      hooksUsed,
+      renderedComponents,
+      fileDependencies: Array.from(fileDependencies.values()),
+      libraryDependencies: Array.from(libraryDependencies.values()),
+    };
+  }
+
+  /** Fetches the indexed data for a specific file. */
+  getFileData(filePath: string): FileNode | undefined {
+    return this.indexedData.get(filePath);
+  }
+
+  /** Finds the location of a component or hook definition. */
+  findSymbolLocation(
+    filePath: string,
+    symbolName: string
+  ): SymbolLocation | undefined {
+    const fileData = this.indexedData.get(filePath);
+    if (!fileData) return undefined;
+
+    const component = fileData.components.find((c) => c.name === symbolName);
+    if (component) return component.location;
+
+    const hook = fileData.hooks.find((h) => h.name === symbolName);
+    if (hook) return hook.location;
+
+    // TODO: Search imports if not found locally? Requires resolving imports.
+
+    return undefined;
+  }
 
   dispose() {
+    // Clean up resources if necessary, e.g., dispose event emitters
     this._onIndexUpdateEmitter.dispose();
   }
 }
