@@ -1,22 +1,21 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { Node, Edge } from "reactflow";
-import * as vscode from "vscode";
-import { outputChannel } from "./initializeExtension";
+import type { Edge, Node } from "reactflow";
+import * as ts from "typescript"; // Need typescript for tsconfig parsing
 import { IndexerService } from "./IndexerService";
+import { outputChannel } from "./initializeExtension";
 import type {
   ComponentNode,
+  DependencyInfo,
   FileNode,
   HookUsage,
-  DependencyInfo,
   ImportData,
 } from "./types";
-import * as ts from "typescript"; // Need typescript for tsconfig parsing
 
 // New type for enhanced node data
 export interface GraphNodeData {
   label: string;
-  type: "Component" | "File" | "FileDep" | "LibDep";
+  type: "Component" | "File" | "FileDep" | "LibDep" | "HookUsage";
   filePath?: string; // For file nodes
   componentId?: string; // For component nodes
   hooksUsed?: HookUsage[];
@@ -24,6 +23,8 @@ export interface GraphNodeData {
   libraryDependencies?: DependencyInfo[];
   isExternal?: boolean; // For dependency nodes
   isEntry?: boolean; // Mark the entry file node
+  hookName?: string;
+  parentComponentId?: string;
 }
 
 // --- START MOVED HELPERS & CACHE ---
@@ -37,19 +38,20 @@ interface TsConfig {
 // Helper to find the tsconfig.json recursively upwards
 function findTsConfigPath(startDir: string): string | undefined {
   let currentDir = startDir;
-  while (true) {
-    // Loop until root or found
-    const tsconfigPath = path.join(currentDir, "tsconfig.json");
-    if (fs.existsSync(tsconfigPath)) {
-      return tsconfigPath;
-    }
+  // --- START LINTER FIX ---
+  // Keep searching upwards until we find tsconfig.json or reach the root
+  let tsconfigPath = path.join(currentDir, "tsconfig.json");
+  while (!fs.existsSync(tsconfigPath)) {
     const parentDir = path.dirname(currentDir);
+    // Stop if we have reached the root directory
     if (parentDir === currentDir) {
-      // We've reached the root directory and haven't found tsconfig.json
       return undefined;
     }
     currentDir = parentDir;
+    tsconfigPath = path.join(currentDir, "tsconfig.json");
   }
+  return tsconfigPath;
+  // --- END LINTER FIX ---
 }
 
 // Helper to read and parse tsconfig.json
@@ -138,12 +140,14 @@ let tsConfigBasePath: string | undefined = undefined;
  * @param targetPath The starting file path for the analysis.
  * @param maxDepth The maximum depth to traverse the dependency tree.
  * @param indexerService The instance of the IndexerService containing the indexed data.
+ * @param workspaceRoot The workspace root directory.
  * @returns An object containing the nodes and edges for React Flow.
  */
 export function buildDependencyGraph(
   targetPath: string,
   maxDepth: number,
-  indexerService: IndexerService
+  indexerService: IndexerService,
+  workspaceRoot: string
 ): { nodes: Node<GraphNodeData>[]; edges: Edge[] } {
   outputChannel.appendLine(
     `[Graph] Building graph for: ${targetPath} (maxDepth: ${maxDepth})`
@@ -190,20 +194,30 @@ export function buildDependencyGraph(
   const nodes: Node<GraphNodeData>[] = [];
   const edges: Edge[] = [];
   const nodePositions: { [id: string]: { x: number; y: number } } = {};
+  const fileNodeDimensions: {
+    [id: string]: { width: number; height: number };
+  } = {}; // Store dimensions for file nodes
 
-  const xSpacing = 350; // Increased spacing for potential dependency nodes
-  const ySpacing = 100;
+  const xSpacing = 450; // Increased spacing for parent nodes
+  const ySpacing = 400; // Increased vertical spacing for parent nodes
+  const componentXOffset = 50; // Offset for components within files
+  const componentYOffset = 60; // Increased offset to make space for component label
+  const componentYSpacing = 120; // Vertical spacing between components in a file
+  const hookXOffset = 10; // Offset for hooks within components
+  const hookYOffset = 35; // Start hooks below the component label
+  const hookYSpacing = 40; // Vertical spacing between hooks
 
   const addedNodeIds = new Set<string>();
   const addedEdgeIds = new Set<string>();
   const exploredComponentIds = new Set<string>();
+  const componentsInFile: { [fileGraphId: string]: number } = {}; // Track component count per file for positioning
 
   type QueueItem =
     | {
         type: "file";
         filePath: string;
         depth: number;
-        sourceNodeId?: string;
+        // Removed sourceNodeId as file->component edge is replaced by parent/child
       }
     | {
         type: "component";
@@ -211,9 +225,15 @@ export function buildDependencyGraph(
         componentName: string;
         filePath: string;
         depth: number;
-        sourceNodeId: string;
+        sourceComponentGraphId: string; // The component *rendering* this one
       };
-  const queue: QueueItem[] = [{ type: "file", filePath: targetPath, depth: 0 }];
+  // Start with the initial file
+  const initialFileQueueItem: QueueItem = {
+    type: "file",
+    filePath: targetPath,
+    depth: 0,
+  };
+  const queue: QueueItem[] = [initialFileQueueItem];
 
   const findComponentDetails = (
     compId: string // Indexer ID (filePath:Name)
@@ -237,48 +257,216 @@ export function buildDependencyGraph(
     return undefined;
   };
 
+  // Consistent ID generation
   const getGraphNodeId = (
     type: "file" | "component" | "filedep" | "libdep",
-    id: string
+    id: string, // Base ID (filePath, componentId, depSource)
+    // Optional suffix for uniqueness, like hook index
+    suffix?: string | number
   ): string => {
-    return `${type}::${id}`;
+    // Use Buffer to create a more filesystem-friendly ID from paths
+    const baseSafeId = Buffer.from(id).toString("base64url");
+    const suffixPart = suffix !== undefined ? `::${suffix}` : "";
+    return `${type}::${baseSafeId}${suffixPart}`;
   };
 
   const addNode = (node: Node<GraphNodeData>, depth: number) => {
-    if (!addedNodeIds.has(node.id)) {
-      // Determine x position based on depth and type (Component vs others)
-      let currentX = depth * xSpacing;
-      if (node.data.type === "Component") {
-        currentX += xSpacing / 2; // Offset components slightly
-      } else if (node.data.type === "FileDep" || node.data.type === "LibDep") {
-        currentX += xSpacing * 0.75; // Offset dependencies even further?
+    if (addedNodeIds.has(node.id)) {
+      outputChannel.appendLine(`[Graph] Node already exists: ${node.id}`);
+      return; // Don't add or reposition if already present
+    }
+
+    let position: { x: number; y: number };
+
+    if (node.data.type === "File") {
+      // Position File (parent) nodes in a grid based on depth
+      const nodesAtThisDepth = nodes.filter(
+        (n) =>
+          n.data.type === "File" && nodePositions[n.id]?.x === depth * xSpacing
+      );
+      position = {
+        x: depth * xSpacing,
+        y: 50 + nodesAtThisDepth.length * ySpacing,
+      };
+      // Initialize component count for positioning within this file
+      componentsInFile[node.id] = 0;
+      // Store initial dimensions (will be updated later if needed)
+      fileNodeDimensions[node.id] = {
+        width: xSpacing - 50,
+        height: ySpacing - 50,
+      };
+      node.style = {
+        ...node.style,
+        // Set default dimensions - React Flow might override if children exceed this
+        width: fileNodeDimensions[node.id]?.width ?? xSpacing - 50,
+        height: fileNodeDimensions[node.id]?.height ?? ySpacing - 50,
+        backgroundColor: "rgba(100, 80, 60, 0.1)", // Brownish background
+        borderColor: "rgba(160, 120, 80, 0.8)",
+        borderWidth: 1,
+        borderStyle: "solid",
+        // Ensure label is readable
+        color: "#ccc", // Light text color for dark theme
+        fontSize: "12px",
+        // Add padding inside the file node for its children
+        padding: "20px",
+        zIndex: 0, // Ensure file is behind components
+      };
+      // Mark as a parent type for React Flow
+      node.type = "group"; // Use React Flow's group type for containers
+    } else if (node.data.type === "Component" && node.parentNode) {
+      // --- Component Node Logic ---
+      node.extent = "parent"; // Keep component inside file parent bounds
+
+      // Position Component nodes relative to their parent File node
+      const fileGraphId = node.parentNode;
+      const componentIndex = componentsInFile[fileGraphId] ?? 0;
+      position = {
+        x: componentXOffset, // Fixed X offset within parent
+        y: componentYOffset + componentIndex * componentYSpacing, // Stack vertically
+      };
+      componentsInFile[fileGraphId] = componentIndex + 1; // Increment count
+
+      // Optionally update parent file node dimensions if needed (basic estimation)
+      const fileDims = fileNodeDimensions[fileGraphId];
+      if (fileDims) {
+        const requiredHeight = position.y + componentYSpacing; // Estimate needed height
+        if (requiredHeight > fileDims.height) {
+          fileDims.height = requiredHeight + componentYOffset; // Add padding
+          const parentNode = nodes.find((n) => n.id === fileGraphId);
+          if (parentNode) {
+            parentNode.style = {
+              ...parentNode.style,
+              height: fileDims.height,
+            };
+          }
+        }
+        // Similar logic could be added for width if needed
       }
 
-      // Count nodes already placed at this specific X coordinate to determine Y
-      const nodesAtThisX = nodes.filter(
-        (n) => nodePositions[n.id]?.x === currentX
-      );
-      const position = {
-        x: currentX,
-        y: 50 + nodesAtThisX.length * ySpacing, // Stack vertically at the same X
+      // Basic Style for component group node
+      node.style = {
+        backgroundColor: "rgba(16, 94, 80, 0.3)", // Dark teal background
+        borderColor: "rgba(22, 163, 136, 1)", // Teal border
+        borderWidth: 1,
+        borderStyle: "solid",
+        color: "#eee",
+        fontSize: "11px",
+        padding: "5px", // Reduced padding as hooks are now nodes
+        width: xSpacing - 50 - 2 * componentXOffset - 20, // Parent width - margins - padding
+        height: hookYOffset, // Base height before adding hooks, label is implicitly positioned by react-flow
       };
 
-      node.position = position;
-      nodePositions[node.id] = position;
-      nodes.push(node);
-      addedNodeIds.add(node.id);
+      // --- Add Hook Nodes as Children ---
+      let componentHeight = hookYOffset; // Start height calculation
+      if (node.data.hooksUsed && node.data.hooksUsed.length > 0) {
+        node.data.hooksUsed.forEach((hook, index) => {
+          const hookGraphId = getGraphNodeId(
+            "component", // Base type off parent
+            node.id, // Use component graph ID as base
+            `hook_${index}` // Add hook index for uniqueness
+          );
+          const hookNode: Node<GraphNodeData> = {
+            id: hookGraphId,
+            position: { x: 0, y: 0 }, // Positioned relative to component in HookUsage block
+            parentNode: node.id, // Set parent to the component node
+            extent: "parent",
+            data: {
+              label: hook.hookName,
+              type: "HookUsage",
+              hookName: hook.hookName,
+              parentComponentId: node.data.componentId, // Store originating component indexer ID
+            },
+          };
+          // Recursively call addNode for the hook
+          addNode(hookNode, depth + 1); // Place hooks visually 'inside' component level
+          componentHeight += hookYSpacing; // Increment height for each hook
+        });
+      }
+      // Update component node height based on hooks added
+      node.style.height = Math.max(componentHeight, 50); // Ensure a minimum height
+      // -------------------------------
+    } else if (node.data.type === "HookUsage" /* && node.parentNode */) {
+      // --- HookUsage Node Logic (No longer parented to Component visually) ---
+      // Hooks will now position relative to the canvas origin, not the component
+      // Position Hook nodes relative to their parent Component node
+      // const componentGraphId = node.parentNode; // ParentNode link is broken by removing group
 
-      outputChannel.appendLine(
-        `[Graph] Adding Node: ${node.id} (${node.data.label}) at depth ${depth} Type: ${node.data.type} Pos:(${position.x}, ${position.y})`
+      // Find index based on ID suffix (hacky, but works for now)
+      const parts = node.id.split("::");
+      const indexStr = parts[parts.length - 1]?.split("_")[1];
+      const hookIndex = indexStr ? parseInt(indexStr, 10) : 0;
+
+      position = {
+        x: hookXOffset, // Fixed X offset within parent component
+        y: hookYOffset + hookIndex * hookYSpacing, // Stack vertically
+      };
+      // Style HookUsage nodes
+      node.style = {
+        backgroundColor: "rgba(40, 50, 100, 0.4)", // Bluish background
+        borderColor: "rgba(80, 100, 200, 1)", // Blue border
+        borderWidth: 1,
+        borderStyle: "solid",
+        color: "#ddd",
+        fontSize: "9px",
+        padding: "3px 5px",
+        // Width can be fixed or dynamic based on label
+        // width: (nodePositions[componentGraphId]?.x ? (nodes.find(n => n.id === componentGraphId)?.style?.width as number ?? 200) : 200) - 2 * hookXOffset - 10,
+        width: 150, // Fixed width for now
+        height: hookYSpacing - 10, // Fit within spacing
+      };
+    } else if (node.data.type === "FileDep" || node.data.type === "LibDep") {
+      // Position Dependency nodes - maybe position relative to source component later?
+      // For now, place them at the next depth level, similar to original logic
+      const currentX = (depth + 0.5) * xSpacing; // Place between file/component levels
+      const nodesAtThisX = nodes.filter(
+        (n) =>
+          (n.data.type === "FileDep" || n.data.type === "LibDep") &&
+          nodePositions[n.id]?.x === currentX
       );
+      position = {
+        x: currentX,
+        y: 100 + nodesAtThisX.length * ySpacing * 0.5, // Adjust Y spacing for deps
+      };
+      node.style = {
+        backgroundColor: "rgba(60, 60, 60, 0.3)",
+        borderColor: "#888",
+        borderWidth: 1,
+        borderStyle: "dashed",
+        color: "#bbb",
+        fontSize: "10px",
+        padding: "5px",
+      };
     } else {
-      outputChannel.appendLine(`[Graph] Node already exists: ${node.id}`);
+      // Default positioning for any other unexpected node types or components without parents
+      outputChannel.appendLine(
+        `[Graph] Warning: Node ${node.id} (${node.data.type}) has unexpected state for positioning.`
+      );
+      position = { x: depth * xSpacing, y: 500 }; // Fallback position
     }
+
+    node.position = position;
+    nodePositions[node.id] = position; // Store absolute position for layout reference
+    nodes.push(node);
+    addedNodeIds.add(node.id);
+
+    outputChannel.appendLine(
+      `[Graph] Adding Node: ${node.id} (${node.data.label}) Type: ${
+        node.data.type
+      } ${node.parentNode ? `Parent: ${node.parentNode}` : ""} Pos:(${
+        position.x
+      }, ${position.y})`
+    );
   };
 
   const addEdge = (edge: Edge) => {
     if (edge.source === edge.target) {
       outputChannel.appendLine(`[Graph] Skipping self-loop edge: ${edge.id}`);
+      return;
+    }
+    if (!addedNodeIds.has(edge.source) || !addedNodeIds.has(edge.target)) {
+      outputChannel.appendLine(
+        `[Graph] Skipping edge ${edge.id} because source or target node not found.`
+      );
       return;
     }
     if (!addedEdgeIds.has(edge.id)) {
@@ -314,10 +502,10 @@ export function buildDependencyGraph(
     }
 
     if (currentItem.type === "file") {
-      const { filePath, sourceNodeId } = currentItem;
-      let fileNode = indexerService.getIndexedData().get(filePath);
+      const { filePath } = currentItem;
+      let fileNodeData = indexerService.getIndexedData().get(filePath);
 
-      if (!fileNode) {
+      if (!fileNodeData) {
         outputChannel.appendLine(
           `[Graph] File not indexed, parsing on demand: ${filePath}`
         );
@@ -329,8 +517,8 @@ export function buildDependencyGraph(
             );
             continue;
           }
-          fileNode = indexerService.getIndexedData().get(filePath); // Try getting again
-          if (!fileNode) {
+          fileNodeData = indexerService.getIndexedData().get(filePath); // Try getting again
+          if (!fileNodeData) {
             outputChannel.appendLine(
               `[Graph] On-demand parsing failed to produce node for: ${filePath}`
             );
@@ -347,17 +535,37 @@ export function buildDependencyGraph(
         }
       }
 
-      processFileNode(fileNode, currentDepth, sourceNodeId);
+      processFileNode(fileNodeData, currentDepth); // Pass depth
     } else if (currentItem.type === "component") {
-      const { componentId, componentName, filePath, sourceNodeId } =
-        currentItem;
+      const {
+        componentId,
+        componentName,
+        filePath,
+        sourceComponentGraphId, // Renamed from sourceNodeId for clarity
+      } = currentItem;
       const graphComponentId = getGraphNodeId("component", componentId);
+      const parentFileGraphId = getGraphNodeId("file", filePath); // ID of the file this component is defined in
 
       // Check if already explored this specific component ID
       if (exploredComponentIds.has(componentId)) {
         outputChannel.appendLine(
-          `[Graph] Component ${componentId} already explored, skipping.`
+          `[Graph] Component ${componentId} already explored, skipping queue processing.`
         );
+        // Still add the edge if the source component is valid and node exists
+        if (
+          sourceComponentGraphId &&
+          addedNodeIds.has(sourceComponentGraphId) &&
+          addedNodeIds.has(graphComponentId)
+        ) {
+          addEdge({
+            id: `e-${sourceComponentGraphId}-renders-${graphComponentId}`, // More descriptive ID
+            source: sourceComponentGraphId,
+            target: graphComponentId,
+            animated: true,
+            type: "smoothstep",
+            style: { stroke: "#00bbff" }, // Style component render edges
+          });
+        }
         continue;
       }
 
@@ -369,14 +577,17 @@ export function buildDependencyGraph(
         );
         continue; // Skip if component data isn't found
       }
-      const { component, file: parentFileNode } = details;
+      const { component, file: parentFileNode } = details; // parentFileNode here is the FileNode from indexer
 
-      // Add the component node
+      // Add the component node, associating it with its parent file
       addNode(
         {
           id: graphComponentId,
-          position: { x: 0, y: 0 }, // Placeholder
-          // Pass relevant data to the node for rendering
+          position: { x: 0, y: 0 }, // Position is relative to parent, calculated in addNode
+          // --- START Parent Association ---
+          parentNode: parentFileGraphId, // Link to the file container node
+          extent: "parent", // Keep node inside parent bounds
+          // --- END Parent Association ---
           data: {
             label: componentName,
             type: "Component",
@@ -386,44 +597,55 @@ export function buildDependencyGraph(
             libraryDependencies: component.libraryDependencies,
             filePath: filePath, // Store defining file path
           },
-          type: "ComponentNode", // Custom node type for React Flow
+          // type: 'ComponentNode', // Keep or adjust based on frontend needs
         },
-        currentDepth
+        currentDepth // Pass depth for potential fallback positioning logic
       );
 
-      // Add edge from the source (file or component) to this component
-      addEdge({
-        id: `e-${sourceNodeId}-${graphComponentId}`,
-        source: sourceNodeId,
-        target: graphComponentId,
-        animated: true,
-        type: "smoothstep",
-        // style: { stroke: '#00ff00' }, // Optional: Style component definition edges
-      });
+      // --- Edge Removed: No longer drawing edge from file to component ---
+      // The parent/child relationship handles this visually.
+
+      // Add edge from the *rendering* component to this component
+      // Ensure the source component node actually exists before adding edge
+      if (sourceComponentGraphId && addedNodeIds.has(sourceComponentGraphId)) {
+        addEdge({
+          id: `e-${sourceComponentGraphId}-renders-${graphComponentId}`,
+          source: sourceComponentGraphId,
+          target: graphComponentId,
+          animated: true,
+          type: "smoothstep",
+          style: { stroke: "#00bbff" }, // Style component render edges
+        });
+      } else if (sourceComponentGraphId) {
+        outputChannel.appendLine(
+          `[Graph] Skipping render edge to ${graphComponentId} because source component ${sourceComponentGraphId} not found.`
+        );
+      }
 
       // Mark as explored *before* processing dependencies to prevent cycles
       exploredComponentIds.add(componentId);
 
-      // Process rendered components (outgoing rendering edges)
+      // Process rendered components (outgoing rendering edges) only if depth allows
       if (currentDepth < maxDepth) {
         component.renderedComponents.forEach((rendered) => {
-          // Pass the componentId (indexer ID) of the current (rendering) component
           resolveAndQueueRenderedComponent(
             rendered,
-            component, // Pass the full ComponentNode
-            componentId, // Pass indexer ID
-            parentFileNode,
-            currentDepth // Depth of the rendering component
+            component, // Pass the full ComponentNode data from indexer
+            componentId, // Pass indexer ID of the *rendering* component
+            parentFileNode, // Pass the FileNode data from indexer
+            currentDepth // Depth of the *rendering* component
           );
         });
 
         // Process file dependencies (outgoing dependency edges)
         component.fileDependencies.forEach((dep) => {
+          // Pass the *component's* graph ID as source
           processDependency(dep, graphComponentId, currentDepth, "filedep");
         });
 
         // Process library dependencies (outgoing dependency edges)
         component.libraryDependencies.forEach((dep) => {
+          // Pass the *component's* graph ID as source
           processDependency(dep, graphComponentId, currentDepth, "libdep");
         });
       }
@@ -432,57 +654,113 @@ export function buildDependencyGraph(
 
   // --- Helper Functions Nested Inside ---
 
-  function processFileNode(
-    fileNode: FileNode,
-    depth: number,
-    sourceNodeId?: string
-  ) {
-    const graphFileId = getGraphNodeId("file", fileNode.id);
+  function processFileNode(fileNodeData: FileNode, depth: number) {
+    const graphFileId = getGraphNodeId("file", fileNodeData.filePath); // Use filePath for unique ID
+    // Use relative path for label if possible
+    const relativeFilePath = path.relative(
+      workspaceRoot,
+      fileNodeData.filePath
+    );
     outputChannel.appendLine(
-      `[Graph] Processing File Node: ${fileNode.id} at depth ${depth}`
+      `[Graph] Processing File Node (as Parent): ${relativeFilePath} at depth ${depth}`
     );
 
-    addNode(
-      {
-        id: graphFileId,
-        position: { x: 0, y: 0 }, // Placeholder
-        data: {
-          label: fileNode.name,
-          type: "File",
-          filePath: fileNode.filePath,
-          isEntry: depth === 0, // Mark if it's the root file
+    // Check if file node already added (could happen if referenced as dependency before being processed directly)
+    if (!addedNodeIds.has(graphFileId)) {
+      addNode(
+        {
+          id: graphFileId,
+          position: { x: 0, y: 0 }, // Placeholder, calculated in addNode
+          data: {
+            label: relativeFilePath || fileNodeData.name, // Display relative path
+            type: "File",
+            filePath: fileNodeData.filePath,
+            isEntry: depth === 0, // Mark if it's the root file
+          },
+          // type: 'FileNode', // Set to 'group' in addNode
         },
-        type: "FileNode", // Custom node type for React Flow
-      },
-      depth
-    );
-
-    // If this file was reached from another node, add the edge
-    if (sourceNodeId) {
-      addEdge({
-        id: `e-${sourceNodeId}-${graphFileId}`,
-        source: sourceNodeId,
-        target: graphFileId,
-        animated: false,
-        type: "smoothstep",
-        style: { stroke: "#aaa", strokeDasharray: "5 5" }, // Style file import edges
-      });
+        depth
+      );
+    } else {
+      outputChannel.appendLine(
+        `[Graph] File node ${graphFileId} already added.`
+      );
+      // Ensure it's marked as entry if it's the root file being processed now
+      const existingNode = nodes.find((n) => n.id === graphFileId);
+      if (existingNode && depth === 0) {
+        existingNode.data.isEntry = true;
+        // Re-apply entry styling if needed? (Handled by React Flow based on data)
+      }
     }
 
     // Queue components defined in this file (only if depth allows further exploration)
+    // Components are queued with depth+1
     if (depth < maxDepth) {
-      fileNode.components.forEach((comp) => {
+      fileNodeData.components.forEach((comp) => {
         outputChannel.appendLine(
-          `[Graph] Queuing component from file ${fileNode.id}: ${comp.name}`
+          `[Graph] Queuing component from file ${relativeFilePath}: ${comp.name}`
         );
-        queue.push({
-          type: "component",
-          componentId: comp.id, // Use the indexer ID
-          componentName: comp.name,
-          filePath: fileNode.filePath,
-          depth: depth + 1,
-          sourceNodeId: graphFileId, // Source is the file node
-        });
+        // Components are rendered *by* something. Here, they are defined within the file.
+        // We need to decide if we want edges representing definition.
+        // For now, the parent/child relationship shows definition.
+        // We only queue components if they are *rendered* by another component.
+        // Let's initiate the component processing directly from the file processing
+        // if we want to show components even if not rendered by the entry point's components.
+
+        // Check if component already explored or added
+        const graphCompId = getGraphNodeId("component", comp.id);
+        if (
+          !exploredComponentIds.has(comp.id) &&
+          !addedNodeIds.has(graphCompId)
+        ) {
+          // Add the component node directly, parented to the file
+          addNode(
+            {
+              id: graphCompId,
+              position: { x: 0, y: 0 }, // Relative pos calculated in addNode
+              parentNode: graphFileId,
+              extent: "parent",
+              data: {
+                label: comp.name,
+                type: "Component",
+                componentId: comp.id,
+                hooksUsed: comp.hooksUsed,
+                fileDependencies: comp.fileDependencies,
+                libraryDependencies: comp.libraryDependencies,
+                filePath: fileNodeData.filePath,
+              },
+              // type: 'ComponentNode'
+            },
+            depth + 1 // Treat components as being at the next logical level
+          );
+          // Now, explore this component's dependencies and rendered children
+          exploredComponentIds.add(comp.id); // Mark as explored
+
+          if (depth + 1 < maxDepth) {
+            // Process rendered components
+            comp.renderedComponents.forEach((rendered) => {
+              resolveAndQueueRenderedComponent(
+                rendered,
+                comp,
+                comp.id,
+                fileNodeData,
+                depth + 1 // Depth of this component
+              );
+            });
+
+            // Process dependencies
+            comp.fileDependencies.forEach((dep) => {
+              processDependency(dep, graphCompId, depth + 1, "filedep");
+            });
+            comp.libraryDependencies.forEach((dep) => {
+              processDependency(dep, graphCompId, depth + 1, "libdep");
+            });
+          }
+        } else {
+          outputChannel.appendLine(
+            `[Graph] Component ${comp.name} (${comp.id}) already added or explored.`
+          );
+        }
       });
     }
   }
@@ -496,248 +774,286 @@ export function buildDependencyGraph(
   ) {
     const targetId = dep.source; // Use module specifier as base ID
     const graphDepId = getGraphNodeId(depType, targetId);
-    const depDepth = componentDepth + 1; // Place deps at next level
+    const depDepth = componentDepth; // Place deps visually closer to their source component level
 
-    if (depDepth > maxDepth) {
-      outputChannel.appendLine(
-        `[Graph] Skipping dependency due to depth: ${targetId}`
-      );
-      return;
-    }
+    // Don't check maxDepth here, let the component logic handle traversal depth.
+    // Always show direct dependencies of explored components.
+    // if (depDepth > maxDepth) { ... } // Removed depth check here
 
     outputChannel.appendLine(
       `[Graph] Processing Dependency: ${targetId} from ${sourceComponentGraphId}`
     );
 
-    addNode(
-      {
-        id: graphDepId,
-        position: { x: 0, y: 0 }, // Placeholder
-        data: {
-          label: targetId, // Display module specifier
-          type: depType === "filedep" ? "FileDep" : "LibDep",
-          filePath: depType === "filedep" ? targetId : undefined, // Store path for file deps
-          isExternal: depType === "libdep",
+    // --- START DEPENDENCY NODE REMOVAL ---
+    // Comment out adding separate nodes and edges for dependencies
+    /*
+    // Only add the node if it doesn't exist
+    if (!addedNodeIds.has(graphDepId)) {
+      addNode(
+        {
+          id: graphDepId,
+          position: { x: 0, y: 0 }, // Placeholder, calculated in addNode
+          data: {
+            label: targetId, // Display module specifier
+            type: depType === "filedep" ? "FileDep" : "LibDep",
+            // Resolve file path for file dependencies if possible (useful for linking later)
+            filePath:
+              depType === "filedep"
+                ? resolveImportPath(
+                    targetId,
+                    nodes.find((n) => n.id === sourceComponentGraphId)?.data
+                      .filePath ?? ""
+                  ) // Attempt resolution
+                : undefined,
+            isExternal: depType === "libdep",
+          },
+          // type: 'DependencyNode', // Keep or adjust based on frontend needs
         },
-        type: "DependencyNode", // Custom node type for React Flow
-      },
-      depDepth // Add at the next depth level
-    );
+        depDepth // Add node at the calculated depth
+      );
+    }
 
+    // Always add the edge from the component to the dependency node
     addEdge({
-      id: `e-${sourceComponentGraphId}-${graphDepId}`,
+      id: `e-${sourceComponentGraphId}-depends-${graphDepId}`,
       source: sourceComponentGraphId,
       target: graphDepId,
       animated: false,
       type: "smoothstep",
       style: { stroke: "#f6ad55", strokeDasharray: "3 3" }, // Style dependency edges
     });
+    */
+    outputChannel.appendLine(
+      `[Graph] Skipped adding separate node/edge for dependency: ${targetId}`
+    );
+    // --- END DEPENDENCY NODE REMOVAL ---
 
-    // FUTURE: If it's a file dependency, we *could* potentially queue the actual file
-    // for further analysis, turning the FileDep node into a File node if found.
-    // This requires resolving the relative path `dep.source` against the source component's file path.
-    // Example (needs path resolution logic):
-    // if (depType === 'filedep') {
-    //     const sourceCompFilePath = nodes.find(n => n.id === sourceComponentGraphId)?.data.filePath;
-    //     if (sourceCompFilePath) {
-    //         const resolvedDepPath = resolveImportPath(dep.source, sourceCompFilePath); // You need this helper
-    //         if (resolvedDepPath) {
-    //             // Check if this file is already added or in queue to avoid cycles/redundancy
-    //             const existingFileGraphId = getGraphNodeId("file", resolvedDepPath);
-    //             if (!addedNodeIds.has(existingFileGraphId)) {
-    //                  // We could queue it, but might make graph huge. Stick to showing the dependency link for now.
-    //                 // queue.push({ type: 'file', filePath: resolvedDepPath, depth: depDepth, sourceNodeId: sourceComponentGraphId });
-    //             }
-    //         }
-    //     }
-    // }
+    // Future Enhancement: If it's a successfully resolved 'filedep',
+    // we could potentially link `graphDepId` to the actual `FileNode` (`graphFileId`)
+    // instead of showing a separate 'FileDep' node. This would connect components
+    // directly to the File containers they import from.
+    // This requires reliable path resolution and checking if the target file node exists.
   }
 
   function resolveAndQueueRenderedComponent(
-    rendered: { name: string; location: any },
-    renderingComponent: ComponentNode,
-    renderingComponentId: string, // indexer ID (filePath:Name)
-    parentFileNode: FileNode,
-    currentDepth: number // Depth of the *rendering* component
+    rendered: { name: string; location: any }, // location might be useful later
+    renderingComponentData: ComponentNode, // Data of the component doing the rendering
+    renderingComponentId: string, // indexer ID (filePath:Name) of the rendering component
+    parentFileNodeData: FileNode, // FileNode data where rendering component is defined
+    renderingComponentDepth: number // Depth of the *rendering* component
   ) {
     const renderingComponentGraphId = getGraphNodeId(
       "component",
       renderingComponentId
     );
+    // Ensure the rendering component node actually exists in the graph before proceeding
+    if (!addedNodeIds.has(renderingComponentGraphId)) {
+      outputChannel.appendLine(
+        `[Graph] Skipping rendered component resolution for ${rendered.name} because rendering component ${renderingComponentGraphId} is not added (likely due to depth).`
+      );
+      return;
+    }
+
     outputChannel.appendLine(
-      `[Graph] Resolving rendered component: ${rendered.name} by ${renderingComponent.name}`
+      `[Graph] Resolving rendered component: ${rendered.name} rendered by ${renderingComponentData.name}`
     );
 
-    // 1. Find the import statement for the rendered component name in the parent file
-    const importInfo = findImportInfo(rendered.name, parentFileNode.imports);
+    // 1. Find the import statement for the rendered component name
+    const importInfo = findImportInfo(
+      rendered.name,
+      parentFileNodeData.imports
+    );
+
+    let targetComponentId: string | undefined; // Indexer ID (filePath:Name)
+    let targetComponentName: string | undefined;
+    let targetFilePath: string | undefined;
 
     if (!importInfo) {
       outputChannel.appendLine(
-        `[Graph] Could not find import for rendered component: ${rendered.name} in ${parentFileNode.filePath}. Assuming local.`
+        `[Graph] Could not find import for rendered component: ${rendered.name} in ${parentFileNodeData.filePath}. Assuming local.`
       );
       // Attempt to find the component defined in the *same file*
-      const localComponent = parentFileNode.components.find(
+      const localComponent = parentFileNodeData.components.find(
         (c) => c.name === rendered.name
       );
       if (localComponent) {
-        const localComponentGraphId = getGraphNodeId(
-          "component",
-          localComponent.id
+        targetComponentId = localComponent.id;
+        targetComponentName = localComponent.name;
+        targetFilePath = parentFileNodeData.filePath;
+        outputChannel.appendLine(
+          `[Graph] Found locally defined component: ${targetComponentName} (${targetComponentId})`
         );
-        // Check if the target component is already explored or would exceed depth
-        if (
-          !exploredComponentIds.has(localComponent.id) &&
-          currentDepth + 1 <= maxDepth
-        ) {
+      } else {
+        outputChannel.appendLine(
+          `[Graph] Could not find local component ${rendered.name}. Cannot resolve.`
+        );
+        return; // Stop if not found locally
+      }
+    } else {
+      outputChannel.appendLine(
+        `[Graph] Found import for ${rendered.name}: ${JSON.stringify(
+          importInfo
+        )}`
+      );
+
+      // 2. Resolve the imported module path to an absolute file path
+      const resolvedPath = resolveImportPath(
+        importInfo.moduleSpecifier,
+        parentFileNodeData.filePath // Resolve relative to the file doing the import
+      );
+
+      if (!resolvedPath) {
+        outputChannel.appendLine(
+          `[Graph] Could not resolve import path: ${importInfo.moduleSpecifier}. Treating as external/unresolved.`
+        );
+        // Optional: Create an external dependency node? For now, just skip.
+        return;
+      }
+
+      outputChannel.appendLine(`[Graph] Resolved import path: ${resolvedPath}`);
+
+      // 3. Find the target component definition in the resolved file
+      let targetFileNodeData = indexerService
+        .getIndexedData()
+        .get(resolvedPath);
+      if (!targetFileNodeData) {
+        outputChannel.appendLine(
+          `[Graph] Target file for import ${resolvedPath} not indexed, parsing.`
+        );
+        // Use try-catch as parsing might fail
+        try {
+          const parsedFileNode = indexerService.parseFile(resolvedPath);
+          if (!parsedFileNode) {
+            outputChannel.appendLine(
+              `[Graph] Failed to parse target file: ${resolvedPath}`
+            );
+            return; // Cannot proceed if target file parsing fails
+          }
+          targetFileNodeData = parsedFileNode; // Assign the successfully parsed node
+          // IMPORTANT: If parsing happens here, we also need to add the File Node (as parent)
+          // to the graph if it's not already there.
+          processFileNode(targetFileNodeData, renderingComponentDepth + 1); // Add file node at next depth
+        } catch (error: any) {
           outputChannel.appendLine(
-            `[Graph] Queuing locally defined component: ${localComponent.name}`
+            `[Graph] Error parsing target file ${resolvedPath}: ${error.message}`
           );
-          queue.push({
-            type: "component",
-            componentId: localComponent.id,
-            componentName: localComponent.name,
-            filePath: parentFileNode.filePath,
-            depth: currentDepth + 1,
-            sourceNodeId: renderingComponentGraphId, // Link from the rendering component
-          });
-        } else if (addedNodeIds.has(localComponentGraphId)) {
-          // If already added but not queued (due to depth/explored), still draw the edge
+          return;
+        }
+      } else {
+        // Ensure the file node exists in the graph if found in index but not processed yet
+        const targetFileGraphId = getGraphNodeId("file", resolvedPath);
+        if (!addedNodeIds.has(targetFileGraphId)) {
           outputChannel.appendLine(
-            `[Graph] Adding edge to existing local component node: ${localComponent.name}`
+            `[Graph] Target file ${resolvedPath} found in index but not added to graph yet. Adding now.`
           );
-          addEdge({
-            id: `e-${renderingComponentGraphId}-${localComponentGraphId}`,
-            source: renderingComponentGraphId,
-            target: localComponentGraphId,
-            animated: true,
-            type: "smoothstep",
-          });
+          processFileNode(targetFileNodeData, renderingComponentDepth + 1);
         }
       }
-      return; // Stop here if assumed local
-    }
 
-    outputChannel.appendLine(
-      `[Graph] Found import for ${rendered.name}: ${JSON.stringify(importInfo)}`
-    );
-
-    // 2. Resolve the imported module path to an absolute file path
-    const resolvedPath = resolveImportPath(
-      importInfo.moduleSpecifier,
-      parentFileNode.filePath
-    );
-
-    if (!resolvedPath) {
-      // Could be an external library or unresolved path
-      outputChannel.appendLine(
-        `[Graph] Could not resolve import path: ${importInfo.moduleSpecifier}. Treating as external/unresolved.`
+      // Find the component in the target file
+      const targetComponent = targetFileNodeData.components.find(
+        (c) =>
+          c.name === importInfo.importedName || // Match original/aliased name
+          (importInfo.isDefault && c.exported) // Or match default export
       );
-      // Optional: Create a node for unresolved/external imports?
-      // For now, we just don't queue it.
-      return;
-    }
 
-    outputChannel.appendLine(`[Graph] Resolved import path: ${resolvedPath}`);
-
-    // 3. Find the target component definition in the resolved file
-    // We need to parse the target file if it hasn't been already
-    let targetFileNode = indexerService.getIndexedData().get(resolvedPath);
-    if (!targetFileNode) {
-      outputChannel.appendLine(
-        `[Graph] Target file for import ${resolvedPath} not indexed, parsing.`
-      );
-      const parsedFileNode = indexerService.parseFile(resolvedPath);
-      if (!parsedFileNode) {
+      if (!targetComponent) {
         outputChannel.appendLine(
-          `[Graph] Failed to parse target file: ${resolvedPath}`
+          `[Graph] Could not find exported component matching '${
+            importInfo.importedName
+          }' ${importInfo.isDefault ? "(default)" : ""} in ${resolvedPath}`
         );
-        return; // Cannot proceed if target file parsing fails
+        return;
       }
-      targetFileNode = parsedFileNode; // Assign the successfully parsed node
+
+      targetComponentId = targetComponent.id;
+      targetComponentName = targetComponent.name;
+      targetFilePath = resolvedPath;
+      outputChannel.appendLine(
+        `[Graph] Found imported component: ${targetComponentName} (${targetComponentId}) in ${targetFilePath}`
+      );
     }
 
-    // Find the component in the target file (using the imported name, could be alias)
-    const targetComponent = targetFileNode.components.find(
-      (c) =>
-        c.name === importInfo.importedName || // Match original name
-        (importInfo.isDefault && c.exported) // Or match default export if imported as default
-      // TODO: Handle named exports with aliases more robustly
-    );
-
-    if (!targetComponent) {
-      outputChannel.appendLine(
-        `[Graph] Could not find exported component ${importInfo.importedName} in ${resolvedPath}`
+    // 4. Queue or link the found component
+    if (targetComponentId && targetComponentName && targetFilePath) {
+      const targetComponentGraphId = getGraphNodeId(
+        "component",
+        targetComponentId
       );
-      // TODO: Maybe check hooks as well? Or just skip.
-      return;
-    }
+      const nextDepth = renderingComponentDepth + 1;
 
-    const targetComponentGraphId = getGraphNodeId(
-      "component",
-      targetComponent.id
-    );
-
-    // 4. Queue the found component for processing if conditions met
-    if (
-      !exploredComponentIds.has(targetComponent.id) &&
-      currentDepth + 1 <= maxDepth
-    ) {
-      outputChannel.appendLine(
-        `[Graph] Queuing imported component: ${targetComponent.name} from ${resolvedPath}`
-      );
-      queue.push({
-        type: "component",
-        componentId: targetComponent.id,
-        componentName: targetComponent.name,
-        filePath: resolvedPath,
-        depth: currentDepth + 1,
-        sourceNodeId: renderingComponentGraphId, // Link from the rendering component
-      });
-    } else if (addedNodeIds.has(targetComponentGraphId)) {
-      // If already added but not queued, draw the edge
-      outputChannel.appendLine(
-        `[Graph] Adding edge to existing imported component node: ${targetComponent.name}`
-      );
-      addEdge({
-        id: `e-${renderingComponentGraphId}-${targetComponentGraphId}`,
-        source: renderingComponentGraphId,
-        target: targetComponentGraphId,
-        animated: true,
-        type: "smoothstep",
-      });
+      // Check if the target component is already explored or would exceed depth
+      if (
+        !exploredComponentIds.has(targetComponentId) &&
+        nextDepth <= maxDepth
+      ) {
+        outputChannel.appendLine(
+          `[Graph] Queuing resolved component: ${targetComponentName}`
+        );
+        // Queue the component with the rendering component as the source
+        queue.push({
+          type: "component",
+          componentId: targetComponentId,
+          componentName: targetComponentName,
+          filePath: targetFilePath,
+          depth: nextDepth,
+          sourceComponentGraphId: renderingComponentGraphId, // Link from the rendering component
+        });
+      } else if (addedNodeIds.has(targetComponentGraphId)) {
+        // If node exists (added directly from its file or via another render path) but wasn't queued
+        // (due to depth/explored), still draw the edge from the *rendering* component.
+        outputChannel.appendLine(
+          `[Graph] Adding edge to existing component node: ${targetComponentName} (rendered by ${renderingComponentData.name})`
+        );
+        addEdge({
+          id: `e-${renderingComponentGraphId}-renders-${targetComponentGraphId}`,
+          source: renderingComponentGraphId,
+          target: targetComponentGraphId,
+          animated: true,
+          type: "smoothstep",
+          style: { stroke: "#00bbff" }, // Style component render edges
+        });
+      } else {
+        outputChannel.appendLine(
+          `[Graph] Not queuing or linking ${targetComponentName}: Explored=${exploredComponentIds.has(
+            targetComponentId
+          )}, Depth=${nextDepth > maxDepth}`
+        );
+      }
     }
   }
 
   function findImportInfo(
     localName: string,
-    imports: ImportData[] // Use the actual ImportData type (already imported)
+    imports: ImportData[]
   ):
     | { moduleSpecifier: string; importedName: string; isDefault: boolean }
     | undefined {
     for (const imp of imports) {
       // Check default import
       if (imp.defaultImport && imp.defaultImport === localName) {
-        // Need to know the *actual* exported name if it was exported as default
-        // This is tricky without deeper analysis. Assume default export name isn't readily available here.
-        // For now, we'll signal it's a default import and maybe handle it downstream.
         return {
           moduleSpecifier: imp.moduleSpecifier,
-          importedName: localName, // Use the local name for now
+          importedName: localName, // May need adjustment if default export name is different
           isDefault: true,
         };
       }
 
       // Check named imports
       if (imp.namedBindings) {
-        for (const namedImport of imp.namedBindings) {
-          // TODO: Handle aliases (e.g., import { Button as MyButton } from ...)
-          if (namedImport === localName) {
+        for (const namedImportOrAlias of imp.namedBindings) {
+          // Simple case: import { Button } from './Button' -> localName = 'Button'
+          if (namedImportOrAlias === localName) {
             return {
               moduleSpecifier: imp.moduleSpecifier,
-              importedName: namedImport, // The name as it appears in the import statement
+              importedName: localName, // The name used in the export statement
               isDefault: false,
             };
           }
+          // Alias case: import { Button as Btn } from './Button' -> localName = 'Btn'
+          // Need to parse the alias structure if indexer provides it, otherwise this is hard.
+          // Assuming indexer stores aliases correctly if `namedBindings` can be objects like { propertyName, name }
+          // For now, let's assume `namedBindings` is just an array of strings (local names)
         }
       }
 
@@ -745,10 +1061,10 @@ export function buildDependencyGraph(
       if (imp.namespaceImport) {
         const namespace = imp.namespaceImport; // e.g., "Material"
         if (localName.startsWith(`${namespace}.`)) {
-          const actualName = localName.substring(namespace.length + 1);
+          const actualExportedName = localName.substring(namespace.length + 1);
           return {
             moduleSpecifier: imp.moduleSpecifier,
-            importedName: actualName,
+            importedName: actualExportedName, // The actual name of the export accessed via the namespace
             isDefault: false, // Namespace imports access named exports
           };
         }
@@ -767,47 +1083,44 @@ export function buildDependencyGraph(
     if (moduleSpecifier.startsWith(".")) {
       try {
         const resolved = resolvePathWithExtensions(currentDir, moduleSpecifier);
-        if (resolved) {
-          // outputChannel.appendLine(`[Graph] Resolved relative path '${moduleSpecifier}' to '${resolved}'`);
-          return resolved;
-        }
-        outputChannel.appendLine(
-          `[Graph] Could not resolve relative import '${moduleSpecifier}' from '${currentFilePath}'`
-        );
-        return undefined;
+        // if (resolved) {
+        //   outputChannel.appendLine(`[Graph Path] Resolved relative '${moduleSpecifier}' -> '${resolved}'`);
+        // } else {
+        //   outputChannel.appendLine(`[Graph Path] Failed relative '${moduleSpecifier}' from '${currentFilePath}'`);
+        // }
+        return resolved;
       } catch (error: any) {
         outputChannel.appendLine(
-          `[Graph] Error resolving relative import '${moduleSpecifier}' from '${currentFilePath}': ${error.message}`
+          `[Graph Path] Error resolving relative import '${moduleSpecifier}' from '${currentFilePath}': ${error.message}`
         );
         return undefined;
       }
-    } else {
-      // 2. Handle non-relative paths (alias or external/node_modules)
+    }
 
-      // Attempt alias resolution using tsconfig
-      if (tsConfigCache && tsConfigBasePath && tsConfigCache.compilerOptions) {
-        const { baseUrl, paths } = tsConfigCache.compilerOptions;
-        // Important: baseUrl paths are relative to tsConfigBasePath
-        const absoluteBaseUrl = baseUrl
-          ? path.resolve(tsConfigBasePath, baseUrl)
-          : tsConfigBasePath;
+    // 2. Handle non-relative paths (alias or external/node_modules)
+    if (tsConfigCache && tsConfigBasePath && tsConfigCache.compilerOptions) {
+      const { baseUrl, paths } = tsConfigCache.compilerOptions;
+      const absoluteBaseUrl = baseUrl
+        ? path.resolve(tsConfigBasePath, baseUrl)
+        : tsConfigBasePath;
 
-        if (paths) {
-          // outputChannel.appendLine(`[Graph] Attempting alias resolution for: ${moduleSpecifier} using base: ${absoluteBaseUrl}`);
+      if (paths) {
+        // outputChannel.appendLine(`[Graph Path] Attempting alias resolution for: ${moduleSpecifier} using base: ${absoluteBaseUrl}`);
+        const matchingAlias = Object.keys(paths)
+          .sort((a, b) => b.length - a.length)
+          .find((alias) =>
+            alias.endsWith("/*")
+              ? moduleSpecifier.startsWith(alias.slice(0, -2))
+              : moduleSpecifier === alias
+          );
 
-          // Find the best matching alias key (longest prefix match first)
-          const matchingAlias = Object.keys(paths)
-            .sort((a, b) => b.length - a.length) // Sort by length descending
-            .find((alias) => {
-              if (alias.endsWith("/*")) {
-                return moduleSpecifier.startsWith(alias.slice(0, -2));
-              } else {
-                return moduleSpecifier === alias;
-              }
-            });
-
-          if (matchingAlias) {
-            const aliasTargets = paths[matchingAlias];
+        if (matchingAlias) {
+          const aliasTargets = paths[matchingAlias];
+          if (!aliasTargets || aliasTargets.length === 0) {
+            outputChannel.appendLine(
+              `[Graph Path] Warning: No path targets found for matched alias '${matchingAlias}' in tsconfig.`
+            );
+          } else {
             const isStarAlias = matchingAlias.endsWith("/*");
             const aliasPattern = isStarAlias
               ? matchingAlias.slice(0, -2)
@@ -816,101 +1129,69 @@ export function buildDependencyGraph(
               ? moduleSpecifier.substring(aliasPattern.length)
               : "";
 
-            // --- START LINTER FIX ---
-            if (!aliasTargets) {
-              outputChannel.appendLine(
-                `[Graph] Warning: No path targets found for matched alias '${matchingAlias}' in tsconfig.`
+            // outputChannel.appendLine(`[Graph Path] Matched alias: '${matchingAlias}'. Remaining: '${remainingPath}'`);
+
+            for (const targetPathPattern of aliasTargets) {
+              const targetBase =
+                isStarAlias && targetPathPattern.endsWith("/*")
+                  ? targetPathPattern.slice(0, -2)
+                  : targetPathPattern;
+              const potentialDir = path.resolve(absoluteBaseUrl, targetBase);
+              const potentialPath = path.join(potentialDir, remainingPath);
+
+              // outputChannel.appendLine(`[Graph Path] Trying potential alias path: ${potentialPath}`);
+              const resolved = resolvePathWithExtensions(
+                path.dirname(potentialPath) || ".", // Handle edge case where potentialPath might be root?
+                `./${path.basename(potentialPath)}`
               );
-              // Continue to the next check (external/node_modules)
-            } else {
-              // --- END LINTER FIX ---
 
-              outputChannel.appendLine(
-                `[Graph] Matched alias: '${matchingAlias}'. Remaining path: '${remainingPath}'`
-              );
-
-              for (const targetPathPattern of aliasTargets) {
-                // Replace wildcard in target pattern if needed
-                const targetBase =
-                  isStarAlias && targetPathPattern.endsWith("/*")
-                    ? targetPathPattern.slice(0, -2)
-                    : targetPathPattern;
-
-                const potentialDir = path.resolve(absoluteBaseUrl, targetBase);
-                const potentialPath = path.join(potentialDir, remainingPath);
-
-                outputChannel.appendLine(
-                  `[Graph] Trying potential alias path: ${potentialPath} (from target ${targetPathPattern})`
-                );
-
-                // Resolve the potential path using the same extension/index logic
-                // Use dirname/basename to handle passing to the helper correctly
-                const resolved = resolvePathWithExtensions(
-                  path.dirname(potentialPath),
-                  `./${path.basename(potentialPath)}`
-                );
-
-                if (
-                  resolved &&
-                  fs.existsSync(resolved) &&
-                  fs.lstatSync(resolved).isFile()
-                ) {
-                  outputChannel.appendLine(
-                    `[Graph] Resolved alias '${moduleSpecifier}' to file: ${resolved}`
-                  );
-                  return resolved;
-                } else {
-                  outputChannel.appendLine(
-                    `[Graph] Alias resolution check failed for: ${
-                      resolved || potentialPath
-                    }`
-                  );
-                }
+              if (resolved) {
+                // outputChannel.appendLine(`[Graph Path] Resolved alias '${moduleSpecifier}' to file: ${resolved}`);
+                return resolved;
               }
-              outputChannel.appendLine(
-                `[Graph] Could not resolve alias '${moduleSpecifier}' using pattern '${matchingAlias}' after checking all targets.`
-              );
-              // --- START LINTER FIX (Closing brace for the if check) ---
+              // else {
+              // outputChannel.appendLine(`[Graph Path] Alias check failed for potential: ${potentialPath}`);
+              // }
             }
-            // --- END LINTER FIX ---
-          } else {
-            // outputChannel.appendLine(`[Graph] No matching tsconfig alias found for '${moduleSpecifier}'.`);
+            // outputChannel.appendLine(`[Graph Path] Could not resolve alias '${moduleSpecifier}' via '${matchingAlias}'`);
           }
-        } else {
-          // outputChannel.appendLine(`[Graph] No paths defined in tsconfig compilerOptions.`);
         }
-      } else {
-        outputChannel.appendLine(
-          `[Graph] Skipping alias check: ${
-            !tsConfigCache ? "tsconfig not found/parsed" : "no compilerOptions"
-          }`
-        );
+        // else {
+        // outputChannel.appendLine(`[Graph Path] No matching tsconfig alias found for '${moduleSpecifier}'.`);
+        // }
       }
-
-      // 3. If alias resolution fails or no tsconfig, treat as external/node_modules
-      //    (We don't attempt to resolve node_modules in this version)
-      outputChannel.appendLine(
-        `[Graph] Treating import '${moduleSpecifier}' as external (alias resolution failed or node_modules).`
-      );
-      return undefined;
+      // else {
+      //   outputChannel.appendLine(`[Graph Path] No paths defined in tsconfig.`);
+      // }
     }
+    // else {
+    // outputChannel.appendLine(`[Graph Path] Skipping alias check: tsconfig missing/invalid.`);
+    // }
+
+    // 3. If not relative and not resolved by alias, assume external/node_modules
+    outputChannel.appendLine(
+      `[Graph Path] Treating import '${moduleSpecifier}' as external (not relative, alias failed/skipped).`
+    );
+    return undefined;
   }
 
+  // --- Final Touches ---
   outputChannel.appendLine(
     `[Graph] Build complete. Nodes: ${nodes.length}, Edges: ${edges.length}`
   );
-  console.log("Graph Nodes:", nodes);
-  console.log("Graph Edges:", edges);
+  // console.log("Graph Nodes:", JSON.stringify(nodes, null, 2)); // Detailed logging if needed
+  // console.log("Graph Edges:", JSON.stringify(edges, null, 2));
 
-  // Add root node styling if targetPath was processed
-  const rootNodeId = getGraphNodeId("file", targetPath);
-  const rootNode = nodes.find((n) => n.id === rootNodeId);
-  if (rootNode) {
+  // Apply root node styling (if it exists and is a file node)
+  const rootFileGraphId = getGraphNodeId("file", targetPath);
+  const rootNode = nodes.find((n) => n.id === rootFileGraphId);
+  if (rootNode && rootNode.data.type === "File") {
     rootNode.style = {
       ...rootNode.style,
-      backgroundColor: "rgba(0, 255, 0, 0.1)",
-      border: "1px solid green",
-    }; // Example highlight
+      // Override border for root
+      borderColor: "rgba(80, 150, 80, 0.9)", // Greenish border for root
+      borderWidth: 2,
+    };
   }
 
   return { nodes, edges };

@@ -7,3 +7,11 @@
 - Show the props coming into a comp - trace those through the parents + tree
 - Keep trucking on the plan - get Cursor to update the status and README with current functionality
 - Publish to npm + VS Code Marketplace
+
+Improve single file display:
+
+- Group by file (do not show as a separate node)
+- Still need to see external deps - show them as a box with each import listed?
+- Show repeated hooks with a count instead of a list
+- Allow a click to expand the node to show deps for a given hook
+- Use ELK for layout

@@ -164,45 +164,67 @@ const App: React.FC = () => {
 
   // Update nodes/edges visibility based on settings
   useEffect(() => {
-    console.log("[Webview] Applying settings to graph:", settings);
-    setNodes((nds) =>
-      nds.map((node) => {
-        let hidden = false;
-        if (node.data?.type === "FileDep" && !settings.showFileDeps) {
-          hidden = true;
-        }
-        if (node.data?.type === "LibDep" && !settings.showLibDeps) {
-          hidden = true;
-        }
-        // We don't hide Component nodes based on hooks, hooks are shown *inside*
-        return { ...node, hidden };
-      })
-    );
+    console.log("[Webview] Updating nodes/edges visibility based on settings");
+    let nodesChanged = false;
+    const nextNodes = nodes.map((node) => {
+      let newHidden = false;
+      if (node.data?.type === "FileDep" && !settings.showFileDeps) {
+        newHidden = true;
+      }
+      if (node.data?.type === "LibDep" && !settings.showLibDeps) {
+        newHidden = true;
+      }
+      // We don't hide Component nodes based on hooks, hooks are shown *inside*
+      if (node.hidden !== newHidden) {
+        nodesChanged = true;
+      }
+      return { ...node, hidden: newHidden };
+    });
 
-    setEdges((eds) =>
-      eds.map((edge) => {
-        let hidden = false;
-        // Hide edges connected to hidden nodes
-        const sourceNode = nodes.find((n) => n.id === edge.source);
-        const targetNode = nodes.find((n) => n.id === edge.target);
-        if (sourceNode?.hidden || targetNode?.hidden) {
-          hidden = true;
-        }
+    if (nodesChanged) {
+      setNodes(nextNodes);
+    }
+
+    // Update edges based on the potentially updated nodes (nextNodes)
+    let edgesChanged = false;
+    const nextEdges = edges.map((edge) => {
+      let newHidden = false;
+      // Hide edges connected to hidden nodes (use nextNodes for calculation)
+      const sourceNode = nextNodes.find((n) => n.id === edge.source);
+      const targetNode = nextNodes.find((n) => n.id === edge.target);
+
+      // Check if the source or target node *will be* hidden
+      if (sourceNode?.hidden || targetNode?.hidden) {
+        newHidden = true;
+      } else {
         // Specifically hide dependency edges if their type is toggled off
+        // Check based on source/target types and settings
         if (sourceNode?.data?.type === "Component") {
           if (targetNode?.data?.type === "FileDep" && !settings.showFileDeps) {
-            hidden = true;
+            newHidden = true;
           }
           if (targetNode?.data?.type === "LibDep" && !settings.showLibDeps) {
-            hidden = true;
+            newHidden = true;
           }
         }
-        // We could also hide edges based on the source node type if needed
+        // Add other edge hiding logic if needed
+      }
 
-        return { ...edge, hidden };
-      })
-    );
-  }, [settings, nodes]); // Re-run when settings or the base nodes change
+      if (edge.hidden !== newHidden) {
+        edgesChanged = true;
+      }
+      return { ...edge, hidden: newHidden };
+    });
+
+    // Only update edges state if necessary
+    if (edgesChanged) {
+      setEdges(nextEdges);
+    }
+    // The dependency array still includes nodes because changes to the *base* nodes
+    // (received from the extension) should trigger this visibility update.
+    // The internal checks (nodesChanged, edgesChanged) prevent infinite loops
+    // caused by the effect updating its own dependencies.
+  }, [settings, nodes, edges]); // Also add edges to dependency array
 
   // Define nodeTypes mapping
   const nodeTypes = React.useMemo(

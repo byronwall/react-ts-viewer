@@ -20,7 +20,6 @@ module.exports = {
   rules: {
     // Basic rules
     semi: ["error", "always"],
-    quotes: ["error", "single", { avoidEscape: true }],
     "no-unused-vars": "off", // Use @typescript-eslint/no-unused-vars instead
     "@typescript-eslint/no-unused-vars": [
       "warn",

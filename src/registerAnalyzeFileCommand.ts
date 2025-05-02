@@ -12,7 +12,7 @@ export function registerAnalyzeFileCommand(
   context: vscode.ExtensionContext,
   indexer: IndexerService
 ) {
-  let analyzeFileCommand = vscode.commands.registerCommand(
+  const analyzeFileCommand = vscode.commands.registerCommand(
     "reactAnalysis.analyzeCurrentFile",
     () => {
       const editor = vscode.window.activeTextEditor;
@@ -57,17 +57,41 @@ export function registerAnalyzeFileCommand(
           filePath
         );
 
+        // --- Get workspace root (moved outside switch) ---
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        let workspaceRoot: string | undefined;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+          workspaceRoot = workspaceFolders[0]?.uri.fsPath;
+        } // Note: Handle cases where workspaceRoot might still be undefined if needed
+        // ---
+
+        // --- Declare variables outside switch ---
+        let targetPath: string | undefined;
+        // ---
+
         webviewPanel.webview.onDidReceiveMessage(
           (message) => {
             switch (message.command) {
               case "runAnalysis":
-                const targetPath = message.filePath;
+                // --- Assign targetPath here ---
+                targetPath = message.filePath;
+                // ---
                 if (!targetPath) {
                   vscode.window.showErrorMessage(
                     "No file path provided for analysis."
                   );
                   return;
                 }
+
+                // --- Check if workspace root was found ---
+                if (!workspaceRoot) {
+                  vscode.window.showErrorMessage(
+                    "React Analysis: Could not determine workspace root for analysis."
+                  );
+                  return;
+                }
+                // ---
+
                 vscode.window.withProgress(
                   {
                     location: vscode.ProgressLocation.Notification,
@@ -80,7 +104,7 @@ export function registerAnalyzeFileCommand(
                       message: "Checking index...",
                     });
 
-                    const isIndexed = indexer.getIndexedData().has(targetPath);
+                    const isIndexed = indexer.getIndexedData().has(targetPath!);
                     if (!isIndexed) {
                       outputChannel.appendLine(
                         `[Extension] File not indexed, parsing on demand: ${targetPath}`
@@ -90,14 +114,14 @@ export function registerAnalyzeFileCommand(
                         message: "Parsing file...",
                       });
                       try {
-                        const parseResult = indexer.parseFile(targetPath);
+                        const parseResult = indexer.parseFile(targetPath!);
                         if (!parseResult) {
                           outputChannel.appendLine(
                             `[Extension] On-demand parsing failed for: ${targetPath}`
                           );
                           vscode.window.showErrorMessage(
                             `React Analysis: Failed to parse ${path.basename(
-                              targetPath
+                              targetPath!
                             )}.`
                           );
                           return;
@@ -111,7 +135,7 @@ export function registerAnalyzeFileCommand(
                         );
                         vscode.window.showErrorMessage(
                           `React Analysis: Error parsing ${path.basename(
-                            targetPath
+                            targetPath!
                           )}. See Output.`
                         );
                         return;
@@ -129,9 +153,10 @@ export function registerAnalyzeFileCommand(
                     const maxDepth = message.settings?.maxDepth ?? 5;
 
                     const results = buildDependencyGraph(
-                      targetPath,
+                      targetPath!,
                       maxDepth,
-                      indexer // Pass the service instance
+                      indexer, // Pass the service instance
+                      workspaceRoot // <-- Pass workspace root
                     );
 
                     progress.report({ increment: 100, message: "Done!" });
