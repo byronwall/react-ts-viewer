@@ -63,7 +63,7 @@ interface AnalysisSettings {
 // Initial default settings (moved before context creation)
 const defaultSettings: AnalysisSettings = {
   maxDepth: 3,
-  showMinimap: true,
+  showMinimap: false,
   showHooks: true, // Default to showing
   showFileDeps: true, // Default to showing
   showLibDeps: true, // Default to showing
@@ -545,9 +545,9 @@ const App: React.FC = () => {
             >
               Target File:
             </label>
-            <input
-              type="text"
+            <textarea
               id="targetFile"
+              rows={3} // Set the number of visible rows
               value={targetFile}
               onChange={(e) => setTargetFile(e.target.value)}
               placeholder="/path/to/your/component.tsx"
@@ -560,16 +560,7 @@ const App: React.FC = () => {
                 border: "1px solid #555",
                 boxSizing: "border-box", // Include padding in width
                 flexShrink: 0,
-              }}
-            />
-
-            {/* Separator */}
-            <hr
-              style={{
-                width: "100%",
-                borderTop: "1px solid #444",
-                margin: "15px 0",
-                flexShrink: 0,
+                resize: "vertical", // Allow vertical resizing
               }}
             />
 
