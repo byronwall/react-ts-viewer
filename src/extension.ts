@@ -9,12 +9,28 @@ import { registerIndexWorkspaceCommand } from "./registerIndexWorkspaceCommand";
 import { registerShowSummaryCommand } from "./registerShowSummaryCommand";
 import { registerAnalyzeFileCommand } from "./registerAnalyzeFileCommand";
 
+// Keep track of the status bar item
+let analyzeFileStatusBarItem: vscode.StatusBarItem;
+
 export function activate(context: vscode.ExtensionContext) {
   initializeExtension(context);
   setupTreeView(context, indexerService); // Pass indexerService
   registerIndexWorkspaceCommand(context, indexerService); // Pass indexerService
   registerShowSummaryCommand(context, indexerService); // Pass indexerService
   registerAnalyzeFileCommand(context, indexerService); // Pass indexerService
+
+  // Create status bar item
+  analyzeFileStatusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  analyzeFileStatusBarItem.command = "reactAnalysis.analyzeCurrentFile";
+  analyzeFileStatusBarItem.text = `$(microscope) Analyze File`;
+  analyzeFileStatusBarItem.tooltip = "Analyze Current React File";
+  context.subscriptions.push(analyzeFileStatusBarItem);
+
+  // Show the status bar item
+  analyzeFileStatusBarItem.show();
 
   // Optionally trigger initial index on startup if configured?
   // const config = vscode.workspace.getConfiguration("reactAnalysis");

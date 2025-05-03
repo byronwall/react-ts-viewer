@@ -18,8 +18,10 @@ Improve single file display:
 Biggest annoyances:
 
 - Graph view is awful
-- Need to hide minimap by default
 - Need to show internal + external deps
-- Show the total child count in the structure view
-- Structure view needs to go in the left panel under the input + settings; settings should be a popover instead of always visible
--
+  - External deps should be listed in the file box
+  - Ensure that all internal comps in a file are shown in the list (not just exported ones that are used by others)
+- Need to show the props coming into a comp
+- Clicking on a node in structure view should focus the graph on that node -- double clicking should navigate VS Code to the file (open the editor, ideally at the correct line)
+- When a file only have a single export, collapse to a single line in the structure view (show both the file name and the export name)
+- Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types
