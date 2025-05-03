@@ -60,23 +60,42 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
       };
 
       // Process hooks immediately for this component
-      if (Array.isArray(node.data.hooks) && node.data.hooks.length > 0) {
-        const hooksContainer: TreeNodeData = {
-          id: `${node.id}-hooks-container`,
-          label: "Hooks",
-          type: "HooksContainer",
-          children: node.data.hooks
-            .map((hook: any, index: number) => ({
-              id: `${node.id}-hook-${index}`,
-              label:
-                typeof hook === "string" ? hook : hook?.name || "unknown hook",
-              type: "Hook",
-            }))
-            .filter((h: any) => h.label !== "unknown hook"), // Filter out potentially bad hook data
-        };
-        if (hooksContainer.children && hooksContainer.children.length > 0) {
-          componentData.children?.push(hooksContainer);
+      const hooksSource = node.data.hooksUsed; // <-- Use hooksUsed
+      // --- DEBUGGING: Log incoming hooks data ---
+      console.log(
+        `[buildTree Hooks] Processing hooks for component: ${node.data.label} (ID: ${node.id})`,
+        hooksSource
+      );
+      // --- END DEBUGGING ---
+      if (Array.isArray(hooksSource) && hooksSource.length > 0) {
+        // Map hooks directly to component children
+        const hookNodes: TreeNodeData[] = hooksSource
+          .map((hook: any, index: number) => ({
+            id: `${node.id}-hook-${index}`,
+            label: `Hook: ${
+              typeof hook === "string" ? hook : hook?.hookName || "unknown hook"
+            }`,
+            type: "Hook",
+          }))
+          .filter((h: any) => h.label !== "Hook: unknown hook"); // Filter out potentially bad hook data
+
+        if (hookNodes.length > 0) {
+          componentData.children?.push(...hookNodes);
+          // --- DEBUGGING: Log adding individual hooks ---
+          console.log(
+            `[buildTree Hooks] Added ${hookNodes.length} hook nodes directly to children of ${componentData.id}`
+          );
+          // --- END DEBUGGING ---
         }
+      } else {
+        // --- DEBUGGING: Log if no hooks found or not an array ---
+        console.log(
+          `[buildTree Hooks] No hooks found or hooksSource is not an array for ${node.id}.`
+        );
+        console.log(
+          `[buildTree Hooks] No hooks found or node.data.hooks is not an array for ${node.id}.`
+        );
+        // --- END DEBUGGING ---
       }
 
       componentNodeMap.set(node.id, componentData);
