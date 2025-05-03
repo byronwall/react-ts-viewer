@@ -405,7 +405,7 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges }) => {
   return (
     <div className="tree-view-panel">
       {/* Removed H4 title, added in App.tsx */}
-      <ul className="tree-view-root">
+      <ul className="tree-view-root" style={{ paddingLeft: 0 }}>
         {treeData.map((rootNode) => (
           <TreeNode key={rootNode.id} node={rootNode} level={0} />
         ))}
