@@ -17,6 +17,7 @@ interface TreeNodeData {
   children?: TreeNodeData[];
   filePath?: string; // For File nodes
   referenceType?: "FileDep" | "LibDep"; // For Reference nodes
+  referenceSource?: string; // Added: Original source path for LibDep references
 }
 
 interface TreeViewProps {
@@ -43,18 +44,41 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
     // Create File nodes if they don't exist
     if (filePath && !fileMap.has(filePath)) {
       const fileNodeFromList = nodes.find(
-        (n) => n.id === filePath && n.type === "FileNode"
+        // Find the actual File node from the input `nodes` list
+        // Using `filePath` as a key is risky if multiple nodes share it
+        // Let's find the node with matching filePath AND correct data.type
+        (n) => n.data?.filePath === filePath && n.data?.type === "File"
       );
-      fileMap.set(filePath, {
+      // Use the found file node's data if available, otherwise fallback
+      const fileLabel =
+        fileNodeFromList?.data?.label || filePath.split("/").pop() || filePath;
+      const fileNodeData: TreeNodeData = {
         id: `file-${filePath}`,
-        label:
-          fileNodeFromList?.data?.label ||
-          filePath.split("/").pop() ||
-          filePath,
+        label: fileLabel,
         type: "File",
         filePath: filePath,
         children: [], // Initialize children
-      });
+      };
+
+      // --- START: Add Aggregated Library Dependencies as References ---
+      const aggregatedLibs = fileNodeFromList?.data
+        ?.aggregatedLibraryDependencies as any[] | undefined;
+      if (aggregatedLibs && aggregatedLibs.length > 0) {
+        const libRefs: TreeNodeData[] = aggregatedLibs.map((dep, index) => ({
+          // Ensure unique ID for library reference under the file
+          id: `file-${filePath}-libref-${
+            dep.source?.replace(/\W/g, "") ?? index
+          }`,
+          label: dep.source || "Unknown Library", // Use the library source/name as label
+          type: "Reference",
+          referenceType: "LibDep",
+          referenceSource: dep.source, // Store the original source
+        }));
+        fileNodeData.children?.push(...libRefs);
+      }
+      // --- END: Add Aggregated Library Dependencies as References ---
+
+      fileMap.set(filePath, fileNodeData);
     }
 
     // If it's a component node (check data.type), create its TreeNodeData and store it
@@ -175,6 +199,8 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
   });
 
   // Pass 2: Add References using edges, using the componentNodeMap built in Pass 1
+  // --- START: Remove/Comment out Pass 2 --- (Edges/Nodes for deps are not generated)
+  /*
   edges.forEach((edge) => {
     const sourceComponentNode = componentNodeMap.get(edge.source);
     const targetNode = nodeMap.get(edge.target);
@@ -209,26 +235,31 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
       }
     }
   });
+  */
+  // --- END: Remove/Comment out Pass 2 ---
 
   // Pass 3: Sort children recursively
   const sortChildren = (children: TreeNodeData[]) => {
     children.sort((a, b) => {
-      // Group types: Containers -> Components -> Hooks/UsedComponents -> References
+      // Group types: Components -> Hooks/UsedComponents -> References -> Containers
       const typeOrder = {
-        ReferencesContainer: 4,
-        Reference: 3,
-        Hook: 2,
-        UsedComponent: 2, // Same level as Hook
-        Component: 1,
-        File: 0, // Should not happen inside component normally
-        HooksContainer: 4, // Treat like ReferencesContainer if it exists
+        // Order within a Component Node:
+        HooksContainer: 3,
+        ReferencesContainer: 3,
+        Hook: 1,
+        UsedComponent: 1, // Same level as Hook
+        // Order within a File Node:
+        Component: 0,
+        Reference: 2, // Show References after Components but before Containers
+        // Default/fallback:
+        File: 99, // Should not happen inside component normally
       };
       const orderA = typeOrder[a.type] ?? 99;
       const orderB = typeOrder[b.type] ?? 99;
 
       if (orderA !== orderB) return orderA - orderB;
 
-      // Within Hooks/UsedComponents, sort alphabetically
+      // Within same type group (Components, Hooks/UsedComponents, References), sort alphabetically
       return a.label.localeCompare(b.label);
     });
     children.forEach((child) => {
@@ -241,11 +272,13 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
   treeResult.sort((a, b) => (a.filePath || "").localeCompare(b.filePath || ""));
   treeResult.forEach((fileNode) => {
     if (fileNode.children) {
-      // Sort components within the file first
-      fileNode.children.sort((a, b) => a.label.localeCompare(b.label));
+      // Sort top-level children within the file (Components and file-level References)
+      sortChildren(fileNode.children);
       // Then sort the children of each component
       fileNode.children.forEach((compNode) => {
-        if (compNode.children) sortChildren(compNode.children);
+        if (compNode.type === "Component" && compNode.children) {
+          sortChildren(compNode.children);
+        }
       });
     }
   });
@@ -317,6 +350,7 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
       case "UsedComponent": // Added style for UsedComponent
         return "type-used-component";
       case "Reference":
+        // Add specific class for library dependencies shown at file level
         return `type-reference type-${node.referenceType?.toLowerCase()}`;
       case "HooksContainer":
       case "ReferencesContainer":
@@ -351,9 +385,11 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
         }} // Indentation & cursor
       >
         {getIcon()}
-        <span className="label-text">{node.label}</span>
+        <span className="label-text" title={node.referenceSource}>
+          {node.label}
+        </span>
         {/* Show child count if children exist */}
-        {hasChildren && (
+        {hasChildren && !node.type.includes("Container") && (
           <span className="child-count"> ({node.children?.length || 0})</span>
         )}
         {/* Show file path only for File nodes */}

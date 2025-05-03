@@ -23,5 +23,14 @@ Biggest annoyances:
   - Ensure that all internal comps in a file are shown in the list (not just exported ones that are used by others)
 - Need to show the props coming into a comp
 - Clicking on a node in structure view should focus the graph on that node -- double clicking should navigate VS Code to the file (open the editor, ideally at the correct line)
-- When a file only have a single export, collapse to a single line in the structure view (show both the file name and the export name)
+- When a file only has a single export, collapse to a single line in the structure view (show both the file name and the export name)
 - Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types
+
+Structure view:
+
+- Show the file name + count on left - then the folder name on right (let the ... hide the folder name)
+- Want to see the source next to the comp or hook name - so `useState @ react`
+
+Graph layout problems
+
+- Need to consider dynamic height + width: <https://github.com/xyflow/xyflow/issues/991>

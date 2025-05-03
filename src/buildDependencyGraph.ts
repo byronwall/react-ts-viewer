@@ -21,6 +21,7 @@ export interface GraphNodeData {
   hooksUsed?: HookUsage[];
   fileDependencies?: DependencyInfo[];
   libraryDependencies?: DependencyInfo[];
+  aggregatedLibraryDependencies?: DependencyInfo[]; // Added for File nodes
   isExternal?: boolean; // For dependency nodes
   isEntry?: boolean; // Mark the entry file node
   hookName?: string;
@@ -665,6 +666,19 @@ export function buildDependencyGraph(
       `[Graph] Processing File Node (as Parent): ${relativeFilePath} at depth ${depth}`
     );
 
+    // --- START Aggregate Library Dependencies ---
+    const aggregatedLibs = new Map<string, DependencyInfo>();
+    fileNodeData.components.forEach((comp) => {
+      comp.libraryDependencies?.forEach((dep) => {
+        // Use source as the key to avoid duplicates
+        if (!aggregatedLibs.has(dep.source)) {
+          aggregatedLibs.set(dep.source, dep);
+        }
+      });
+    });
+    const aggregatedLibraryDependencies = Array.from(aggregatedLibs.values());
+    // --- END Aggregate Library Dependencies ---
+
     // Check if file node already added (could happen if referenced as dependency before being processed directly)
     if (!addedNodeIds.has(graphFileId)) {
       addNode(
@@ -676,6 +690,9 @@ export function buildDependencyGraph(
             type: "File",
             filePath: fileNodeData.filePath,
             isEntry: depth === 0, // Mark if it's the root file
+            // --- START Add Aggregated Dependencies ---
+            aggregatedLibraryDependencies: aggregatedLibraryDependencies,
+            // --- END Add Aggregated Dependencies ---
           },
           // type: 'FileNode', // Set to 'group' in addNode
         },
@@ -686,10 +703,16 @@ export function buildDependencyGraph(
         `[Graph] File node ${graphFileId} already added.`
       );
       // Ensure it's marked as entry if it's the root file being processed now
+      // Also update its aggregated dependencies if processed again
       const existingNode = nodes.find((n) => n.id === graphFileId);
-      if (existingNode && depth === 0) {
-        existingNode.data.isEntry = true;
-        // Re-apply entry styling if needed? (Handled by React Flow based on data)
+      if (existingNode) {
+        if (depth === 0 && !existingNode.data.isEntry) {
+          existingNode.data.isEntry = true;
+          // Re-apply entry styling if needed? (Handled by React Flow based on data)
+        }
+        // Update dependencies (merge or replace? Replacing seems simpler for now)
+        existingNode.data.aggregatedLibraryDependencies =
+          aggregatedLibraryDependencies;
       }
     }
 
