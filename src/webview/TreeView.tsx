@@ -352,6 +352,10 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
       >
         {getIcon()}
         <span className="label-text">{node.label}</span>
+        {/* Show child count if children exist */}
+        {hasChildren && (
+          <span className="child-count"> ({node.children?.length || 0})</span>
+        )}
         {/* Show file path only for File nodes */}
         {/* {node.type === 'File' && node.filePath && <span className="file-path"> ({node.filePath})</span>} */}
       </div>
