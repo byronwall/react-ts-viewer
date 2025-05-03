@@ -545,6 +545,27 @@ const App: React.FC = () => {
             </button>
           </div>
 
+          {/* Tree View Panel */}
+          <div
+            style={{
+              width: "300px", // Adjust width as needed
+              padding: "10px",
+              borderRight: "1px solid #444",
+              backgroundColor: "#252526",
+              color: "#ccc",
+              overflowY: "auto", // Make it scrollable if content overflows
+            }}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: "15px" }}>
+              Structure View
+            </h3>
+            {/* Render the TreeView component */}
+            <TreeView
+              nodes={rawAnalysisData.nodes}
+              edges={rawAnalysisData.edges}
+            />
+          </div>
+
           {/* React Flow Canvas Area */}
           <div style={{ flexGrow: 1, height: "100%" }}>
             {/* Pass raw data and settings to the inner component */}

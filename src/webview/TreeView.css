@@ -1,0 +1,113 @@
+/* Basic TreeView Styling */
+.tree-view-panel {
+  height: 100%;
+  overflow: auto;
+  font-size: 13px; /* Match VS Code UI a bit */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+.tree-view-panel.empty {
+  padding: 15px;
+  color: #888;
+}
+
+.tree-view-root,
+.tree-node-children {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tree-node-label {
+  display: flex;
+  align-items: center;
+  padding: 3px 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-node-label:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Increased alpha for hover */
+}
+
+.tree-icon {
+  display: inline-block;
+  width: 16px; /* Size for the icon */
+  height: 16px;
+  margin-right: 4px;
+  text-align: center;
+  flex-shrink: 0;
+  position: relative; /* For pseudo-elements */
+}
+
+/* Basic expand/collapse arrows */
+.tree-icon.collapsed::before,
+.tree-icon.expanded::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tree-icon.collapsed::before {
+  /* Right-pointing triangle */
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent #e0e0e0; /* Brighter icon color */
+  margin-left: -1px; /* Center adjustment */
+}
+
+.tree-icon.expanded::before {
+  /* Down-pointing triangle */
+  border-width: 6px 4px 0 4px;
+  border-color: #e0e0e0 transparent transparent transparent; /* Brighter icon color */
+  margin-top: -1px; /* Center adjustment */
+}
+
+.label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 5px;
+}
+
+.file-path {
+  color: #888;
+  font-size: 0.9em;
+  margin-left: 5px;
+  flex-shrink: 0; /* Prevent path from shrinking */
+}
+
+/* Optional: Type-specific styling */
+.type-file .label-text {
+  font-weight: bold;
+}
+
+.type-component .label-text {
+  color: #9cdcfe; /* VS Code blue for functions/classes */
+}
+
+.type-hook .label-text {
+  color: #4ec9b0; /* VS Code teal for variables */
+}
+
+.type-reference.type-filedep .label-text {
+  color: #ce9178; /* VS Code orange/brown for strings/paths */
+}
+
+.type-reference.type-libdep .label-text {
+  color: #dcdcaa; /* VS Code yellow for keywords/libs */
+}
+
+.type-hookscontainer .label-text,
+.type-referencescontainer .label-text {
+  font-style: italic;
+  color: #aaa;
+}
