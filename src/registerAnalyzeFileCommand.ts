@@ -24,7 +24,7 @@ export function registerAnalyzeFileCommand(
       }
 
       const filePath = editor.document.uri.fsPath;
-      const column = vscode.ViewColumn.Beside;
+      const column = vscode.ViewColumn.Active;
 
       if (webviewPanel) {
         webviewPanel.reveal(column);

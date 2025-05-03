@@ -14,13 +14,12 @@ Improve single file display:
 - Still need to see external deps - show them as a box with each import listed?
 - Show repeated hooks with a count instead of a list
 - Allow a click to expand the node to show deps for a given hook
-- Use ELK for layout
 
 Biggest annoyances:
 
-- Need to open in a full screen window in the same list - not on the side
-- Need to hide minimap by default
 - Graph view is awful
+- Need to hide minimap by default
 - Need to show internal + external deps
 - Show the total child count in the structure view
 - Structure view needs to go in the left panel under the input + settings; settings should be a popover instead of always visible
+-
