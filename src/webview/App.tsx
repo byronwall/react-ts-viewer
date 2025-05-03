@@ -25,6 +25,12 @@ import ReactFlow, {
   Panel,
 } from "reactflow";
 import ELK from "elkjs/lib/elk.bundled.js";
+import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+  PopoverBackdrop,
+} from "@headlessui/react";
 
 import "reactflow/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
@@ -405,24 +411,146 @@ const App: React.FC = () => {
       {/* Wrap the layout part in ReactFlowProvider */}
       <ReactFlowProvider>
         <div style={{ height: "100vh", width: "100vw", display: "flex" }}>
-          {/* Controls Panel */}
+          {/* Left Panel (Controls + Tree View) */}
           <div
+            className="left-panel"
             style={{
-              width: "250px",
+              width: "300px", // Increased width slightly
               padding: "10px",
               borderRight: "1px solid #444",
               display: "flex",
               flexDirection: "column",
               backgroundColor: "#252526", // VS Code dark theme background
               color: "#ccc", // Light text color
+              position: "relative", // Needed for popover positioning
+              overflowY: "auto", // Make panel scrollable
             }}
           >
-            <h3 style={{ marginTop: 0, marginBottom: "15px" }}>
-              Analysis Controls
-            </h3>
+            <div
+              className="panel-header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              <h3 style={{ marginTop: 0, marginBottom: "15px" }}>
+                Analysis Controls
+              </h3>
+              {/* Headless UI Popover for Settings */}
+              <Popover className="relative settings-popover-container">
+                <PopoverButton className="settings-button">
+                  {/* SVG Cog Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    width="20"
+                    height="20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01-.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </PopoverButton>
+                {/* Optional backdrop */}
+                {/* <PopoverBackdrop className="fixed inset-0 bg-black/15" /> */}
+                <PopoverPanel
+                  anchor="bottom end"
+                  className="settings-popover-panel"
+                >
+                  {/* Moved Settings Content Here */}
+                  <h4>Analysis Settings</h4>
+
+                  {/* Max Depth Input */}
+                  <label
+                    htmlFor="maxDepth"
+                    style={{ marginBottom: "5px", display: "block" }}
+                  >
+                    Max Depth:
+                  </label>
+                  <input
+                    type="number"
+                    id="maxDepth"
+                    value={settings.maxDepth}
+                    onChange={(e) =>
+                      handleSettingChange(
+                        "maxDepth",
+                        parseInt(e.target.value, 10) || 1
+                      )
+                    }
+                    min="1"
+                    max="10" // Reasonable max
+                  />
+
+                  {/* Show Minimap Checkbox */}
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="showMinimap"
+                      checked={settings.showMinimap}
+                      onChange={(e) =>
+                        handleSettingChange("showMinimap", e.target.checked)
+                      }
+                    />
+                    <label htmlFor="showMinimap">Show Minimap</label>
+                  </div>
+
+                  {/* Show Hooks Checkbox */}
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="showHooks"
+                      checked={settings.showHooks}
+                      onChange={(e) =>
+                        handleSettingChange("showHooks", e.target.checked)
+                      }
+                    />
+                    <label htmlFor="showHooks">Show Hooks</label>
+                  </div>
+
+                  {/* Show File Dependencies Checkbox */}
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="showFileDeps"
+                      checked={settings.showFileDeps}
+                      onChange={(e) =>
+                        handleSettingChange("showFileDeps", e.target.checked)
+                      }
+                    />
+                    <label htmlFor="showFileDeps">Show File Dependencies</label>
+                  </div>
+
+                  {/* Show Library Dependencies Checkbox */}
+                  <div>
+                    <input
+                      type="checkbox"
+                      id="showLibDeps"
+                      checked={settings.showLibDeps}
+                      onChange={(e) =>
+                        handleSettingChange("showLibDeps", e.target.checked)
+                      }
+                    />
+                    <label htmlFor="showLibDeps">
+                      Show Library Dependencies
+                    </label>
+                  </div>
+
+                  {/* You might need a close button if not using backdrop click-away */}
+                  {/* <button onClick={() => close()}>Close</button> */}
+                </PopoverPanel>
+              </Popover>
+            </div>
 
             {/* Target File Input */}
-            <label htmlFor="targetFile" style={{ marginBottom: "5px" }}>
+            <label
+              htmlFor="targetFile"
+              style={{ marginBottom: "5px", flexShrink: 0 }}
+            >
               Target File:
             </label>
             <input
@@ -438,100 +566,52 @@ const App: React.FC = () => {
                 backgroundColor: "#3c3c3c",
                 color: "#ccc",
                 border: "1px solid #555",
+                boxSizing: "border-box", // Include padding in width
+                flexShrink: 0,
               }}
             />
 
-            {/* Max Depth Input */}
-            <label htmlFor="maxDepth" style={{ marginBottom: "5px" }}>
-              Max Depth:
-            </label>
-            <input
-              type="number"
-              id="maxDepth"
-              value={settings.maxDepth}
-              onChange={(e) =>
-                handleSettingChange(
-                  "maxDepth",
-                  parseInt(e.target.value, 10) || 1
-                )
-              }
-              min="1"
-              max="10" // Reasonable max
+            {/* Separator */}
+            <hr
               style={{
-                marginBottom: "15px",
-                width: "60px", // Smaller width
-                padding: "5px",
-                backgroundColor: "#3c3c3c",
-                color: "#ccc",
-                border: "1px solid #555",
+                width: "100%",
+                borderTop: "1px solid #444",
+                margin: "15px 0",
+                flexShrink: 0,
               }}
             />
 
-            {/* Show Minimap Checkbox */}
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                type="checkbox"
-                id="showMinimap"
-                checked={settings.showMinimap}
-                onChange={(e) =>
-                  handleSettingChange("showMinimap", e.target.checked)
-                }
-              />
-              <label htmlFor="showMinimap" style={{ marginLeft: "5px" }}>
-                Show Minimap
-              </label>
+            {/* Tree View Panel */}
+            <div
+              style={{
+                flexGrow: 1,
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {" "}
+              {/* Container for TreeView */}
+              <h3 style={{ marginTop: 0, marginBottom: "15px", flexShrink: 0 }}>
+                Structure View
+              </h3>
+              {/* Render the TreeView component */}
+              <div style={{ flexGrow: 1 }}>
+                {" "}
+                {/* Allows TreeView content to scroll */}
+                <TreeView
+                  nodes={rawAnalysisData.nodes}
+                  edges={rawAnalysisData.edges}
+                />
+              </div>
             </div>
-
-            {/* ---- Added Checkboxes ---- */}
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                type="checkbox"
-                id="showHooks"
-                checked={settings.showHooks}
-                onChange={(e) =>
-                  handleSettingChange("showHooks", e.target.checked)
-                }
-              />
-              <label htmlFor="showHooks" style={{ marginLeft: "5px" }}>
-                Show Hooks
-              </label>
-            </div>
-
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                type="checkbox"
-                id="showFileDeps"
-                checked={settings.showFileDeps}
-                onChange={(e) =>
-                  handleSettingChange("showFileDeps", e.target.checked)
-                }
-              />
-              <label htmlFor="showFileDeps" style={{ marginLeft: "5px" }}>
-                Show File Dependencies
-              </label>
-            </div>
-
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                type="checkbox"
-                id="showLibDeps"
-                checked={settings.showLibDeps}
-                onChange={(e) =>
-                  handleSettingChange("showLibDeps", e.target.checked)
-                }
-              />
-              <label htmlFor="showLibDeps" style={{ marginLeft: "5px" }}>
-                Show Library Dependencies
-              </label>
-            </div>
-            {/* ---- End Added Checkboxes ---- */}
 
             {/* Run Analysis Button */}
             <button
               onClick={() => runAnalysis(targetFile, settings)}
               disabled={isLoading || !targetFile}
               style={{
-                marginTop: "auto", // Push to bottom
+                marginTop: "15px", // Add some space above the button
                 padding: "8px 15px",
                 cursor: "pointer",
                 backgroundColor: isLoading ? "#555" : "#0e639c",
@@ -539,31 +619,11 @@ const App: React.FC = () => {
                 border: "none",
                 borderRadius: "3px",
                 opacity: !targetFile ? 0.6 : 1,
+                flexShrink: 0, // Prevent button from shrinking
               }}
             >
               {isLoading ? "Analyzing..." : "Run Analysis"}
             </button>
-          </div>
-
-          {/* Tree View Panel */}
-          <div
-            style={{
-              width: "300px", // Adjust width as needed
-              padding: "10px",
-              borderRight: "1px solid #444",
-              backgroundColor: "#252526",
-              color: "#ccc",
-              overflowY: "auto", // Make it scrollable if content overflows
-            }}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: "15px" }}>
-              Structure View
-            </h3>
-            {/* Render the TreeView component */}
-            <TreeView
-              nodes={rawAnalysisData.nodes}
-              edges={rawAnalysisData.edges}
-            />
           </div>
 
           {/* React Flow Canvas Area */}

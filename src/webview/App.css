@@ -193,3 +193,78 @@ html,
   padding: 2px 0;
   font-size: 0.9em;
 }
+
+/* Headless UI Popover Styles */
+.settings-popover-container {
+  position: relative; /* Needed for panel positioning */
+}
+
+.settings-button {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: 0;
+  cursor: pointer;
+  color: var(--vscode-icon-foreground); /* Use VS Code icon color */
+  display: flex; /* Align icon nicely */
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px; /* Slight rounding */
+}
+
+.settings-button:hover {
+  background-color: var(
+    --vscode-toolbar-hoverBackground,
+    #555
+  ); /* Use VS Code hover color */
+}
+
+.settings-button svg {
+  display: block; /* Prevent extra space below SVG */
+}
+
+.settings-popover-panel {
+  position: absolute;
+  right: 0; /* Align to the right of the container */
+  top: 100%; /* Position below the button */
+  margin-top: 4px; /* Small gap */
+  width: 280px; /* Adjust width as needed */
+  background-color: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-widget-border, #454545);
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 20; /* Ensure it's above other elements */
+  color: var(--vscode-editorWidget-foreground, #ccc);
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Spacing between items in the panel */
+}
+
+.settings-popover-panel h4 {
+  margin-top: 0;
+  margin-bottom: 5px; /* Reduced margin */
+  border-bottom: 1px solid var(--vscode-widget-border, #454545);
+  padding-bottom: 8px;
+  font-size: 1.1em;
+}
+
+.settings-popover-panel label {
+  display: flex; /* Align checkbox and text */
+  align-items: center;
+  gap: 6px; /* Space between checkbox and label text */
+  font-size: 0.95em;
+}
+
+.settings-popover-panel input[type="number"] {
+  padding: 4px 6px;
+  border: 1px solid var(--vscode-input-border, #ccc);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border-radius: 3px;
+  width: 60px; /* Keep small width */
+}
+
+.settings-popover-panel input[type="checkbox"] {
+  margin: 0; /* Remove default margin */
+}
