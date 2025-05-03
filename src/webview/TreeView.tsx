@@ -6,7 +6,14 @@ import "./TreeView.css"; // Import CSS for styling
 interface TreeNodeData {
   id: string;
   label: string;
-  type: string; // 'File', 'Component', 'Hook', 'Reference', 'HooksContainer', 'ReferencesContainer'
+  type:
+    | "File"
+    | "Component"
+    | "Hook"
+    | "UsedComponent"
+    | "Reference"
+    | "HooksContainer"
+    | "ReferencesContainer"; // Added 'UsedComponent'
   children?: TreeNodeData[];
   filePath?: string; // For File nodes
   referenceType?: "FileDep" | "LibDep"; // For Reference nodes
@@ -59,43 +66,98 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
         children: [],
       };
 
-      // Process hooks immediately for this component
-      const hooksSource = node.data.hooksUsed; // <-- Use hooksUsed
-      // --- DEBUGGING: Log incoming hooks data ---
-      console.log(
-        `[buildTree Hooks] Processing hooks for component: ${node.data.label} (ID: ${node.id})`,
-        hooksSource
-      );
-      // --- END DEBUGGING ---
-      if (Array.isArray(hooksSource) && hooksSource.length > 0) {
-        // Map hooks directly to component children
-        const hookNodes: TreeNodeData[] = hooksSource
-          .map((hook: any, index: number) => ({
-            id: `${node.id}-hook-${index}`,
-            label: `Hook: ${
-              typeof hook === "string" ? hook : hook?.hookName || "unknown hook"
-            }`,
-            type: "Hook",
-          }))
-          .filter((h: any) => h.label !== "Hook: unknown hook"); // Filter out potentially bad hook data
+      // --- Aggregate Hooks and Used Components ---
+      const itemCounts = new Map<
+        string,
+        { type: "Hook" | "UsedComponent"; count: number; originalName: string }
+      >();
 
-        if (hookNodes.length > 0) {
-          componentData.children?.push(...hookNodes);
-          // --- DEBUGGING: Log adding individual hooks ---
-          console.log(
-            `[buildTree Hooks] Added ${hookNodes.length} hook nodes directly to children of ${componentData.id}`
-          );
-          // --- END DEBUGGING ---
-        }
-      } else {
-        // --- DEBUGGING: Log if no hooks found or not an array ---
+      // Process Hooks
+      const hooksSource = node.data.hooksUsed || [];
+      if (Array.isArray(hooksSource)) {
+        hooksSource.forEach((hook: any) => {
+          const hookName = typeof hook === "string" ? hook : hook?.hookName;
+          if (hookName && hookName !== "unknown hook") {
+            const key = `Hook: ${hookName}`;
+            const current = itemCounts.get(key) || {
+              type: "Hook",
+              count: 0,
+              originalName: hookName,
+            };
+            itemCounts.set(key, { ...current, count: current.count + 1 });
+          }
+        });
+      }
+
+      // Process File Dependencies (as Used Components)
+      const fileDepsSource = node.data.fileDependencies || [];
+      if (Array.isArray(fileDepsSource)) {
+        fileDepsSource.forEach((dep: any) => {
+          const compName = dep?.name;
+          if (compName) {
+            const key = `Comp: ${compName}`;
+            const current = itemCounts.get(key) || {
+              type: "UsedComponent",
+              count: 0,
+              originalName: compName,
+            };
+            itemCounts.set(key, { ...current, count: current.count + 1 });
+          }
+        });
+      }
+
+      // Process Library Dependencies (filter for potential components)
+      const libDepsSource = node.data.libraryDependencies || [];
+      if (Array.isArray(libDepsSource)) {
+        libDepsSource.forEach((dep: any) => {
+          const compName = dep?.name;
+          const sourcePath = dep?.source;
+          // Heuristic: Include if source starts with ~/, ./, ../ or is a common UI lib pattern
+          const isLikelyComponent =
+            compName &&
+            sourcePath &&
+            /^[A-Z]/.test(compName) &&
+            (sourcePath.startsWith("~/components") ||
+              sourcePath.startsWith(".") ||
+              /^(react|@radix-ui)/.test(sourcePath));
+
+          if (isLikelyComponent) {
+            const key = `Comp: ${compName}`;
+            const current = itemCounts.get(key) || {
+              type: "UsedComponent",
+              count: 0,
+              originalName: compName,
+            };
+            itemCounts.set(key, { ...current, count: current.count + 1 });
+          }
+        });
+      }
+
+      // Create TreeNodeData for aggregated children
+      const childrenNodes: TreeNodeData[] = [];
+      itemCounts.forEach((details, key) => {
+        const label = `${details.type === "Hook" ? "Hook: " : ""}${
+          details.originalName
+        }${details.count > 1 ? ` (x${details.count})` : ""}`;
+        childrenNodes.push({
+          id: `${
+            node.id
+          }-${details.type.toLowerCase()}-${details.originalName.replace(
+            /[^a-zA-Z0-9]/g,
+            "_"
+          )}`,
+          label: label,
+          type: details.type, // 'Hook' or 'UsedComponent'
+        });
+      });
+
+      // --- End Aggregation ---
+
+      if (childrenNodes.length > 0) {
+        componentData.children?.push(...childrenNodes);
         console.log(
-          `[buildTree Hooks] No hooks found or hooksSource is not an array for ${node.id}.`
+          `[buildTree Aggregated] Added ${childrenNodes.length} aggregated nodes to children of ${componentData.id}`
         );
-        console.log(
-          `[buildTree Hooks] No hooks found or node.data.hooks is not an array for ${node.id}.`
-        );
-        // --- END DEBUGGING ---
       }
 
       componentNodeMap.set(node.id, componentData);
@@ -151,11 +213,23 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
   // Pass 3: Sort children recursively
   const sortChildren = (children: TreeNodeData[]) => {
     children.sort((a, b) => {
-      const typeA = a.type.includes("Container");
-      const typeB = b.type.includes("Container");
-      if (typeA && !typeB) return -1; // Containers first
-      if (!typeA && typeB) return 1;
-      return a.label.localeCompare(b.label); // Then alphabetically
+      // Group types: Containers -> Components -> Hooks/UsedComponents -> References
+      const typeOrder = {
+        ReferencesContainer: 4,
+        Reference: 3,
+        Hook: 2,
+        UsedComponent: 2, // Same level as Hook
+        Component: 1,
+        File: 0, // Should not happen inside component normally
+        HooksContainer: 4, // Treat like ReferencesContainer if it exists
+      };
+      const orderA = typeOrder[a.type] ?? 99;
+      const orderB = typeOrder[b.type] ?? 99;
+
+      if (orderA !== orderB) return orderA - orderB;
+
+      // Within Hooks/UsedComponents, sort alphabetically
+      return a.label.localeCompare(b.label);
     });
     children.forEach((child) => {
       if (child.children) sortChildren(child.children);
@@ -166,7 +240,14 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
   // Sort files alphabetically by path, then sort children recursively
   treeResult.sort((a, b) => (a.filePath || "").localeCompare(b.filePath || ""));
   treeResult.forEach((fileNode) => {
-    if (fileNode.children) sortChildren(fileNode.children);
+    if (fileNode.children) {
+      // Sort components within the file first
+      fileNode.children.sort((a, b) => a.label.localeCompare(b.label));
+      // Then sort the children of each component
+      fileNode.children.forEach((compNode) => {
+        if (compNode.children) sortChildren(compNode.children);
+      });
+    }
   });
 
   return treeResult;
@@ -192,7 +273,7 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
 
   // --- DEBUGGING --- Add console log here
   console.log(
-    `[TreeNode] Rendering node: ${node.label} (ID: ${node.id}), Level: ${level}, HasChildren: ${hasChildren}, IsExpanded: ${isExpanded}`
+    `[TreeNode] Rendering node: ${node.label} (ID: ${node.id}), Type: ${node.type}, Level: ${level}, HasChildren: ${hasChildren}, IsExpanded: ${isExpanded}`
   );
   if (hasChildren) {
     console.log(`[TreeNode] Children of ${node.label}:`, node.children);
@@ -207,8 +288,15 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
   };
 
   const getIcon = () => {
-    // Only show expand/collapse icon if there are children
-    if (!hasChildren) return <span className="tree-icon type-indicator"></span>;
+    // Only show expand/collapse icon if there are children (e.g., for Files, Components, Containers)
+    if (
+      !hasChildren ||
+      node.type === "Hook" ||
+      node.type === "UsedComponent" ||
+      node.type === "Reference"
+    ) {
+      return <span className="tree-icon type-indicator"></span>; // Placeholder for alignment or specific type icon later
+    }
     return (
       <span
         className={`tree-icon expand-collapse ${
@@ -226,6 +314,8 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
         return "type-component";
       case "Hook":
         return "type-hook";
+      case "UsedComponent": // Added style for UsedComponent
+        return "type-used-component";
       case "Reference":
         return `type-reference type-${node.referenceType?.toLowerCase()}`;
       case "HooksContainer":
@@ -240,8 +330,25 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
     <li className={`tree-node ${getNodeTypeClass()}`}>
       <div
         className="tree-node-label"
-        onClick={handleToggle}
-        style={{ paddingLeft: `${level * 18}px` }} // Indentation (reduced slightly)
+        // Use onClick only if the node *can* be toggled (has children and isn't a leaf like Hook/UsedComponent/Reference)
+        onClick={
+          hasChildren &&
+          node.type !== "Hook" &&
+          node.type !== "UsedComponent" &&
+          node.type !== "Reference"
+            ? handleToggle
+            : undefined
+        }
+        style={{
+          paddingLeft: `${level * 18}px`,
+          cursor:
+            hasChildren &&
+            node.type !== "Hook" &&
+            node.type !== "UsedComponent" &&
+            node.type !== "Reference"
+              ? "pointer"
+              : "default",
+        }} // Indentation & cursor
       >
         {getIcon()}
         <span className="label-text">{node.label}</span>
