@@ -1,36 +1,42 @@
 # TODO
 
-- Get things to run quickly on 1 file - OK
+## Overall extension
+
 - Save the index results to disk
-- Need to show the deps going into hooks and the variables being used
-  - Need to get hooks to appear in single file view
-- Show the props coming into a comp - trace those through the parents + tree
-- Keep trucking on the plan - get Cursor to update the status and README with current functionality
 - Publish to npm + VS Code Marketplace
 
-Improve single file display:
-
-- Group by file (do not show as a separate node)
-- Still need to see external deps - show them as a box with each import listed?
-- Show repeated hooks with a count instead of a list
-- Allow a click to expand the node to show deps for a given hook
-
-Biggest annoyances:
+## Biggest annoyances
 
 - Graph view is awful
-- Need to show internal + external deps
-  - External deps should be listed in the file box
-  - Ensure that all internal comps in a file are shown in the list (not just exported ones that are used by others)
+
+## Main web view
+
+- Allow user to select a new file with a fuzzy picker dialog (like how move file works)
+- Allow the side pane to be resized
+- Show the relative file path in the input box
+- Results are cleared when losing focus
+
+## Detailed react analysis
+
 - Need to show the props coming into a comp
+- Show the fields coming into a hook and compare against the deps array
+- (End goal is to support quickly refactoring hooks into their own files)
+- Ability to detect a `useContext` and show how the context is being used
+- Same ability to detect a global state management library and show how it is being used (like zustand or react-query)
+
+## Structure view
+
 - Clicking on a node in structure view should focus the graph on that node -- double clicking should navigate VS Code to the file (open the editor, ideally at the correct line)
 - When a file only has a single export, collapse to a single line in the structure view (show both the file name and the export name)
-- Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types
-
-Structure view:
-
 - Show the file name + count on left - then the folder name on right (let the ... hide the folder name)
 - Want to see the source next to the comp or hook name - so `useState @ react`
+- Show the originating file at the top of structure view (want to focus on the one that triggered the analysis)
+- Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types
+- Need to list the comps that are imported from external libraries - so `X @ lucide-react`
+- Add a button to collapse all nodes - and another to expand all nodes
+- Allow the tree view to trigger `find all references` from VS Code
+- For external deps, list all of the things imported from that library - make the display of these external deps optional
 
-Graph layout problems
+## Graph layout problems
 
 - Need to consider dynamic height + width: <https://github.com/xyflow/xyflow/issues/991>
