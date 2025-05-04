@@ -878,7 +878,7 @@ export function buildDependencyGraph(
     }
 
     outputChannel.appendLine(
-      `[Graph] Resolving rendered component: ${rendered.name} rendered by ${renderingComponentData.name}`
+      `[Graph Resolve] Resolving rendered component: ${rendered.name} rendered by ${renderingComponentData.name}`
     );
 
     // 1. Find the import statement for the rendered component name
@@ -893,7 +893,7 @@ export function buildDependencyGraph(
 
     if (!importInfo) {
       outputChannel.appendLine(
-        `[Graph] Could not find import for rendered component: ${rendered.name} in ${parentFileNodeData.filePath}. Assuming local.`
+        `[Graph Resolve]   Could not find import for rendered component: ${rendered.name} in ${parentFileNodeData.filePath}. Assuming local.`
       );
       // Attempt to find the component defined in the *same file*
       const localComponent = parentFileNodeData.components.find(
@@ -904,17 +904,17 @@ export function buildDependencyGraph(
         targetComponentName = localComponent.name;
         targetFilePath = parentFileNodeData.filePath;
         outputChannel.appendLine(
-          `[Graph] Found locally defined component: ${targetComponentName} (${targetComponentId})`
+          `[Graph Resolve]   Found locally defined component: ${targetComponentName} (${targetComponentId})`
         );
       } else {
         outputChannel.appendLine(
-          `[Graph] Could not find local component ${rendered.name}. Cannot resolve.`
+          `[Graph Resolve]   Could not find local component ${rendered.name}. Cannot resolve.`
         );
         return; // Stop if not found locally
       }
     } else {
       outputChannel.appendLine(
-        `[Graph] Found import for ${rendered.name}: ${JSON.stringify(
+        `[Graph Resolve]   Found import for ${rendered.name}: ${JSON.stringify(
           importInfo
         )}`
       );
@@ -927,13 +927,15 @@ export function buildDependencyGraph(
 
       if (!resolvedPath) {
         outputChannel.appendLine(
-          `[Graph] Could not resolve import path: ${importInfo.moduleSpecifier}. Treating as external/unresolved.`
+          `[Graph Resolve]   Could not resolve import path: ${importInfo.moduleSpecifier} from ${parentFileNodeData.filePath}. Treating as external/unresolved.`
         );
         // Optional: Create an external dependency node? For now, just skip.
         return;
       }
 
-      outputChannel.appendLine(`[Graph] Resolved import path: ${resolvedPath}`);
+      outputChannel.appendLine(
+        `[Graph Resolve]   Resolved import path: ${importInfo.moduleSpecifier} -> ${resolvedPath}`
+      );
 
       // 3. Find the target component definition in the resolved file
       let targetFileNodeData = indexerService
@@ -941,24 +943,30 @@ export function buildDependencyGraph(
         .get(resolvedPath);
       if (!targetFileNodeData) {
         outputChannel.appendLine(
-          `[Graph] Target file for import ${resolvedPath} not indexed, parsing.`
+          `[Graph Resolve]   Target file for import ${resolvedPath} not indexed, parsing.`
         );
         // Use try-catch as parsing might fail
         try {
           const parsedFileNode = indexerService.parseFile(resolvedPath);
           if (!parsedFileNode) {
             outputChannel.appendLine(
-              `[Graph] Failed to parse target file: ${resolvedPath}`
+              `[Graph Resolve]   Failed to parse target file: ${resolvedPath}`
             );
             return; // Cannot proceed if target file parsing fails
           }
           targetFileNodeData = parsedFileNode; // Assign the successfully parsed node
           // IMPORTANT: If parsing happens here, we also need to add the File Node (as parent)
           // to the graph if it's not already there.
+          // Use processFileNode which handles adding the node if needed
+          outputChannel.appendLine(
+            `[Graph Resolve]     Adding potentially new file node for ${resolvedPath} at depth ${
+              renderingComponentDepth + 1
+            }`
+          );
           processFileNode(targetFileNodeData, renderingComponentDepth + 1); // Add file node at next depth
         } catch (error: any) {
           outputChannel.appendLine(
-            `[Graph] Error parsing target file ${resolvedPath}: ${error.message}`
+            `[Graph Resolve]   Error parsing target file ${resolvedPath}: ${error.message}`
           );
           return;
         }
@@ -967,33 +975,44 @@ export function buildDependencyGraph(
         const targetFileGraphId = getGraphNodeId("file", resolvedPath);
         if (!addedNodeIds.has(targetFileGraphId)) {
           outputChannel.appendLine(
-            `[Graph] Target file ${resolvedPath} found in index but not added to graph yet. Adding now.`
+            `[Graph Resolve]   Target file ${resolvedPath} found in index but not added to graph yet. Adding now.`
           );
+          // Use processFileNode which handles adding the node if needed
           processFileNode(targetFileNodeData, renderingComponentDepth + 1);
         }
       }
 
       // Find the component in the target file
-      const targetComponent = targetFileNodeData.components.find(
-        (c) =>
-          c.name === importInfo.importedName || // Match original/aliased name
-          (importInfo.isDefault && c.exported) // Or match default export
-      );
+      const componentNameToCheck = importInfo.isDefault
+        ? targetFileNodeData.components.find((c) => c.exported)?.name // Find *any* exported component for default (approximation)
+        : importInfo.importedName;
 
+      const targetComponent = componentNameToCheck
+        ? targetFileNodeData.components.find(
+            (c) => c.name === componentNameToCheck
+          )
+        : undefined;
+
+      // --- START: Improved Logging for Component Finding ---
       if (!targetComponent) {
         outputChannel.appendLine(
-          `[Graph] Could not find exported component matching '${
-            importInfo.importedName
-          }' ${importInfo.isDefault ? "(default)" : ""} in ${resolvedPath}`
+          `[Graph Resolve]   Could not find exported component matching '${componentNameToCheck}' in ${resolvedPath}. Searched for ${
+            importInfo.isDefault
+              ? "exported default (approximated)"
+              : `'${importInfo.importedName}'`
+          }. Available: ${targetFileNodeData.components
+            .map((c) => `${c.name}${c.exported ? "(exp)" : ""}`)
+            .join(", ")}`
         );
         return;
       }
+      // --- END: Improved Logging for Component Finding ---
 
       targetComponentId = targetComponent.id;
       targetComponentName = targetComponent.name;
       targetFilePath = resolvedPath;
       outputChannel.appendLine(
-        `[Graph] Found imported component: ${targetComponentName} (${targetComponentId}) in ${targetFilePath}`
+        `[Graph Resolve]   Found imported component: ${targetComponentName} (${targetComponentId}) in ${targetFilePath}`
       );
     }
 
@@ -1006,12 +1025,16 @@ export function buildDependencyGraph(
       const nextDepth = renderingComponentDepth + 1;
 
       // Check if the target component is already explored or would exceed depth
-      if (
-        !exploredComponentIds.has(targetComponentId) &&
-        nextDepth <= maxDepth
-      ) {
+      // --- START: Logging Queue Decision ---
+      const skipReason = exploredComponentIds.has(targetComponentId)
+        ? "already explored"
+        : nextDepth > maxDepth
+        ? `depth limit exceeded (${nextDepth} > ${maxDepth})`
+        : undefined;
+
+      if (!skipReason) {
         outputChannel.appendLine(
-          `[Graph] Queuing resolved component: ${targetComponentName}`
+          `[Graph Resolve]   Queueing resolved component: ${targetComponentName} at depth ${nextDepth}`
         );
         // Queue the component with the rendering component as the source
         queue.push({
@@ -1026,7 +1049,7 @@ export function buildDependencyGraph(
         // If node exists (added directly from its file or via another render path) but wasn't queued
         // (due to depth/explored), still draw the edge from the *rendering* component.
         outputChannel.appendLine(
-          `[Graph] Adding edge to existing component node: ${targetComponentName} (rendered by ${renderingComponentData.name})`
+          `[Graph Resolve]   Adding edge to existing component node: ${targetComponentName} (rendered by ${renderingComponentData.name}). Reason for not queueing: ${skipReason}`
         );
         addEdge({
           id: `e-${renderingComponentGraphId}-renders-${targetComponentGraphId}`,
@@ -1037,12 +1060,12 @@ export function buildDependencyGraph(
           style: { stroke: "#00bbff" }, // Style component render edges
         });
       } else {
+        // Should not happen often if processFileNode adds nodes correctly
         outputChannel.appendLine(
-          `[Graph] Not queuing or linking ${targetComponentName}: Explored=${exploredComponentIds.has(
-            targetComponentId
-          )}, Depth=${nextDepth > maxDepth}`
+          `[Graph Resolve]   Not queueing or linking ${targetComponentName}. Reason: ${skipReason}. Target node not added yet.`
         );
       }
+      // --- END: Logging Queue Decision ---
     }
   }
 

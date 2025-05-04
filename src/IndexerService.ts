@@ -410,29 +410,66 @@ export class IndexerService {
       .getDescendantsOfKind(SyntaxKind.JsxOpeningElement)
       .forEach((jsx) => {
         const tagName = jsx.getTagNameNode().getText();
+        const filePath = bodyNode.getSourceFile().getFilePath(); // Get file path for logging context
+        console.log(
+          `[Indexer Log - ${path.basename(
+            filePath
+          )}] Visiting JsxOpeningElement: <${tagName}>`
+        ); // Log visit
         // Basic check: If tag name starts with uppercase, assume it's a component
         if (isComponentName(tagName)) {
           renderedComponents.push({
             name: tagName,
             location: getNodeLocation(jsx.getTagNameNode()),
           });
+          console.log(
+            `[Indexer Log - ${path.basename(
+              filePath
+            )}]   Identified as component: ${tagName}`
+          ); // Log identification
           // Also check if the component is imported
           const importData = resolvedImports.get(tagName);
           if (importData) {
+            console.log(
+              `[Indexer Log - ${path.basename(
+                filePath
+              )}]   Resolved import for ${tagName}:`,
+              importData.moduleSpecifier
+            ); // Log import resolution
             const depInfo: DependencyInfo = {
               name: tagName,
               source: importData.moduleSpecifier,
               location: getNodeLocation(jsx.getTagNameNode()), // Location of the tag usage
             };
             if (isExternalLibrary(importData.moduleSpecifier)) {
+              console.log(
+                `[Indexer Log - ${path.basename(
+                  filePath
+                )}]     Adding to libraryDependencies: ${tagName} from ${
+                  importData.moduleSpecifier
+                }`
+              ); // Log adding dependency
               if (!libraryDependencies.has(importData.moduleSpecifier)) {
                 libraryDependencies.set(importData.moduleSpecifier, depInfo);
               }
             } else {
+              console.log(
+                `[Indexer Log - ${path.basename(
+                  filePath
+                )}]     Adding to fileDependencies: ${tagName} from ${
+                  importData.moduleSpecifier
+                }`
+              ); // Log adding dependency
               if (!fileDependencies.has(importData.moduleSpecifier)) {
                 fileDependencies.set(importData.moduleSpecifier, depInfo);
               }
             }
+          } else {
+            console.log(
+              `[Indexer Log - ${path.basename(
+                filePath
+              )}]   Could not resolve import for component: ${tagName}`
+            ); // Log failed resolution
           }
         }
       });
@@ -440,28 +477,65 @@ export class IndexerService {
       .getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement)
       .forEach((jsx) => {
         const tagName = jsx.getTagNameNode().getText();
+        const filePath = bodyNode.getSourceFile().getFilePath(); // Get file path for logging context
+        console.log(
+          `[Indexer Log - ${path.basename(
+            filePath
+          )}] Visiting JsxSelfClosingElement: <${tagName} />`
+        ); // Log visit
         if (isComponentName(tagName)) {
           renderedComponents.push({
             name: tagName,
             location: getNodeLocation(jsx.getTagNameNode()),
           });
+          console.log(
+            `[Indexer Log - ${path.basename(
+              filePath
+            )}]   Identified as component: ${tagName}`
+          ); // Log identification
           // Also check if the component is imported
           const importData = resolvedImports.get(tagName);
           if (importData) {
+            console.log(
+              `[Indexer Log - ${path.basename(
+                filePath
+              )}]   Resolved import for ${tagName}:`,
+              importData.moduleSpecifier
+            ); // Log import resolution
             const depInfo: DependencyInfo = {
               name: tagName,
               source: importData.moduleSpecifier,
               location: getNodeLocation(jsx.getTagNameNode()),
             };
             if (isExternalLibrary(importData.moduleSpecifier)) {
+              console.log(
+                `[Indexer Log - ${path.basename(
+                  filePath
+                )}]     Adding to libraryDependencies: ${tagName} from ${
+                  importData.moduleSpecifier
+                }`
+              ); // Log adding dependency
               if (!libraryDependencies.has(importData.moduleSpecifier)) {
                 libraryDependencies.set(importData.moduleSpecifier, depInfo);
               }
             } else {
+              console.log(
+                `[Indexer Log - ${path.basename(
+                  filePath
+                )}]     Adding to fileDependencies: ${tagName} from ${
+                  importData.moduleSpecifier
+                }`
+              ); // Log adding dependency
               if (!fileDependencies.has(importData.moduleSpecifier)) {
                 fileDependencies.set(importData.moduleSpecifier, depInfo);
               }
             }
+          } else {
+            console.log(
+              `[Indexer Log - ${path.basename(
+                filePath
+              )}]   Could not resolve import for component: ${tagName}`
+            ); // Log failed resolution
           }
         }
       });

@@ -183,3 +183,12 @@
   color: #888; /* Lighter color for directory path */
   text-align: right; /* Align text within its container to the right */
 }
+
+/* Add style for UsedComponent nodes */
+.type-used-component .label-text {
+  color: #ce9178; /* VS Code orange/brown for strings/paths */
+}
+
+.type-reference.type-filedep .label-text {
+  color: #ce9178; /* VS Code orange/brown for strings/paths */
+}

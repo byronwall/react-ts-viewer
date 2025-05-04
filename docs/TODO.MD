@@ -27,15 +27,16 @@
 
 ## Structure view
 
+- Reduce the indent + padding on the left side of the tree view
 - Clicking on a node in structure view should focus the graph on that node -- double clicking should navigate VS Code to the file (open the editor, ideally at the correct line)
 - When a file only has a single export, collapse to a single line in the structure view (show both the file name and the export name)
 - Want to see the source next to the comp or hook name - so `useState @ react`
 - Show the originating file at the top of structure view (want to focus on the one that triggered the analysis)
 - Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types
-- Need to list the comps that are imported from external libraries - so `X @ lucide-react`
 - Add a button to collapse all nodes - and another to expand all nodes
 - Allow the tree view to trigger `find all references` from VS Code
-- For external deps, list all of the things imported from that library - make the display of these external deps optional
+- Need to style external deps different from internal deps
+- Need to identify aliased deps as internal deps
 
 ## Graph layout problems
 
