@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { outputChannel } from "./initializeExtension";
 import { getNonce } from "./getNonce";
+import * as path from "path";
 
 export function getWebviewContent(
   context: vscode.ExtensionContext,
@@ -37,17 +38,22 @@ export function getWebviewContent(
     `[Extension] Embedding initial path as JSON string: ${initialFilePathJson}`
   );
 
+  // Get workspace root path (handle potential undefined case)
+  const workspaceRoot =
+    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "";
+
   return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} https: data:; script-src 'nonce-${nonce}';">
+			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
+        webview.cspSource
+      } 'unsafe-inline'; img-src ${
+    webview.cspSource
+  } https: data:; script-src 'nonce-${nonce}';">
 			<link href="${styleUri}" rel="stylesheet">
 			<title>Dependency Analyzer</title>
-		</head>
-		<body>
-			<div id="root"></div>
 			<script nonce="${nonce}">
 				// Pass initial data to the webview
 				const vscode = acquireVsCodeApi();
@@ -55,7 +61,12 @@ export function getWebviewContent(
 					filePath: ${initialFilePathJson} // Embed the JSON stringified path
 				};
 				vscode.setState(initialData);
+				// Inject workspace root using JSON.stringify for safe escaping
+				window.initialWorkspaceRoot = ${JSON.stringify(workspaceRoot)};
 			</script>
+		</head>
+		<body>
+			<div id="root"></div>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 		</body>
 		</html>`;

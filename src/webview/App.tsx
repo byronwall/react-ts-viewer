@@ -51,6 +51,13 @@ declare const vscode: {
   postMessage: (message: any) => void;
 };
 
+// Declare the injected global variable
+declare global {
+  interface Window {
+    initialWorkspaceRoot?: string;
+  }
+}
+
 // Interface for settings managed by the App
 interface AnalysisSettings {
   maxDepth: number;
@@ -301,6 +308,9 @@ const App: React.FC = () => {
   const [targetFile, setTargetFile] = useState<string>("");
   const [settings, setSettings] = useState<AnalysisSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [workspaceRoot, setWorkspaceRoot] = useState<string | undefined>(
+    undefined
+  );
   // State to hold raw results from extension before layouting
   const [rawAnalysisData, setRawAnalysisData] = useState<{
     nodes: Node[];
@@ -313,6 +323,18 @@ const App: React.FC = () => {
     if (state?.filePath) {
       console.log("[Webview] Restoring state with file path:", state.filePath);
       setTargetFile(state.filePath);
+      // Read initial workspace root from global variable
+      if (window.initialWorkspaceRoot) {
+        console.log(
+          "[Webview] Reading initial workspace root:",
+          window.initialWorkspaceRoot
+        );
+        setWorkspaceRoot(window.initialWorkspaceRoot);
+      } else {
+        console.warn(
+          "[Webview] Initial workspace root not found on window object."
+        );
+      }
       // Optionally restore previous settings if saved
       // if (state.settings) setSettings(state.settings);
     }
@@ -585,6 +607,7 @@ const App: React.FC = () => {
                 <TreeView
                   nodes={rawAnalysisData.nodes}
                   edges={rawAnalysisData.edges}
+                  workspaceRoot={workspaceRoot}
                 />
               </div>
             </div>

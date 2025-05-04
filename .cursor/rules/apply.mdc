@@ -6,3 +6,5 @@ alwaysApply: true
 Apply all changes using `edit_file`.  When making changes, be sure to apply them using `edit_file`.  Apply `edit_file`.
 
 Always apply edits when suggesting changes.  Do not ask me if you should.  You should.
+
+When revising react comps, be sure to apply updates to the consumers of those comps.

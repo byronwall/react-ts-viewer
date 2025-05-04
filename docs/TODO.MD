@@ -4,6 +4,7 @@
 
 - Save the index results to disk
 - Publish to npm + VS Code Marketplace
+- Create a README with features and other details
 
 ## Biggest annoyances
 
@@ -28,7 +29,6 @@
 
 - Clicking on a node in structure view should focus the graph on that node -- double clicking should navigate VS Code to the file (open the editor, ideally at the correct line)
 - When a file only has a single export, collapse to a single line in the structure view (show both the file name and the export name)
-- Show the file name + count on left - then the folder name on right (let the ... hide the folder name)
 - Want to see the source next to the comp or hook name - so `useState @ react`
 - Show the originating file at the top of structure view (want to focus on the one that triggered the analysis)
 - Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types

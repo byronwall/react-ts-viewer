@@ -111,3 +111,75 @@
   font-style: italic;
   color: #aaa;
 }
+
+/* Add general cursor style based on node type */
+.tree-node.type-file > .tree-node-label,
+.tree-node.type-component > .tree-node-label,
+.tree-node.type-container > .tree-node-label {
+  cursor: pointer;
+}
+
+.tree-node.type-hook > .tree-node-label,
+.tree-node.type-used-component > .tree-node-label,
+.tree-node.type-reference > .tree-node-label {
+  cursor: default;
+}
+
+/* Style rules for File nodes specifically */
+.tree-node.type-file > .tree-node-label {
+  display: flex;
+  align-items: center;
+  /* No justify-content: space-between needed if dir-path handles alignment */
+  width: 100%; /* Ensure it takes full width for alignment */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.tree-node.type-file .child-count {
+  /* Ensure count is first visually */
+  /* Count now comes after icon */
+  margin-right: 4px; /* Space between count and filename */
+  margin-left: 0; /* No space needed before count (handled by icon margin) */
+  flex-shrink: 0; /* Prevent count from shrinking */
+  font-size: 0.9em;
+  color: #888;
+}
+
+.tree-node.type-file .tree-icon.expand-collapse {
+  /* Icon comes after count */
+  /* Icon is now first */
+  margin-right: 4px; /* Reset margin, handled by label */
+  /* Add margin back to space icon from count */
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.tree-node.type-file .label-text.file-name {
+  /* Filename comes after icon */
+  /* Filename now comes after count */
+  margin-right: 8px; /* Space between filename and dir path */
+  /* Allow filename to grow but not shrink excessively */
+  /* Prevent filename from shrinking or truncating */
+  flex-grow: 0;
+  flex-shrink: 0; /* Do not shrink filename */
+  /* Prevent filename itself from truncating unless absolutely necessary */
+  /* Remove truncation styles */
+  white-space: nowrap; /* Keep on one line if possible, but allow wrap if needed? No, keep nowrap */
+  overflow: hidden; /* Remove overflow */
+  text-overflow: ellipsis; /* Remove ellipsis */
+  min-width: 50px; /* Give filename some minimum space */
+  overflow: visible; /* Allow filename to overflow if needed */
+  text-overflow: clip; /* Or use clip if visible causes issues */
+}
+
+.tree-node.type-file .label-text.dir-path {
+  /* Directory path comes last and aligns right */
+  margin-left: auto; /* Pushes it to the right */
+  padding-left: 8px; /* Add some space if filename is short */
+  flex-grow: 1; /* Allow dir path to take remaining space */
+  flex-shrink: 1; /* Allow dir path to shrink */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #888; /* Lighter color for directory path */
+  text-align: right; /* Align text within its container to the right */
+}

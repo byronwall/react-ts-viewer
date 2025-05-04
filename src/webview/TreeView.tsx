@@ -23,6 +23,7 @@ interface TreeNodeData {
 interface TreeViewProps {
   nodes: Node[];
   edges: Edge[];
+  workspaceRoot?: string; // Added: Optional workspace root path
 }
 
 // --- Helper Functions ---
@@ -287,10 +288,11 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
 };
 
 // --- TreeNode Component (Recursive) ---
-const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
-  node,
-  level,
-}) => {
+const TreeNode: React.FC<{
+  node: TreeNodeData;
+  level: number;
+  workspaceRoot?: string;
+}> = ({ node, level, workspaceRoot }) => {
   // Default expansion: Files expanded, Components collapsed, Containers determined by content
   const initialExpanded = useMemo(() => {
     if (level === 0) return true; // Expand files
@@ -360,6 +362,49 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
     }
   };
 
+  // --- Helper to extract file name and relative directory path ---
+  const getFileParts = (
+    filePath: string | undefined,
+    rootPath: string | undefined
+  ): { fileName: string; dirPath: string; fullPath: string } => {
+    const fullPath = filePath || ""; // Store original full path
+    if (!filePath) return { fileName: node.label, dirPath: "", fullPath }; // Fallback
+
+    let displayPath = filePath; // Path used for splitting filename/dirname
+
+    // Normalize rootPath: remove trailing slash if exists, ensure it's not empty
+    const normalizedRoot = rootPath?.replace(/\/$/, "");
+
+    // Calculate relative path for display if rootPath is valid and filePath starts with it
+    if (normalizedRoot && filePath.startsWith(normalizedRoot)) {
+      // Get part after root, ensure leading slash is removed
+      let relative = filePath.substring(normalizedRoot.length);
+      if (relative.startsWith("/")) {
+        relative = relative.substring(1);
+      }
+      displayPath = relative; // Use the relative path for splitting
+    }
+    // If rootPath wasn't provided or didn't match, displayPath remains the full filePath
+
+    const parts = displayPath.split("/");
+    const fileName = parts.pop() || displayPath; // Take last part or full path if no '/'
+    // Construct dirPath from the remaining parts of displayPath
+    const dirPath = parts.length > 0 ? parts.join("/") + "/" : ""; // Join remaining parts for dir
+
+    // Return the calculated parts, using fullPath for the title
+    return { fileName, dirPath, fullPath };
+  };
+
+  const { fileName, dirPath, fullPath } =
+    node.type === "File"
+      ? getFileParts(node.filePath, workspaceRoot)
+      : {
+          fileName: node.label,
+          dirPath: "",
+          fullPath: node.filePath || node.label,
+        };
+  // --- End Helper ---
+
   return (
     <li className={`tree-node ${getNodeTypeClass()}`}>
       <div
@@ -374,31 +419,71 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
             : undefined
         }
         style={{
-          paddingLeft: `${level * 18}px`,
-          cursor:
-            hasChildren &&
-            node.type !== "Hook" &&
-            node.type !== "UsedComponent" &&
-            node.type !== "Reference"
-              ? "pointer"
-              : "default",
-        }} // Indentation & cursor
+          paddingLeft: `${level * 18}px`, // Indentation handled here
+          // Remove cursor style from here, apply via CSS for better control
+        }}
       >
+        {/* Consistent structure: Icon, Count (if applicable), then Label */}
+        {getIcon()}
+        {hasChildren &&
+          !node.type.includes("Container") && ( // Show count if children exist and not a container
+            <span className="child-count">({node.children?.length || 0})</span>
+          )}
+
+        {/* Structure for File nodes */}
+        {node.type === "File" && (
+          <>
+            {/* File Name (Moved after Icon/Count) */}
+            <span
+              className="label-text file-name"
+              title={fullPath /* Show full path on hover */}
+            >
+              {fileName}
+            </span>
+            {/* Directory Path (aligned right) */}
+            <span
+              className="label-text dir-path"
+              title={fullPath /* Show full path on hover */}
+            >
+              {dirPath}
+            </span>
+          </>
+        )}
+
+        {/* Structure for Non-File nodes (Moved after Icon/Count) */}
+        {node.type !== "File" && (
+          <>
+            <span
+              className="label-text"
+              title={node.referenceSource || node.filePath}
+            >
+              {node.label}
+            </span>
+            {/* Child count moved to the front */}
+          </>
+        )}
+
+        {/* Commented out old structure
         {getIcon()}
         <span className="label-text" title={node.referenceSource}>
           {node.label}
         </span>
-        {/* Show child count if children exist */}
         {hasChildren && !node.type.includes("Container") && (
           <span className="child-count"> ({node.children?.length || 0})</span>
         )}
+        */}
         {/* Show file path only for File nodes */}
         {/* {node.type === 'File' && node.filePath && <span className="file-path"> ({node.filePath})</span>} */}
       </div>
       {hasChildren && isExpanded && (
         <ul className="tree-node-children">
           {node.children?.map((child) => (
-            <TreeNode key={child.id} node={child} level={level + 1} />
+            <TreeNode
+              key={child.id}
+              node={child}
+              level={level + 1}
+              workspaceRoot={workspaceRoot}
+            />
           ))}
         </ul>
       )}
@@ -407,7 +492,7 @@ const TreeNode: React.FC<{ node: TreeNodeData; level: number }> = ({
 };
 
 // --- Main TreeView Component ---
-const TreeView: React.FC<TreeViewProps> = ({ nodes, edges }) => {
+const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
   // Memoize the tree structure to avoid rebuilding on every render
   const treeData = useMemo(() => {
     console.log(
@@ -419,7 +504,7 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges }) => {
     const builtTree = buildTree(nodes, edges);
     console.log("[TreeView] Built tree structure:", builtTree);
     return builtTree;
-  }, [nodes, edges]);
+  }, [nodes, edges, workspaceRoot]);
 
   if (!nodes || nodes.length === 0) {
     return (
@@ -443,7 +528,12 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges }) => {
       {/* Removed H4 title, added in App.tsx */}
       <ul className="tree-view-root" style={{ paddingLeft: 0 }}>
         {treeData.map((rootNode) => (
-          <TreeNode key={rootNode.id} node={rootNode} level={0} />
+          <TreeNode
+            key={rootNode.id}
+            node={rootNode}
+            level={0}
+            workspaceRoot={workspaceRoot}
+          />
         ))}
       </ul>
     </div>
