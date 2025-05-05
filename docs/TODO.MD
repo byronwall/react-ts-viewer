@@ -37,6 +37,7 @@
 - Need to identify aliased deps as internal deps - almost there?
 - Find all refs is often finding the props interface instead of the actual component export
 - If we can programmatically trigger the find all refs, we could show the results in the tree view
+- `Jump to file` needs to jump to where the comp is referenced (currently jumps to the start of file?)
 
 ## Graph layout problems
 

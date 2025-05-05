@@ -185,7 +185,7 @@ html,
 
 .tree-view-panel ul {
   list-style: none;
-  padding-left: 15px;
+  /* padding-left: 15px; */
   margin: 0;
 }
 
