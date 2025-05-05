@@ -80,7 +80,7 @@ interface TreeNodeData {
     | "LibraryReferenceGroup"
     | "LibraryImport";
   children?: TreeNodeData[];
-  filePath?: string; // For File nodes
+  filePath?: string; // For File nodes, AND NOW for Component, Hook, UsedComponent
   referenceType?: "FileDep" | "LibDep"; // For Reference nodes
   referenceSource?: string; // Original source path for LibDep references or Library Groups
   dependencyType?: "internal" | "external"; // Added for UsedComponent
@@ -184,6 +184,11 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
           sortChildrenInternal(node.children); // Use internal sorter for imports
         }
         // No need to sort Component children here, done during creation
+        // --- START: Add sorting for children of potentially added containers ---
+        // else if (node.type === "HooksContainer" || node.type === "ReferencesContainer") {
+        //   sortChildrenInternal(node.children);
+        // }
+        // --- END: Add sorting for children of potentially added containers ---
       }
     });
   };
@@ -240,14 +245,15 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
         id: node.id,
         label: node.data.label || node.id,
         type: "Component",
+        filePath: filePath, // Add filePath for component
         children: [],
       };
+      // Add logging for component creation
+      console.log(
+        `[buildTree] Created Component node: ${componentData.label}, filePath: ${componentData.filePath}`
+      );
 
       // --- Aggregate Hooks, Used Components, and Library Dependencies ---
-      // const itemCounts = new Map<
-      //   string,
-      //   { type: "Hook" | "UsedComponent"; count: number; originalName: string }
-      // >();
       const childrenNodes: TreeNodeData[] = []; // To hold Hooks, UsedComponents, and Library Groups
 
       // Process Hooks
@@ -299,9 +305,14 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
           id: uniqueId,
           label: finalLabel,
           type: "Hook",
+          filePath: filePath, // Add parent component's filePath
           // Optionally store source separately if needed later
           // referenceSource: source,
         });
+        // Add logging for hook creation
+        console.log(
+          `[buildTree] Created Hook node: ${finalLabel}, filePath: ${filePath}`
+        );
       });
       // --- END: Create Hook Nodes with Source in Label ---
       // --- END: Aggregate Hooks ---
@@ -356,7 +367,12 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
           type: "UsedComponent",
           dependencyType: "internal", // Mark as internal
           referenceSource: source, // Store original source if needed
+          filePath: filePath, // Add parent component's filePath
         });
+        // Add logging for internal used component creation
+        console.log(
+          `[buildTree] Created Internal UsedComponent node: ${finalLabel}, filePath: ${filePath}`
+        );
       });
 
       // --- Process Library Dependencies (External Used Components) ---
@@ -426,7 +442,12 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
           type: "UsedComponent",
           dependencyType: "external", // Mark as external
           referenceSource: source, // Store original source if needed
+          filePath: filePath, // Add parent component's filePath
         });
+        // Add logging for external used component creation
+        console.log(
+          `[buildTree] Created External UsedComponent node: ${finalLabel}, filePath: ${filePath}`
+        );
       });
       // --- END: Separate Processing ---
 
@@ -866,6 +887,30 @@ const getAllExpandableNodeIds = (nodes: TreeNodeData[]): string[] => {
   return ids;
 };
 
+// --- START: Helper function to extract base symbol name ---
+const extractSymbolName = (
+  label: string,
+  type: TreeNodeData["type"]
+): string => {
+  if (!label) return ""; // Handle cases where label might be undefined/empty
+
+  if (type === "Hook") {
+    // Matches "Hook: ActualHookName" potentially followed by spaces, counts, sources etc.
+    const match = label.match(/^Hook:\s*([\w\d_]+)/);
+    // Null coalesce: use captured group or fallback to removing prefix
+    return match?.[1] ?? label.replace(/^Hook:\s*/, "");
+  } else if (type === "UsedComponent" || type === "Component") {
+    // Matches the first sequence of word characters (letters, numbers, underscore) at the start.
+    // This should capture the component name before counts or source annotations like "(x2)" or "(@ path)"
+    const match = label.match(/^([\w\d_]+)/);
+    // Null coalesce: use captured group or fallback to original label
+    return match?.[1] ?? label;
+  }
+  // For other types, assume the label is the name
+  return label;
+};
+// --- END: Helper function to extract base symbol name ---
+
 // --- Main TreeView Component ---
 const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
   const treeData = useMemo(() => {
@@ -933,32 +978,66 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
 
   // --- VS Code Interaction Handlers --- (Use global vscodeApi)
   const handleNodeDoubleClick = useCallback((node: TreeNodeData) => {
+    console.log("[TreeView] Double Clicked:", node); // Log node data
     if (
       node.type === "File" ||
       node.type === "Component" ||
-      node.type === "Hook"
+      node.type === "Hook" // Hooks can be double-clicked to open file
     ) {
       if (node.filePath) {
+        console.log(`[TreeView] Posting openFile: filePath=${node.filePath}`); // Log details
+        const verifiedFilePath = node.filePath as string; // Cast to string since we checked
         vscodeApi?.postMessage({
           command: "openFile",
-          payload: { filePath: node.filePath },
+          payload: { filePath: verifiedFilePath },
         });
+      } else {
+        console.warn(
+          "[TreeView] Double Click: Missing filePath for node:",
+          node
+        ); // Log warning
       }
+    } else {
+      console.log(
+        `[TreeView] Double Click: Node type "${node.type}" is not configured for opening file.`
+      );
     }
   }, []);
 
   const handleNodeFindReferencesClick = useCallback((node: TreeNodeData) => {
+    console.log("[TreeView] Find References Clicked:", node); // Log node data
     if (
       node.type === "Component" ||
       node.type === "Hook" ||
       node.type === "UsedComponent"
     ) {
       if (node.filePath) {
+        const symbolName = extractSymbolName(node.label, node.type);
+        if (!symbolName) {
+          console.warn(
+            "[TreeView] Find References: Could not extract symbol name from label:",
+            node.label
+          );
+          return; // Don't proceed if symbol name is empty
+        }
+        console.log(
+          `[TreeView] Posting findReferences: filePath=${node.filePath}, symbolName=${symbolName}`
+        ); // Log details
+        const verifiedFilePath = node.filePath as string; // Cast to string since we checked
         vscodeApi?.postMessage({
           command: "findReferences",
-          payload: { filePath: node.filePath, symbolName: node.label },
+          payload: { filePath: verifiedFilePath, symbolName: symbolName }, // Use extracted name
         });
+      } else {
+        console.warn(
+          "[TreeView] Find References: Missing filePath for node:",
+          node
+        ); // Log warning
       }
+    } else {
+      console.log(
+        `[TreeView] Find References: Node type "${node.type}" is not configured for finding references.`
+      );
     }
   }, []);
 

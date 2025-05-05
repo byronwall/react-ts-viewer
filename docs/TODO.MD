@@ -15,7 +15,7 @@
 - Allow user to select a new file with a fuzzy picker dialog (like how move file works)
 - Allow the side pane to be resized
 - Show the relative file path in the input box
-- Results are cleared when losing focus
+- Results are cleared when losing focus - or seem to be reloaded?
 
 ## Detailed react analysis
 
@@ -33,10 +33,10 @@
 - Want to see the source next to the comp or hook name - so `useState @ react`
 - Show the originating file at the top of structure view (want to focus on the one that triggered the analysis)
 - Revise structure view labels to show `H` or `C` for hooks and components and `F` for files -- do this in a way that is easily extendable to other types
-- Add a button to collapse all nodes - and another to expand all nodes
-- Allow the tree view to trigger `find all references` from VS Code
 - Need to style external deps different from internal deps
-- Need to identify aliased deps as internal deps
+- Need to identify aliased deps as internal deps - almost there?
+- Find all refs is often finding the props interface instead of the actual component export
+- If we can programmatically trigger the find all refs, we could show the results in the tree view
 
 ## Graph layout problems
 

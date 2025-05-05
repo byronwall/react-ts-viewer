@@ -70,7 +70,8 @@ export function registerAnalyzeFileCommand(
         // ---
 
         webviewPanel.webview.onDidReceiveMessage(
-          (message) => {
+          async (message) => {
+            console.log("[Extension] Received message:", message);
             switch (message.command) {
               case "runAnalysis":
                 // --- Assign targetPath here ---
@@ -167,6 +168,116 @@ export function registerAnalyzeFileCommand(
                   }
                 );
                 return;
+              case "openFile":
+                console.log("[Extension] Handling openFile:", message.payload);
+                if (message.payload?.filePath) {
+                  try {
+                    const uri = vscode.Uri.file(message.payload.filePath);
+                    console.log(
+                      "[Extension] Attempting to open file:",
+                      uri.fsPath
+                    );
+                    await vscode.window.showTextDocument(uri);
+                    console.log(
+                      "[Extension] Successfully opened file:",
+                      uri.fsPath
+                    );
+                  } catch (error) {
+                    console.error("[Extension] Error opening file:", error);
+                    vscode.window.showErrorMessage(
+                      `Error opening file: ${error}`
+                    );
+                  }
+                } else {
+                  console.warn(
+                    "[Extension] openFile command missing filePath payload."
+                  );
+                }
+                return;
+              case "findReferences":
+                console.log(
+                  "[Extension] Handling findReferences:",
+                  message.payload
+                );
+                if (message.payload?.filePath && message.payload?.symbolName) {
+                  try {
+                    const uri = vscode.Uri.file(message.payload.filePath);
+                    const symbolName = message.payload.symbolName;
+                    console.log(
+                      `[Extension] Attempting findReferences for symbol '${symbolName}' in file:`,
+                      uri.fsPath
+                    );
+
+                    // Open the document first
+                    const document = await vscode.workspace.openTextDocument(
+                      uri
+                    );
+                    await vscode.window.showTextDocument(document);
+
+                    // Find the first occurrence (simple approach)
+                    const text = document.getText();
+                    const firstOccurrenceOffset = text.indexOf(symbolName);
+                    let position = new vscode.Position(0, 0); // Default to start
+                    if (firstOccurrenceOffset !== -1) {
+                      position = document.positionAt(firstOccurrenceOffset);
+                      console.log(
+                        `[Extension] Found first occurrence of '${symbolName}' at line ${
+                          position.line + 1
+                        }, char ${position.character + 1}`
+                      );
+                    } else {
+                      console.warn(
+                        `[Extension] Could not find symbol '${symbolName}' in file ${uri.fsPath} for positioning.`
+                      );
+                    }
+
+                    // Move cursor to the approximate position AND show references
+                    const editor = vscode.window.activeTextEditor;
+                    if (editor && editor.document.uri.fsPath === uri.fsPath) {
+                      editor.selection = new vscode.Selection(
+                        position,
+                        position
+                      );
+                      editor.revealRange(new vscode.Range(position, position));
+                      console.log(
+                        "[Extension] Moved cursor to symbol position."
+                      );
+
+                      // Step 1: Get reference locations programmatically
+                      console.log(
+                        `[Extension] Executing references-view.findReferences`
+                      );
+                      await vscode.commands.executeCommand(
+                        "references-view.findReferences"
+                      );
+                      console.log(
+                        "[Extension] references-view.findReferences command executed."
+                      );
+                    } else {
+                      console.warn(
+                        "[Extension] Could not move cursor - active editor mismatch or unavailable."
+                      );
+                    }
+                  } catch (error) {
+                    console.error(
+                      "[Extension] Error finding references:",
+                      error
+                    );
+                    vscode.window.showErrorMessage(
+                      `Error finding references: ${error}`
+                    );
+                  }
+                } else {
+                  console.warn(
+                    "[Extension] findReferences command missing filePath or symbolName payload."
+                  );
+                }
+                return;
+              default:
+                console.warn(
+                  "[Extension] Received unknown command:",
+                  message.command
+                );
             }
           },
           undefined,
