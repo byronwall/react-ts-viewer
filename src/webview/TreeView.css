@@ -22,7 +22,7 @@
 .tree-node-label {
   display: flex;
   align-items: center;
-  padding: 3px 5px;
+  padding: 1px 5px;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -186,9 +186,43 @@
 
 /* Add style for UsedComponent nodes */
 .type-used-component .label-text {
-  color: #ce9178; /* VS Code orange/brown for strings/paths */
+  /* Example: Default color or style if neither internal/external matches */
+  /* color: #ce9178; */ /* Using specific styles below */
+}
+
+/* Style for INTERNAL UsedComponent nodes */
+.type-used-component.type-internal-dep .label-text {
+  color: #ce9178; /* VS Code orange/brown - same as FileDep */
+}
+
+/* Style for EXTERNAL UsedComponent nodes */
+.type-used-component.type-external-dep .label-text {
+  color: #dcdcaa; /* VS Code yellow - same as LibDep */
 }
 
 .type-reference.type-filedep .label-text {
   color: #ce9178; /* VS Code orange/brown for strings/paths */
+}
+
+/* Find References Button Styling */
+.find-references-button {
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.1s ease-in-out;
+  margin-left: auto; /* Push to the right */
+  padding: 0 3px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit; /* Use surrounding text color */
+  font-size: 1.2em; /* Make icon slightly larger */
+  line-height: 1; /* Align vertically */
+}
+
+.tree-node-label:hover .find-references-button {
+  opacity: 1; /* Show on hover of the label */
+}
+
+.find-references-button:hover {
+  /* Optional: Add slight emphasis on button hover */
+  color: var(--vscode-foreground); /* Use a standard VS Code color */
 }

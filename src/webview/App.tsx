@@ -37,23 +37,17 @@ import "reactflow/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "@reactflow/controls/dist/style.css";
 import "./App.css";
-import TreeView from "./TreeView"; // Import the TreeView component
+import TreeView, { vscodeApi } from "./TreeView"; // Import vscodeApi
 
 // Import custom node components
 import ComponentNodeDisplay from "./ComponentNodeDisplay";
 import FileNodeDisplay from "./FileNodeDisplay";
 import DependencyNodeDisplay from "./DependencyNodeDisplay";
 
-// Declare the global vscode object provided by the inline script in getWebviewContent.ts
-declare const vscode: {
-  getState: () => any;
-  setState: (state: any) => void;
-  postMessage: (message: any) => void;
-};
-
-// Declare the injected global variable
+// Declare the injected global variable (keep this for initial data)
 declare global {
   interface Window {
+    initialData?: { filePath?: string };
     initialWorkspaceRoot?: string;
   }
 }
@@ -317,38 +311,42 @@ const App: React.FC = () => {
     edges: Edge[];
   }>({ nodes: [], edges: [] });
 
-  // Load initial state and settings from VS Code state API
+  // --- Initialization Effect ---
   useEffect(() => {
-    const state = vscode.getState();
-    if (state?.filePath) {
-      console.log("[Webview] Restoring state with file path:", state.filePath);
-      setTargetFile(state.filePath);
-      // Read initial workspace root from global variable
-      if (window.initialWorkspaceRoot) {
-        console.log(
-          "[Webview] Reading initial workspace root:",
-          window.initialWorkspaceRoot
-        );
-        setWorkspaceRoot(window.initialWorkspaceRoot);
-      } else {
-        console.warn(
-          "[Webview] Initial workspace root not found on window object."
-        );
-      }
-      // Optionally restore previous settings if saved
-      // if (state.settings) setSettings(state.settings);
+    let initialFile = "";
+    // Read initial data from window object
+    if (window.initialData?.filePath) {
+      console.log(
+        "[Webview] Reading initial file path from window:",
+        window.initialData.filePath
+      );
+      initialFile = window.initialData.filePath;
+      setTargetFile(initialFile);
+    } else {
+      console.warn("[Webview] Initial file path not found on window object.");
     }
-    // Trigger analysis automatically if a file path is present on load
-    if (state?.filePath) {
-      runAnalysis(state.filePath, settings);
-    }
-  }, []);
 
-  // Update VS Code state when targetFile or settings change
-  useEffect(() => {
-    console.log("[Webview] Saving state:", { filePath: targetFile, settings });
-    vscode.setState({ filePath: targetFile, settings });
-  }, [targetFile, settings]);
+    if (window.initialWorkspaceRoot) {
+      console.log(
+        "[Webview] Reading initial workspace root from window:",
+        window.initialWorkspaceRoot
+      );
+      setWorkspaceRoot(window.initialWorkspaceRoot);
+    } else {
+      console.warn(
+        "[Webview] Initial workspace root not found on window object."
+      );
+    }
+
+    // Removed state restoration via vscode.getState()
+    // If state persistence is needed, it must be requested from the extension via postMessage
+
+    // Trigger analysis automatically if a file path was found
+    if (initialFile) {
+      // Need to pass initial settings directly as state might not be updated yet
+      runAnalysis(initialFile, defaultSettings);
+    }
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   // Function to send analysis request to extension
   const runAnalysis = useCallback(
@@ -362,13 +360,14 @@ const App: React.FC = () => {
         currentSettings
       );
       setIsLoading(true);
-      vscode.postMessage({
+      // Use the imported vscodeApi
+      vscodeApi.postMessage({
         command: "runAnalysis",
         filePath: filePath,
-        settings: currentSettings, // Send current settings
+        settings: currentSettings,
       });
     },
-    [] // No dependencies needed as vscode is stable
+    [] // Dependency array is correct, vscodeApi is stable module-level const
   );
 
   // Handle messages from the extension
@@ -633,9 +632,15 @@ const App: React.FC = () => {
           </div>
 
           {/* React Flow Canvas Area */}
-          <div style={{ flexGrow: 1, height: "100%" }}>
-            {/* Pass raw data and settings to the inner component */}
+          <div
+            className="right-panel"
+            style={{ flex: 1, position: "relative", overflow: "hidden" }}
+          >
+            {isLoading && (
+              <div className="loading-overlay">Analyzing... Please wait.</div>
+            )}
             <FlowCanvas
+              // Pass the raw data, FlowCanvas handles layout
               initialNodes={rawAnalysisData.nodes}
               initialEdges={rawAnalysisData.edges}
               settings={settings}

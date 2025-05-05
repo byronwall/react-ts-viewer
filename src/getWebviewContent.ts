@@ -55,13 +55,15 @@ export function getWebviewContent(
 			<link href="${styleUri}" rel="stylesheet">
 			<title>Dependency Analyzer</title>
 			<script nonce="${nonce}">
-				// Pass initial data to the webview
-				const vscode = acquireVsCodeApi();
+				// Pass initial data to the webview via window object
 				const initialData = {
 					filePath: ${initialFilePathJson} // Embed the JSON stringified path
 				};
-				vscode.setState(initialData);
-				// Inject workspace root using JSON.stringify for safe escaping
+				// Remove vscode.setState - state should be handled by the React app
+				// vscode.setState(initialData);
+
+				// Inject initial data and workspace root using JSON.stringify for safe escaping
+				window.initialData = initialData;
 				window.initialWorkspaceRoot = ${JSON.stringify(workspaceRoot)};
 			</script>
 		</head>

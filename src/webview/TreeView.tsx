@@ -1,4 +1,67 @@
-import React, { useState, useMemo } from "react";
+// --- Robust VS Code API Singleton --- START
+declare const acquireVsCodeApi: () => any;
+interface VsCodeApi {
+  postMessage(message: any): void;
+  // Add other methods you use if necessary
+}
+
+// Ensure window object is accessible and add a custom property type
+declare global {
+  interface Window {
+    vscodeApiInstance?: VsCodeApi;
+    vscodeApiAcquired?: boolean;
+  }
+}
+
+console.log(
+  "[TreeView Start] Script execution started. Checking window.vscodeApiAcquired:",
+  window.vscodeApiAcquired
+);
+
+// Acquire API only if it hasn't been acquired anywhere in this context
+if (!window.vscodeApiAcquired) {
+  console.log(
+    "[TreeView Start] window.vscodeApiAcquired is false. Setting flag and attempting acquisition."
+  );
+  window.vscodeApiAcquired = true; // Set flag immediately
+  try {
+    console.log("[TreeView Start] Calling acquireVsCodeApi()...");
+    window.vscodeApiInstance = acquireVsCodeApi();
+    console.log("[TreeView Start] acquireVsCodeApi() succeeded.");
+  } catch (error) {
+    console.error("[TreeView Start] Error during acquireVsCodeApi():", error);
+    // If acquisition fails here, maybe another script already acquired it despite the flag?
+    // Or maybe the function throws even on the first call in some race condition?
+    // Fallback: Try to use instance if it was set by another script during the error?
+    if (!window.vscodeApiInstance) {
+      console.error(
+        "[TreeView Start] API acquisition failed AND window.vscodeApiInstance is still not set!"
+      );
+      // Potentially throw or handle this case where API is unavailable
+    }
+  }
+} else {
+  console.log(
+    "[TreeView Start] window.vscodeApiAcquired was already true. Skipping acquisition."
+  );
+}
+
+// Assign the instance (now guaranteed to exist) from window to a const
+const vscodeApiInstance = window.vscodeApiInstance as VsCodeApi;
+
+// Export the acquired instance
+export const vscodeApi: VsCodeApi = vscodeApiInstance ?? {
+  postMessage: () => console.error("VSCode API not available!"),
+};
+
+if (!vscodeApiInstance) {
+  console.error(
+    "[TreeView Start] CRITICAL: window.vscodeApiInstance is null or undefined after singleton logic!"
+  );
+}
+// --- Robust VS Code API Singleton --- END
+
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Node, Edge } from "reactflow";
 import "./TreeView.css"; // Import CSS for styling
 
@@ -20,6 +83,7 @@ interface TreeNodeData {
   filePath?: string; // For File nodes
   referenceType?: "FileDep" | "LibDep"; // For Reference nodes
   referenceSource?: string; // Original source path for LibDep references or Library Groups
+  dependencyType?: "internal" | "external"; // Added for UsedComponent
 }
 
 interface TreeViewProps {
@@ -124,6 +188,16 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
     });
   };
   // --- END: Define Sorting Functions First ---
+
+  // --- Helper to check if a path is internal ---
+  const isInternalPath = (path: string | undefined): boolean => {
+    if (!path) return false;
+    // Simple check: starts with ./ ../ / or @/
+    return (
+      path.startsWith(".") || path.startsWith("/") || path.startsWith("@/")
+    );
+    // TODO: Potentially make this more robust using tsconfig aliases or workspace root
+  };
 
   // Pass 1: Create File nodes and Component nodes with aggregated children
   nodes.forEach((node) => {
@@ -232,62 +306,46 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
       // --- END: Create Hook Nodes with Source in Label ---
       // --- END: Aggregate Hooks ---
 
-      // Process File Dependencies (as Used Components)
+      // --- START: Separate Processing for File and Library Dependencies ---
       const fileDepsSource = node.data.fileDependencies || [];
-      // --- START: Combine File and Library Dependencies for Used Components ---
       const libraryDepsSource = node.data.libraryDependencies || [];
-      const allDepsSource = [...fileDepsSource, ...libraryDepsSource]; // Combine both arrays
-      // --- END: Combine File and Library Dependencies for Used Components ---
 
-      // --- START: Aggregate Used Components with Source ---
-      const usedCompCounts = new Map<string, number>();
-      if (Array.isArray(allDepsSource)) {
-        // Iterate over the combined list
-        allDepsSource.forEach((dep: any) => {
-          // Iterate over the combined list
+      // --- Process File Dependencies (Internal Used Components) ---
+      const internalCompCounts = new Map<
+        string,
+        { count: number; source?: string }
+      >();
+      if (Array.isArray(fileDepsSource)) {
+        fileDepsSource.forEach((dep: any) => {
           const compName = dep?.name;
-          if (compName) {
-            // const key = `Comp: ${compName}`;
-            // const current = itemCounts.get(key) || { type: "UsedComponent", count: 0, originalName: compName };
-            // itemCounts.set(key, { ...current, count: current.count + 1 });
-            // usedCompCounts.set(
-            //   compName,
-            //   (usedCompCounts.get(compName) || 0) + 1
-            // );
-            // --- START: Aggregate Used Components with Source ---
-            const source = dep?.source;
+          const source = dep?.source;
+          if (compName && isInternalPath(source)) {
+            // Check if internal
             const countKey = source ? `${compName}|${source}` : compName;
-            usedCompCounts.set(
-              countKey,
-              (usedCompCounts.get(countKey) || 0) + 1
-            );
-            // --- END: Aggregate Used Components with Source ---
+            const current = internalCompCounts.get(countKey) || {
+              count: 0,
+              source,
+            };
+            internalCompCounts.set(countKey, {
+              ...current,
+              count: current.count + 1,
+            });
           }
+          // We could potentially handle non-internal fileDeps here too if needed
         });
       }
-      // usedCompCounts.forEach((count, compName) => {
-      //   const label = `${compName}${count > 1 ? ` (x${count})` : ""}`;
-      //   childrenNodes.push({
-      //     id: `${node.id}-usedcomp-${compName.replace(/[^a-zA-Z0-9]/g, "_")}`,
-      //     label: label,
-      //     type: "UsedComponent",
-      //   });
-      // });
-      // --- START: Create Used Component Nodes with Source in Label ---
-      usedCompCounts.forEach((count, countKey) => {
-        const [compName, source] = countKey.split("|");
+      internalCompCounts.forEach((data, countKey) => {
+        const [compName] = countKey.split("|");
+        const { count, source } = data;
         const countSuffix = count > 1 ? ` (x${count})` : "";
-        // Clean up source path for display (remove ~/, etc.)
         const displaySource = source
-          ? source.replace(/^~\//, "").replace(/\.(tsx|jsx|js|ts)$/, "") // Basic cleanup
+          ? source.replace(/^~\//, "").replace(/\.(tsx|jsx|js|ts)$/, "")
           : undefined;
-        const sourceSuffix = displaySource ? ` (@ ${displaySource})` : ""; // Use '@' as separator
+        const sourceSuffix = displaySource ? ` (@ ${displaySource})` : "";
         const finalLabel = `${compName}${countSuffix}${sourceSuffix}`;
-
-        // Generate ID based on name and source for uniqueness
         const idSuffix =
-          (source ? `${compName}_${source}` : compName) || "unknown_comp"; // Fallback
-        const uniqueId = `${node.id}-usedcomp-${idSuffix.replace(
+          (source ? `${compName}_${source}` : compName) || "unknown_comp";
+        const uniqueId = `${node.id}-usedcomp-int-${idSuffix.replace(
           /[^a-zA-Z0-9]/g,
           "_"
         )}`;
@@ -296,13 +354,83 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
           id: uniqueId,
           label: finalLabel,
           type: "UsedComponent",
-          // referenceSource: source, // Store original source if needed
+          dependencyType: "internal", // Mark as internal
+          referenceSource: source, // Store original source if needed
         });
       });
-      // --- END: Create Used Component Nodes with Source in Label ---
-      // --- END: Aggregate Used Components ---
 
-      // Process Library Dependencies (Group them by source) - MOVED TO FILE LEVEL
+      // --- Process Library Dependencies (External Used Components) ---
+      // Also include any file deps that were NOT internal
+      const externalCompCounts = new Map<
+        string,
+        { count: number; source?: string }
+      >();
+      // Process remaining file deps
+      if (Array.isArray(fileDepsSource)) {
+        fileDepsSource.forEach((dep: any) => {
+          const compName = dep?.name;
+          const source = dep?.source;
+          if (compName && !isInternalPath(source)) {
+            // Check if NOT internal
+            const countKey = source ? `${compName}|${source}` : compName;
+            const current = externalCompCounts.get(countKey) || {
+              count: 0,
+              source,
+            };
+            externalCompCounts.set(countKey, {
+              ...current,
+              count: current.count + 1,
+            });
+          }
+        });
+      }
+      // Process library deps
+      if (Array.isArray(libraryDepsSource)) {
+        libraryDepsSource.forEach((dep: any) => {
+          const compName = dep?.name;
+          const source = dep?.source;
+          if (compName) {
+            // Assume all library deps are external
+            const countKey = source ? `${compName}|${source}` : compName;
+            const current = externalCompCounts.get(countKey) || {
+              count: 0,
+              source,
+            };
+            externalCompCounts.set(countKey, {
+              ...current,
+              count: current.count + 1,
+            });
+          }
+        });
+      }
+      externalCompCounts.forEach((data, countKey) => {
+        const [compName] = countKey.split("|");
+        const { count, source } = data;
+        const countSuffix = count > 1 ? ` (x${count})` : "";
+        // Display source differently? Maybe just the package name?
+        const displaySource = source // Simpler display for external
+          ? source.split("/")[0] // Often just the package name
+          : undefined;
+        const sourceSuffix = displaySource ? ` (@ ${displaySource})` : ""; // Keep '@' for now
+        const finalLabel = `${compName}${countSuffix}${sourceSuffix}`;
+        const idSuffix =
+          (source ? `${compName}_${source}` : compName) || "unknown_comp";
+        const uniqueId = `${node.id}-usedcomp-ext-${idSuffix.replace(
+          /[^a-zA-Z0-9]/g,
+          "_"
+        )}`;
+
+        childrenNodes.push({
+          id: uniqueId,
+          label: finalLabel,
+          type: "UsedComponent",
+          dependencyType: "external", // Mark as external
+          referenceSource: source, // Store original source if needed
+        });
+      });
+      // --- END: Separate Processing ---
+
+      // --- Process Library Dependencies (Group them by source) - MOVED TO FILE LEVEL ---
       // --- START: Restore population of fileLibraryDeps from Component data ---
       const libDepsSource = node.data.libraryDependencies || [];
       if (Array.isArray(libDepsSource)) {
@@ -458,67 +586,74 @@ const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
 const TreeNode: React.FC<{
   node: TreeNodeData;
   level: number;
+  expandedNodes: Record<string, boolean>;
+  onToggle: (nodeId: string) => void;
+  // Add props for the new handlers passed from TreeView
+  onNodeDoubleClick: (node: TreeNodeData) => void;
+  onNodeFindReferencesClick: (node: TreeNodeData) => void;
   workspaceRoot?: string;
-}> = ({ node, level, workspaceRoot }) => {
-  // Default expansion: Files expanded, Components collapsed, Library Groups collapsed
-  const initialExpanded = useMemo(() => {
-    if (level === 0) return true; // Expand files
-    // Keep containers expandable only if they have content (though likely unused now)
-    if (node.type.includes("Container"))
-      // Keep for safety, though likely unused
-      return node.children && node.children.length > 0;
-    // Files expanded, everything else collapsed by default
-    // return node.type === "File"; // Only expand files initially
-    return false; // Collapse all nested levels initially
-  }, [node, level]);
-
-  const [isExpanded, setIsExpanded] = useState(initialExpanded);
-
+}> = ({
+  node,
+  level,
+  expandedNodes,
+  onToggle,
+  onNodeDoubleClick,
+  onNodeFindReferencesClick,
+  workspaceRoot,
+}) => {
+  const isCurrentNodeExpanded = expandedNodes[node.id] ?? false;
   const hasChildren = node.children && node.children.length > 0;
 
-  // --- DEBUGGING --- Add console log here (kept commented)
-  /*
-  console.log(
-    `[TreeNode] Rendering node: ${node.label} (ID: ${node.id}), Type: ${node.type}, Level: ${level}, HasChildren: ${hasChildren}, IsExpanded: ${isExpanded}`
-  );
-  if (hasChildren) {
-    console.log(`[TreeNode] Children of ${node.label}:`, node.children);
-  }
-  */
-  // --- END DEBUGGING ---
+  // Remove the direct VSCode API handlers from TreeNode
+  // const handleDoubleClick = useCallback(() => { ... });
+  // const handleFindReferencesClick = useCallback((event) => { ... });
 
-  const handleToggle = (event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent toggling parent nodes
-    // Allow toggle only for types designed to be containers/expandable
-    if (
-      hasChildren &&
-      (node.type === "File" ||
-        node.type === "Component" ||
-        node.type === "LibraryReferenceGroup" || // Allow toggling Library Group
-        node.type.includes("Container")) // Keep for safety
-    ) {
-      setIsExpanded(!isExpanded);
-    }
-  };
+  // --- Internal Handlers to call props ---
+  const handleInternalDoubleClick = useCallback(() => {
+    onNodeDoubleClick(node);
+  }, [node, onNodeDoubleClick]);
+
+  const handleInternalFindReferencesClick = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation(); // Still need to stop propagation here
+      onNodeFindReferencesClick(node);
+    },
+    [node, onNodeFindReferencesClick]
+  );
+
+  const handleToggle = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation(); // Prevent toggling parent nodes
+      const canToggle =
+        hasChildren &&
+        (node.type === "File" ||
+          node.type === "Component" ||
+          node.type === "LibraryReferenceGroup" || // Allow toggling Library Group
+          node.type.includes("Container")); // Keep for safety
+
+      if (canToggle) {
+        onToggle(node.id);
+      }
+    },
+    [node.id, node.type, hasChildren, onToggle]
+  );
 
   const getIcon = () => {
-    // Show expand/collapse icon for File, Component, and LibraryReferenceGroup if they have children
     const canExpand =
       hasChildren &&
       (node.type === "File" ||
         node.type === "Component" ||
-        node.type === "LibraryReferenceGroup"); // Added LibraryReferenceGroup
+        node.type === "LibraryReferenceGroup");
 
     if (canExpand) {
       return (
         <span
           className={`tree-icon expand-collapse ${
-            isExpanded ? "expanded" : "collapsed"
+            isCurrentNodeExpanded ? "expanded" : "collapsed"
           }`}
         ></span>
       );
     }
-    // Placeholder for alignment or specific type icon for leaf nodes (Hook, UsedComponent, LibraryImport)
     return <span className="tree-icon type-indicator"></span>;
   };
 
@@ -530,8 +665,14 @@ const TreeNode: React.FC<{
         return "type-component";
       case "Hook":
         return "type-hook";
-      case "UsedComponent": // Added style for UsedComponent
-        return "type-used-component";
+      case "UsedComponent":
+        // Add specific class based on dependencyType
+        if (node.dependencyType === "internal") {
+          return "type-used-component type-internal-dep";
+        } else if (node.dependencyType === "external") {
+          return "type-used-component type-external-dep";
+        }
+        return "type-used-component"; // Fallback
       case "LibraryReferenceGroup": // Style for the library group
         return "type-library-group";
       case "LibraryImport": // Style for the individual import
@@ -596,24 +737,23 @@ const TreeNode: React.FC<{
     hasChildren &&
     (node.type === "File" ||
       node.type === "Component" ||
-      node.type === "LibraryReferenceGroup"); // Added LibraryReferenceGroup
+      node.type === "LibraryReferenceGroup");
 
   return (
-    <li className={`tree-node ${getNodeTypeClass()}`}>
+    <li
+      className={`tree-node ${getNodeTypeClass()}`}
+      // Use the new internal handler
+      onDoubleClick={handleInternalDoubleClick}
+    >
       <div
-        // Add clickable class only if the node can be toggled
         className={`tree-node-label ${isToggleable ? "clickable" : ""}`}
-        // Use onClick only if the node *can* be toggled
         onClick={isToggleable ? handleToggle : undefined}
-        style={{
-          paddingLeft: `${level * 18}px`, // Indentation handled here
-        }}
+        style={{ paddingLeft: `${level * 18}px` }}
       >
-        {/* Consistent structure: Icon, Count (if applicable), then Label */}
         {getIcon()}
 
         {/* Show count for Component and LibraryReferenceGroup if they have children */}
-        {(node.type === "Component" || node.type === "LibraryReferenceGroup") && // Added LibraryReferenceGroup
+        {(node.type === "Component" || node.type === "LibraryReferenceGroup") &&
           hasChildren && (
             <span className="child-count">({node.children?.length || 0})</span>
           )}
@@ -658,19 +798,41 @@ const TreeNode: React.FC<{
           </>
         )}
 
-        {/* Commented out old structure
-        // ... old structure ...
-        */}
-        {/* Show file path only for File nodes (commented out) */}
-        {/* {node.type === 'File' && node.filePath && <span className="file-path"> ({node.filePath})</span>} */}
+        {/* Find References Button uses the new internal handler */}
+        {(node.type === "Component" ||
+          node.type === "Hook" ||
+          node.type === "UsedComponent") &&
+          node.filePath && (
+            <button
+              className="find-references-button"
+              title={`Find All References to ${node.label}`}
+              onClick={handleInternalFindReferencesClick}
+              style={{
+                marginLeft: "auto",
+                padding: "0 3px",
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+                color: "inherit",
+                fontSize: "1.2em",
+              }}
+            >
+              &nbsp;⊙ {/* Example icon */}
+            </button>
+          )}
       </div>
-      {hasChildren && isExpanded && (
+      {hasChildren && isCurrentNodeExpanded && (
         <ul className="tree-node-children">
           {node.children?.map((child) => (
             <TreeNode
               key={child.id}
               node={child}
               level={level + 1}
+              expandedNodes={expandedNodes}
+              onToggle={onToggle}
+              // Pass the handlers down recursively
+              onNodeDoubleClick={onNodeDoubleClick}
+              onNodeFindReferencesClick={onNodeFindReferencesClick}
               workspaceRoot={workspaceRoot}
             />
           ))}
@@ -680,66 +842,165 @@ const TreeNode: React.FC<{
   );
 };
 
+// --- Helper function to get all expandable node IDs ---
+const getAllExpandableNodeIds = (nodes: TreeNodeData[]): string[] => {
+  let ids: string[] = [];
+  nodes.forEach((node) => {
+    const hasChildren = node.children && node.children.length > 0;
+    const canExpand =
+      hasChildren &&
+      (node.type === "File" ||
+        node.type === "Component" ||
+        node.type === "LibraryReferenceGroup");
+    if (canExpand) {
+      ids.push(node.id);
+      if (node.children) {
+        ids = ids.concat(getAllExpandableNodeIds(node.children));
+      }
+    }
+    // Also collect children even if parent is not expandable (e.g., Containers if they existed)
+    else if (node.children) {
+      ids = ids.concat(getAllExpandableNodeIds(node.children));
+    }
+  });
+  return ids;
+};
+
 // --- Main TreeView Component ---
 const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
-  // Memoize the tree structure to avoid rebuilding on every render
   const treeData = useMemo(() => {
     console.log(
       "[TreeView] Building tree structure with nodes:",
-      // nodes, // Avoid logging potentially large nodes array frequently
       `(${nodes?.length || 0} nodes)`,
       "edges:",
-      // edges, // Avoid logging potentially large edges array frequently
       `(${edges?.length || 0} edges)`
     );
     const builtTree = buildTree(nodes, edges);
     console.log("[TreeView] Built tree structure:", builtTree); // Log the final structure
     return builtTree;
-    // Add workspaceRoot to dependency array if buildTree logic depends on it (it currently doesn't directly, but getFileParts uses it later)
-  }, [nodes, edges /*, workspaceRoot */]); // Keep workspaceRoot out for now unless buildTree itself uses it
+  }, [nodes, edges]);
+
+  // --- State for Expansion ---
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  // Effect to set initial expansion state (only top-level files)
+  useEffect(() => {
+    const initialExpansion: Record<string, boolean> = {};
+    treeData.forEach((node) => {
+      if (node.type === "File") {
+        // Expand only top-level files initially
+        const hasChildren = node.children && node.children.length > 0;
+        if (hasChildren) {
+          // Only mark as expandable if it has children
+          initialExpansion[node.id] = true;
+        }
+      }
+      // Recursively check children? No, keep initial expansion shallow for performance.
+    });
+    setExpandedNodes(initialExpansion);
+  }, [treeData]); // Re-run when treeData changes
+
+  // --- Handlers for Expansion ---
+  const toggleNode = useCallback((nodeId: string) => {
+    setExpandedNodes((prev) => ({ ...prev, [nodeId]: !prev[nodeId] }));
+  }, []);
+
+  const expandAll = useCallback(() => {
+    const allIds = getAllExpandableNodeIds(treeData);
+    const nextState: Record<string, boolean> = {};
+    allIds.forEach((id) => {
+      nextState[id] = true;
+    });
+    setExpandedNodes(nextState);
+  }, [treeData]);
+
+  const collapseAll = useCallback(
+    () => {
+      // We can just set to empty object, as default is collapsed
+      setExpandedNodes({});
+      // Alternatively, explicitly set all known expandable nodes to false:
+      // const allIds = getAllExpandableNodeIds(treeData);
+      // const nextState: Record<string, boolean> = {};
+      // allIds.forEach(id => { nextState[id] = false; });
+      // setExpandedNodes(nextState);
+    },
+    [
+      /*treeData*/
+    ]
+  ); // treeData dependency removed for empty object approach
+
+  // --- VS Code Interaction Handlers --- (Use global vscodeApi)
+  const handleNodeDoubleClick = useCallback((node: TreeNodeData) => {
+    if (
+      node.type === "File" ||
+      node.type === "Component" ||
+      node.type === "Hook"
+    ) {
+      if (node.filePath) {
+        vscodeApi?.postMessage({
+          command: "openFile",
+          payload: { filePath: node.filePath },
+        });
+      }
+    }
+  }, []);
+
+  const handleNodeFindReferencesClick = useCallback((node: TreeNodeData) => {
+    if (
+      node.type === "Component" ||
+      node.type === "Hook" ||
+      node.type === "UsedComponent"
+    ) {
+      if (node.filePath) {
+        vscodeApi?.postMessage({
+          command: "findReferences",
+          payload: { filePath: node.filePath, symbolName: node.label },
+        });
+      }
+    }
+  }, []);
 
   if (!nodes || nodes.length === 0) {
-    return (
-      <div className="tree-view-panel empty">
-        No data received yet. Run analysis.
-      </div>
-    );
+    return <div className="tree-view-panel empty">No data to display.</div>;
   }
 
-  // Check treeData *after* building it
-  if (treeData.length === 0) {
-    // Check if there were nodes but the tree is empty (e.g., only non-file/component nodes processed into nothing)
-    const hasPotentialData = nodes.some(
-      (n) => n.data?.type === "File" || n.data?.type === "Component"
-    );
-    if (!hasPotentialData && nodes.length > 0) {
-      // If input nodes exist but none are Files or Components
-      return (
-        <div className="tree-view-panel empty">
-          Data contains nodes, but no Files or Components to display in the
-          tree.
-        </div>
-      );
-    }
-    // If there were Files/Components but tree is still empty, it's an error/unexpected case
+  if (!treeData || treeData.length === 0) {
+    console.log("[TreeView] No tree data could be built.");
     return (
-      <div className="tree-view-panel empty">
-        No hierarchical structure could be built from the provided
-        File/Component data. Check console for details.
-      </div>
+      <div className="tree-view-panel empty">Could not build tree view.</div>
     );
   }
 
   return (
     <div className="tree-view-panel">
-      {/* Removed H4 title, added in App.tsx */}
-      <ul className="tree-view-root" style={{ paddingLeft: 0 }}>
+      {/* Add Collapse/Expand Buttons */}
+      <div
+        className="tree-view-controls"
+        style={{
+          padding: "4px 5px",
+          borderBottom: "1px solid var(--vscode-editorGroupHeader-tabsBorder)",
+          marginBottom: "4px",
+        }}
+      >
+        <button onClick={expandAll} style={{ marginRight: "5px" }}>
+          Expand All
+        </button>
+        <button onClick={collapseAll}>Collapse All</button>
+      </div>
+
+      <ul className="tree-view-root">
         {treeData.map((rootNode) => (
           <TreeNode
             key={rootNode.id}
             node={rootNode}
             level={0}
-            workspaceRoot={workspaceRoot} // Pass down workspaceRoot
+            expandedNodes={expandedNodes}
+            onToggle={toggleNode}
+            onNodeDoubleClick={handleNodeDoubleClick}
+            onNodeFindReferencesClick={handleNodeFindReferencesClick}
+            workspaceRoot={workspaceRoot}
           />
         ))}
       </ul>
