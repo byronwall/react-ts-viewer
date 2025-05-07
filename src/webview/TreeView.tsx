@@ -62,32 +62,31 @@ if (!vscodeApiInstance) {
 // --- Robust VS Code API Singleton --- END
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Node, Edge } from "reactflow";
+import { Node, Edge, NodeProps } from "reactflow";
 import "./TreeView.css"; // Import CSS for styling
 
-// Interface for the structured tree data
+// --- TreeNodeData Interface Update ---
 interface TreeNodeData {
   id: string;
   label: string;
+  // New type system based on graph.md
   type:
-    | "File"
-    | "Component"
-    | "Hook"
-    | "UsedComponent"
-    | "Reference"
-    | "HooksContainer"
-    | "ReferencesContainer"
-    | "LibraryReferenceGroup"
-    | "LibraryImport";
+    | "FileContainer" // Was "File"
+    | "LibraryContainer" // Was "LibraryReferenceGroup"
+    | "ExportedItem" // Replaces "Component", "Hook"
+    | "LibraryImportItem"; // Was "LibraryImport", now a child of LibraryContainer
+  // Obsolete types: "UsedComponent", "Reference", "HooksContainer", "ReferencesContainer"
+
+  actualType?: string; // For ExportedItem, e.g., "Component", "Hook", "Function", "Variable"
   children?: TreeNodeData[];
-  filePath?: string; // For File nodes, AND NOW for Component, Hook, UsedComponent
-  referenceType?: "FileDep" | "LibDep"; // For Reference nodes
-  referenceSource?: string; // Original source path for LibDep references or Library Groups
-  dependencyType?: "internal" | "external"; // Added for UsedComponent
+  filePath?: string; // For FileContainer, ExportedItem
+  referenceSource?: string; // For LibraryContainer (e.g., package name), LibraryImportItem
+  parentNodeId?: string; // Temporary field to help build hierarchy from flat list
+  // dependencyType is obsolete
 }
 
 interface TreeViewProps {
-  nodes: Node[];
+  nodes: Node[]; // Changed from ReactFlowNode[] to Node[]
   edges: Edge[];
   workspaceRoot?: string; // Added: Optional workspace root path
 }
@@ -96,511 +95,281 @@ interface TreeViewProps {
 
 // Function to build the hierarchical structure
 const buildTree = (nodes: Node[], edges: Edge[]): TreeNodeData[] => {
-  const fileMap = new Map<string, TreeNodeData>();
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-  const componentNodeMap = new Map<string, TreeNodeData>();
-  // --- START: Add Map for File-Level Library Dependencies ---
-  const fileLibraryDeps = new Map<string, Map<string, Set<string>>>(); // Map<filePath, Map<source, Set<importName>>>
-  // --- END: Add Map for File-Level Library Dependencies ---
+  console.log(
+    "[TreeView buildTree] Starting with raw graph nodes:",
+    nodes.length,
+    "nodes,",
+    edges.length,
+    "edges."
+    // nodes.map((n) => ({ // Reduced verbosity
+    //   id: n.id,
+    //   type: n.type,
+    //   data: n.data,
+    //   parentNode: n.parentNode,
+    // }))
+  );
+  if (!nodes || nodes.length === 0) {
+    console.warn("[TreeView buildTree] No raw nodes provided to buildTree.");
+    return [];
+  }
 
-  // --- START: Define Sorting Functions First ---
-  // Internal sorter for component children (Hooks -> Used -> LibGroups)
-  const sortChildrenInternal = (children: TreeNodeData[]) => {
-    children.sort((a, b) => {
-      const typeOrder: { [key in TreeNodeData["type"]]?: number } = {
-        Hook: 0,
-        UsedComponent: 1,
-        LibraryReferenceGroup: 2,
-        LibraryImport: 3,
-        Component: 90,
-        Reference: 91,
-        HooksContainer: 92,
-        ReferencesContainer: 93,
-        File: 99,
-      };
-      const orderA = typeOrder[a.type] ?? 99;
-      const orderB = typeOrder[b.type] ?? 99;
-      if (orderA !== orderB) return orderA - orderB;
-      return a.label.localeCompare(b.label);
-    });
-    children.forEach((child) => {
-      if (child.type === "LibraryReferenceGroup" && child.children) {
-        sortChildrenInternal(child.children);
-      }
-    });
-  };
+  const treeNodeMap = new Map<string, TreeNodeData>();
+  const rootTreeNodes: TreeNodeData[] = [];
 
-  // Sorter for top-level (File nodes) and their direct children (Components & LibGroups)
-  const sortTopLevelAndComponents = (nodesToSort: TreeNodeData[]) => {
-    nodesToSort.sort((a, b) => {
-      if (a.type === "File" && b.type !== "File") return -1;
-      if (a.type !== "File" && b.type === "File") return 1;
-      if (a.type === "File" && b.type === "File") {
-        return (a.filePath || "").localeCompare(b.filePath || "");
-      }
-      // --- START: Update Sorting for File Children ---
-      const typeOrder: { [key in TreeNodeData["type"]]?: number } = {
-        Component: 0,
-        LibraryReferenceGroup: 1,
-        // Add other potential direct file children types here if needed
-        Hook: 90, // Keep other types lower priority
-        UsedComponent: 91,
-        LibraryImport: 92,
-        Reference: 93,
-        HooksContainer: 94,
-        ReferencesContainer: 95,
-        File: 99,
-      };
-      const orderA = typeOrder[a.type] ?? 99;
-      const orderB = typeOrder[b.type] ?? 99;
-      if (orderA !== orderB) return orderA - orderB;
-      // --- END: Update Sorting for File Children ---
+  // Pass 1: Transform React Flow nodes to initial TreeNodeData items
+  console.log(
+    "[TreeView buildTree] Pass 1: Transforming raw nodes. Node count:",
+    nodes.length
+  );
+  nodes.forEach((rawNode) => {
+    let treeNodeType: TreeNodeData["type"] | undefined;
+    let actualType: string | undefined;
+    let decisionType: string | undefined;
 
-      // Sort Components alphabetically by label
-      if (a.type === "Component" && b.type === "Component") {
-        return a.label.localeCompare(b.label);
-      }
-      // Sort Library Groups alphabetically by source (label)
+    // Priority 1: Use data.type if it's a non-empty string
+    if (
+      typeof rawNode.data?.type === "string" &&
+      rawNode.data.type.length > 0
+    ) {
+      decisionType = rawNode.data.type; // e.g., "File", "Component", "HookUsage"
+      // Add a log if rawNode.type (ReactFlow type) was unusual or different
       if (
-        a.type === "LibraryReferenceGroup" &&
-        b.type === "LibraryReferenceGroup"
+        rawNode.type &&
+        rawNode.type !== "group" &&
+        rawNode.type !== decisionType &&
+        rawNode.type !== "undefined"
       ) {
-        return a.label.localeCompare(b.label); // Label is the source name
+        console.log(
+          `[TreeView buildTree] Using data.type "${decisionType}" for node ${rawNode.id}. (rawNode.type was "${rawNode.type}")`
+        );
+      } else if (rawNode.type === "undefined") {
+        console.log(
+          `[TreeView buildTree] Using data.type "${decisionType}" for node ${rawNode.id}. (rawNode.type was the string 'undefined')`
+        );
       }
-      // Fallback sort by label for any other types
-      return a.label.localeCompare(b.label);
-    });
-    nodesToSort.forEach((node) => {
-      if (node.children) {
-        if (node.type === "File") {
-          // Sort children of File nodes (Components, LibraryGroups)
-          sortTopLevelAndComponents(node.children);
-        } else if (node.type === "Component") {
-          // Sort children of Component nodes (Hooks, UsedComponents)
-          // Library groups are no longer here
-          sortChildrenInternal(node.children);
-        } else if (node.type === "LibraryReferenceGroup") {
-          // Sort children of Library Group nodes (LibraryImports)
-          sortChildrenInternal(node.children); // Use internal sorter for imports
-        }
-        // No need to sort Component children here, done during creation
-        // --- START: Add sorting for children of potentially added containers ---
-        // else if (node.type === "HooksContainer" || node.type === "ReferencesContainer") {
-        //   sortChildrenInternal(node.children);
-        // }
-        // --- END: Add sorting for children of potentially added containers ---
-      }
-    });
-  };
-  // --- END: Define Sorting Functions First ---
-
-  // --- Helper to check if a path is internal ---
-  const isInternalPath = (path: string | undefined): boolean => {
-    if (!path) return false;
-    // Simple check: starts with ./ ../ / or @/
-    return (
-      path.startsWith(".") || path.startsWith("/") || path.startsWith("@/")
-    );
-    // TODO: Potentially make this more robust using tsconfig aliases or workspace root
-  };
-
-  // Pass 1: Create File nodes and Component nodes with aggregated children
-  nodes.forEach((node) => {
-    // --- DEBUGGING --- (Removing logs)
-    // console.log(`[buildTree Pass 1 Loop] Processing node ID: ${node.id}, Type: ${node.type}, Data:`, node.data);
-    const filePath = node.data?.filePath;
-    // console.log(`  >> Extracted filePath: ${filePath}`);
-    // --- END DEBUGGING ---
-
-    // Create File nodes if they don't exist
-    if (filePath && !fileMap.has(filePath)) {
-      const fileNodeFromList = nodes.find(
-        // Find the actual File node from the input `nodes` list
-        // Using `filePath` as a key is risky if multiple nodes share it
-        // Let's find the node with matching filePath AND correct data.type
-        (n) => n.data?.filePath === filePath && n.data?.type === "File"
-      );
-      // Use the found file node's data if available, otherwise fallback
-      const fileLabel =
-        fileNodeFromList?.data?.label || filePath.split("/").pop() || filePath;
-      const fileNodeData: TreeNodeData = {
-        id: `file-${filePath}`,
-        label: fileLabel,
-        type: "File",
-        filePath: filePath,
-        children: [], // Initialize children
-      };
-
-      // --- START: Remove Aggregated Library Dependencies from File Level ---
-      // Removed code block that added LibRefs directly to File node children
-      // Library dependencies will be added after processing all components
-      // --- END: Remove Aggregated Library Dependencies from File Level ---
-
-      fileMap.set(filePath, fileNodeData);
     }
-
-    // Process Component nodes
-    if (node.data?.type === "Component" && filePath) {
-      const componentData: TreeNodeData = {
-        id: node.id,
-        label: node.data.label || node.id,
-        type: "Component",
-        filePath: filePath, // Add filePath for component
-        children: [],
-      };
-      // Add logging for component creation
+    // Priority 2: Fallback to rawNode.type if data.type is missing, and rawNode.type is meaningful
+    else if (
+      typeof rawNode.type === "string" &&
+      rawNode.type.length > 0 &&
+      rawNode.type !== "group" &&
+      rawNode.type !== "undefined"
+    ) {
+      decisionType = rawNode.type; // This might be a direct semantic type or a ReactFlow node type
       console.log(
-        `[buildTree] Created Component node: ${componentData.label}, filePath: ${componentData.filePath}`
+        `[TreeView buildTree] Using rawNode.type "${decisionType}" as decisionType for node ${rawNode.id} (data.type was missing or invalid).`
       );
+    }
+    // Special handling if rawNode.type is "group" and data.type was missing (should ideally not happen if "group" implies data.type)
+    else if (rawNode.type === "group") {
+      console.warn(
+        `[TreeView buildTree] Node ${rawNode.id} is type "group" but rawNode.data.type is missing/invalid. Cannot determine decisionType.`
+      );
+      return; // Skip
+    }
+    // If no valid type could be determined
+    else {
+      console.warn(
+        `[TreeView buildTree] Could not determine a valid decisionType for node ${rawNode.id}. rawNode.type: "${rawNode.type}", rawNode.data.type: "${rawNode.data?.type}". Skipping node.`
+      );
+      return; // Skip this node
+    }
 
-      // --- Aggregate Hooks, Used Components, and Library Dependencies ---
-      const childrenNodes: TreeNodeData[] = []; // To hold Hooks, UsedComponents, and Library Groups
-
-      // Process Hooks
-      const hooksSource = node.data.hooksUsed || [];
-      // --- START: Aggregate Hooks with Source ---
-      const hookCounts = new Map<string, number>();
-      if (Array.isArray(hooksSource)) {
-        hooksSource.forEach((hook: any) => {
-          const hookName = typeof hook === "string" ? hook : hook?.hookName;
-          if (hookName && hookName !== "unknown hook") {
-            // Generate a key that includes the source if available, otherwise just the name
-            // We'll store the source separately for label generation
-            // hookCounts.set(hookName, (hookCounts.get(hookName) || 0) + 1);
-            // --- START: Aggregate Hooks with Source ---
-            const source = typeof hook === "object" ? hook?.source : undefined;
-            // Use a combined key for counting to handle hooks with the same name but different sources (if possible)
-            const countKey = source ? `${hookName}|${source}` : hookName;
-            hookCounts.set(countKey, (hookCounts.get(countKey) || 0) + 1);
-            // --- END: Aggregate Hooks with Source ---
-          }
-        });
-      }
-      // hookCounts.forEach((count, hookName) => {
-      //   const label = `Hook: ${hookName}${count > 1 ? ` (x${count})` : ""}`;
-      //   childrenNodes.push({
-      //     id: `${node.id}-hook-${hookName.replace(/[^a-zA-Z0-9]/g, "_")}`,
-      //     label: label,
-      //     type: "Hook",
-      //   });
-      // });
-      // --- START: Create Hook Nodes with Source in Label ---
-      hookCounts.forEach((count, countKey) => {
-        const [hookName, source] = countKey.split("|"); // Source will be undefined if not present in key
-        const baseLabel = `Hook: ${hookName}`;
-        const countSuffix = count > 1 ? ` (x${count})` : "";
-        // Append source only if it exists
-        const sourceSuffix = source ? ` (${source})` : "";
-        const finalLabel = `${baseLabel}${countSuffix}${sourceSuffix}`;
-
-        // Generate ID based on name and source for uniqueness
-        const idSuffix =
-          (source ? `${hookName}_${source}` : hookName) || "unknown_hook"; // Fallback
-        const uniqueId = `${node.id}-hook-${idSuffix.replace(
-          /[^a-zA-Z0-9]/g,
-          "_"
-        )}`;
-
-        childrenNodes.push({
-          id: uniqueId,
-          label: finalLabel,
-          type: "Hook",
-          filePath: filePath, // Add parent component's filePath
-          // Optionally store source separately if needed later
-          // referenceSource: source,
-        });
-        // Add logging for hook creation
-        console.log(
-          `[buildTree] Created Hook node: ${finalLabel}, filePath: ${filePath}`
+    // New switch logic based on the determined decisionType
+    switch (decisionType) {
+      case "File":
+        treeNodeType = "FileContainer";
+        break;
+      case "LibraryReferenceGroup":
+        treeNodeType = "LibraryContainer";
+        break;
+      case "Component":
+      case "Hook":
+      case "Function":
+      case "Variable":
+        treeNodeType = "ExportedItem";
+        actualType = decisionType;
+        break;
+      case "HookUsage": // Handling for HookUsage
+        treeNodeType = "ExportedItem"; // Display as an item, parent should be a Component
+        actualType = "HookUsage"; // actualType distinguishes it
+        // The label for HookUsage nodes is often the hook's name from rawNode.data.label or rawNode.data.hookName
+        break;
+      case "LibraryImport":
+        treeNodeType = "LibraryImportItem";
+        actualType = rawNode.data?.label || decisionType;
+        break;
+      // Fallback cases for direct ReactFlow node types if decisionType ended up being one of these
+      // (e.g. if rawNode.data.type was missing but rawNode.type was a ReactFlow type)
+      case "FileContainerNode":
+        treeNodeType = "FileContainer";
+        console.warn(
+          `[TreeView buildTree] Node ${rawNode.id} resolved to ReactFlow type "FileContainerNode" as decisionType.`
         );
-      });
-      // --- END: Create Hook Nodes with Source in Label ---
-      // --- END: Aggregate Hooks ---
-
-      // --- START: Separate Processing for File and Library Dependencies ---
-      const fileDepsSource = node.data.fileDependencies || [];
-      const libraryDepsSource = node.data.libraryDependencies || [];
-
-      // --- Process File Dependencies (Internal Used Components) ---
-      const internalCompCounts = new Map<
-        string,
-        { count: number; source?: string }
-      >();
-      if (Array.isArray(fileDepsSource)) {
-        fileDepsSource.forEach((dep: any) => {
-          const compName = dep?.name;
-          const source = dep?.source;
-          if (compName && isInternalPath(source)) {
-            // Check if internal
-            const countKey = source ? `${compName}|${source}` : compName;
-            const current = internalCompCounts.get(countKey) || {
-              count: 0,
-              source,
-            };
-            internalCompCounts.set(countKey, {
-              ...current,
-              count: current.count + 1,
-            });
-          }
-          // We could potentially handle non-internal fileDeps here too if needed
-        });
-      }
-      internalCompCounts.forEach((data, countKey) => {
-        const [compName] = countKey.split("|");
-        const { count, source } = data;
-        const countSuffix = count > 1 ? ` (x${count})` : "";
-        const displaySource = source
-          ? source.replace(/^~\//, "").replace(/\.(tsx|jsx|js|ts)$/, "")
-          : undefined;
-        const sourceSuffix = displaySource ? ` (@ ${displaySource})` : "";
-        const finalLabel = `${compName}${countSuffix}${sourceSuffix}`;
-        const idSuffix =
-          (source ? `${compName}_${source}` : compName) || "unknown_comp";
-        const uniqueId = `${node.id}-usedcomp-int-${idSuffix.replace(
-          /[^a-zA-Z0-9]/g,
-          "_"
-        )}`;
-
-        childrenNodes.push({
-          id: uniqueId,
-          label: finalLabel,
-          type: "UsedComponent",
-          dependencyType: "internal", // Mark as internal
-          referenceSource: source, // Store original source if needed
-          filePath: filePath, // Add parent component's filePath
-        });
-        // Add logging for internal used component creation
-        console.log(
-          `[buildTree] Created Internal UsedComponent node: ${finalLabel}, filePath: ${filePath}`
+        break;
+      case "LibraryContainerNode":
+        treeNodeType = "LibraryContainer";
+        console.warn(
+          `[TreeView buildTree] Node ${rawNode.id} resolved to ReactFlow type "LibraryContainerNode" as decisionType.`
         );
-      });
-
-      // --- Process Library Dependencies (External Used Components) ---
-      // Also include any file deps that were NOT internal
-      const externalCompCounts = new Map<
-        string,
-        { count: number; source?: string }
-      >();
-      // Process remaining file deps
-      if (Array.isArray(fileDepsSource)) {
-        fileDepsSource.forEach((dep: any) => {
-          const compName = dep?.name;
-          const source = dep?.source;
-          if (compName && !isInternalPath(source)) {
-            // Check if NOT internal
-            const countKey = source ? `${compName}|${source}` : compName;
-            const current = externalCompCounts.get(countKey) || {
-              count: 0,
-              source,
-            };
-            externalCompCounts.set(countKey, {
-              ...current,
-              count: current.count + 1,
-            });
-          }
-        });
-      }
-      // Process library deps
-      if (Array.isArray(libraryDepsSource)) {
-        libraryDepsSource.forEach((dep: any) => {
-          const compName = dep?.name;
-          const source = dep?.source;
-          if (compName) {
-            // Assume all library deps are external
-            const countKey = source ? `${compName}|${source}` : compName;
-            const current = externalCompCounts.get(countKey) || {
-              count: 0,
-              source,
-            };
-            externalCompCounts.set(countKey, {
-              ...current,
-              count: current.count + 1,
-            });
-          }
-        });
-      }
-      externalCompCounts.forEach((data, countKey) => {
-        const [compName] = countKey.split("|");
-        const { count, source } = data;
-        const countSuffix = count > 1 ? ` (x${count})` : "";
-        // Display source differently? Maybe just the package name?
-        const displaySource = source // Simpler display for external
-          ? source.split("/")[0] // Often just the package name
-          : undefined;
-        const sourceSuffix = displaySource ? ` (@ ${displaySource})` : ""; // Keep '@' for now
-        const finalLabel = `${compName}${countSuffix}${sourceSuffix}`;
-        const idSuffix =
-          (source ? `${compName}_${source}` : compName) || "unknown_comp";
-        const uniqueId = `${node.id}-usedcomp-ext-${idSuffix.replace(
-          /[^a-zA-Z0-9]/g,
-          "_"
-        )}`;
-
-        childrenNodes.push({
-          id: uniqueId,
-          label: finalLabel,
-          type: "UsedComponent",
-          dependencyType: "external", // Mark as external
-          referenceSource: source, // Store original source if needed
-          filePath: filePath, // Add parent component's filePath
-        });
-        // Add logging for external used component creation
-        console.log(
-          `[buildTree] Created External UsedComponent node: ${finalLabel}, filePath: ${filePath}`
+        break;
+      case "ExportedItemNode":
+        treeNodeType = "ExportedItem";
+        actualType = rawNode.data?.actualType;
+        console.warn(
+          `[TreeView buildTree] Node ${rawNode.id} resolved to ReactFlow type "ExportedItemNode" as decisionType.`
         );
-      });
-      // --- END: Separate Processing ---
-
-      // --- Process Library Dependencies (Group them by source) - MOVED TO FILE LEVEL ---
-      // --- START: Restore population of fileLibraryDeps from Component data ---
-      const libDepsSource = node.data.libraryDependencies || [];
-      if (Array.isArray(libDepsSource)) {
-        // Ensure the map exists for this file path
-        if (!fileLibraryDeps.has(filePath)) {
-          fileLibraryDeps.set(filePath, new Map<string, Set<string>>());
-        }
-        const currentFileLibDeps = fileLibraryDeps.get(filePath)!;
-
-        libDepsSource.forEach((dep: any) => {
-          const source = dep?.source;
-          const importName = dep?.name;
-          // Ensure source and importName are valid strings before proceeding
-          if (
-            typeof source === "string" &&
-            source.length > 0 &&
-            typeof importName === "string" &&
-            importName.length > 0
-          ) {
-            // Add the import to the set for this source in the file-level map
-            if (!currentFileLibDeps.has(source)) {
-              currentFileLibDeps.set(source, new Set<string>());
-            }
-            currentFileLibDeps.get(source)?.add(importName);
-          } else {
-            // Optional logging for invalid deps
-            // console.warn(`[buildTree] Skipping library dependency due to missing source or name:`, dep);
-          }
-        });
-      }
-      // --- END: Restore population of fileLibraryDeps from Component data ---
-
-      // Create TreeNodeData for aggregated children (Old logic removed)
-      // const childrenNodes: TreeNodeData[] = [];
-      // itemCounts.forEach((details, key) => { ... }); // Removed this aggregation method
-
-      // --- End Aggregation ---
-
-      if (childrenNodes.length > 0) {
-        // Now sortChildrenInternal is defined before this call
-        sortChildrenInternal(childrenNodes);
-        componentData.children?.push(...childrenNodes);
-        console.log(
-          `[buildTree Aggregated] Added ${childrenNodes.length} aggregated nodes to children of ${componentData.id}`
+        break;
+      case "LibraryImportNode":
+        treeNodeType = "LibraryImportItem";
+        actualType = rawNode.data?.actualType;
+        console.warn(
+          `[TreeView buildTree] Node ${rawNode.id} resolved to ReactFlow type "LibraryImportNode" as decisionType.`
         );
-      }
+        break;
+      default:
+        console.warn(
+          `[TreeView buildTree] Encountered unhandled DECISION type: "${decisionType}" for node ID ${rawNode.id}. (Derived from rawNode.type: "${rawNode.type}", rawNode.data.type: "${rawNode.data?.type}"). Data:`,
+          rawNode.data
+        );
+        return; // Skip this node
+    }
 
-      componentNodeMap.set(node.id, componentData);
+    if (!treeNodeType) {
+      // This case should ideally not be reached if the default in switch returns
+      console.warn(
+        `[TreeView buildTree] treeNodeType is undefined for node ID ${rawNode.id} after switch. DecisionType: ${decisionType}`
+      );
+      return;
+    }
 
-      // Add this component to its parent file node
-      const parentFileNode = fileMap.get(filePath);
-      // --- DEBUGGING --- (Removed previous block)
-      if (parentFileNode) {
-        parentFileNode.children?.push(componentData);
+    const treeNode: TreeNodeData = {
+      id: rawNode.id,
+      label: rawNode.data?.label || rawNode.id,
+      type: treeNodeType,
+      actualType: actualType,
+      filePath: rawNode.data?.filePath,
+      referenceSource: rawNode.data?.referenceSource,
+      parentNodeId: rawNode.parentNode, // This is crucial
+      children: [],
+    };
+    treeNodeMap.set(treeNode.id, treeNode);
+    // console.log(`[TreeView buildTree] Created initial TreeNodeData: id=${treeNode.id}, type=${treeNode.type}, actualType=${treeNode.actualType}, parentNodeId=${treeNode.parentNodeId}`);
+  });
+  console.log(
+    "[TreeView buildTree] Pass 1 complete. treeNodeMap size:",
+    treeNodeMap.size
+  );
+  // Log a sample of created tree nodes if map is not empty
+  if (treeNodeMap.size > 0) {
+    console.log(
+      "[TreeView buildTree] Sample transformed node (first one):",
+      treeNodeMap.values().next().value
+    );
+  }
+
+  // Pass 2: Build hierarchy using parentNodeId
+  console.log(
+    "[TreeView buildTree] Pass 2: Building hierarchy. Processing nodes in treeNodeMap:",
+    treeNodeMap.size
+  );
+  treeNodeMap.forEach((treeNode) => {
+    if (treeNode.parentNodeId && treeNodeMap.has(treeNode.parentNodeId)) {
+      const parentTreeNode = treeNodeMap.get(treeNode.parentNodeId);
+      parentTreeNode?.children?.push(treeNode);
+      // console.log(`[TreeView buildTree] Attached ${treeNode.id} to parent ${treeNode.parentNodeId}`);
+    } else {
+      rootTreeNodes.push(treeNode);
+      if (treeNode.parentNodeId) {
+        console.warn(
+          `[TreeView buildTree] Node ${treeNode.id} (type ${treeNode.type}, label: ${treeNode.label}) has parentNodeId ${treeNode.parentNodeId} but parent was NOT FOUND in treeNodeMap. Adding as root.`
+        );
       } else {
-        // console.warn(`[buildTree Pass 1] Could not find parent file node in map for ${node.id} using filePath: ${filePath}`);
-      }
-      // --- END DEBUGGING ---
-    }
-  });
-
-  // Pass 2: Add References using edges, using the componentNodeMap built in Pass 1
-  // --- START: Keep Pass 2 commented out as edges are not used for this tree structure ---
-  /*
-  edges.forEach((edge) => {
-    const sourceComponentNode = componentNodeMap.get(edge.source);
-    const targetNode = nodeMap.get(edge.target);
-
-    if (sourceComponentNode && targetNode) {
-      const isFileDep =
-        targetNode.type === "FileNode" || targetNode.data?.type === "FileDep";
-      const isLibDep =
-        targetNode.type === "DependencyNode" ||
-        targetNode.data?.type === "LibDep";
-
-      if (isFileDep || isLibDep) {
-        let referencesContainer = sourceComponentNode.children?.find(
-          (c) => c.type === "ReferencesContainer"
-        );
-        if (!referencesContainer) {
-          referencesContainer = {
-            id: `${sourceComponentNode.id}-refs-container`,
-            label: "References",
-            type: "ReferencesContainer",
-            children: [],
-          };
-          sourceComponentNode.children?.push(referencesContainer);
-        }
-
-        referencesContainer.children?.push({
-          id: edge.id,
-          label: targetNode.data.label || targetNode.id,
-          type: "Reference",
-          referenceType: isFileDep ? "FileDep" : "LibDep",
-        });
+        // console.log(`[TreeView buildTree] Node ${treeNode.id} (type ${treeNode.type}) has no parentNodeId. Adding as root.`);
       }
     }
   });
-  */
-  // --- END: Keep Pass 2 commented out ---
+  console.log(
+    "[TreeView buildTree] Pass 2 complete. Root node count:",
+    rootTreeNodes.length
+  );
+  // Log a summary of root nodes
+  if (rootTreeNodes.length > 0) {
+    console.log(
+      "[TreeView buildTree] Summary of root nodes:",
+      rootTreeNodes.map((n) => ({
+        id: n.id,
+        type: n.type,
+        label: n.label,
+        childrenCount: n.children?.length || 0,
+      }))
+    );
+  }
 
-  // Pass 3: Sort children recursively
-  // --- START: Refactor Sorting Logic --- (Definitions moved above)
+  // Sorting logic (to be refined)
+  const sortTreeNodes = (nodesToSort: TreeNodeData[]) => {
+    // Define desired order for top-level and within FileContainers
+    const typeOrder: { [key in TreeNodeData["type"]]?: number } = {
+      FileContainer: 0,
+      ExportedItem: 1, // actualType will differentiate further if needed
+      LibraryContainer: 2,
+      LibraryImportItem: 3,
+    };
 
-  // Sorter for top-level (File nodes) and their direct children (Components) - Definition moved above
-  // const sortTopLevelAndComponents = ...
+    nodesToSort.sort((a, b) => {
+      const orderA = typeOrder[a.type] ?? 99;
+      const orderB = typeOrder[b.type] ?? 99;
 
-  const treeResult = Array.from(fileMap.values());
-  // Sort files alphabetically, then sort components within files
-  // Now sortTopLevelAndComponents is defined before this call
-  sortTopLevelAndComponents(treeResult);
+      if (orderA !== orderB) return orderA - orderB;
 
-  // --- END: Refactor Sorting Logic ---
-
-  // --- START: Add Pass to Create and Add File-Level Library Groups ---
-  fileLibraryDeps.forEach((groupedLibImports, filePath) => {
-    const fileNode = fileMap.get(filePath);
-    if (!fileNode) return; // Should not happen if logic is correct
-
-    groupedLibImports.forEach((importNames, source) => {
-      const sortedImports = Array.from(importNames)
-        .filter((name) => name.length > 0)
-        .sort();
-
-      if (sortedImports.length > 0) {
-        const libraryGroupNode: TreeNodeData = {
-          // Use filePath in ID to ensure uniqueness across files
-          id: `file-${filePath}-libgroup-${source.replace(/\W/g, "")}`,
-          label: source,
-          type: "LibraryReferenceGroup",
-          referenceSource: source,
-          children: sortedImports.map((importName) => ({
-            id: `file-${filePath}-lib-${source.replace(
-              /\W/g,
-              ""
-            )}-import-${importName.replace(/\W/g, "")}`,
-            label: importName,
-            type: "LibraryImport",
-          })),
+      // Specific sorting for ExportedItems by actualType if they are at the same level
+      if (a.type === "ExportedItem" && b.type === "ExportedItem") {
+        const actualTypeOrder: { [key: string]: number } = {
+          Component: 0,
+          Hook: 1,
+          Function: 2,
+          Variable: 3,
         };
-        // Add the library group to the File node's children
-        fileNode.children = fileNode.children || []; // Ensure children array exists
-        fileNode.children.push(libraryGroupNode);
+        const actualOrderA = actualTypeOrder[a.actualType || ""] ?? 99;
+        const actualOrderB = actualTypeOrder[b.actualType || ""] ?? 99;
+        if (actualOrderA !== actualOrderB) return actualOrderA - actualOrderB;
+      }
+
+      return a.label.localeCompare(b.label); // Fallback to label sorting
+    });
+
+    nodesToSort.forEach((node) => {
+      if (node.children && node.children.length > 0) {
+        sortTreeNodes(node.children); // Recursive sort
       }
     });
-  });
-  // --- END: Add Pass to Create and Add File-Level Library Groups ---
+  };
 
-  return treeResult;
+  sortTreeNodes(rootTreeNodes); // Apply sorting
+  console.log(
+    "[TreeView buildTree] Final hierarchical tree nodes (after sorting) count:",
+    rootTreeNodes.length
+    // rootTreeNodes.map((r) => ({ // Reduced verbosity
+    //   id: r.id,
+    //   label: r.label,
+    //   type: r.type,
+    //   childrenCount: r.children?.length,
+    // }))
+  );
+  if (rootTreeNodes.length === 0 && nodes.length > 0) {
+    console.warn(
+      "[TreeView buildTree] buildTree resulted in an empty tree, but received input nodes. Check transformation and hierarchy logic."
+    );
+  }
+
+  // The old complex multi-pass logic is replaced.
+  // Library imports: If LibraryContainerNode in rawAnalysisData already has children that are
+  // meant to be LibraryImportItems, they should be transformed in Pass 1 if they have a distinct node type.
+  // If they are just data within LibraryContainerNode.data.imports, then the LibraryContainerNode
+  // itself would need to create these TreeNodeData children.
+  // For now, this simplistic buildTree assumes LibraryImportItems would be separate nodes with a parentNode link.
+
+  return rootTreeNodes;
 };
 
 // --- TreeNode Component (Recursive) ---
@@ -647,10 +416,12 @@ const TreeNode: React.FC<{
       event.stopPropagation(); // Prevent toggling parent nodes
       const canToggle =
         hasChildren &&
-        (node.type === "File" ||
-          node.type === "Component" ||
-          node.type === "LibraryReferenceGroup" || // Allow toggling Library Group
-          node.type.includes("Container")); // Keep for safety
+        (node.type === "FileContainer" ||
+          node.type === "LibraryContainer" ||
+          (node.type === "ExportedItem" &&
+            node.children &&
+            node.children.length > 0)); // ExportedItem only if it has children
+      // LibraryImportItem is not typically expandable by itself
 
       if (canToggle) {
         onToggle(node.id);
@@ -662,9 +433,11 @@ const TreeNode: React.FC<{
   const getIcon = () => {
     const canExpand =
       hasChildren &&
-      (node.type === "File" ||
-        node.type === "Component" ||
-        node.type === "LibraryReferenceGroup");
+      (node.type === "FileContainer" ||
+        node.type === "LibraryContainer" ||
+        (node.type === "ExportedItem" &&
+          node.children &&
+          node.children.length > 0));
 
     if (canExpand) {
       return (
@@ -679,34 +452,30 @@ const TreeNode: React.FC<{
   };
 
   const getNodeTypeClass = () => {
+    let baseClass = "";
+    let actualTypeClass = "";
+
     switch (node.type) {
-      case "File":
-        return "type-file";
-      case "Component":
-        return "type-component";
-      case "Hook":
-        return "type-hook";
-      case "UsedComponent":
-        // Add specific class based on dependencyType
-        if (node.dependencyType === "internal") {
-          return "type-used-component type-internal-dep";
-        } else if (node.dependencyType === "external") {
-          return "type-used-component type-external-dep";
+      case "FileContainer":
+        baseClass = "type-file-container"; // Was type-file
+        break;
+      case "LibraryContainer":
+        baseClass = "type-library-container"; // Was type-library-group
+        break;
+      case "ExportedItem":
+        baseClass = "type-exported-item";
+        if (node.actualType) {
+          actualTypeClass = `actual-type-${node.actualType.toLowerCase()}`;
         }
-        return "type-used-component"; // Fallback
-      case "LibraryReferenceGroup": // Style for the library group
-        return "type-library-group";
-      case "LibraryImport": // Style for the individual import
-        return "type-library-import";
-      case "Reference":
-        // Add specific class for library dependencies shown at file level (if used elsewhere)
-        return `type-reference type-${node.referenceType?.toLowerCase()}`;
-      case "HooksContainer": // Keep existing style
-      case "ReferencesContainer": // Keep existing style
-        return "type-container";
+        // Examples: actual-type-component, actual-type-hook
+        break;
+      case "LibraryImportItem":
+        baseClass = "type-library-import-item"; // Was type-library-import
+        break;
       default:
-        return "";
+        baseClass = "";
     }
+    return `${baseClass} ${actualTypeClass}`.trim();
   };
 
   // --- Helper to extract file name and relative directory path ---
@@ -743,7 +512,7 @@ const TreeNode: React.FC<{
   };
 
   const { fileName, dirPath, fullPath } =
-    node.type === "File"
+    node.type === "FileContainer"
       ? getFileParts(node.filePath, workspaceRoot)
       : {
           fileName: node.label, // Use label for non-files
@@ -756,9 +525,12 @@ const TreeNode: React.FC<{
   // Determine if the node is clickable for toggling expansion
   const isToggleable =
     hasChildren &&
-    (node.type === "File" ||
-      node.type === "Component" ||
-      node.type === "LibraryReferenceGroup");
+    (node.type === "FileContainer" ||
+      node.type === "LibraryContainer" ||
+      (node.type === "ExportedItem" &&
+        node.children &&
+        node.children.length > 0));
+  // LibraryImportItem not usually toggleable
 
   return (
     <li
@@ -773,14 +545,16 @@ const TreeNode: React.FC<{
       >
         {getIcon()}
 
-        {/* Show count for Component and LibraryReferenceGroup if they have children */}
-        {(node.type === "Component" || node.type === "LibraryReferenceGroup") &&
+        {/* Show count for parent-like nodes if they have children */}
+        {(node.type === "FileContainer" ||
+          node.type === "LibraryContainer" ||
+          node.type === "ExportedItem") &&
           hasChildren && (
             <span className="child-count">({node.children?.length || 0})</span>
           )}
 
-        {/* Structure for File nodes */}
-        {node.type === "File" && (
+        {/* Structure for FileContainer nodes */}
+        {node.type === "FileContainer" && (
           <>
             {/* File Name (Moved after Icon/Count) */}
             <span
@@ -799,30 +573,31 @@ const TreeNode: React.FC<{
           </>
         )}
 
-        {/* Structure for Non-File nodes (Moved after Icon/Count) */}
-        {node.type !== "File" && (
+        {/* Structure for Non-FileContainer nodes (Moved after Icon/Count) */}
+        {node.type !== "FileContainer" && (
           <>
-            <span
-              className="label-text"
-              // Use fullPath (which might be referenceSource) for title
-              title={fullPath}
-            >
+            <span className="label-text" title={fullPath}>
               {/* Add space if count exists for better alignment */}
-              {(node.type === "Component" ||
-                node.type === "LibraryReferenceGroup") &&
+              {(node.type === "LibraryContainer" ||
+                node.type === "ExportedItem") &&
               hasChildren
                 ? " "
                 : ""}
               {node.label}
+              {/* Optionally display actualType for ExportedItem if not clear from label */}
+              {node.type === "ExportedItem" && node.actualType && (
+                <span className="actual-type-indicator">
+                  {" "}
+                  ({node.actualType})
+                </span>
+              )}
             </span>
-            {/* Child count moved to the front */}
           </>
         )}
 
         {/* Find References Button uses the new internal handler */}
-        {(node.type === "Component" ||
-          node.type === "Hook" ||
-          node.type === "UsedComponent") &&
+        {/* Primarily for ExportedItem, potentially LibraryImportItem if it makes sense */}
+        {(node.type === "ExportedItem" || node.type === "LibraryImportItem") &&
           node.filePath && (
             <button
               className="find-references-button"
@@ -868,11 +643,13 @@ const getAllExpandableNodeIds = (nodes: TreeNodeData[]): string[] => {
   let ids: string[] = [];
   nodes.forEach((node) => {
     const hasChildren = node.children && node.children.length > 0;
+    // Define which types are considered expandable if they have children
     const canExpand =
       hasChildren &&
-      (node.type === "File" ||
-        node.type === "Component" ||
-        node.type === "LibraryReferenceGroup");
+      (node.type === "FileContainer" ||
+        node.type === "LibraryContainer" ||
+        node.type === "ExportedItem"); // ExportedItem can be expandable if it has children (e.g. nested items in future)
+    // LibraryImportItem typically not expandable
     if (canExpand) {
       ids.push(node.id);
       if (node.children) {
@@ -890,23 +667,27 @@ const getAllExpandableNodeIds = (nodes: TreeNodeData[]): string[] => {
 // --- START: Helper function to extract base symbol name ---
 const extractSymbolName = (
   label: string,
-  type: TreeNodeData["type"]
+  type: TreeNodeData["type"],
+  actualType?: string
 ): string => {
-  if (!label) return ""; // Handle cases where label might be undefined/empty
+  if (!label) return "";
 
-  if (type === "Hook") {
-    // Matches "Hook: ActualHookName" potentially followed by spaces, counts, sources etc.
-    const match = label.match(/^Hook:\s*([\w\d_]+)/);
-    // Null coalesce: use captured group or fallback to removing prefix
-    return match?.[1] ?? label.replace(/^Hook:\s*/, "");
-  } else if (type === "UsedComponent" || type === "Component") {
-    // Matches the first sequence of word characters (letters, numbers, underscore) at the start.
-    // This should capture the component name before counts or source annotations like "(x2)" or "(@ path)"
-    const match = label.match(/^([\w\d_]+)/);
-    // Null coalesce: use captured group or fallback to original label
-    return match?.[1] ?? label;
+  if (type === "ExportedItem") {
+    // Handle different actualTypes within ExportedItem
+    if (actualType === "Hook") {
+      const match = label.match(/^Hook:\s*([\w\d_]+)/);
+      return match?.[1] ?? label.replace(/^Hook:\s*/, "");
+    } else if (actualType === "Component") {
+      const match = label.match(/^([\w\d_]+)/);
+      return match?.[1] ?? label;
+    } else {
+      // Default for other ExportedItem actualTypes (e.g., Function, Variable)
+      // Assumes label is the name, or might need more specific parsing if prefixed
+      return label;
+    }
   }
-  // For other types, assume the label is the name
+
+  // For other types (FileContainer, LibraryContainer, LibraryImportItem), assume the label is the name
   return label;
 };
 // --- END: Helper function to extract base symbol name ---
@@ -930,11 +711,11 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
     {}
   );
 
-  // Effect to set initial expansion state (only top-level files)
+  // Effect to set initial expansion state (only top-level FileContainers)
   useEffect(() => {
     const initialExpansion: Record<string, boolean> = {};
     treeData.forEach((node) => {
-      if (node.type === "File") {
+      if (node.type === "FileContainer") {
         // Expand only top-level files initially
         const hasChildren = node.children && node.children.length > 0;
         if (hasChildren) {
@@ -978,11 +759,11 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
 
   // --- VS Code Interaction Handlers --- (Use global vscodeApi)
   const handleNodeDoubleClick = useCallback((node: TreeNodeData) => {
-    console.log("[TreeView] Double Clicked:", node); // Log node data
+    console.log("[TreeView] Double Clicked:", node);
     if (
-      node.type === "File" ||
-      node.type === "Component" ||
-      node.type === "Hook" // Hooks can be double-clicked to open file
+      node.type === "FileContainer" ||
+      (node.type === "ExportedItem" && node.filePath) || // ExportedItem only if it has a filePath
+      (node.type === "LibraryImportItem" && node.filePath) // LibraryImportItem if it has a filePath (e.g. points to a definition)
     ) {
       if (node.filePath) {
         console.log(`[TreeView] Posting openFile: filePath=${node.filePath}`); // Log details
@@ -1006,13 +787,13 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
 
   const handleNodeFindReferencesClick = useCallback((node: TreeNodeData) => {
     console.log("[TreeView] Find References Clicked:", node); // Log node data
-    if (
-      node.type === "Component" ||
-      node.type === "Hook" ||
-      node.type === "UsedComponent"
-    ) {
+    if (node.type === "ExportedItem") {
       if (node.filePath) {
-        const symbolName = extractSymbolName(node.label, node.type);
+        const symbolName = extractSymbolName(
+          node.label,
+          node.type,
+          node.actualType
+        );
         if (!symbolName) {
           console.warn(
             "[TreeView] Find References: Could not extract symbol name from label:",
@@ -1046,7 +827,9 @@ const TreeView: React.FC<TreeViewProps> = ({ nodes, edges, workspaceRoot }) => {
   }
 
   if (!treeData || treeData.length === 0) {
-    console.log("[TreeView] No tree data could be built.");
+    console.log(
+      "[TreeView] No tree data could be built. Check buildTree function logs."
+    ); // Enhanced log
     return (
       <div className="tree-view-panel empty">Could not build tree view.</div>
     );

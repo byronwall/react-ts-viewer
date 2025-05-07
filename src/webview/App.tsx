@@ -23,6 +23,7 @@ import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
   Panel,
+  NodeProps,
 } from "reactflow";
 import ELK from "elkjs/lib/elk.bundled.js";
 import {
@@ -41,8 +42,85 @@ import TreeView, { vscodeApi } from "./TreeView"; // Import vscodeApi
 
 // Import custom node components
 import ComponentNodeDisplay from "./ComponentNodeDisplay";
-import FileNodeDisplay from "./FileNodeDisplay";
-import DependencyNodeDisplay from "./DependencyNodeDisplay";
+// FileNodeDisplay and DependencyNodeDisplay will be removed
+// import FileNodeDisplay from "./FileNodeDisplay";
+// import DependencyNodeDisplay from "./DependencyNodeDisplay";
+
+// Placeholder components for new node types
+const FileContainerNodeDisplay: React.FC<NodeProps> = (props) => {
+  console.log(
+    "[Webview FlowCanvas] Rendering FileContainerNodeDisplay (placeholder) for node:",
+    props.id,
+    "Data:",
+    props.data
+  );
+  return (
+    <div
+      style={{
+        padding: 10,
+        border: "1px solid green",
+        background: "#f0fff0",
+        borderRadius: "5px",
+      }}
+    >
+      <strong>File Container</strong>
+      <br />
+      ID: {props.id}
+      <br />
+      Label: {props.data?.label || "N/A"}
+    </div>
+  );
+};
+
+const LibraryContainerNodeDisplay: React.FC<NodeProps> = (props) => {
+  console.log(
+    "[Webview FlowCanvas] Rendering LibraryContainerNodeDisplay (placeholder) for node:",
+    props.id,
+    "Data:",
+    props.data
+  );
+  return (
+    <div
+      style={{
+        padding: 10,
+        border: "1px solid orange",
+        background: "#fff5e6",
+        borderRadius: "5px",
+      }}
+    >
+      <strong>Library Container</strong>
+      <br />
+      ID: {props.id}
+      <br />
+      Label: {props.data?.label || "N/A"}
+    </div>
+  );
+};
+
+const ExportedItemNodeDisplay: React.FC<NodeProps> = (props) => {
+  console.log(
+    "[Webview FlowCanvas] Rendering ExportedItemNodeDisplay (placeholder) for node:",
+    props.id,
+    "Data:",
+    props.data
+  );
+  return (
+    <div
+      style={{
+        padding: 10,
+        border: "1px solid purple",
+        background: "#f3e7f3",
+        borderRadius: "5px",
+      }}
+    >
+      <strong>Exported Item</strong> ({props.data?.actualType || "Unknown Type"}
+      )<br />
+      ID: {props.id}
+      <br />
+      Label: {props.data?.label || "N/A"}
+    </div>
+  );
+};
 
 // Declare the injected global variable (keep this for initial data)
 declare global {
@@ -57,7 +135,7 @@ interface AnalysisSettings {
   maxDepth: number;
   showMinimap: boolean;
   showHooks: boolean;
-  showFileDeps: boolean;
+  // showFileDeps: boolean; // To be removed
   showLibDeps: boolean;
 }
 
@@ -66,7 +144,7 @@ const defaultSettings: AnalysisSettings = {
   maxDepth: 3,
   showMinimap: false,
   showHooks: true, // Default to showing
-  showFileDeps: true, // Default to showing
+  // showFileDeps: true, // To be removed
   showLibDeps: true, // Default to showing
 };
 
@@ -86,6 +164,9 @@ const elkOptions = {
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.spacing.nodeNode": "80",
   "elk.direction": "DOWN", // Default layout direction
+  "elk.hierarchyHandling": "INCLUDE_CHILDREN", // Added for hierarchical layout
+  // Consider adding options for padding within parent nodes if needed later
+  // "elk.padding": "[top=20,left=20,bottom=20,right=20]",
 };
 
 // Hardcoded node dimensions for ELK layout
@@ -99,20 +180,60 @@ const getLayoutedElements = (
   edges: Edge[],
   options = {}
 ): Promise<{ nodes: Node[]; edges: Edge[] } | void> => {
+  console.log(
+    "[Webview getLayoutedElements] Initial nodes for ELK - Count:",
+    nodes.length,
+    "Edges count:",
+    edges.length
+  );
+
   const layoutOptions = { ...elkOptions, ...options };
   const isHorizontal = layoutOptions["elk.direction"] === "RIGHT";
-  const graph: any = {
-    // Use any temporarily for the graph type to avoid deep ELK type issues
-    id: "root",
-    layoutOptions: layoutOptions,
-    children: nodes.map((node) => ({
+
+  // Transform flat list of nodes with parentNode into a hierarchical structure for ELK
+  const elkNodesMap = new Map();
+  const rootElkNodes: any[] = []; // Using any[] for ELK node children temporarily
+
+  nodes.forEach((node) => {
+    const elkNode = {
       ...node,
+      id: node.id, // Ensure id is correctly passed
       targetPosition: isHorizontal ? "left" : "top",
       sourcePosition: isHorizontal ? "right" : "bottom",
       width: node.width ?? nodeWidth,
       height: node.height ?? nodeHeight,
-    })),
-    // Map React Flow edges to ELK edges format (sources/targets arrays)
+      children: [], // Initialize children array for potential parent nodes
+      // layoutOptions for individual nodes can be set here if needed
+    };
+    elkNodesMap.set(node.id, elkNode);
+  });
+
+  nodes.forEach((node) => {
+    const elkNode = elkNodesMap.get(node.id);
+    if (node.parentNode && elkNodesMap.has(node.parentNode)) {
+      const parentElkNode = elkNodesMap.get(node.parentNode);
+      parentElkNode.children.push(elkNode);
+      console.log(
+        `[Webview getLayoutedElements] Node ${node.id} added as child to ${node.parentNode}`
+      );
+    } else {
+      rootElkNodes.push(elkNode);
+      if (node.parentNode) {
+        console.warn(
+          `[Webview getLayoutedElements] Node ${node.id} has parentNode ${node.parentNode} but parent not found in map. Adding as root.`
+        );
+      }
+    }
+  });
+  console.log(
+    "[Webview getLayoutedElements] Transformed root ELK nodes for layout - Count:",
+    rootElkNodes.length
+  );
+
+  const graph: any = {
+    id: "root",
+    layoutOptions: layoutOptions,
+    children: rootElkNodes, // Use the transformed hierarchical nodes
     edges: edges.map((edge) => ({
       ...edge,
       sources: [edge.source],
@@ -123,22 +244,70 @@ const getLayoutedElements = (
   return elk
     .layout(graph)
     .then((layoutedGraph) => {
-      // Check if layoutedGraph and children exist
       if (!layoutedGraph || !layoutedGraph.children) {
         console.error(
-          "[Webview] ELK layout failed: No graph or children returned."
+          "[Webview getLayoutedElements] ELK layout failed: No graph or children returned."
         );
-        return; // Return void if layout failed
+        return;
       }
+
+      const finalLayoutedNodes: Node[] = [];
+
+      // Recursive function to flatten hierarchy and adjust coordinates
+      const processLayoutedNode = (
+        elkNode: any,
+        parentPosition: { x: number; y: number },
+        parentId?: string
+      ) => {
+        const absoluteX = (elkNode.x ?? 0) + parentPosition.x;
+        const absoluteY = (elkNode.y ?? 0) + parentPosition.y;
+
+        // Find original node data to preserve other properties (like data, type, etc.)
+        // elkNode from ELK might only have id, x, y, width, height, children, edges
+        const originalNode = nodes.find((n) => n.id === elkNode.id);
+        if (!originalNode) {
+          console.warn(
+            `[Webview getLayoutedElements] Original node not found for ELK node id ${elkNode.id}`
+          );
+          return; // Skip if no original node
+        }
+
+        const reactFlowNode: Node = {
+          ...originalNode, // Spread original node properties first
+          id: elkNode.id,
+          position: { x: absoluteX, y: absoluteY },
+          width: elkNode.width,
+          height: elkNode.height,
+          // Preserve parentNode relationship for React Flow if it was there
+          // ELK children are processed recursively, original parentNode from input is what matters for React Flow
+          parentNode: originalNode.parentNode,
+        };
+        finalLayoutedNodes.push(reactFlowNode);
+
+        if (elkNode.children && elkNode.children.length > 0) {
+          elkNode.children.forEach((childElkNode: any) => {
+            processLayoutedNode(
+              childElkNode,
+              { x: absoluteX, y: absoluteY },
+              elkNode.id
+            );
+          });
+        }
+      };
+
+      // Start processing from root children of the layouted graph
+      layoutedGraph.children.forEach((rootElkNode: any) => {
+        processLayoutedNode(rootElkNode, { x: 0, y: 0 });
+      });
+
+      console.log(
+        "[Webview getLayoutedElements] Final flattened layouted nodes for React Flow - Count:",
+        finalLayoutedNodes.length
+      );
+
       return {
-        nodes: layoutedGraph.children.map((node: any) => ({
-          // Use any for node type from ELK result
-          ...node,
-          position: { x: node.x, y: node.y },
-        })),
-        // Return the original edges, ELK doesn't modify edge structure in the return
-        // unless specific options are used (like bendpoints)
-        edges: edges,
+        nodes: finalLayoutedNodes,
+        edges: edges, // Edges are assumed to be correct as per current ELK usage
       };
     })
     .catch((err) => {
@@ -173,8 +342,12 @@ const FlowCanvas: React.FC<{
 
   // Layout effect to run ELK when initial nodes/edges change
   useLayoutEffect(() => {
+    console.log(
+      "[Webview FlowCanvas] Layout effect triggered. Initial nodes count:",
+      initialNodes.length
+    );
     if (initialNodes.length > 0) {
-      console.log("[Webview] Running ELK layout...");
+      console.log("[Webview FlowCanvas] Running ELK layout...");
       getLayoutedElements(initialNodes, initialEdges)
         .then((layoutResult) => {
           // Check if the layout result is valid before destructuring
@@ -203,69 +376,121 @@ const FlowCanvas: React.FC<{
   // Effect to update node/edge visibility based on settings
   // This runs *after* layouting and initial state setting
   useEffect(() => {
-    console.log("[Webview] Updating nodes/edges visibility based on settings");
+    console.log(
+      "[Webview FlowCanvas] Settings or nodes/edges changed, updating visibility. Settings:",
+      settings
+    );
+    // console.log("[Webview FlowCanvas] Current nodes for visibility update:", nodes);
+    // console.log("[Webview FlowCanvas] Current edges for visibility update:", edges);
+
     let nodesChanged = false;
     const nextNodes = nodes.map((node) => {
       let newHidden = false;
-      if (node.data?.type === "FileDep" && !settings.showFileDeps) {
+
+      // Logic for ExportedItemNode (e.g., Hooks)
+      if (
+        node.type === "ExportedItemNode" &&
+        node.data?.actualType === "Hook" &&
+        !settings.showHooks
+      ) {
+        console.log(
+          `[Webview FlowCanvas] Node ${node.id} (ExportedItem Hook) hidden due to showHooks: ${settings.showHooks}`
+        );
         newHidden = true;
       }
-      if (node.data?.type === "LibDep" && !settings.showLibDeps) {
+
+      // Logic for LibraryContainerNode
+      if (node.type === "LibraryContainerNode" && !settings.showLibDeps) {
+        console.log(
+          `[Webview FlowCanvas] Node ${node.id} (LibraryContainer) hidden due to showLibDeps: ${settings.showLibDeps}`
+        );
         newHidden = true;
       }
+
+      // Remove old LibDep logic (FileDep already removed from settings)
+      // if (node.data?.type === "LibDep" && !settings.showLibDeps) { ... }
+
       if (node.hidden !== newHidden) {
         nodesChanged = true;
+        // console.log(`[Webview FlowCanvas] Node ${node.id} visibility changed to ${newHidden}`);
         return { ...node, hidden: newHidden };
       }
       return node; // Return same instance if no change
     });
 
-    // Update edges based on the visibility of the potentially updated nodes
     let edgesChanged = false;
     const nextEdges = edges.map((edge) => {
       let newHidden = false;
-      // Find nodes in the *current potentially updated* list (nextNodes)
       const sourceNode = nextNodes.find((n) => n.id === edge.source);
       const targetNode = nextNodes.find((n) => n.id === edge.target);
 
-      // Check if the source or target node is now hidden
       if (sourceNode?.hidden || targetNode?.hidden) {
+        // console.log(`[Webview FlowCanvas] Edge ${edge.id} hidden because source/target node (${sourceNode?.id}/${targetNode?.id}) is hidden.`);
         newHidden = true;
       } else {
-        // Specifically hide dependency edges if their type is toggled off
-        if (sourceNode?.data?.type === "Component") {
-          if (targetNode?.data?.type === "FileDep" && !settings.showFileDeps) {
-            newHidden = true;
-          }
-          if (targetNode?.data?.type === "LibDep" && !settings.showLibDeps) {
-            newHidden = true;
-          }
+        // Logic for edges connected to ExportedItemNode (Hooks)
+        if (
+          targetNode?.type === "ExportedItemNode" &&
+          targetNode.data?.actualType === "Hook" &&
+          !settings.showHooks
+        ) {
+          console.log(
+            `[Webview FlowCanvas] Edge ${edge.id} to ExportedItem Hook ${targetNode.id} hidden due to showHooks: ${settings.showHooks}`
+          );
+          newHidden = true;
         }
-        // Add other edge hiding logic if needed
+        // Logic for edges connected to LibraryContainerNode
+        // Also check sourceNode in case the edge direction is from a library (less common but possible)
+        if (
+          !newHidden &&
+          targetNode?.type === "LibraryContainerNode" &&
+          !settings.showLibDeps
+        ) {
+          console.log(
+            `[Webview FlowCanvas] Edge ${edge.id} to LibraryContainer ${targetNode.id} hidden due to showLibDeps: ${settings.showLibDeps}`
+          );
+          newHidden = true;
+        }
+        if (
+          !newHidden &&
+          sourceNode?.type === "LibraryContainerNode" &&
+          !settings.showLibDeps
+        ) {
+          console.log(
+            `[Webview FlowCanvas] Edge ${edge.id} from LibraryContainer ${sourceNode.id} hidden due to showLibDeps: ${settings.showLibDeps}`
+          );
+          newHidden = true;
+        }
+
+        // Remove old LibDep edge logic
+        // if (targetNode?.data?.type === "LibDep" && !settings.showLibDeps) { ... }
       }
 
       if (edge.hidden !== newHidden) {
         edgesChanged = true;
+        // console.log(`[Webview FlowCanvas] Edge ${edge.id} visibility changed to ${newHidden}`);
         return { ...edge, hidden: newHidden };
       }
       return edge; // Return same instance if no change
     });
 
-    // Only update state if necessary to prevent loops
     if (nodesChanged) {
+      // console.log("[Webview FlowCanvas] Applying node visibility changes:", nextNodes.filter(n => n.hidden).map(n => n.id));
       setNodes(nextNodes);
     }
     if (edgesChanged) {
+      // console.log("[Webview FlowCanvas] Applying edge visibility changes:", nextEdges.filter(e => e.hidden).map(e => e.id));
       setEdges(nextEdges);
     }
-  }, [settings, nodes, edges]); // Re-run when settings or the base nodes/edges change
+  }, [settings, nodes, edges, setNodes, setEdges]);
 
   // Define nodeTypes mapping
   const nodeTypes = useMemo(
     () => ({
-      ComponentNode: ComponentNodeDisplay,
-      FileNode: FileNodeDisplay,
-      DependencyNode: DependencyNodeDisplay,
+      ComponentNode: ComponentNodeDisplay, // This might become a more generic 'ExportedItemNode' or be part of it
+      FileContainerNode: FileContainerNodeDisplay,
+      LibraryContainerNode: LibraryContainerNodeDisplay,
+      ExportedItemNode: ExportedItemNodeDisplay,
     }),
     []
   );
@@ -525,7 +750,8 @@ const App: React.FC = () => {
                     <label htmlFor="showHooks">Show Hooks</label>
                   </div>
 
-                  {/* Show File Dependencies Checkbox */}
+                  {/* Show File Dependencies Checkbox - TO BE REMOVED */}
+                  {/*
                   <div>
                     <input
                       type="checkbox"
@@ -537,6 +763,7 @@ const App: React.FC = () => {
                     />
                     <label htmlFor="showFileDeps">Show File Dependencies</label>
                   </div>
+                  */}
 
                   {/* Show Library Dependencies Checkbox */}
                   <div>
