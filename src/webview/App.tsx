@@ -40,6 +40,12 @@ import "@reactflow/controls/dist/style.css";
 import "./App.css";
 import TreeView, { vscodeApi } from "./TreeView"; // Import vscodeApi
 
+// Explicitly type CustomNodeProps to include width and height
+interface CustomNodeProps extends NodeProps {
+  width?: number;
+  height?: number;
+}
+
 // Import custom node components
 import ComponentNodeDisplay from "./ComponentNodeDisplay";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
@@ -47,57 +53,114 @@ import ComponentNodeDisplay from "./ComponentNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
 
 // Placeholder components for new node types
-const FileContainerNodeDisplay: React.FC<NodeProps> = (props) => {
+const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
+  const { getNodes } = useReactFlow();
+  const filePath = props.data?.filePath || props.data?.label || "";
+  const parts = filePath.split("/");
+  const fileName = parts.pop() || filePath;
+  const dirPath = parts.length > 0 ? parts.join("/") : ""; // Display empty string if no dirPath
+
+  const childNodesCount = useMemo(() => {
+    const allNodes = getNodes();
+    // Only count direct children that are not themselves hidden
+    return allNodes.filter((n) => n.parentId === props.id && !n.hidden).length;
+  }, [props.id, getNodes, props.data]); // Added props.data to re-calc if children change affecting parent data somehow
+
   console.log(
-    "[Webview FlowCanvas] Rendering FileContainerNodeDisplay (placeholder) for node:",
+    "[Webview FlowCanvas] Rendering FileContainerNodeDisplay for node:",
     props.id,
     "Data:",
-    props.data
+    props.data,
+    "W/H:",
+    props.width,
+    props.height
   );
   return (
     <div
       style={{
         padding: 10,
-        border: "1px solid green",
-        background: "#f0fff0",
+        border: "1px solid #3E863E", // Darker green
+        background: "#1f3d1f", // Dark green background
+        color: "#E0E0E0", // Light text
         borderRadius: "5px",
+        width: props.width || nodeWidth, // Use ELK width, fallback to default
+        height: props.height || nodeHeight, // Use ELK height, fallback to default
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center", // Center content vertically
+        alignItems: "flex-start", // Align content to the start (left)
       }}
     >
-      <strong>File Container</strong>
-      <br />
-      ID: {props.id}
-      <br />
-      Label: {props.data?.label || "N/A"}
+      <strong style={{ fontSize: "1em", marginBottom: "2px" }}>
+        {fileName}
+      </strong>
+      {childNodesCount > 0 && (
+        <span
+          style={{ fontSize: "0.8em", color: "#A0A0A0", marginBottom: "4px" }}
+        >
+          ({childNodesCount} item{childNodesCount === 1 ? "" : "s"})
+        </span>
+      )}
+      {dirPath && (
+        <span style={{ fontSize: "0.75em", color: "#909090" }}>{dirPath}</span>
+      )}
+      {/* <div style={{ fontSize: '0.7em', color: '#777', marginTop: 'auto' }}>ID: {props.id}</div> */}
     </div>
   );
 };
 
-const LibraryContainerNodeDisplay: React.FC<NodeProps> = (props) => {
+const LibraryContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
+  const { getNodes } = useReactFlow();
+
+  const childNodesCount = useMemo(() => {
+    const allNodes = getNodes();
+    // Only count direct children that are not themselves hidden
+    return allNodes.filter((n) => n.parentId === props.id && !n.hidden).length;
+  }, [props.id, getNodes, props.data]); // Added props.data
+
   console.log(
-    "[Webview FlowCanvas] Rendering LibraryContainerNodeDisplay (placeholder) for node:",
+    "[Webview FlowCanvas] Rendering LibraryContainerNodeDisplay for node:",
     props.id,
     "Data:",
-    props.data
+    props.data,
+    "W/H:",
+    props.width,
+    props.height
   );
   return (
     <div
       style={{
         padding: 10,
-        border: "1px solid orange",
-        background: "#fff5e6",
+        border: "1px solid #8B4513", // Darker orange/brown
+        background: "#4a2f19", // Dark orange/brown background
+        color: "#E0E0E0", // Light text
         borderRadius: "5px",
+        width: props.width || nodeWidth, // Use ELK width, fallback to default
+        height: props.height || nodeHeight, // Use ELK height, fallback to default
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "flex-start",
       }}
     >
-      <strong>Library Container</strong>
-      <br />
-      ID: {props.id}
-      <br />
-      Label: {props.data?.label || "N/A"}
+      <strong style={{ fontSize: "1em", marginBottom: "2px" }}>
+        {props.data?.label || "Library"}
+      </strong>
+      {childNodesCount > 0 && (
+        <span
+          style={{ fontSize: "0.8em", color: "#A0A0A0", marginBottom: "4px" }}
+        >
+          ({childNodesCount} import{childNodesCount === 1 ? "" : "s"})
+        </span>
+      )}
+      {/* <div style={{ fontSize: '0.7em', color: '#777', marginTop: 'auto' }}>ID: {props.id}</div> */}
     </div>
   );
 };
 
-const ExportedItemNodeDisplay: React.FC<NodeProps> = (props) => {
+const ExportedItemNodeDisplay: React.FC<CustomNodeProps> = (props) => {
   console.log(
     "[Webview FlowCanvas] Rendering ExportedItemNodeDisplay (placeholder) for node:",
     props.id,
@@ -161,12 +224,11 @@ const elk = new ELK();
 // See https://www.eclipse.org/elk/reference/options.html
 const elkOptions = {
   "elk.algorithm": "layered",
-  "elk.layered.spacing.nodeNodeBetweenLayers": "100",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "80",
   "elk.spacing.nodeNode": "80",
-  "elk.direction": "DOWN", // Default layout direction
-  "elk.hierarchyHandling": "INCLUDE_CHILDREN", // Added for hierarchical layout
-  // Consider adding options for padding within parent nodes if needed later
-  // "elk.padding": "[top=20,left=20,bottom=20,right=20]",
+  "elk.direction": "RIGHT",
+  "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+  "elk.padding": "[top=60,left=20,bottom=100,right=20]",
 };
 
 // Hardcoded node dimensions for ELK layout
@@ -190,7 +252,7 @@ const getLayoutedElements = (
   const layoutOptions = { ...elkOptions, ...options };
   const isHorizontal = layoutOptions["elk.direction"] === "RIGHT";
 
-  // Transform flat list of nodes with parentNode into a hierarchical structure for ELK
+  // Transform flat list of nodes with parentId into a hierarchical structure for ELK
   const elkNodesMap = new Map();
   const rootElkNodes: any[] = []; // Using any[] for ELK node children temporarily
 
@@ -201,7 +263,13 @@ const getLayoutedElements = (
       targetPosition: isHorizontal ? "left" : "top",
       sourcePosition: isHorizontal ? "right" : "bottom",
       width: node.width ?? nodeWidth,
-      height: node.height ?? nodeHeight,
+      // For parent types, provide a minimal height to ELK to avoid errors with `undefined`,
+      // but small enough that ELK must expand it based on children and padding.
+      height:
+        node.data?.conceptualType === "FileContainer" ||
+        node.data?.conceptualType === "LibraryContainer"
+          ? 20 // Provide a small, nominal height for container nodes
+          : node.height ?? nodeHeight, // Use specified or default height for other nodes
       children: [], // Initialize children array for potential parent nodes
       // layoutOptions for individual nodes can be set here if needed
     };
@@ -210,17 +278,17 @@ const getLayoutedElements = (
 
   nodes.forEach((node) => {
     const elkNode = elkNodesMap.get(node.id);
-    if (node.parentNode && elkNodesMap.has(node.parentNode)) {
-      const parentElkNode = elkNodesMap.get(node.parentNode);
+    if (node.parentId && elkNodesMap.has(node.parentId)) {
+      const parentElkNode = elkNodesMap.get(node.parentId);
       parentElkNode.children.push(elkNode);
       console.log(
-        `[Webview getLayoutedElements] Node ${node.id} added as child to ${node.parentNode}`
+        `[Webview getLayoutedElements] Node ${node.id} added as child to ${node.parentId}`
       );
     } else {
       rootElkNodes.push(elkNode);
-      if (node.parentNode) {
+      if (node.parentId) {
         console.warn(
-          `[Webview getLayoutedElements] Node ${node.id} has parentNode ${node.parentNode} but parent not found in map. Adding as root.`
+          `[Webview getLayoutedElements] Node ${node.id} has parentId ${node.parentId} but parent not found in map. Adding as root.`
         );
       }
     }
@@ -253,51 +321,54 @@ const getLayoutedElements = (
 
       const finalLayoutedNodes: Node[] = [];
 
-      // Recursive function to flatten hierarchy and adjust coordinates
-      const processLayoutedNode = (
+      // Recursive function to process ELK nodes and create React Flow nodes
+      // elkNode: node from ELK layout output
+      // elkParentId: ID of the parent node in the ELK layout structure (undefined for roots)
+      const mapElkNodeToReactFlowNode = (
         elkNode: any,
-        parentPosition: { x: number; y: number },
-        parentId?: string
+        elkParentId?: string
       ) => {
-        const absoluteX = (elkNode.x ?? 0) + parentPosition.x;
-        const absoluteY = (elkNode.y ?? 0) + parentPosition.y;
-
-        // Find original node data to preserve other properties (like data, type, etc.)
-        // elkNode from ELK might only have id, x, y, width, height, children, edges
         const originalNode = nodes.find((n) => n.id === elkNode.id);
         if (!originalNode) {
           console.warn(
             `[Webview getLayoutedElements] Original node not found for ELK node id ${elkNode.id}`
           );
-          return; // Skip if no original node
+          return;
         }
 
-        const reactFlowNode: Node = {
-          ...originalNode, // Spread original node properties first
+        const rfNode: Node = {
+          ...originalNode, // Spread original data, type, etc.
           id: elkNode.id,
-          position: { x: absoluteX, y: absoluteY },
+          // Position from ELK: for roots it's absolute, for children it's relative to their ELK parent.
+          position: { x: elkNode.x ?? 0, y: elkNode.y ?? 0 },
           width: elkNode.width,
           height: elkNode.height,
-          // Preserve parentNode relationship for React Flow if it was there
-          // ELK children are processed recursively, original parentNode from input is what matters for React Flow
-          parentNode: originalNode.parentNode,
+          // parentId for React Flow is determined by the ELK hierarchy.
         };
-        finalLayoutedNodes.push(reactFlowNode);
+
+        if (elkParentId) {
+          // This node is a child in the ELK layout; its position is relative to elkParentId.
+          rfNode.parentId = elkParentId;
+        } else {
+          // This node is a root in the ELK layout; its position is absolute.
+          // We remove any pre-existing parentId from originalNode for React Flow's layouting,
+          // as ELK has positioned it as a root.
+          delete rfNode.parentId;
+        }
+
+        finalLayoutedNodes.push(rfNode);
 
         if (elkNode.children && elkNode.children.length > 0) {
           elkNode.children.forEach((childElkNode: any) => {
-            processLayoutedNode(
-              childElkNode,
-              { x: absoluteX, y: absoluteY },
-              elkNode.id
-            );
+            // Recursively call for children, passing current elkNode.id as their ELK parent ID.
+            mapElkNodeToReactFlowNode(childElkNode, elkNode.id);
           });
         }
       };
 
-      // Start processing from root children of the layouted graph
-      layoutedGraph.children.forEach((rootElkNode: any) => {
-        processLayoutedNode(rootElkNode, { x: 0, y: 0 });
+      // Start processing from the root children of the layouted graph
+      layoutedGraph.children?.forEach((rootElkNode: any) => {
+        mapElkNodeToReactFlowNode(rootElkNode); // Root ELK nodes have no elkParentId
       });
 
       console.log(
@@ -317,6 +388,188 @@ const getLayoutedElements = (
     });
 };
 // --- End ELK Layout ---
+
+// --- START: transformDataForFlow Function ---
+const transformDataForFlow = (
+  rawNodes: Node[],
+  rawEdges: Edge[]
+): { nodes: Node[]; edges: Edge[] } => {
+  const newNodes: Node[] = [];
+  // const nodeMap = new Map(rawNodes.map(n => [n.id, n])); // Not strictly needed if parentId IDs are correct
+
+  console.log(
+    "[App.tsx transformDataForFlow] Starting transformation. Raw nodes count:",
+    rawNodes.length
+  );
+
+  rawNodes.forEach((rawNode) => {
+    let flowNodeType: string | undefined;
+    const dataPayload: any = { ...rawNode.data }; // Copy existing data
+
+    // Determine the primary type identifier from rawNode.data.type or rawNode.type (ReactFlow type)
+    let decisionType = rawNode.data?.type; // Prefer semantic type from analysis
+    if (
+      !decisionType &&
+      rawNode.type &&
+      !["default", "input", "output", "group"].includes(rawNode.type)
+    ) {
+      // If rawNode.data.type is missing, but rawNode.type is a meaningful custom type (not a generic RF type)
+      decisionType = rawNode.type;
+      console.log(
+        `[App.tsx transformDataForFlow] Using rawNode.type "${decisionType}" as decisionType for node ${rawNode.id} as data.type was missing.`
+      );
+    }
+
+    // Fallback if decisionType is still not determined from relevant fields
+    if (!decisionType) {
+      console.warn(
+        `[App.tsx transformDataForFlow] Node ${rawNode.id} has no clear 'data.type' or custom 'rawNode.type'. Label: ${rawNode.data?.label}. Skipping transformation for this node if it's not a known RF type.`
+      );
+      // If it's one of our already known React Flow types, preserve it.
+      if (
+        [
+          "FileContainerNode",
+          "LibraryContainerNode",
+          "ExportedItemNode",
+          "ComponentNode",
+        ].includes(rawNode.type || "")
+      ) {
+        flowNodeType = rawNode.type;
+      } else {
+        return; // Skip node if no type can be determined
+      }
+    }
+
+    if (!flowNodeType) {
+      // if not set by the block above, determine it now
+      switch (decisionType) {
+        case "File":
+          flowNodeType = "FileContainerNode";
+          dataPayload.conceptualType = "FileContainer";
+          break;
+        case "LibraryReferenceGroup":
+          flowNodeType = "LibraryContainerNode";
+          dataPayload.conceptualType = "LibraryContainer";
+          break;
+        case "Component":
+          flowNodeType = "ComponentNode"; // Use dedicated component node type
+          dataPayload.conceptualType = "ExportedItem";
+          dataPayload.actualType = "Component";
+          break;
+        case "Hook":
+        case "Function":
+        case "Variable":
+          flowNodeType = "ExportedItemNode";
+          dataPayload.conceptualType = "ExportedItem";
+          dataPayload.actualType = decisionType; // "Hook", "Function", "Variable"
+          break;
+        case "LibraryImport":
+          flowNodeType = "ExportedItemNode"; // Represent imports as items, parented by LibraryContainer
+          dataPayload.conceptualType = "LibraryImportItem";
+          // actualType might be the imported name, e.g. 'useState'
+          dataPayload.actualType = rawNode.data?.label || decisionType;
+          break;
+        case "HookUsage": // Explicitly filter out HookUsage nodes
+          console.log(
+            `[App.tsx transformDataForFlow] Filtering out HookUsage node: ${rawNode.id} ('${rawNode.data?.label}')`
+          );
+          return; // Skip creating a node for HookUsage
+        default:
+          // Check if decisionType itself is one of the direct React Flow node types
+          if (
+            [
+              "FileContainerNode",
+              "LibraryContainerNode",
+              "ExportedItemNode",
+              "ComponentNode",
+            ].includes(decisionType ?? "")
+          ) {
+            flowNodeType = decisionType;
+            // Infer conceptualType if possible
+            if (
+              decisionType === "FileContainerNode" &&
+              !dataPayload.conceptualType
+            )
+              dataPayload.conceptualType = "FileContainer";
+            else if (
+              decisionType === "LibraryContainerNode" &&
+              !dataPayload.conceptualType
+            )
+              dataPayload.conceptualType = "LibraryContainer";
+            else if (
+              (decisionType === "ExportedItemNode" ||
+                decisionType === "ComponentNode") &&
+              !dataPayload.conceptualType
+            )
+              dataPayload.conceptualType = "ExportedItem";
+          } else {
+            console.warn(
+              `[App.tsx transformDataForFlow] Unhandled decision type: "${decisionType}" for node ${rawNode.id} ('${rawNode.data?.label}'). Treating as generic ExportedItem or skipping.`
+            );
+            // Fallback for unknown types that might be part of the hierarchy
+            if (rawNode.data?.label) {
+              flowNodeType = "ExportedItemNode";
+              dataPayload.conceptualType = "UnknownExport";
+              dataPayload.actualType = String(decisionType);
+            } else {
+              return; // Skip if no label and totally unknown
+            }
+          }
+      }
+    }
+
+    if (!flowNodeType) {
+      console.warn(
+        `[App.tsx transformDataForFlow] flowNodeType is still undefined for node ${rawNode.id} ('${rawNode.data?.label}'). Skipping.`
+      );
+      return;
+    }
+
+    const newNode: Node = {
+      ...rawNode, // Spread original props (id, position will be re-calculated by ELK)
+      type: flowNodeType,
+      data: dataPayload,
+      parentId: rawNode.parentNode, // CORRECTED: Source from rawNode.parentNode, assign to parentId for React Flow
+      // Ensure width/height are at least defaults if not specified, ELK might override
+      width: rawNode.width ?? nodeWidth,
+      height: rawNode.height ?? nodeHeight,
+    };
+
+    // If the node has a parent (now correctly sourced), set its extent to 'parent'
+    if (newNode.parentId) {
+      newNode.extent = "parent";
+    }
+
+    newNodes.push(newNode);
+  });
+  console.log(
+    "[App.tsx transformDataForFlow] Transformation complete. New nodes count:",
+    newNodes.length
+  );
+
+  // Filter edges to ensure both source and target nodes exist in the newNodes list
+  const newNodeIds = new Set(newNodes.map((n) => n.id));
+  const newEdges = rawEdges.filter((edge) => {
+    const sourceExists = newNodeIds.has(edge.source);
+    const targetExists = newNodeIds.has(edge.target);
+    if (!sourceExists)
+      console.warn(
+        `[App.tsx transformDataForFlow] Edge ${edge.id} source ${edge.source} missing in new nodes.`
+      );
+    if (!targetExists)
+      console.warn(
+        `[App.tsx transformDataForFlow] Edge ${edge.id} target ${edge.target} missing in new nodes.`
+      );
+    return sourceExists && targetExists;
+  });
+  console.log(
+    "[App.tsx transformDataForFlow] Edges filtered. New edges count:",
+    newEdges.length
+  );
+
+  return { nodes: newNodes, edges: newEdges };
+};
+// --- END: transformDataForFlow Function ---
 
 // Inner component to handle React Flow instance and layout
 const FlowCanvas: React.FC<{
@@ -611,18 +864,25 @@ const App: React.FC = () => {
             return currentSettings; // No change to settings needed here
           });
           break;
-        case "showResults":
+        case "showResults": {
           console.log(
-            "[Webview] Storing raw results for layout:",
+            "[Webview] Received raw results from extension:", // Log original
             message.data
           );
           setIsLoading(false);
+          // Apply transformation
+          const transformedData = transformDataForFlow(
+            message.data.nodes || [],
+            message.data.edges || []
+          );
+          console.log(
+            "[Webview] Storing TRANSFORMED results for layout:", // Log transformed
+            transformedData
+          );
           // Store raw data; layout happens in FlowCanvas's effect
-          setRawAnalysisData({
-            nodes: message.data.nodes || [],
-            edges: message.data.edges || [],
-          });
+          setRawAnalysisData(transformedData); // Store transformed data
           break;
+        }
         // Add other message handlers if needed
       }
     };
