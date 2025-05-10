@@ -11,15 +11,11 @@ First version generates tree maps with several options
 Todo:
 
 - Color scheme is not great
-- Need to default to binary + 2 px border
 - All nodes should identify their type
 - All nodes + containers should have more info in the label with a truncate - add the node type for JSX, variable name etc.
 - Single left click should expand/collapse; cmd+click should open the file with a visual change in the node border
 - Need to show if and other control flows as parents or differently
 - Node sizes are not well determined - figure out how to keep things more consistent
-- Add a button to export the raw data structure - drop into LLM to get better suggestions
-- Run prettier on the code snippets + syntax highlight
-- Make the container text slightly smaller and reduce padding as much as possible
 - Tree map should probably render on the side of code - open existing editor when clicking.
 
 Tree creation
@@ -39,7 +35,6 @@ Design:
   - Auto-hide or truncate labels below a minimum pixel area; reveal full label on hover/focus.
   - Use a semi-transparent label background so text remains legible over coloured fills.
 - Revise header and node color black/white based on background contrast
-- Move the reset zoom and `up one level` buttons to the top header
 
 UX:
 
@@ -51,4 +46,3 @@ UX:
   - Consider an HTML export that includes tooltips or other interactions
 - Perf goals
   - Enforce < 200 ms initial render for 1 k-line files; if exceeded, lazy-render deeper levels.
-- Add a keyboard shortcut to disable tooltip

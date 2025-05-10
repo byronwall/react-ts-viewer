@@ -109,7 +109,7 @@ const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
   return (
     <div
       style={{
-        padding: 10,
+        padding: 5,
         border: "1px solid #3E863E", // Darker green
         background: "#1f3d1f", // Dark green background
         color: "#E0E0E0", // Light text
@@ -123,18 +123,18 @@ const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
         alignItems: "flex-start", // Align content to the start (left)
       }}
     >
-      <strong style={{ fontSize: "1em", marginBottom: "2px" }}>
+      <strong style={{ fontSize: "0.9em", marginBottom: "1px" }}>
         {fileName}
       </strong>
       {childNodesCount > 0 && (
         <span
-          style={{ fontSize: "0.8em", color: "#A0A0A0", marginBottom: "4px" }}
+          style={{ fontSize: "0.7em", color: "#A0A0A0", marginBottom: "2px" }}
         >
           ({childNodesCount} item{childNodesCount === 1 ? "" : "s"})
         </span>
       )}
       {dirPath && (
-        <span style={{ fontSize: "0.75em", color: "#909090" }}>{dirPath}</span>
+        <span style={{ fontSize: "0.65em", color: "#909090" }}>{dirPath}</span>
       )}
       {/* <div style={{ fontSize: '0.7em', color: '#777', marginTop: 'auto' }}>ID: {props.id}</div> */}
     </div>
@@ -162,7 +162,7 @@ const LibraryContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
   return (
     <div
       style={{
-        padding: 10,
+        padding: 5,
         border: "1px solid #8B4513", // Darker orange/brown
         background: "#4a2f19", // Dark orange/brown background
         color: "#E0E0E0", // Light text
@@ -176,12 +176,12 @@ const LibraryContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
         alignItems: "flex-start",
       }}
     >
-      <strong style={{ fontSize: "1em", marginBottom: "2px" }}>
+      <strong style={{ fontSize: "0.9em", marginBottom: "1px" }}>
         {props.data?.label || "Library"}
       </strong>
       {childNodesCount > 0 && (
         <span
-          style={{ fontSize: "0.8em", color: "#A0A0A0", marginBottom: "4px" }}
+          style={{ fontSize: "0.7em", color: "#A0A0A0", marginBottom: "2px" }}
         >
           ({childNodesCount} import{childNodesCount === 1 ? "" : "s"})
         </span>
@@ -236,14 +236,14 @@ const defaultSettings: AnalysisSettings = {
 
 // Default Treemap settings
 const defaultTreemapSettings: TreemapSettings = {
-  tile: "squarify",
+  tile: "binary",
   leavesOnly: false,
   innerPadding: 3,
   outerPadding: 3,
   enableLabel: true,
   labelSkipSize: 12,
   nodeOpacity: 1,
-  borderWidth: 1,
+  borderWidth: 2,
   colorPalette: "Default",
   // Default tooltip settings
   enableTooltip: true,
@@ -1507,7 +1507,11 @@ const App: React.FC = () => {
                 height: "100%",
               }}
             >
-              <TreemapDisplay data={scopeTreeData} settings={treemapSettings} />
+              <TreemapDisplay
+                data={scopeTreeData}
+                settings={treemapSettings}
+                onSettingsChange={handleTreemapSettingChange}
+              />
             </div>
           )}
 

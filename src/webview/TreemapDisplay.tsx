@@ -160,6 +160,7 @@ interface TreemapSettings {
 interface TreemapDisplayProps {
   data: ScopeNode;
   settings: TreemapSettings;
+  onSettingsChange: (settingName: keyof TreemapSettings, value: any) => void;
   // width: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
   // height: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
 }
@@ -189,6 +190,7 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   data: initialData,
   settings,
+  onSettingsChange,
 }) => {
   const [isolatedNode, setIsolatedNode] = useState<ScopeNode | null>(null);
   const [isolationPath, setIsolationPath] = useState<ScopeNode[]>([]);
@@ -379,6 +381,25 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [goUpOneLevel]);
 
+  // New useEffect for tooltip toggle shortcut
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "t") {
+        event.preventDefault();
+        onSettingsChange("enableTooltip", !settings.enableTooltip);
+        vscodeApi.postMessage({
+          command: "showInformationMessage",
+          text: `Tooltip ${!settings.enableTooltip ? "enabled" : "disabled"}`,
+        });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [settings.enableTooltip, onSettingsChange, vscodeApi]);
+
   const displayData = isolatedNode || initialData;
 
   // Basic color scale based on category - extend as needed
@@ -425,7 +446,29 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
           Treemap: {fileName}
         </h3>
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {(isolatedNode || isolationPath.length > 0) && (
+            <>
+              {isolatedNode && (
+                <button
+                  onClick={resetIsolation}
+                  style={{ padding: "5px 10px", fontSize: "0.9em" }}
+                  title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
+                >
+                  Reset Zoom
+                </button>
+              )}
+              {isolationPath.length > 0 && (
+                <button
+                  onClick={goUpOneLevel}
+                  style={{ padding: "5px 10px", fontSize: "0.9em" }}
+                  title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
+                >
+                  Up One Level
+                </button>
+              )}
+            </>
+          )}
           <button
             onClick={handleExportToJson}
             style={{ padding: "5px 10px", fontSize: "0.9em" }}
@@ -452,25 +495,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         }}
         className="nivo-treemap-container"
       >
-        {(isolatedNode || isolationPath.length > 0) && (
-          <div
-            style={{
-              position: "absolute",
-              top: 10,
-              left: 10,
-              zIndex: 10,
-              display: "flex",
-              gap: "5px",
-            }}
-          >
-            {isolatedNode && (
-              <button onClick={resetIsolation}>Reset Zoom</button>
-            )}
-            {isolationPath.length > 0 && (
-              <button onClick={goUpOneLevel}>Up One Level</button>
-            )}
-          </div>
-        )}
         <ResponsiveTreeMap
           data={displayData}
           identity="id"
@@ -598,8 +622,10 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                                 marginTop: "3px",
                               }}
                             >
-                              {scopeNode.source.substring(0, snippetLength)}
-                              {scopeNode.source.length > snippetLength
+                              {scopeNode.source
+                                .trim()
+                                .substring(0, snippetLength)}
+                              {scopeNode.source.trim().length > snippetLength
                                 ? "..."
                                 : ""}
                             </pre>
