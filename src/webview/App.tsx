@@ -28,6 +28,7 @@ import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
 import TreemapDisplay from "./TreemapDisplay"; // Import the new TreemapDisplay component
+import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi instance
 
 // Explicitly type CustomNodeProps to include width and height
 interface CustomNodeProps extends NodeProps {
@@ -41,6 +42,14 @@ import { ScopeNode } from "../types";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
+
+// Global declarations specific to App.tsx initialization
+declare global {
+  interface Window {
+    initialData?: { filePath?: string };
+    initialWorkspaceRoot?: string;
+  }
+}
 
 // Placeholder components for new node types
 const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
@@ -174,14 +183,6 @@ const ExportedItemNodeDisplay: React.FC<CustomNodeProps> = (props) => {
     </div>
   );
 };
-
-// Declare the injected global variable (keep this for initial data)
-declare global {
-  interface Window {
-    initialData?: { filePath?: string };
-    initialWorkspaceRoot?: string;
-  }
-}
 
 // Interface for settings managed by the App
 interface AnalysisSettings {
@@ -805,11 +806,6 @@ const App: React.FC = () => {
   const [currentAnalysisTarget, setCurrentAnalysisTarget] = useState<
     string | null
   >(filePath);
-
-  const vscodeApi = useMemo(() => {
-    // @ts-expect-error acquireVsCodeApi is a global provided by VS Code in webviews
-    return acquireVsCodeApi();
-  }, []);
 
   useEffect(() => {
     if (filePath && activeView === "treemap") {

@@ -5,6 +5,7 @@ import { buildDependencyGraph } from "./buildDependencyGraph";
 import { outputChannel } from "./initializeExtension";
 import { getWebviewContent } from "./getWebviewContent";
 import { IndexerService } from "./IndexerService";
+import { setupWebviewPanelMessageHandler } from "./setupWebviewPanelMessageHandler";
 
 export let webviewPanel: vscode.WebviewPanel | undefined;
 
@@ -56,6 +57,9 @@ export function registerAnalyzeFileCommand(
           webviewPanel.webview,
           filePath
         );
+
+        // Setup the message handler for webview communication
+        setupWebviewPanelMessageHandler(webviewPanel, context);
 
         // --- Get workspace root (moved outside switch) ---
         const workspaceFolders = vscode.workspace.workspaceFolders;

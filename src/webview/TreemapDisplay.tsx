@@ -2,19 +2,18 @@ import React from "react";
 // import { ResponsiveTreeMapCanvas, TreeMapDatum } from "@nivo/treemap"; // TreeMapDatum might not be exported
 import { ResponsiveTreeMapCanvas } from "@nivo/treemap";
 import { NodeCategory, ScopeNode } from "../types"; // Assuming src/types.ts
-// import { vscode } from "./vscodeApi"; // Assuming you have a vscodeApi helper
+import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleton
 
-// Helper to get VS Code API instance. You might have this in a dedicated file e.g. vscodeApi.ts
-// Ensure this is initialized only once and used across your webview components.
-let vscodeApiInstance: any;
-function getVsCodeApi() {
-  if (!vscodeApiInstance) {
-    // @ts-expect-error - Standard VS Code webview API acquisition
-    vscodeApiInstance = acquireVsCodeApi();
-  }
-  return vscodeApiInstance;
-}
-const vscode = getVsCodeApi();
+// Remove the standalone vscode API implementation - use the imported singleton instead
+// let vscodeApiInstance: any;
+// function getVsCodeApi() {
+//   if (!vscodeApiInstance) {
+//     // @ts-expect-error - Standard VS Code webview API acquisition
+//     vscodeApiInstance = acquireVsCodeApi();
+//   }
+//   return vscodeApiInstance;
+// }
+// const vscode = getVsCodeApi();
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -36,7 +35,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
       const idParts = scopeNode.id.split(":");
       const filePath =
         idParts.length > 1 ? idParts.slice(0, -1).join(":") : idParts[0]; // Handles file paths with colons
-      vscode.postMessage({
+      vscodeApi.postMessage({
         command: "revealCode",
         filePath: filePath,
         loc: scopeNode.loc,
