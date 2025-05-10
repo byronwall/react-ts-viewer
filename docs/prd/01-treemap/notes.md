@@ -47,7 +47,6 @@ UX:
   - Show a list of variable names and hover to show where they are used
 - Add an on-hover tooltip or side legend for Program, Variable, ArrowFunction, etc.
 - Export & share
-  - Export as image or raw SVG
   - Consider an HTML export that includes tooltips or other interactions
 - Perf goals
   - Enforce < 200 ms initial render for 1 k-line files; if exceeded, lazy-render deeper levels.
