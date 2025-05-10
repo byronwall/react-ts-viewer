@@ -19,6 +19,113 @@ import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleto
 // }
 // const vscode = getVsCodeApi();
 
+// --- START: Color Palette Definitions ---
+const pastelSet: Record<NodeCategory, string> = {
+  [NodeCategory.Program]: "#8dd3c7",
+  [NodeCategory.Module]: "#ffffb3",
+  [NodeCategory.Class]: "#bebada",
+  [NodeCategory.Function]: "#fb8072",
+  [NodeCategory.ArrowFunction]: "#80b1d3",
+  [NodeCategory.Block]: "#fdb462",
+  [NodeCategory.ControlFlow]: "#b3de69",
+  [NodeCategory.Variable]: "#fccde5",
+  [NodeCategory.Call]: "#d9d9d9",
+  [NodeCategory.ReactComponent]: "#bc80bd",
+  [NodeCategory.ReactHook]: "#ccebc5",
+  [NodeCategory.JSX]: "#ffed6f",
+  [NodeCategory.Other]: "#a6cee3",
+};
+
+const solarizedBright: Record<NodeCategory, string> = {
+  [NodeCategory.Program]: "#268bd2", // blue
+  [NodeCategory.Module]: "#2aa198", // cyan
+  [NodeCategory.Class]: "#859900", // green
+  [NodeCategory.Function]: "#b58900", // yellow
+  [NodeCategory.ArrowFunction]: "#cb4b16", // orange
+  [NodeCategory.Block]: "#dc322f", // red
+  [NodeCategory.ControlFlow]: "#d33682", // magenta
+  [NodeCategory.Variable]: "#6c71c4", // violet
+  [NodeCategory.Call]: "#93a1a1", // light gray
+  [NodeCategory.ReactComponent]: "#657b83", // gray
+  [NodeCategory.ReactHook]: "#073642", // dark cyan
+  [NodeCategory.JSX]: "#586e75", // slate
+  [NodeCategory.Other]: "#839496", // mid gray
+};
+
+const materialVibrant: Record<NodeCategory, string> = {
+  [NodeCategory.Program]: "#2196f3", // blue
+  [NodeCategory.Module]: "#03a9f4", // light-blue
+  [NodeCategory.Class]: "#009688", // teal
+  [NodeCategory.Function]: "#4caf50", // green
+  [NodeCategory.ArrowFunction]: "#8bc34a", // light-green
+  [NodeCategory.Block]: "#ffc107", // amber
+  [NodeCategory.ControlFlow]: "#ff9800", // orange
+  [NodeCategory.Variable]: "#ff5722", // deep-orange
+  [NodeCategory.Call]: "#9c27b0", // purple
+  [NodeCategory.ReactComponent]: "#673ab7", // deep-purple
+  [NodeCategory.ReactHook]: "#607d8b", // blue-gray
+  [NodeCategory.JSX]: "#795548", // brown
+  [NodeCategory.Other]: "#e91e63", // pink
+};
+
+const okabeIto: Record<NodeCategory, string> = {
+  [NodeCategory.Program]: "#000000", // black
+  [NodeCategory.Module]: "#0072B2", // blue
+  [NodeCategory.Class]: "#E69F00", // orange
+  [NodeCategory.Function]: "#009E73", // green
+  [NodeCategory.ArrowFunction]: "#F0E442", // yellow
+  [NodeCategory.Block]: "#56B4E9", // sky-blue
+  [NodeCategory.ControlFlow]: "#D55E00", // vermilion
+  [NodeCategory.Variable]: "#CC79A7", // reddish-purple
+  [NodeCategory.Call]: "#999999", // med-gray
+  [NodeCategory.ReactComponent]: "#66A61E", // olive-green
+  [NodeCategory.ReactHook]: "#C44E52", // rose-red
+  [NodeCategory.JSX]: "#8172B3", // lavender
+  [NodeCategory.Other]: "#5F9EA0", // cadet-blue
+};
+
+const neutralAccents: Record<NodeCategory, string> = {
+  [NodeCategory.Program]: "#4e4e4e", // dark gray
+  [NodeCategory.Module]: "#7a7a7a", // gray
+  [NodeCategory.Class]: "#9e9e9e", // mid gray
+  [NodeCategory.Function]: "#ff7043", // accent orange
+  [NodeCategory.ArrowFunction]: "#ffa726", // lighter orange
+  [NodeCategory.Block]: "#bdbdbd", // light gray
+  [NodeCategory.ControlFlow]: "#ef5350", // red accent
+  [NodeCategory.Variable]: "#26a69a", // teal accent
+  [NodeCategory.Call]: "#66bb6a", // green accent
+  [NodeCategory.ReactComponent]: "#42a5f5", // blue accent
+  [NodeCategory.ReactHook]: "#ab47bc", // purple accent
+  [NodeCategory.JSX]: "#8d6e63", // brownish accent
+  [NodeCategory.Other]: "#cfd8dc", // very light gray
+};
+
+const defaultPalette: Record<NodeCategory, string> = {
+  [NodeCategory.Program]: "#1f77b4",
+  [NodeCategory.Module]: "#aec7e8",
+  [NodeCategory.Class]: "#ff7f0e",
+  [NodeCategory.Function]: "#ffbb78",
+  [NodeCategory.ArrowFunction]: "#2ca02c",
+  [NodeCategory.Block]: "#98df8a",
+  [NodeCategory.ControlFlow]: "#d62728",
+  [NodeCategory.Variable]: "#ff9896",
+  [NodeCategory.Call]: "#9467bd",
+  [NodeCategory.ReactComponent]: "#c5b0d5",
+  [NodeCategory.ReactHook]: "#8c564b",
+  [NodeCategory.JSX]: "#c49c94",
+  [NodeCategory.Other]: "#7f7f7f",
+};
+
+export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
+  Default: defaultPalette,
+  "Pastel Set": pastelSet,
+  "Solarized Bright": solarizedBright,
+  "Material Vibrant": materialVibrant,
+  "Okabe-Ito": okabeIto,
+  "Neutral with Accents": neutralAccents,
+};
+// --- END: Color Palette Definitions ---
+
 interface TreemapSettings {
   tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
   leavesOnly: boolean;
@@ -28,6 +135,7 @@ interface TreemapSettings {
   labelSkipSize: number;
   nodeOpacity: number;
   borderWidth: number;
+  colorPalette: string; // Key for availablePalettes
   // Tooltip settings
   enableTooltip: boolean;
   showTooltipId: boolean;
@@ -167,21 +275,24 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const displayData = isolatedNode || initialData;
 
   // Basic color scale based on category - extend as needed
-  const categoryColors: Record<NodeCategory, string> = {
-    [NodeCategory.Program]: "#1f77b4",
-    [NodeCategory.Module]: "#aec7e8",
-    [NodeCategory.Class]: "#ff7f0e",
-    [NodeCategory.Function]: "#ffbb78",
-    [NodeCategory.ArrowFunction]: "#2ca02c",
-    [NodeCategory.Block]: "#98df8a",
-    [NodeCategory.ControlFlow]: "#d62728",
-    [NodeCategory.Variable]: "#ff9896",
-    [NodeCategory.Call]: "#9467bd",
-    [NodeCategory.ReactComponent]: "#c5b0d5",
-    [NodeCategory.ReactHook]: "#8c564b",
-    [NodeCategory.JSX]: "#c49c94",
-    [NodeCategory.Other]: "#7f7f7f",
-  };
+  // const categoryColors: Record<NodeCategory, string> = {
+  //   [NodeCategory.Program]: "#1f77b4",
+  //   [NodeCategory.Module]: "#aec7e8",
+  //   [NodeCategory.Class]: "#ff7f0e",
+  //   [NodeCategory.Function]: "#ffbb78",
+  //   [NodeCategory.ArrowFunction]: "#2ca02c",
+  //   [NodeCategory.Block]: "#98df8a",
+  //   [NodeCategory.ControlFlow]: "#d62728",
+  //   [NodeCategory.Variable]: "#ff9896",
+  //   [NodeCategory.Call]: "#9467bd",
+  //   [NodeCategory.ReactComponent]: "#c5b0d5",
+  //   [NodeCategory.ReactHook]: "#8c564b",
+  //   [NodeCategory.JSX]: "#c49c94",
+  //   [NodeCategory.Other]: "#7f7f7f",
+  // };
+
+  const activePalette =
+    availablePalettes[settings.colorPalette] || defaultPalette;
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -219,7 +330,8 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         }
         colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
           const category = nodeWithData.data.category;
-          return categoryColors[category] || categoryColors[NodeCategory.Other];
+          // return categoryColors[category] || categoryColors[NodeCategory.Other];
+          return activePalette[category] || activePalette[NodeCategory.Other];
         }}
         borderColor={{
           from: "color",
