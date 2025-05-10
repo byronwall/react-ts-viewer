@@ -11,6 +11,9 @@ import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleto
 // Import for save-svg-as-png if you install it
 import { saveSvgAsPng, svgAsPngUri } from "save-svg-as-png";
 
+// Import the new CodeBlock component
+import { CodeBlock } from "./CodeBlock";
+
 // Remove the standalone vscode API implementation - use the imported singleton instead
 // let vscodeApiInstance: any;
 // function getVsCodeApi() {
@@ -611,24 +614,20 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                             >
                               Source snippet (first {snippetLength} chars):
                             </div>
-                            <pre
+                            <div
                               style={{
-                                whiteSpace: "pre-wrap",
-                                wordBreak: "break-all",
-                                maxHeight: "100px",
+                                maxHeight: "200px", // Example max height for the block
                                 overflowY: "auto",
-                                background: "#f0f0f0",
+                                background: "#f0f0f0", // Background for the container
                                 padding: "5px",
                                 marginTop: "3px",
                               }}
                             >
-                              {scopeNode.source
-                                .trim()
-                                .substring(0, snippetLength)}
-                              {scopeNode.source.trim().length > snippetLength
-                                ? "..."
-                                : ""}
-                            </pre>
+                              <CodeBlock
+                                raw={scopeNode.source.trim()}
+                                lang="tsx"
+                              />
+                            </div>
                           </>
                         )}
                     </div>

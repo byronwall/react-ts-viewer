@@ -10,7 +10,6 @@ First version generates tree maps with several options
 
 Todo:
 
-- Color scheme is not great
 - All nodes should identify their type
 - All nodes + containers should have more info in the label with a truncate - add the node type for JSX, variable name etc.
 - Single left click should expand/collapse; cmd+click should open the file with a visual change in the node border
@@ -20,8 +19,7 @@ Todo:
 
 Tree creation
 
-- ArrowFunction -> Block can be combined into a single element (probably just drop the block one)
-- Drop the `Program` node - not needed as a parent
+- Drop the `Program` node - not needed as a parent -- attempted this but it created a synthetic node...
 - Add a symbol or marker to indicate if something is exported
 
 Design:
