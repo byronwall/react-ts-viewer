@@ -43,6 +43,18 @@ import { ScopeNode } from "../types";
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
 
+// Add TreemapSettings type, ensure it's consistent with TreemapDisplay.tsx
+interface TreemapSettings {
+  tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
+  leavesOnly: boolean;
+  innerPadding: number;
+  outerPadding: number;
+  enableLabel: boolean;
+  labelSkipSize: number;
+  nodeOpacity: number;
+  borderWidth: number;
+}
+
 // Global declarations specific to App.tsx initialization
 declare global {
   interface Window {
@@ -200,6 +212,18 @@ const defaultSettings: AnalysisSettings = {
   showHooks: true, // Default to showing
   // showFileDeps: true, // To be removed
   showLibDeps: true, // Default to showing
+};
+
+// Default Treemap settings
+const defaultTreemapSettings: TreemapSettings = {
+  tile: "squarify",
+  leavesOnly: false,
+  innerPadding: 3,
+  outerPadding: 3,
+  enableLabel: true,
+  labelSkipSize: 12,
+  nodeOpacity: 1,
+  borderWidth: 1,
 };
 
 // --- Settings Context ---
@@ -796,6 +820,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultSettings);
+  const [treemapSettings, setTreemapSettings] = useState<TreemapSettings>(
+    defaultTreemapSettings
+  );
 
   const [activeView, setActiveView] = useState<
     "graph" | "treeview" | "treemap"
@@ -898,6 +925,17 @@ const App: React.FC = () => {
 
   const HEADER_HEIGHT_PX = 50; // Example
 
+  // Handler for Treemap settings changes
+  const handleTreemapSettingChange = (
+    settingName: keyof TreemapSettings,
+    value: any
+  ) => {
+    setTreemapSettings((prevSettings) => ({
+      ...prevSettings,
+      [settingName]: value,
+    }));
+  };
+
   // Main return statement for the App component's JSX
   return (
     <SettingsContext.Provider value={settings}>
@@ -961,6 +999,132 @@ const App: React.FC = () => {
               Treemap
             </button>
           </div>
+
+          {/* Treemap Specific Settings - Shown only when Treemap view is active */}
+          {activeView === "treemap" && (
+            <div className="settings-group" style={{ marginTop: "15px" }}>
+              <h4>Treemap Settings</h4>
+              <div className="setting-item">
+                <label htmlFor="tile">Tiling Algorithm:</label>
+                <select
+                  id="tile"
+                  value={treemapSettings.tile}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "tile",
+                      e.target.value as TreemapSettings["tile"]
+                    )
+                  }
+                >
+                  <option value="squarify">Squarify</option>
+                  <option value="binary">Binary</option>
+                  <option value="dice">Dice</option>
+                  <option value="slice">Slice</option>
+                  <option value="sliceDice">SliceDice</option>
+                </select>
+              </div>
+              <div className="setting-item">
+                <label htmlFor="leavesOnly">Leaves Only:</label>
+                <input
+                  type="checkbox"
+                  id="leavesOnly"
+                  checked={treemapSettings.leavesOnly}
+                  onChange={(e) =>
+                    handleTreemapSettingChange("leavesOnly", e.target.checked)
+                  }
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="enableLabel">Enable Labels:</label>
+                <input
+                  type="checkbox"
+                  id="enableLabel"
+                  checked={treemapSettings.enableLabel}
+                  onChange={(e) =>
+                    handleTreemapSettingChange("enableLabel", e.target.checked)
+                  }
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="labelSkipSize">Label Skip Size:</label>
+                <input
+                  type="number"
+                  id="labelSkipSize"
+                  value={treemapSettings.labelSkipSize}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "labelSkipSize",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="0"
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="innerPadding">Inner Padding (px):</label>
+                <input
+                  type="number"
+                  id="innerPadding"
+                  value={treemapSettings.innerPadding}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "innerPadding",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="0"
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="outerPadding">Outer Padding (px):</label>
+                <input
+                  type="number"
+                  id="outerPadding"
+                  value={treemapSettings.outerPadding}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "outerPadding",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="0"
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="nodeOpacity">Node Opacity (0-1):</label>
+                <input
+                  type="number"
+                  id="nodeOpacity"
+                  value={treemapSettings.nodeOpacity}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "nodeOpacity",
+                      parseFloat(e.target.value)
+                    )
+                  }
+                  min="0"
+                  max="1"
+                  step="0.1"
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="borderWidth">Border Width (px):</label>
+                <input
+                  type="number"
+                  id="borderWidth"
+                  value={treemapSettings.borderWidth}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "borderWidth",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="0"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Settings Popover and other controls from original App.tsx should be here */}
           {/* Make sure to re-integrate your settings popover and other controls from original App.tsx */}
         </div>
@@ -1003,7 +1167,7 @@ const App: React.FC = () => {
                 height: "100%",
               }}
             >
-              <TreemapDisplay data={scopeTreeData} />
+              <TreemapDisplay data={scopeTreeData} settings={treemapSettings} />
             </div>
           )}
 

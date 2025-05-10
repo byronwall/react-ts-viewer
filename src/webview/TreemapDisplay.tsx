@@ -15,8 +15,20 @@ import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleto
 // }
 // const vscode = getVsCodeApi();
 
+interface TreemapSettings {
+  tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
+  leavesOnly: boolean;
+  innerPadding: number;
+  outerPadding: number;
+  enableLabel: boolean;
+  labelSkipSize: number;
+  nodeOpacity: number;
+  borderWidth: number;
+}
+
 interface TreemapDisplayProps {
   data: ScopeNode;
+  settings: TreemapSettings;
   // width: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
   // height: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
 }
@@ -27,7 +39,7 @@ interface NivoNodeExtensions {
   // other Nivo specific properties if needed, like formattedValue, color etc.
 }
 
-const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
+const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data, settings }) => {
   const handleNodeClick = (node: any) => {
     const scopeNode = node.data as ScopeNode;
     if (scopeNode.loc && scopeNode.id) {
@@ -65,15 +77,11 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
       identity="id"
       value="value"
       valueFormat=".02s"
-      tile="binary"
-      leavesOnly={false}
       margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-      labelSkipSize={18}
       labelTextColor={{
         from: "color",
         modifiers: [["darker", 2]],
       }}
-      enableLabel={true}
       parentLabel={(node) =>
         `${node.data.category} [${node.data.loc.start.line}-${node.data.loc.end.line}]`
       }
@@ -89,7 +97,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
         from: "color",
         modifiers: [["darker", 0.8]],
       }}
-      borderWidth={4}
       onClick={handleNodeClick}
       tooltip={({ node }: any) => {
         const scopeNode = node.data as ScopeNode;
@@ -140,7 +147,14 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
       }}
       isInteractive={true}
       animate={false}
-      nodeOpacity={1}
+      tile={settings.tile}
+      leavesOnly={settings.leavesOnly}
+      innerPadding={settings.innerPadding}
+      outerPadding={settings.outerPadding}
+      enableLabel={settings.enableLabel}
+      labelSkipSize={settings.labelSkipSize}
+      nodeOpacity={settings.nodeOpacity}
+      borderWidth={settings.borderWidth}
     />
   );
 };
