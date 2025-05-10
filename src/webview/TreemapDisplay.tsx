@@ -24,6 +24,14 @@ interface TreemapSettings {
   labelSkipSize: number;
   nodeOpacity: number;
   borderWidth: number;
+  // Tooltip settings
+  enableTooltip: boolean;
+  showTooltipId: boolean;
+  showTooltipCategory: boolean;
+  showTooltipValue: boolean;
+  showTooltipLines: boolean;
+  showTooltipSourceSnippet: boolean;
+  tooltipSourceSnippetLength: number;
 }
 
 interface TreemapDisplayProps {
@@ -98,53 +106,86 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data, settings }) => {
         modifiers: [["darker", 0.8]],
       }}
       onClick={handleNodeClick}
-      tooltip={({ node }: any) => {
-        const scopeNode = node.data as ScopeNode;
-        return (
-          <div
-            style={{
-              padding: "8px 12px",
-              background: "white",
-              color: "#333",
-              border: "1px solid #ccc",
-              borderRadius: "3px",
-              fontSize: "12px",
-              maxWidth: "400px",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-            }}
-          >
-            <strong>{scopeNode.id.split(":").pop()}</strong> (
-            {scopeNode.category})<br />
-            Value: {node.formattedValue} ({scopeNode.value} chars)
-            <br />
-            Lines: {scopeNode.loc.start.line} - {scopeNode.loc.end.line}
-            <br />
-            <div
-              style={{
-                marginTop: "5px",
-                paddingTop: "5px",
-                borderTop: "1px solid #eee",
-              }}
-            >
-              Source snippet (first 250 chars):
-            </div>
-            <pre
-              style={{
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-all",
-                maxHeight: "100px",
-                overflowY: "auto",
-                background: "#f0f0f0",
-                padding: "5px",
-                marginTop: "3px",
-              }}
-            >
-              {scopeNode.source.substring(0, 250)}
-              {scopeNode.source.length > 250 ? "..." : ""}
-            </pre>
-          </div>
-        );
-      }}
+      tooltip={
+        settings.enableTooltip
+          ? ({ node }: any) => {
+              const scopeNode = node.data as ScopeNode;
+              const snippetLength = Math.max(
+                0,
+                settings.tooltipSourceSnippetLength
+              );
+              return (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    background: "white",
+                    color: "#333",
+                    border: "1px solid #ccc",
+                    borderRadius: "3px",
+                    fontSize: "12px",
+                    maxWidth: "400px",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  {settings.showTooltipId && (
+                    <>
+                      <strong>{scopeNode.id.split(":").pop()}</strong>
+                      {settings.showTooltipCategory &&
+                        ` (${scopeNode.category})`}
+                      <br />
+                    </>
+                  )}
+                  {!settings.showTooltipId && settings.showTooltipCategory && (
+                    <>
+                      <strong>{scopeNode.category}</strong>
+                      <br />
+                    </>
+                  )}
+                  {settings.showTooltipValue && (
+                    <>
+                      Value: {node.formattedValue} ({scopeNode.value} chars)
+                      <br />
+                    </>
+                  )}
+                  {settings.showTooltipLines && (
+                    <>
+                      Lines: {scopeNode.loc.start.line} -{" "}
+                      {scopeNode.loc.end.line}
+                      <br />
+                    </>
+                  )}
+                  {settings.showTooltipSourceSnippet && scopeNode.source && (
+                    <>
+                      <div
+                        style={{
+                          marginTop: "5px",
+                          paddingTop: "5px",
+                          borderTop: "1px solid #eee",
+                        }}
+                      >
+                        Source snippet (first {snippetLength} chars):
+                      </div>
+                      <pre
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                          maxHeight: "100px",
+                          overflowY: "auto",
+                          background: "#f0f0f0",
+                          padding: "5px",
+                          marginTop: "3px",
+                        }}
+                      >
+                        {scopeNode.source.substring(0, snippetLength)}
+                        {scopeNode.source.length > snippetLength ? "..." : ""}
+                      </pre>
+                    </>
+                  )}
+                </div>
+              );
+            }
+          : (node) => null
+      }
       isInteractive={true}
       animate={false}
       tile={settings.tile}

@@ -53,6 +53,14 @@ interface TreemapSettings {
   labelSkipSize: number;
   nodeOpacity: number;
   borderWidth: number;
+  // Tooltip settings
+  enableTooltip: boolean;
+  showTooltipId: boolean;
+  showTooltipCategory: boolean;
+  showTooltipValue: boolean;
+  showTooltipLines: boolean;
+  showTooltipSourceSnippet: boolean;
+  tooltipSourceSnippetLength: number;
 }
 
 // Global declarations specific to App.tsx initialization
@@ -224,6 +232,14 @@ const defaultTreemapSettings: TreemapSettings = {
   labelSkipSize: 12,
   nodeOpacity: 1,
   borderWidth: 1,
+  // Default tooltip settings
+  enableTooltip: true,
+  showTooltipId: true,
+  showTooltipCategory: true,
+  showTooltipValue: true,
+  showTooltipLines: true,
+  showTooltipSourceSnippet: true,
+  tooltipSourceSnippetLength: 250,
 };
 
 // --- Settings Context ---
@@ -1120,6 +1136,165 @@ const App: React.FC = () => {
                     )
                   }
                   min="0"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Treemap Tooltip Settings - Shown only when Treemap view is active */}
+          {activeView === "treemap" && (
+            <div className="settings-group" style={{ marginTop: "10px" }}>
+              <h5>Tooltip Settings</h5>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="enableTooltip"
+                  checked={treemapSettings.enableTooltip}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "enableTooltip",
+                      e.target.checked
+                    )
+                  }
+                />
+                <label htmlFor="enableTooltip">Enable Tooltip</label>
+              </div>
+              <hr style={{ margin: "8px 0", borderColor: "#555" }} />
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="showTooltipId"
+                  checked={treemapSettings.showTooltipId}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "showTooltipId",
+                      e.target.checked
+                    )
+                  }
+                  disabled={!treemapSettings.enableTooltip}
+                />
+                <label
+                  htmlFor="showTooltipId"
+                  style={{
+                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
+                  }}
+                >
+                  Show ID
+                </label>
+              </div>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="showTooltipCategory"
+                  checked={treemapSettings.showTooltipCategory}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "showTooltipCategory",
+                      e.target.checked
+                    )
+                  }
+                  disabled={!treemapSettings.enableTooltip}
+                />
+                <label
+                  htmlFor="showTooltipCategory"
+                  style={{
+                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
+                  }}
+                >
+                  Show Category
+                </label>
+              </div>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="showTooltipValue"
+                  checked={treemapSettings.showTooltipValue}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "showTooltipValue",
+                      e.target.checked
+                    )
+                  }
+                  disabled={!treemapSettings.enableTooltip}
+                />
+                <label
+                  htmlFor="showTooltipValue"
+                  style={{
+                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
+                  }}
+                >
+                  Show Value
+                </label>
+              </div>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="showTooltipLines"
+                  checked={treemapSettings.showTooltipLines}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "showTooltipLines",
+                      e.target.checked
+                    )
+                  }
+                  disabled={!treemapSettings.enableTooltip}
+                />
+                <label
+                  htmlFor="showTooltipLines"
+                  style={{
+                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
+                  }}
+                >
+                  Show Lines
+                </label>
+              </div>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="showTooltipSourceSnippet"
+                  checked={treemapSettings.showTooltipSourceSnippet}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "showTooltipSourceSnippet",
+                      e.target.checked
+                    )
+                  }
+                  disabled={!treemapSettings.enableTooltip}
+                />
+                <label
+                  htmlFor="showTooltipSourceSnippet"
+                  style={{
+                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
+                  }}
+                >
+                  Show Source Snippet
+                </label>
+              </div>
+              <div className="setting-item">
+                <label
+                  htmlFor="tooltipSourceSnippetLength"
+                  style={{
+                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
+                  }}
+                >
+                  Snippet Length:
+                </label>
+                <input
+                  type="number"
+                  id="tooltipSourceSnippetLength"
+                  value={treemapSettings.tooltipSourceSnippetLength}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "tooltipSourceSnippetLength",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="0"
+                  max="1000" // Max length for snippet
+                  disabled={
+                    !treemapSettings.enableTooltip ||
+                    !treemapSettings.showTooltipSourceSnippet
+                  }
                 />
               </div>
             </div>
