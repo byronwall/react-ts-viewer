@@ -228,7 +228,7 @@ const elkOptions = {
   "elk.spacing.nodeNode": "80",
   "elk.direction": "RIGHT",
   "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-  "elk.padding": "[top=60,left=20,bottom=100,right=20]",
+  "elk.padding": "[top=10,left=10,bottom=10,right=10]",
 };
 
 // Hardcoded node dimensions for ELK layout
@@ -525,11 +525,30 @@ const transformDataForFlow = (
       return;
     }
 
+    let parentIdToAssign = rawNode.parentNode;
+
+    // If this node is a FileContainerNode or LibraryContainerNode,
+    // it should always be a root element in the React Flow graph.
+    // This prevents one such container from inadvertently dragging another
+    // if rawNode.parentNode was set unexpectedly.
+    if (
+      flowNodeType === "FileContainerNode" ||
+      flowNodeType === "LibraryContainerNode"
+    ) {
+      if (parentIdToAssign) {
+        // Log if we are overriding an existing parentNode
+        console.log(
+          `[App.tsx transformDataForFlow] Forcing ${flowNodeType} ${rawNode.id} to be a root node. Original parentNode ('${parentIdToAssign}') is being cleared.`
+        );
+      }
+      parentIdToAssign = undefined;
+    }
+
     const newNode: Node = {
       ...rawNode, // Spread original props (id, position will be re-calculated by ELK)
       type: flowNodeType,
       data: dataPayload,
-      parentId: rawNode.parentNode, // CORRECTED: Source from rawNode.parentNode, assign to parentId for React Flow
+      parentId: parentIdToAssign, // Use the potentially modified parentId
       // Ensure width/height are at least defaults if not specified, ELK might override
       width: rawNode.width ?? nodeWidth,
       height: rawNode.height ?? nodeHeight,

@@ -40,6 +40,13 @@
 - Double click for `jump to file` does not really work well - first click changes collapse state... add a button instead
 - If the tree view is decent - embed it into the graph view as the contents - then use edges to show how that comp or file relates to other stuff
 
+## File layout overview
+
+- Generate a visual that renders the source code file as an image of colored blocks that represent the code - the goal is to show the flow of the code through the file
+- Specifically, I want to see how data flows through the file from chunk to chunk
+- Could also render as a tree or graph showing how data flows down the files
+- Then once it gets the to JSX part, show how data flows down the JSX tree
+
 ## Graph layout problems
 
 - Need to consider dynamic height + width: <https://github.com/xyflow/xyflow/issues/991>
