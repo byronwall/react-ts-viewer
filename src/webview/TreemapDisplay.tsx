@@ -29,12 +29,11 @@ interface NivoNodeExtensions {
 
 const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
   const handleNodeClick = (node: any) => {
-    // Use 'any' or a more specific Nivo type if available
     const scopeNode = node.data as ScopeNode;
     if (scopeNode.loc && scopeNode.id) {
       const idParts = scopeNode.id.split(":");
       const filePath =
-        idParts.length > 1 ? idParts.slice(0, -1).join(":") : idParts[0]; // Handles file paths with colons
+        idParts.length > 1 ? idParts.slice(0, -1).join(":") : idParts[0];
       vscodeApi.postMessage({
         command: "revealCode",
         filePath: filePath,
@@ -75,24 +74,24 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
         modifiers: [["darker", 2]],
       }}
       enableLabel={true}
-      // colors={{ scheme: "spectral" }} // Can use a scheme or a custom function
+      parentLabel={(node) =>
+        `${node.data.category} [${node.data.loc.start.line}-${node.data.loc.end.line}]`
+      }
       colors={(nodeWithPossiblyOurData: any) => {
         const category = (nodeWithPossiblyOurData.data as ScopeNode)
           .category as NodeCategory;
-        // Ensure a string is always returned, even if category is somehow not in categoryColors
         return (
           categoryColors[category] ||
           categoryColors[NodeCategory.Other as NodeCategory]
         );
       }}
-      // colorBy="id" // Using custom colors function above
       borderColor={{
         from: "color",
         modifiers: [["darker", 0.8]],
       }}
+      borderWidth={4}
       onClick={handleNodeClick}
       tooltip={({ node }: any) => {
-        // Use 'any' for the destructured node
         const scopeNode = node.data as ScopeNode;
         return (
           <div
@@ -107,7 +106,8 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
               boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
             }}
           >
-            <strong>{scopeNode.label}</strong> ({scopeNode.category})<br />
+            <strong>{scopeNode.id.split(":").pop()}</strong> (
+            {scopeNode.category})<br />
             Value: {node.formattedValue} ({scopeNode.value} chars)
             <br />
             Lines: {scopeNode.loc.start.line} - {scopeNode.loc.end.line}
