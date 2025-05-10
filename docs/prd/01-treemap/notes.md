@@ -39,6 +39,7 @@ Design:
   - Auto-hide or truncate labels below a minimum pixel area; reveal full label on hover/focus.
   - Use a semi-transparent label background so text remains legible over coloured fills.
 - Revise header and node color black/white based on background contrast
+- Move the reset zoom and `up one level` buttons to the top header
 
 UX:
 

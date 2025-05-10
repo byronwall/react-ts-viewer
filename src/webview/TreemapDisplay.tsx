@@ -44,27 +44,6 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.SyntheticGroup]: "#e6e6fa",
 };
 
-const solarizedBright: Record<NodeCategory, string> = {
-  [NodeCategory.Program]: "#268bd2", // blue
-  [NodeCategory.Module]: "#2aa198", // cyan
-  [NodeCategory.Class]: "#859900", // green
-  [NodeCategory.Function]: "#b58900", // yellow
-  [NodeCategory.ArrowFunction]: "#cb4b16", // orange
-  [NodeCategory.Block]: "#dc322f", // red
-  [NodeCategory.ControlFlow]: "#d33682", // magenta
-  [NodeCategory.Variable]: "#6c71c4", // violet
-  [NodeCategory.Call]: "#93a1a1", // light gray
-  [NodeCategory.ReactComponent]: "#657b83", // gray
-  [NodeCategory.ReactHook]: "#073642", // dark cyan
-  [NodeCategory.JSX]: "#586e75", // slate
-  [NodeCategory.Other]: "#839496", // mid gray
-  [NodeCategory.Import]: "#002b36", // base03
-  [NodeCategory.TypeAlias]: "#b58900", // yellow (shared)
-  [NodeCategory.Interface]: "#2aa198", // cyan (shared)
-  [NodeCategory.Literal]: "#eee8d5", // base2
-  [NodeCategory.SyntheticGroup]: "#d33682", // magenta (shared for distinctness)
-};
-
 const materialVibrant: Record<NodeCategory, string> = {
   [NodeCategory.Program]: "#2196f3", // blue
   [NodeCategory.Module]: "#03a9f4", // light-blue
@@ -152,7 +131,6 @@ const defaultPalette: Record<NodeCategory, string> = {
 export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
   Default: defaultPalette,
   "Pastel Set": pastelSet,
-  "Solarized Bright": solarizedBright,
   "Material Vibrant": materialVibrant,
   "Okabe-Ito": okabeIto,
   "Neutral with Accents": neutralAccents,
