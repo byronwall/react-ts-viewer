@@ -1,6 +1,6 @@
 import React from "react";
 // import { ResponsiveTreeMapCanvas, TreeMapDatum } from "@nivo/treemap"; // TreeMapDatum might not be exported
-import { ResponsiveTreeMapCanvas } from "@nivo/treemap";
+import { ResponsiveTreeMap } from "@nivo/treemap";
 import { NodeCategory, ScopeNode } from "../types"; // Assuming src/types.ts
 import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleton
 
@@ -61,11 +61,12 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
   };
 
   return (
-    <ResponsiveTreeMapCanvas
+    <ResponsiveTreeMap
       data={data}
       identity="id"
       value="value"
       valueFormat=".02s"
+      tile="binary"
       leavesOnly={false}
       margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
       labelSkipSize={18}
@@ -73,6 +74,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
         from: "color",
         modifiers: [["darker", 2]],
       }}
+      enableLabel={true}
       // colors={{ scheme: "spectral" }} // Can use a scheme or a custom function
       colors={(nodeWithPossiblyOurData: any) => {
         const category = (nodeWithPossiblyOurData.data as ScopeNode)
@@ -102,6 +104,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
               borderRadius: "3px",
               fontSize: "12px",
               maxWidth: "400px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
             }}
           >
             <strong>{scopeNode.label}</strong> ({scopeNode.category})<br />
@@ -135,6 +138,9 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({ data }) => {
           </div>
         );
       }}
+      isInteractive={true}
+      animate={false}
+      nodeOpacity={1}
     />
   );
 };
