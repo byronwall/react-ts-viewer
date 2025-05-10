@@ -62,6 +62,17 @@ interface TreemapSettings {
   showTooltipLines: boolean;
   showTooltipSourceSnippet: boolean;
   tooltipSourceSnippetLength: number;
+
+  // New settings for flattening from plan
+  enableNodeFlattening: boolean;
+  flattenBlocks: boolean;
+  flattenArrowFunctions: boolean;
+  createSyntheticGroups: boolean;
+
+  // Category visibility toggles from plan
+  showImports: boolean;
+  showTypes: boolean;
+  showLiterals: boolean;
 }
 
 // Global declarations specific to App.tsx initialization
@@ -242,6 +253,16 @@ const defaultTreemapSettings: TreemapSettings = {
   showTooltipLines: true,
   showTooltipSourceSnippet: true,
   tooltipSourceSnippetLength: 250,
+
+  // New settings defaults from plan
+  enableNodeFlattening: true,
+  flattenBlocks: true,
+  flattenArrowFunctions: true,
+  createSyntheticGroups: true,
+
+  showImports: true, // On by default
+  showTypes: true, // On by default
+  showLiterals: false, // Off by default as there could be many literals
 };
 
 // --- Settings Context ---
@@ -878,14 +899,27 @@ const App: React.FC = () => {
   const requestTreemapData = useCallback(
     (fp: string) => {
       if (!fp) return;
-      vscodeApi.postMessage({ command: "getScopeTree", filePath: fp });
+      vscodeApi.postMessage({
+        command: "getScopeTree",
+        filePath: fp,
+        options: {
+          // Options payload as per plan
+          flattenTree: treemapSettings.enableNodeFlattening,
+          flattenBlocks: treemapSettings.flattenBlocks,
+          flattenArrowFunctions: treemapSettings.flattenArrowFunctions,
+          createSyntheticGroups: treemapSettings.createSyntheticGroups,
+          includeImports: treemapSettings.showImports,
+          includeTypes: treemapSettings.showTypes,
+          includeLiterals: treemapSettings.showLiterals,
+        },
+      });
       setIsTreemapLoading(true);
       setTreemapError(null);
-      setRawAnalysisData(null);
-      setError(null);
+      setRawAnalysisData(null); // Clear other view's data
+      setError(null); // Clear other view's error
       setCurrentAnalysisTarget(fp);
     },
-    [vscodeApi]
+    [vscodeApi, treemapSettings] // Added treemapSettings to dependency array
   );
 
   useEffect(() => {
@@ -1158,6 +1192,119 @@ const App: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* START: Node Flattening, Grouping, and Visibility Settings from Plan */}
+          <div className="settings-group" style={{ marginTop: "10px" }}>
+            <h5>Node Structure Settings</h5>
+            <div className="setting-item-checkbox">
+              <input
+                type="checkbox"
+                id="enableNodeFlattening"
+                checked={treemapSettings.enableNodeFlattening}
+                onChange={(e) =>
+                  handleTreemapSettingChange(
+                    "enableNodeFlattening",
+                    e.target.checked
+                  )
+                }
+              />
+              <label htmlFor="enableNodeFlattening">
+                Enable Node Optimizations
+              </label>
+            </div>
+
+            {treemapSettings.enableNodeFlattening && (
+              <>
+                <div className="setting-item-checkbox indented">
+                  <input
+                    type="checkbox"
+                    id="flattenBlocks"
+                    checked={treemapSettings.flattenBlocks}
+                    onChange={(e) =>
+                      handleTreemapSettingChange(
+                        "flattenBlocks",
+                        e.target.checked
+                      )
+                    }
+                  />
+                  <label htmlFor="flattenBlocks">Optimize Simple Blocks</label>
+                </div>
+
+                <div className="setting-item-checkbox indented">
+                  <input
+                    type="checkbox"
+                    id="flattenArrowFunctions"
+                    checked={treemapSettings.flattenArrowFunctions}
+                    onChange={(e) =>
+                      handleTreemapSettingChange(
+                        "flattenArrowFunctions",
+                        e.target.checked
+                      )
+                    }
+                  />
+                  <label htmlFor="flattenArrowFunctions">
+                    Optimize Arrow Functions
+                  </label>
+                </div>
+
+                <div className="setting-item-checkbox indented">
+                  <input
+                    type="checkbox"
+                    id="createSyntheticGroups"
+                    checked={treemapSettings.createSyntheticGroups}
+                    onChange={(e) =>
+                      handleTreemapSettingChange(
+                        "createSyntheticGroups",
+                        e.target.checked
+                      )
+                    }
+                  />
+                  <label htmlFor="createSyntheticGroups">
+                    Group Related Nodes
+                  </label>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="settings-group" style={{ marginTop: "10px" }}>
+            <h5>Node Visibility Settings</h5>{" "}
+            {/* Changed heading slightly from plan for consistency */}
+            <div className="setting-item-checkbox">
+              <input
+                type="checkbox"
+                id="showImports"
+                checked={treemapSettings.showImports}
+                onChange={(e) =>
+                  handleTreemapSettingChange("showImports", e.target.checked)
+                }
+              />
+              <label htmlFor="showImports">Show Imports</label>
+            </div>
+            <div className="setting-item-checkbox">
+              <input
+                type="checkbox"
+                id="showTypes"
+                checked={treemapSettings.showTypes}
+                onChange={(e) =>
+                  handleTreemapSettingChange("showTypes", e.target.checked)
+                }
+              />
+              <label htmlFor="showTypes">Show Type Definitions</label>
+            </div>
+            <div className="setting-item-checkbox">
+              <input
+                type="checkbox"
+                id="showLiterals"
+                checked={treemapSettings.showLiterals}
+                onChange={(e) =>
+                  handleTreemapSettingChange("showLiterals", e.target.checked)
+                }
+              />
+              <label htmlFor="showLiterals">Show Literals</label>
+            </div>
+          </div>
+          {/* END: Node Flattening, Grouping, and Visibility Settings from Plan */}
 
           {/* Treemap Tooltip Settings - Shown only when Treemap view is active */}
           {activeView === "treemap" && (

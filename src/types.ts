@@ -118,6 +118,11 @@ export enum NodeCategory {
   ReactHook = "ReactHook",
   JSX = "JSX",
   Other = "Other",
+  Import = "Import",
+  TypeAlias = "TypeAlias",
+  Interface = "Interface",
+  Literal = "Literal",
+  SyntheticGroup = "SyntheticGroup",
 }
 
 export interface ScopeNode {
@@ -130,6 +135,17 @@ export interface ScopeNode {
   value: number; // #chars or LOC — used by treemap layout
   meta?: Record<string, any>; // hooks, props, anything extra
   children: ScopeNode[];
+}
+
+// Options for buildScopeTree function
+export interface BuildScopeTreeOptions {
+  flattenTree?: boolean;
+  flattenBlocks?: boolean;
+  flattenArrowFunctions?: boolean;
+  createSyntheticGroups?: boolean;
+  includeImports?: boolean;
+  includeTypes?: boolean;
+  includeLiterals?: boolean;
 }
 
 // Add more types as needed for tracing, etc.

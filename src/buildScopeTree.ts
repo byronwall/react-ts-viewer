@@ -1,13 +1,29 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as ts from "typescript";
-import { Position, NodeCategory, ScopeNode } from "./types";
+import {
+  Position,
+  NodeCategory,
+  ScopeNode,
+  BuildScopeTreeOptions,
+} from "./types";
 
 // Position helper (already in types.ts, but ts.LineAndCharacter is 0-based for line)
 // export interface Position {
 //   line: number; // 1-based
 //   column: number; // 0-based
 // }
+
+// Default options for buildScopeTree
+const defaultBuildOptions: Required<BuildScopeTreeOptions> = {
+  flattenTree: true, // Enable overall flattening pass
+  flattenBlocks: true,
+  flattenArrowFunctions: true,
+  createSyntheticGroups: true,
+  includeImports: true,
+  includeTypes: true,
+  includeLiterals: false, // Literals often off by default due to volume
+};
 
 function isScopeBoundary(node: ts.Node): boolean {
   return (
@@ -110,6 +126,19 @@ function mapKindToCategory(
   )
     return NodeCategory.JSX;
 
+  // Add new mappings
+  if (ts.isImportDeclaration(node)) return NodeCategory.Import;
+  if (ts.isTypeAliasDeclaration(node)) return NodeCategory.TypeAlias;
+  if (ts.isInterfaceDeclaration(node)) return NodeCategory.Interface;
+  if (
+    ts.isStringLiteral(node) ||
+    ts.isNumericLiteral(node) ||
+    // ts.isBooleanLiteral(node) // ts.SyntaxKind.TrueKeyword / FalseKeyword
+    node.kind === ts.SyntaxKind.TrueKeyword ||
+    node.kind === ts.SyntaxKind.FalseKeyword
+  )
+    return NodeCategory.Literal;
+
   return NodeCategory.Other;
 }
 
@@ -174,8 +203,14 @@ function lineColOfPos(sourceFile: ts.SourceFile, pos: number): Position {
 
 export function buildScopeTree(
   filePath: string,
-  fileText: string = fs.readFileSync(filePath, "utf8")
+  fileText: string = fs.readFileSync(filePath, "utf8"),
+  options?: BuildScopeTreeOptions
 ): ScopeNode {
+  const mergedOptions: Required<BuildScopeTreeOptions> = {
+    ...defaultBuildOptions,
+    ...(options || {}),
+  };
+
   const sourceFile = ts.createSourceFile(
     path.basename(filePath), // Use basename for the source file name in AST
     fileText,
@@ -273,14 +308,26 @@ export function buildScopeTree(
   // The root ScopeNode represents the file, its children will be top-level statements/declarations.
   ts.forEachChild(sourceFile, (child) => walk(child, root, sourceFile));
 
-  console.log("Raw source code for:", filePath, fileText);
+  let processedTree = root;
+
+  // Filter nodes based on options first
+  processedTree = filterNodesByOptions(processedTree, mergedOptions);
+
+  if (mergedOptions.flattenTree) {
+    processedTree = flattenTree(processedTree, mergedOptions);
+  }
+  if (mergedOptions.createSyntheticGroups) {
+    processedTree = createSyntheticGroups(processedTree); // Pass options if createSyntheticGroups needs them (currently doesn't in plan)
+  }
+
+  console.log("Raw source code for:", filePath, /*fileText*/ "(text omitted)"); // Avoid logging full source
   console.log(
     "Final ScopeTree output for:",
     filePath,
-    JSON.stringify(root, null, 2)
+    JSON.stringify(processedTree, null, 2) // Log the processed tree
   );
 
-  return root;
+  return processedTree; // Return the processed tree
 }
 
 // Example Usage (for testing - remove or comment out in production extension code):
@@ -294,3 +341,290 @@ export function buildScopeTree(
 //     console.error('Example file not found:', exampleFilePath);
 //   }
 // }
+
+// --- START: Node Flattening and Grouping Logic ---
+function flattenTree(
+  rootNode: ScopeNode,
+  options: Required<BuildScopeTreeOptions>
+): ScopeNode {
+  // Deep clone the root to avoid modifying the original
+  // A proper deep clone might be needed if ScopeNode has complex nested objects not handled by spread
+  const result = {
+    ...rootNode,
+    // Ensure children array exists before mapping, and clone children
+    children: (rootNode.children || []).map((child) => ({ ...child })),
+  };
+
+  // Process each child recursively
+  result.children = result.children.map((child) => flattenNode(child, options)); // Pass a copy to flattenNode
+
+  return result;
+}
+
+function flattenNode(
+  node: ScopeNode,
+  options: Required<BuildScopeTreeOptions>
+): ScopeNode {
+  const processedChildren = (node.children || []).map((child) =>
+    flattenNode({ ...child }, options)
+  );
+
+  if (shouldCollapseBlock(node, processedChildren, options)) {
+    return collapseBlockNode({ ...node }, processedChildren); // Options not passed to collapse*Node directly
+  }
+
+  if (shouldCollapseArrowFunction(node, processedChildren, options)) {
+    return collapseArrowFunction({ ...node }, processedChildren); // Options not passed to collapse*Node directly
+  }
+
+  return { ...node, children: processedChildren };
+}
+
+function shouldCollapseBlock(
+  node: ScopeNode,
+  children: ScopeNode[],
+  options: Required<BuildScopeTreeOptions>
+): boolean {
+  if (!options.flattenBlocks) {
+    return false;
+  }
+  return (
+    node.category === NodeCategory.Block &&
+    children.every(
+      (child) =>
+        child.category === NodeCategory.Variable ||
+        child.kind === ts.SyntaxKind.ReturnStatement
+    ) &&
+    children.filter((child) => child.kind === ts.SyntaxKind.ReturnStatement)
+      .length <= 1
+  );
+}
+
+function collapseBlockNode(node: ScopeNode, children: ScopeNode[]): ScopeNode {
+  // Removed options from signature
+  return {
+    ...node,
+    children,
+    meta: {
+      ...(node.meta || {}),
+      collapsed: "block",
+      originalCategory: node.category,
+    },
+  };
+}
+
+function shouldCollapseArrowFunction(
+  node: ScopeNode,
+  children: ScopeNode[],
+  options: Required<BuildScopeTreeOptions>
+): boolean {
+  if (!options.flattenArrowFunctions) {
+    return false;
+  }
+  if (node.category !== NodeCategory.ArrowFunction) return false;
+
+  // If the arrow function's direct body resulted in no significant children ScopeNodes (e.g. direct expression `() => x`)
+  if (children.length === 0) return true;
+
+  // If it has one child, and that child is a simple block (e.g. `() => { /* simple stuff */ }`)
+  // Safely access children[0] and its children property
+  if (children.length === 1 && children[0]?.category === NodeCategory.Block) {
+    // Consider the block's children (statements within the arrow function block)
+    const blockChildren = children[0]?.children || [];
+    return blockChildren.length <= 3; // As per plan: ≤ 3 statements in the block
+  }
+
+  // Otherwise, if children are directly from a more complex body (not a single block that was processed)
+  // This case might be less common if ArrowFunction's body is always a Block or an expression.
+  // For now, stick to the plan's spirit: simple body implies few statements.
+  return children.length <= 1; // Heuristic: few direct structural children means simple.
+}
+
+function collapseArrowFunction(
+  node: ScopeNode,
+  children: ScopeNode[]
+  // options: Required<BuildScopeTreeOptions> // Options removed from signature
+): ScopeNode {
+  let callNodeLabel: string | undefined = undefined;
+
+  function findCallLabelRecursive(nodes: ScopeNode[]): string | undefined {
+    for (const child of nodes) {
+      if (child.category === NodeCategory.Call) {
+        return child.label;
+      }
+      if (child.children && child.children.length > 0) {
+        const found = findCallLabelRecursive(child.children);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+
+  callNodeLabel = findCallLabelRecursive(children);
+
+  return {
+    ...node,
+    // Children are kept, but visualizer might hide them or represent the node differently.
+    children,
+    meta: {
+      ...(node.meta || {}),
+      collapsed: "arrowFunction",
+      originalCategory: node.category,
+      call: callNodeLabel, // Store the label of the found call
+    },
+  };
+}
+
+function createSyntheticGroups(rootNode: ScopeNode): ScopeNode {
+  // Ensure children are initialized and cloned properly at the start
+  const initialChildrenToProcess = rootNode.children
+    ? rootNode.children.map((c) => ({ ...c }))
+    : [];
+
+  const result = {
+    ...rootNode,
+    children: initialChildrenToProcess, // Assign the definitely-an-array to result.children
+  };
+
+  // Now, result.children is guaranteed to be an array (possibly empty)
+  if (result.children.length > 0) {
+    // Recursively call on children. Each child from result.children is a clone.
+    const childrenAfterRecursiveCall = result.children.map((child) =>
+      createSyntheticGroups(child)
+    );
+    // Then, group the (already processed) children nodes.
+    result.children = groupRelatedNodes(childrenAfterRecursiveCall, result.id);
+  }
+  return result;
+}
+
+function groupRelatedNodes(nodes: ScopeNode[], parentId: string): ScopeNode[] {
+  const result: ScopeNode[] = [];
+  const groupCandidates: Map<string, ScopeNode[]> = new Map();
+  const ungroupedNodes: ScopeNode[] = [];
+
+  for (const node of nodes) {
+    let grouped = false;
+    if (
+      node.category === NodeCategory.ReactHook ||
+      (node.category === NodeCategory.Call &&
+        node.label.startsWith("use") &&
+        /[A-Z]/.test(node.label[3] || ""))
+    ) {
+      const groupName = "Hooks";
+      const group = groupCandidates.get(groupName) || [];
+      group.push(node);
+      groupCandidates.set(groupName, group);
+      grouped = true;
+    }
+    // Original plan had 'Mutations' group based on meta.initializer.
+    // Let's adapt: if a variable's name or inferred type suggests mutation hook.
+    // This is more robust if initializer text isn't always available or consistent.
+    else if (
+      node.category === NodeCategory.Variable &&
+      (node.label.toLowerCase().includes("mutation") ||
+        node.meta?.initializer?.toString().includes("Mutation"))
+    ) {
+      const groupName = "Mutations";
+      const group = groupCandidates.get(groupName) || [];
+      group.push(node);
+      groupCandidates.set(groupName, group);
+      grouped = true;
+    }
+
+    if (!grouped) {
+      ungroupedNodes.push(node);
+    }
+  }
+
+  for (const [groupName, groupNodes] of groupCandidates.entries()) {
+    if (groupNodes.length > 1) {
+      const firstNode = groupNodes[0];
+      // Guard clause for firstNode before accessing its properties
+      if (firstNode) {
+        const groupValue = groupNodes.reduce(
+          (sum, node) => sum + node.value,
+          0
+        );
+        const groupId = `synthetic:${parentId}:${groupName}:${firstNode.id}`;
+        const firstNodeLoc = firstNode.loc;
+
+        result.push({
+          id: groupId,
+          category: NodeCategory.SyntheticGroup,
+          label: groupName,
+          kind: ts.SyntaxKind.Unknown,
+          value: groupValue,
+          loc: firstNodeLoc,
+          source: "",
+          children: groupNodes,
+          meta: {
+            syntheticGroup: true,
+            contains: groupNodes.length,
+            originalNodesCategories: groupNodes.map((n) => n.category),
+          },
+        });
+      } else {
+        // Fallback: if firstNode is somehow undefined despite length > 1, add to ungrouped.
+        ungroupedNodes.push(...groupNodes);
+      }
+    } else {
+      ungroupedNodes.push(...groupNodes);
+    }
+  }
+
+  // Add back ungrouped nodes, preserving original order as much as possible is tricky here.
+  // For now, append ungrouped nodes. Consider sorting or merging if order is critical.
+  return [...result, ...ungroupedNodes];
+}
+
+// --- END: Node Flattening and Grouping Logic ---
+
+// --- START: Node Filtering Logic ---
+function filterNodesByOptionsRecursive(
+  node: ScopeNode,
+  options: Required<BuildScopeTreeOptions>
+): ScopeNode | null {
+  // First, filter children recursively
+  if (node.children && node.children.length > 0) {
+    node.children = node.children
+      .map((child: ScopeNode) =>
+        filterNodesByOptionsRecursive({ ...child }, options)
+      ) // Process cloned children, child is ScopeNode
+      .filter((child: ScopeNode | null) => child !== null) as ScopeNode[]; // child is ScopeNode | null before filter
+  }
+
+  // Then, decide if the current node itself should be filtered out
+  if (!options.includeImports && node.category === NodeCategory.Import) {
+    return null;
+  }
+  if (
+    !options.includeTypes &&
+    (node.category === NodeCategory.TypeAlias ||
+      node.category === NodeCategory.Interface)
+  ) {
+    return null;
+  }
+  if (!options.includeLiterals && node.category === NodeCategory.Literal) {
+    return null;
+  }
+
+  return node;
+}
+
+function filterNodesByOptions(
+  rootNode: ScopeNode,
+  options: Required<BuildScopeTreeOptions>
+): ScopeNode {
+  const clonedRoot = JSON.parse(JSON.stringify(rootNode)); // Simple deep clone for safety
+
+  if (clonedRoot.children && clonedRoot.children.length > 0) {
+    clonedRoot.children = clonedRoot.children
+      .map((child: ScopeNode) =>
+        filterNodesByOptionsRecursive({ ...child }, options)
+      ) // child is ScopeNode
+      .filter((child: ScopeNode | null) => child !== null) as ScopeNode[]; // child is ScopeNode | null
+  }
+  return clonedRoot;
+}
+// --- END: Node Filtering Logic ---

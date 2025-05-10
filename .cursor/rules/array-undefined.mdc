@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When facing a type error related to array index array[0], just do a guard check on the item before acessing it.  Don't assume it'll work becuase the length is non-zero.
