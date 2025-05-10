@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildScopeTree - Empty File > should handle an empty file > emptyFile 1`] = `
+{
+  "category": "Program",
+  "children": [],
+  "id": "empty.tsx",
+  "kind": 307,
+  "label": "empty.tsx",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 1,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "",
+  "value": 0,
+}
+`;

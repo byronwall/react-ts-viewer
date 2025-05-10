@@ -1,0 +1,24 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildScopeTree - Comments Only File > should handle a file with only comments > commentsOnlyFile 1`] = `
+{
+  "category": "Program",
+  "children": [],
+  "id": "commentsOnly.tsx",
+  "kind": 307,
+  "label": "commentsOnly.tsx",
+  "loc": {
+    "end": {
+      "column": 21,
+      "line": 2,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "// This is a comment
+/* Another comment */",
+  "value": 42,
+}
+`;

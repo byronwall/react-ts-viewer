@@ -142,7 +142,7 @@
     "watch-webview": "esbuild ./src/webview/main.tsx --bundle --outfile=./out/webview/bundle.js --format=iife --loader:.css=css --external:vscode --watch",
     "pretest": "npm run compile-ext && npm run lint",
     "lint": "eslint src --ext ts,tsx",
-    "test": "vscode-test"
+    "test": "vitest"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -159,10 +159,12 @@
     "glob": "^10.3.12",
     "mocha": "^10.4.0",
     "npm-run-all": "^4.1.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.2",
+    "@nivo/treemap": "^0.94.0",
     "@phosphor-icons/react": "^2.1.7",
     "elkjs": "^0.10.0",
     "react": "^18.2.0",

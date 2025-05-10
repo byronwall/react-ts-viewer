@@ -1,0 +1,1756 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file with various constructs > ComplexExample 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "Variable",
+      "children": [
+        {
+          "category": "Call",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:117-151",
+          "kind": 213,
+          "label": "createContext",
+          "loc": {
+            "end": {
+              "column": 52,
+              "line": 9,
+            },
+            "start": {
+              "column": 18,
+              "line": 9,
+            },
+          },
+          "meta": undefined,
+          "source": "createContext<string | null>(null)",
+          "value": 34,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:105-151",
+      "kind": 260,
+      "label": "MyContext",
+      "loc": {
+        "end": {
+          "column": 52,
+          "line": 9,
+        },
+        "start": {
+          "column": 6,
+          "line": 9,
+        },
+      },
+      "meta": {
+        "initializer": "createContext<string | null>(null)",
+      },
+      "source": "MyContext = createContext<string | null>(null)",
+      "value": 46,
+    },
+    {
+      "category": "Variable",
+      "children": [
+        {
+          "category": "Call",
+          "children": [
+            {
+              "category": "ArrowFunction",
+              "children": [
+                {
+                  "category": "Block",
+                  "children": [
+                    {
+                      "category": "Variable",
+                      "children": [
+                        {
+                          "category": "ReactHook",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:283-304",
+                          "kind": 213,
+                          "label": "useContext",
+                          "loc": {
+                            "end": {
+                              "column": 44,
+                              "line": 13,
+                            },
+                            "start": {
+                              "column": 23,
+                              "line": 13,
+                            },
+                          },
+                          "meta": {
+                            "hookName": "useContext",
+                          },
+                          "source": "useContext(MyContext)",
+                          "value": 21,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:268-304",
+                      "kind": 260,
+                      "label": "contextValue",
+                      "loc": {
+                        "end": {
+                          "column": 44,
+                          "line": 13,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 13,
+                        },
+                      },
+                      "meta": {
+                        "initializer": "useContext(MyContext)",
+                      },
+                      "source": "contextValue = useContext(MyContext)",
+                      "value": 36,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:321-379",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 8,
+                          "line": 17,
+                        },
+                        "start": {
+                          "column": 4,
+                          "line": 15,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<p>
+      Inner: {text} (Context: {contextValue})
+    </p>",
+                      "value": 58,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:258-386",
+                  "kind": 241,
+                  "label": "Block",
+                  "loc": {
+                    "end": {
+                      "column": 1,
+                      "line": 19,
+                    },
+                    "start": {
+                      "column": 66,
+                      "line": 12,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "{
+  const contextValue = useContext(MyContext);
+  return (
+    <p>
+      Inner: {text} (Context: {contextValue})
+    </p>
+  );
+}",
+                  "value": 128,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:226-386",
+              "kind": 219,
+              "label": "ArrowFunction",
+              "loc": {
+                "end": {
+                  "column": 1,
+                  "line": 19,
+                },
+                "start": {
+                  "column": 34,
+                  "line": 12,
+                },
+              },
+              "meta": undefined,
+              "source": "({ text }: { text: string }) => {
+  const contextValue = useContext(MyContext);
+  return (
+    <p>
+      Inner: {text} (Context: {contextValue})
+    </p>
+  );
+}",
+              "value": 160,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:215-387",
+          "kind": 213,
+          "label": "React.memo",
+          "loc": {
+            "end": {
+              "column": 2,
+              "line": 19,
+            },
+            "start": {
+              "column": 23,
+              "line": 12,
+            },
+          },
+          "meta": undefined,
+          "source": "React.memo(({ text }: { text: string }) => {
+  const contextValue = useContext(MyContext);
+  return (
+    <p>
+      Inner: {text} (Context: {contextValue})
+    </p>
+  );
+})",
+          "value": 172,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:198-387",
+      "kind": 260,
+      "label": "InnerComponent",
+      "loc": {
+        "end": {
+          "column": 2,
+          "line": 19,
+        },
+        "start": {
+          "column": 6,
+          "line": 12,
+        },
+      },
+      "meta": {
+        "initializer": "React.memo(({ text }: { text: string }) => {
+  const contextValue = useContext(MyContext);
+  return (
+    <p>
+      Inner: {text} (Context: {contextValue})
+    </p>
+  );
+})",
+      },
+      "source": "InnerComponent = React.memo(({ text }: { text: string }) => {
+  const contextValue = useContext(MyContext);
+  return (
+    <p>
+      Inner: {text} (Context: {contextValue})
+    </p>
+  );
+})",
+      "value": 189,
+    },
+    {
+      "category": "Class",
+      "children": [
+        {
+          "category": "Function",
+          "children": [
+            {
+              "category": "Block",
+              "children": [
+                {
+                  "category": "Call",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:541-553",
+                  "kind": 213,
+                  "label": "super",
+                  "loc": {
+                    "end": {
+                      "column": 16,
+                      "line": 26,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 26,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "super(props)",
+                  "value": 12,
+                },
+                {
+                  "category": "Call",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:607-632",
+                  "kind": 213,
+                  "label": "this.increment.bind",
+                  "loc": {
+                    "end": {
+                      "column": 46,
+                      "line": 28,
+                    },
+                    "start": {
+                      "column": 21,
+                      "line": 28,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "this.increment.bind(this)",
+                  "value": 25,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:535-655",
+              "kind": 241,
+              "label": "Block",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 29,
+                },
+                "start": {
+                  "column": 40,
+                  "line": 25,
+                },
+              },
+              "meta": undefined,
+              "source": "{
+    super(props);
+    this.state = { value: 0 };
+    this.increment = this.increment.bind(this); // binding 'this'
+  }",
+              "value": 120,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:497-655",
+          "kind": 176,
+          "label": "Constructor",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 29,
+            },
+            "start": {
+              "column": 2,
+              "line": 25,
+            },
+          },
+          "meta": undefined,
+          "source": "constructor(props: { title: string }) {
+    super(props);
+    this.state = { value: 0 };
+    this.increment = this.increment.bind(this); // binding 'this'
+  }",
+          "value": 158,
+        },
+        {
+          "category": "Function",
+          "children": [
+            {
+              "category": "Block",
+              "children": [
+                {
+                  "category": "Call",
+                  "children": [
+                    {
+                      "category": "ArrowFunction",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:691-728",
+                      "kind": 219,
+                      "label": "ArrowFunction",
+                      "loc": {
+                        "end": {
+                          "column": 55,
+                          "line": 32,
+                        },
+                        "start": {
+                          "column": 18,
+                          "line": 32,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "(prev) => ({ value: prev.value + 1 })",
+                      "value": 37,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:677-729",
+                  "kind": 213,
+                  "label": "this.setState",
+                  "loc": {
+                    "end": {
+                      "column": 56,
+                      "line": 32,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 32,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "this.setState((prev) => ({ value: prev.value + 1 }))",
+                  "value": 52,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:671-734",
+              "kind": 241,
+              "label": "Block",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 33,
+                },
+                "start": {
+                  "column": 14,
+                  "line": 31,
+                },
+              },
+              "meta": undefined,
+              "source": "{
+    this.setState((prev) => ({ value: prev.value + 1 }));
+  }",
+              "value": 63,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:659-734",
+          "kind": 174,
+          "label": "increment",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 33,
+            },
+            "start": {
+              "column": 2,
+              "line": 31,
+            },
+          },
+          "meta": undefined,
+          "source": "increment() {
+    this.setState((prev) => ({ value: prev.value + 1 }));
+  }",
+          "value": 75,
+        },
+        {
+          "category": "Function",
+          "children": [
+            {
+              "category": "Block",
+              "children": [
+                {
+                  "category": "Variable",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:759-781",
+                  "kind": 260,
+                  "label": "VariableDeclaration",
+                  "loc": {
+                    "end": {
+                      "column": 32,
+                      "line": 36,
+                    },
+                    "start": {
+                      "column": 10,
+                      "line": 36,
+                    },
+                  },
+                  "meta": {
+                    "initializer": "this.props",
+                  },
+                  "source": "{ title } = this.props",
+                  "value": 22,
+                },
+                {
+                  "category": "Variable",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:793-815",
+                  "kind": 260,
+                  "label": "VariableDeclaration",
+                  "loc": {
+                    "end": {
+                      "column": 32,
+                      "line": 37,
+                    },
+                    "start": {
+                      "column": 10,
+                      "line": 37,
+                    },
+                  },
+                  "meta": {
+                    "initializer": "this.state",
+                  },
+                  "source": "{ value } = this.state",
+                  "value": 22,
+                },
+                {
+                  "category": "JSX",
+                  "children": [
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:854-888",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 42,
+                          "line": 40,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 40,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<h3>{title} - Class Component</h3>",
+                      "value": 34,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:897-918",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 29,
+                          "line": 41,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 41,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<p>Value: {value}</p>",
+                      "value": 21,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:927-984",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 65,
+                          "line": 42,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 42,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<button onClick={this.increment}>Increment Class</button>",
+                      "value": 57,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:836-1001",
+                  "kind": 284,
+                  "label": "JsxElement",
+                  "loc": {
+                    "end": {
+                      "column": 16,
+                      "line": 43,
+                    },
+                    "start": {
+                      "column": 6,
+                      "line": 39,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "<section>
+        <h3>{title} - Class Component</h3>
+        <p>Value: {value}</p>
+        <button onClick={this.increment}>Increment Class</button>
+      </section>",
+                  "value": 165,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:747-1012",
+              "kind": 241,
+              "label": "Block",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 45,
+                },
+                "start": {
+                  "column": 11,
+                  "line": 35,
+                },
+              },
+              "meta": undefined,
+              "source": "{
+    const { title } = this.props;
+    const { value } = this.state;
+    return (
+      <section>
+        <h3>{title} - Class Component</h3>
+        <p>Value: {value}</p>
+        <button onClick={this.increment}>Increment Class</button>
+      </section>
+    );
+  }",
+              "value": 265,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:738-1012",
+          "kind": 174,
+          "label": "render",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 45,
+            },
+            "start": {
+              "column": 2,
+              "line": 35,
+            },
+          },
+          "meta": undefined,
+          "source": "render() {
+    const { title } = this.props;
+    const { value } = this.state;
+    return (
+      <section>
+        <h3>{title} - Class Component</h3>
+        <p>Value: {value}</p>
+        <button onClick={this.increment}>Increment Class</button>
+      </section>
+    );
+  }",
+          "value": 274,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:390-1014",
+      "kind": 263,
+      "label": "ClassComponentExample",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 46,
+        },
+        "start": {
+          "column": 0,
+          "line": 21,
+        },
+      },
+      "meta": undefined,
+      "source": "export class ClassComponentExample extends React.Component<
+  { title: string },
+  { value: number }
+> {
+  constructor(props: { title: string }) {
+    super(props);
+    this.state = { value: 0 };
+    this.increment = this.increment.bind(this); // binding 'this'
+  }
+
+  increment() {
+    this.setState((prev) => ({ value: prev.value + 1 }));
+  }
+
+  render() {
+    const { title } = this.props;
+    const { value } = this.state;
+    return (
+      <section>
+        <h3>{title} - Class Component</h3>
+        <p>Value: {value}</p>
+        <button onClick={this.increment}>Increment Class</button>
+      </section>
+    );
+  }
+}",
+      "value": 624,
+    },
+    {
+      "category": "Variable",
+      "children": [
+        {
+          "category": "Call",
+          "children": [
+            {
+              "category": "ArrowFunction",
+              "children": [
+                {
+                  "category": "Call",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1080-1109",
+                  "kind": 213,
+                  "label": "import",
+                  "loc": {
+                    "end": {
+                      "column": 68,
+                      "line": 49,
+                    },
+                    "start": {
+                      "column": 39,
+                      "line": 49,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "import("./AdvancedComponent")",
+                  "value": 29,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1074-1109",
+              "kind": 219,
+              "label": "ArrowFunction",
+              "loc": {
+                "end": {
+                  "column": 68,
+                  "line": 49,
+                },
+                "start": {
+                  "column": 33,
+                  "line": 49,
+                },
+              },
+              "meta": undefined,
+              "source": "() => import("./AdvancedComponent")",
+              "value": 35,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1063-1110",
+          "kind": 213,
+          "label": "React.lazy",
+          "loc": {
+            "end": {
+              "column": 69,
+              "line": 49,
+            },
+            "start": {
+              "column": 22,
+              "line": 49,
+            },
+          },
+          "meta": undefined,
+          "source": "React.lazy(() => import("./AdvancedComponent"))",
+          "value": 47,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1047-1110",
+      "kind": 260,
+      "label": "LazyComponent",
+      "loc": {
+        "end": {
+          "column": 69,
+          "line": 49,
+        },
+        "start": {
+          "column": 6,
+          "line": 49,
+        },
+      },
+      "meta": {
+        "initializer": "React.lazy(() => import("./AdvancedComponent"))",
+      },
+      "source": "LazyComponent = React.lazy(() => import("./AdvancedComponent"))",
+      "value": 63,
+    },
+    {
+      "category": "Function",
+      "children": [
+        {
+          "category": "Block",
+          "children": [
+            {
+              "category": "Variable",
+              "children": [
+                {
+                  "category": "ReactHook",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1241-1263",
+                  "kind": 213,
+                  "label": "useState",
+                  "loc": {
+                    "end": {
+                      "column": 48,
+                      "line": 52,
+                    },
+                    "start": {
+                      "column": 26,
+                      "line": 52,
+                    },
+                  },
+                  "meta": {
+                    "hookName": "useState",
+                  },
+                  "source": "useState<string[]>([])",
+                  "value": 22,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1223-1263",
+              "kind": 260,
+              "label": "VariableDeclaration",
+              "loc": {
+                "end": {
+                  "column": 48,
+                  "line": 52,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 52,
+                },
+              },
+              "meta": {
+                "initializer": "useState<string[]>([])",
+              },
+              "source": "[data, setData] = useState<string[]>([])",
+              "value": 40,
+            },
+            {
+              "category": "Variable",
+              "children": [
+                {
+                  "category": "ReactHook",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1301-1316",
+                  "kind": 213,
+                  "label": "useState",
+                  "loc": {
+                    "end": {
+                      "column": 51,
+                      "line": 53,
+                    },
+                    "start": {
+                      "column": 36,
+                      "line": 53,
+                    },
+                  },
+                  "meta": {
+                    "hookName": "useState",
+                  },
+                  "source": "useState(false)",
+                  "value": 15,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1273-1316",
+              "kind": 260,
+              "label": "VariableDeclaration",
+              "loc": {
+                "end": {
+                  "column": 51,
+                  "line": 53,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 53,
+                },
+              },
+              "meta": {
+                "initializer": "useState(false)",
+              },
+              "source": "[isLoading, setIsLoading] = useState(false)",
+              "value": 43,
+            },
+            {
+              "category": "Variable",
+              "children": [
+                {
+                  "category": "ArrowFunction",
+                  "children": [
+                    {
+                      "category": "Block",
+                      "children": [
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1371-1389",
+                          "kind": 213,
+                          "label": "setIsLoading",
+                          "loc": {
+                            "end": {
+                              "column": 22,
+                              "line": 56,
+                            },
+                            "start": {
+                              "column": 4,
+                              "line": 56,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "setIsLoading(true)",
+                          "value": 18,
+                        },
+                        {
+                          "category": "ArrowFunction",
+                          "children": [
+                            {
+                              "category": "Call",
+                              "children": [],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1447-1471",
+                              "kind": 213,
+                              "label": "setTimeout",
+                              "loc": {
+                                "end": {
+                                  "column": 59,
+                                  "line": 58,
+                                },
+                                "start": {
+                                  "column": 35,
+                                  "line": 58,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "setTimeout(resolve, 500)",
+                              "value": 24,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1434-1471",
+                          "kind": 219,
+                          "label": "ArrowFunction",
+                          "loc": {
+                            "end": {
+                              "column": 59,
+                              "line": 58,
+                            },
+                            "start": {
+                              "column": 22,
+                              "line": 58,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "(resolve) => setTimeout(resolve, 500)",
+                          "value": 37,
+                        },
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1478-1525",
+                          "kind": 213,
+                          "label": "setData",
+                          "loc": {
+                            "end": {
+                              "column": 51,
+                              "line": 59,
+                            },
+                            "start": {
+                              "column": 4,
+                              "line": 59,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "setData([\`item1-\${filter}\`, \`item2-\${filter}\`])",
+                          "value": 47,
+                        },
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1531-1550",
+                          "kind": 213,
+                          "label": "setIsLoading",
+                          "loc": {
+                            "end": {
+                              "column": 23,
+                              "line": 60,
+                            },
+                            "start": {
+                              "column": 4,
+                              "line": 60,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "setIsLoading(false)",
+                          "value": 19,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1365-1555",
+                      "kind": 241,
+                      "label": "Block",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 61,
+                        },
+                        "start": {
+                          "column": 46,
+                          "line": 55,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "{
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  }",
+                      "value": 190,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1339-1555",
+                  "kind": 219,
+                  "label": "ArrowFunction",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 61,
+                    },
+                    "start": {
+                      "column": 20,
+                      "line": 55,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "async (filter: string) => {
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  }",
+                  "value": 216,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1327-1555",
+              "kind": 260,
+              "label": "fetchData",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 61,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 55,
+                },
+              },
+              "meta": {
+                "initializer": "async (filter: string) => {
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  }",
+              },
+              "source": "fetchData = async (filter: string) => {
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  }",
+              "value": 228,
+            },
+            {
+              "category": "ReactHook",
+              "children": [
+                {
+                  "category": "ArrowFunction",
+                  "children": [
+                    {
+                      "category": "Block",
+                      "children": [
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1629-1665",
+                          "kind": 213,
+                          "label": "console.log",
+                          "loc": {
+                            "end": {
+                              "column": 40,
+                              "line": 65,
+                            },
+                            "start": {
+                              "column": 4,
+                              "line": 65,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "console.log("Theme changed:", theme)",
+                          "value": 36,
+                        },
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1671-1687",
+                          "kind": 213,
+                          "label": "fetchData",
+                          "loc": {
+                            "end": {
+                              "column": 20,
+                              "line": 66,
+                            },
+                            "start": {
+                              "column": 4,
+                              "line": 66,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "fetchData(theme)",
+                          "value": 16,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1574-1692",
+                      "kind": 241,
+                      "label": "Block",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 67,
+                        },
+                        "start": {
+                          "column": 16,
+                          "line": 63,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "{
+    // Some expensive calculation based on theme
+    console.log("Theme changed:", theme);
+    fetchData(theme);
+  }",
+                      "value": 118,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1568-1692",
+                  "kind": 219,
+                  "label": "ArrowFunction",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 67,
+                    },
+                    "start": {
+                      "column": 10,
+                      "line": 63,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "() => {
+    // Some expensive calculation based on theme
+    console.log("Theme changed:", theme);
+    fetchData(theme);
+  }",
+                  "value": 124,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1560-1702",
+              "kind": 213,
+              "label": "useMemo",
+              "loc": {
+                "end": {
+                  "column": 13,
+                  "line": 67,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 63,
+                },
+              },
+              "meta": {
+                "hookName": "useMemo",
+              },
+              "source": "useMemo(() => {
+    // Some expensive calculation based on theme
+    console.log("Theme changed:", theme);
+    fetchData(theme);
+  }, [theme])",
+              "value": 142,
+            },
+            {
+              "category": "Block",
+              "children": [
+                {
+                  "category": "JSX",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1735-1773",
+                  "kind": 284,
+                  "label": "JsxElement",
+                  "loc": {
+                    "end": {
+                      "column": 49,
+                      "line": 70,
+                    },
+                    "start": {
+                      "column": 11,
+                      "line": 70,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "<div>Loading data for {theme}...</div>",
+                  "value": 38,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1722-1778",
+              "kind": 241,
+              "label": "Block",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 71,
+                },
+                "start": {
+                  "column": 17,
+                  "line": 69,
+                },
+              },
+              "meta": undefined,
+              "source": "{
+    return <div>Loading data for {theme}...</div>;
+  }",
+              "value": 56,
+            },
+            {
+              "category": "Variable",
+              "children": [
+                {
+                  "category": "ReactComponent",
+                  "children": [
+                    {
+                      "category": "Block",
+                      "children": [
+                        {
+                          "category": "JSX",
+                          "children": [
+                            {
+                              "category": "Call",
+                              "children": [],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1921-1939",
+                              "kind": 213,
+                              "label": "item.toUpperCase",
+                              "loc": {
+                                "end": {
+                                  "column": 46,
+                                  "line": 75,
+                                },
+                                "start": {
+                                  "column": 28,
+                                  "line": 75,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "item.toUpperCase()",
+                              "value": 18,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1904-1945",
+                          "kind": 284,
+                          "label": "JsxElement",
+                          "loc": {
+                            "end": {
+                              "column": 52,
+                              "line": 75,
+                            },
+                            "start": {
+                              "column": 11,
+                              "line": 75,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "<li key={index}>{item.toUpperCase()}</li>",
+                          "value": 41,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1834-1950",
+                      "kind": 241,
+                      "label": "Block",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 76,
+                        },
+                        "start": {
+                          "column": 54,
+                          "line": 73,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "{
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  }",
+                      "value": 116,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1801-1950",
+                  "kind": 219,
+                  "label": "ArrowFunction",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 76,
+                    },
+                    "start": {
+                      "column": 21,
+                      "line": 73,
+                    },
+                  },
+                  "meta": {
+                    "props": [
+                      "item",
+                      "index",
+                    ],
+                  },
+                  "source": "(item: string, index: number) => {
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  }",
+                  "value": 149,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1788-1950",
+              "kind": 260,
+              "label": "renderItem",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 76,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 73,
+                },
+              },
+              "meta": {
+                "initializer": "(item: string, index: number) => {
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  }",
+              },
+              "source": "renderItem = (item: string, index: number) => {
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  }",
+              "value": 162,
+            },
+            {
+              "category": "JSX",
+              "children": [
+                {
+                  "category": "JSX",
+                  "children": [
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2056-2080",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 32,
+                          "line": 81,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 81,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<h1>Complex Example</h1>",
+                      "value": 24,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2089-2133",
+                      "kind": 285,
+                      "label": "InnerComponent",
+                      "loc": {
+                        "end": {
+                          "column": 52,
+                          "line": 82,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 82,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<InnerComponent text="Hello from complex" />",
+                      "value": 44,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2147-2167",
+                          "kind": 213,
+                          "label": "data.map",
+                          "loc": {
+                            "end": {
+                              "column": 33,
+                              "line": 83,
+                            },
+                            "start": {
+                              "column": 13,
+                              "line": 83,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "data.map(renderItem)",
+                          "value": 20,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2142-2173",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 39,
+                          "line": 83,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 83,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<ul>{data.map(renderItem)}</ul>",
+                      "value": 31,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2182-2232",
+                      "kind": 285,
+                      "label": "ClassComponentExample",
+                      "loc": {
+                        "end": {
+                          "column": 58,
+                          "line": 84,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 84,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<ClassComponentExample title="My Class Section" />",
+                      "value": 50,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [
+                        {
+                          "category": "JSX",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2261-2297",
+                          "kind": 284,
+                          "label": "JsxElement",
+                          "loc": {
+                            "end": {
+                              "column": 64,
+                              "line": 85,
+                            },
+                            "start": {
+                              "column": 28,
+                              "line": 85,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "<div>Loading lazy component...</div>",
+                          "value": 36,
+                        },
+                        {
+                          "category": "JSX",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2310-2339",
+                          "kind": 285,
+                          "label": "LazyComponent",
+                          "loc": {
+                            "end": {
+                              "column": 39,
+                              "line": 86,
+                            },
+                            "start": {
+                              "column": 10,
+                              "line": 86,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "<LazyComponent id="lazy-1" />",
+                          "value": 29,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2241-2359",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 19,
+                          "line": 87,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 85,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<Suspense fallback={<div>Loading lazy component...</div>}>
+          <LazyComponent id="lazy-1" />
+        </Suspense>",
+                      "value": 118,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2009-2376",
+                  "kind": 284,
+                  "label": "JsxElement",
+                  "loc": {
+                    "end": {
+                      "column": 16,
+                      "line": 88,
+                    },
+                    "start": {
+                      "column": 6,
+                      "line": 80,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "<article className={\`theme-\${theme}\`}>
+        <h1>Complex Example</h1>
+        <InnerComponent text="Hello from complex" />
+        <ul>{data.map(renderItem)}</ul>
+        <ClassComponentExample title="My Class Section" />
+        <Suspense fallback={<div>Loading lazy component...</div>}>
+          <LazyComponent id="lazy-1" />
+        </Suspense>
+      </article>",
+                  "value": 367,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1968-2402",
+              "kind": 284,
+              "label": "JsxElement",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 89,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 79,
+                },
+              },
+              "meta": undefined,
+              "source": "<MyContext.Provider value={theme}>
+      <article className={\`theme-\${theme}\`}>
+        <h1>Complex Example</h1>
+        <InnerComponent text="Hello from complex" />
+        <ul>{data.map(renderItem)}</ul>
+        <ClassComponentExample title="My Class Section" />
+        <Suspense fallback={<div>Loading lazy component...</div>}>
+          <LazyComponent id="lazy-1" />
+        </Suspense>
+      </article>
+    </MyContext.Provider>",
+              "value": 434,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1213-2409",
+          "kind": 241,
+          "label": "Block",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 91,
+            },
+            "start": {
+              "column": 54,
+              "line": 51,
+            },
+          },
+          "meta": undefined,
+          "source": "{
+  const [data, setData] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchData = async (filter: string) => {
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  };
+
+  useMemo(() => {
+    // Some expensive calculation based on theme
+    console.log("Theme changed:", theme);
+    fetchData(theme);
+  }, [theme]);
+
+  if (isLoading) {
+    return <div>Loading data for {theme}...</div>;
+  }
+
+  const renderItem = (item: string, index: number) => {
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  };
+
+  return (
+    <MyContext.Provider value={theme}>
+      <article className={\`theme-\${theme}\`}>
+        <h1>Complex Example</h1>
+        <InnerComponent text="Hello from complex" />
+        <ul>{data.map(renderItem)}</ul>
+        <ClassComponentExample title="My Class Section" />
+        <Suspense fallback={<div>Loading lazy component...</div>}>
+          <LazyComponent id="lazy-1" />
+        </Suspense>
+      </article>
+    </MyContext.Provider>
+  );
+}",
+          "value": 1196,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1159-2409",
+      "kind": 262,
+      "label": "ComplexExample",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 91,
+        },
+        "start": {
+          "column": 0,
+          "line": 51,
+        },
+      },
+      "meta": undefined,
+      "source": "function ComplexExample({ theme }: { theme: string }) {
+  const [data, setData] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchData = async (filter: string) => {
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  };
+
+  useMemo(() => {
+    // Some expensive calculation based on theme
+    console.log("Theme changed:", theme);
+    fetchData(theme);
+  }, [theme]);
+
+  if (isLoading) {
+    return <div>Loading data for {theme}...</div>;
+  }
+
+  const renderItem = (item: string, index: number) => {
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  };
+
+  return (
+    <MyContext.Provider value={theme}>
+      <article className={\`theme-\${theme}\`}>
+        <h1>Complex Example</h1>
+        <InnerComponent text="Hello from complex" />
+        <ul>{data.map(renderItem)}</ul>
+        <ClassComponentExample title="My Class Section" />
+        <Suspense fallback={<div>Loading lazy component...</div>}>
+          <LazyComponent id="lazy-1" />
+        </Suspense>
+      </article>
+    </MyContext.Provider>
+  );
+}",
+      "value": 1250,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx",
+  "kind": 307,
+  "label": "ComplexExample.tsx",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 94,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "import React, {
+  useState,
+  useMemo,
+  createContext,
+  useContext,
+  Suspense,
+} from "react";
+
+const MyContext = createContext<string | null>(null);
+
+// Another component in the same file
+const InnerComponent = React.memo(({ text }: { text: string }) => {
+  const contextValue = useContext(MyContext);
+  return (
+    <p>
+      Inner: {text} (Context: {contextValue})
+    </p>
+  );
+});
+
+export class ClassComponentExample extends React.Component<
+  { title: string },
+  { value: number }
+> {
+  constructor(props: { title: string }) {
+    super(props);
+    this.state = { value: 0 };
+    this.increment = this.increment.bind(this); // binding 'this'
+  }
+
+  increment() {
+    this.setState((prev) => ({ value: prev.value + 1 }));
+  }
+
+  render() {
+    const { title } = this.props;
+    const { value } = this.state;
+    return (
+      <section>
+        <h3>{title} - Class Component</h3>
+        <p>Value: {value}</p>
+        <button onClick={this.increment}>Increment Class</button>
+      </section>
+    );
+  }
+}
+
+// Lazy loaded component
+const LazyComponent = React.lazy(() => import("./AdvancedComponent")); // Assume AdvancedComponent is default export
+
+function ComplexExample({ theme }: { theme: string }) {
+  const [data, setData] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchData = async (filter: string) => {
+    setIsLoading(true);
+    // Mock API call
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
+    setIsLoading(false);
+  };
+
+  useMemo(() => {
+    // Some expensive calculation based on theme
+    console.log("Theme changed:", theme);
+    fetchData(theme);
+  }, [theme]);
+
+  if (isLoading) {
+    return <div>Loading data for {theme}...</div>;
+  }
+
+  const renderItem = (item: string, index: number) => {
+    // A render prop style function inside the component
+    return <li key={index}>{item.toUpperCase()}</li>;
+  };
+
+  return (
+    <MyContext.Provider value={theme}>
+      <article className={\`theme-\${theme}\`}>
+        <h1>Complex Example</h1>
+        <InnerComponent text="Hello from complex" />
+        <ul>{data.map(renderItem)}</ul>
+        <ClassComponentExample title="My Class Section" />
+        <Suspense fallback={<div>Loading lazy component...</div>}>
+          <LazyComponent id="lazy-1" />
+        </Suspense>
+      </article>
+    </MyContext.Provider>
+  );
+}
+
+export default ComplexExample;
+",
+  "value": 2442,
+}
+`;

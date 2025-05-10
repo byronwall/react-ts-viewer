@@ -1,44 +1,33 @@
+import ELK from "elkjs/lib/elk.bundled.js";
 import * as React from "react";
 import {
-  useState,
-  useEffect,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
+  useState,
 } from "react";
 import ReactFlow, {
-  applyNodeChanges,
   applyEdgeChanges,
-  addEdge,
-  Node,
-  Edge,
-  Connection,
-  EdgeChange,
-  NodeChange,
+  applyNodeChanges,
   Background,
-  BackgroundVariant,
   Controls,
-  MiniMap,
+  Edge,
+  EdgeChange,
   MarkerType,
+  MiniMap,
+  Node,
+  NodeChange,
+  NodeProps,
   ReactFlowProvider,
   useReactFlow,
-  Panel,
-  NodeProps,
 } from "reactflow";
-import ELK from "elkjs/lib/elk.bundled.js";
-import {
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-  PopoverBackdrop,
-} from "@headlessui/react";
-import { Gear } from "@phosphor-icons/react"; // Import the Gear icon
 
-import "reactflow/dist/style.css";
-import "@reactflow/minimap/dist/style.css";
 import "@reactflow/controls/dist/style.css";
+import "@reactflow/minimap/dist/style.css";
+import "reactflow/dist/style.css";
 import "./App.css";
-import TreeView, { vscodeApi } from "./TreeView"; // Import vscodeApi
+import TreemapDisplay from "./TreemapDisplay"; // Import the new TreemapDisplay component
 
 // Explicitly type CustomNodeProps to include width and height
 interface CustomNodeProps extends NodeProps {
@@ -48,6 +37,7 @@ interface CustomNodeProps extends NodeProps {
 
 // Import custom node components
 import ComponentNodeDisplay from "./ComponentNodeDisplay";
+import { ScopeNode } from "../types";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
@@ -795,365 +785,259 @@ const FlowCanvas: React.FC<{
 // --- End FlowCanvas ---
 
 const App: React.FC = () => {
-  // State moved: nodes, edges, onNodesChange, onEdgesChange are now in FlowCanvas
-  const [targetFile, setTargetFile] = useState<string>("");
-  const [settings, setSettings] = useState<AnalysisSettings>(defaultSettings);
+  const [filePath, setFilePath] = useState<string | null>(
+    window.initialData?.filePath || null
+  );
+  const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(
+    window.initialWorkspaceRoot || null
+  );
+  const [rawAnalysisData, setRawAnalysisData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [workspaceRoot, setWorkspaceRoot] = useState<string | undefined>(
-    undefined
-  );
-  // State to hold raw results from extension before layouting
-  const [rawAnalysisData, setRawAnalysisData] = useState<{
-    nodes: Node[];
-    edges: Edge[];
-  }>({ nodes: [], edges: [] });
+  const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AnalysisSettings>(defaultSettings);
 
-  // --- Initialization Effect ---
+  const [activeView, setActiveView] = useState<
+    "graph" | "treeview" | "treemap"
+  >("treemap");
+  const [scopeTreeData, setScopeTreeData] = useState<ScopeNode | null>(null);
+  const [isTreemapLoading, setIsTreemapLoading] = useState<boolean>(false);
+  const [treemapError, setTreemapError] = useState<string | null>(null);
+  const [currentAnalysisTarget, setCurrentAnalysisTarget] = useState<
+    string | null
+  >(filePath);
+
+  const vscodeApi = useMemo(() => {
+    // @ts-expect-error acquireVsCodeApi is a global provided by VS Code in webviews
+    return acquireVsCodeApi();
+  }, []);
+
   useEffect(() => {
-    let initialFile = "";
-    // Read initial data from window object
-    if (window.initialData?.filePath) {
-      console.log(
-        "[Webview] Reading initial file path from window:",
-        window.initialData.filePath
-      );
-      initialFile = window.initialData.filePath;
-      setTargetFile(initialFile);
-    } else {
-      console.warn("[Webview] Initial file path not found on window object.");
+    if (filePath && activeView === "treemap") {
+      // Initial load, if treemap is default
+      requestTreemapData(filePath);
+    } else if (filePath && activeView === "graph") {
+      // Or if graph is default
+      requestGraphData(filePath);
     }
+  }, []); // Run once on initial mount with initial filePath
 
-    if (window.initialWorkspaceRoot) {
-      console.log(
-        "[Webview] Reading initial workspace root from window:",
-        window.initialWorkspaceRoot
-      );
-      setWorkspaceRoot(window.initialWorkspaceRoot);
-    } else {
-      console.warn(
-        "[Webview] Initial workspace root not found on window object."
-      );
-    }
-
-    // Removed state restoration via vscode.getState()
-    // If state persistence is needed, it must be requested from the extension via postMessage
-
-    // Trigger analysis automatically if a file path was found
-    if (initialFile) {
-      // Need to pass initial settings directly as state might not be updated yet
-      runAnalysis(initialFile, defaultSettings);
-    }
-  }, []); // Empty dependency array ensures this runs only once on mount
-
-  // Function to send analysis request to extension
-  const runAnalysis = useCallback(
-    (filePath: string, currentSettings: AnalysisSettings) => {
-      if (!filePath) {
-        console.warn("[Webview] runAnalysis called with empty filePath");
-        return;
-      }
-      console.log(
-        `[Webview] Requesting analysis for: ${filePath} with settings:`,
-        currentSettings
-      );
+  const requestGraphData = useCallback(
+    (fp: string) => {
+      if (!fp) return;
+      vscodeApi.postMessage({ command: "analyzeDocument", text: fp });
       setIsLoading(true);
-      // Use the imported vscodeApi
-      vscodeApi.postMessage({
-        command: "runAnalysis",
-        filePath: filePath,
-        settings: currentSettings,
-      });
+      setError(null);
+      setScopeTreeData(null);
+      setTreemapError(null);
+      setCurrentAnalysisTarget(fp);
     },
-    [] // Dependency array is correct, vscodeApi is stable module-level const
+    [vscodeApi]
   );
 
-  // Handle messages from the extension
+  const requestTreemapData = useCallback(
+    (fp: string) => {
+      if (!fp) return;
+      vscodeApi.postMessage({ command: "getScopeTree", filePath: fp });
+      setIsTreemapLoading(true);
+      setTreemapError(null);
+      setRawAnalysisData(null);
+      setError(null);
+      setCurrentAnalysisTarget(fp);
+    },
+    [vscodeApi]
+  );
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      const message = event.data; // The json data that the extension sent
-      console.log("[Webview] Received message:", message);
+      const message = event.data;
+      console.log(
+        "[Webview App] Received message:",
+        message.command,
+        message.filePath || ""
+      );
+
       switch (message.command) {
-        case "setFile":
-          console.log("[Webview] Setting file path:", message.filePath);
-          setTargetFile(message.filePath);
-          // Automatically run analysis when file is set from extension
-          // Ensure we use the *current* settings state
-          setSettings((currentSettings) => {
-            runAnalysis(message.filePath, currentSettings);
-            return currentSettings; // No change to settings needed here
-          });
-          break;
-        case "showResults": {
-          console.log(
-            "[Webview] Received raw results from extension:", // Log original
-            message.data
-          );
+        case "analysisResult":
+          setRawAnalysisData(message.data);
           setIsLoading(false);
-          // Apply transformation
-          const transformedData = transformDataForFlow(
-            message.data.nodes || [],
-            message.data.edges || []
-          );
-          console.log(
-            "[Webview] Storing TRANSFORMED results for layout:", // Log transformed
-            transformedData
-          );
-          // Store raw data; layout happens in FlowCanvas's effect
-          setRawAnalysisData(transformedData); // Store transformed data
+          setError(null);
+          // setActiveView("graph"); // Comment out: let button clicks control active view
           break;
-        }
-        // Add other message handlers if needed
+        case "analysisError":
+          setError(message.error);
+          setIsLoading(false);
+          setRawAnalysisData(null);
+          break;
+        case "showScopeTree":
+          setScopeTreeData(message.data);
+          setIsTreemapLoading(false);
+          setTreemapError(null);
+          // setActiveView("treemap"); // Comment out: let button clicks control active view
+          break;
+        case "showScopeTreeError":
+          setTreemapError(message.error);
+          setIsTreemapLoading(false);
+          setScopeTreeData(null);
+          break;
+        case "fileOpened":
+          console.log("[Webview App] File opened event:", message.filePath);
+          setFilePath(message.filePath); // Update filePath state
+          // setCurrentAnalysisTarget(message.filePath); // This is set by request functions
+          // Automatically trigger analysis for the new file based on the active view
+          if (activeView === "treemap") {
+            requestTreemapData(message.filePath);
+          } else if (activeView === "graph") {
+            requestGraphData(message.filePath);
+          }
+          // If other views, they should handle their data request or have a default
+          break;
       }
     };
 
     window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [vscodeApi, activeView, requestGraphData, requestTreemapData]); // Added request functions to deps
 
-    // Clean up the event listener when the component unmounts
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [runAnalysis]); // Removed settings dependency, handled within setFile logic
+  // ... handleSettingChange ...
 
-  // Handle settings changes
-  const handleSettingChange = (
-    settingName: keyof AnalysisSettings,
-    value: any
-  ) => {
-    setSettings((prev) => {
-      const newSettings = { ...prev, [settingName]: value };
-      // TODO: Update node/edge visibility based on the *new* settings
-      // Maybe trigger a re-filter/update of hidden props here?
-      return newSettings;
-    });
-  };
+  const HEADER_HEIGHT_PX = 50; // Example
 
-  // Visibility update useEffect is now inside FlowCanvas
-
-  // nodeTypes is now inside FlowCanvas
-
+  // Main return statement for the App component's JSX
   return (
-    // Wrap the entire app in the SettingsContext Provider
     <SettingsContext.Provider value={settings}>
-      {/* Wrap the layout part in ReactFlowProvider */}
-      <ReactFlowProvider>
-        <div style={{ height: "100vh", width: "100vw", display: "flex" }}>
-          {/* Left Panel (Controls + Tree View) */}
-          <div
-            className="left-panel"
-            style={{
-              width: "300px", // Increased width slightly
-              padding: "10px",
-              borderRight: "1px solid #444",
-              display: "flex",
-              flexDirection: "column",
-              backgroundColor: "#252526", // VS Code dark theme background
-              color: "#ccc", // Light text color
-              position: "relative", // Needed for popover positioning
-              overflowY: "auto", // Make panel scrollable
-            }}
-          >
-            <div
-              className="panel-header"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              <h3 style={{ marginTop: 0, marginBottom: "15px" }}>
-                Analysis Controls
-              </h3>
-              {/* Headless UI Popover for Settings */}
-              <Popover className="relative settings-popover-container">
-                <PopoverButton className="settings-button">
-                  {/* SVG Cog Icon */}
-                  {/* <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
-                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01-.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                  </svg> */}
-                  <Gear size={20} /> {/* Use Phosphor Gear icon */}
-                </PopoverButton>
-                {/* Optional backdrop */}
-                {/* <PopoverBackdrop className="fixed inset-0 bg-black/15" /> */}
-                <PopoverPanel
-                  anchor="bottom end"
-                  className="settings-popover-panel"
-                >
-                  {/* Moved Settings Content Here */}
-                  <h4>Analysis Settings</h4>
-
-                  {/* Max Depth Input */}
-                  <label
-                    htmlFor="maxDepth"
-                    style={{ marginBottom: "5px", display: "block" }}
-                  >
-                    Max Depth:
-                  </label>
-                  <input
-                    type="number"
-                    id="maxDepth"
-                    value={settings.maxDepth}
-                    onChange={(e) =>
-                      handleSettingChange(
-                        "maxDepth",
-                        parseInt(e.target.value, 10) || 1
-                      )
-                    }
-                    min="1"
-                    max="10" // Reasonable max
-                  />
-
-                  {/* Show Minimap Checkbox */}
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="showMinimap"
-                      checked={settings.showMinimap}
-                      onChange={(e) =>
-                        handleSettingChange("showMinimap", e.target.checked)
-                      }
-                    />
-                    <label htmlFor="showMinimap">Show Minimap</label>
-                  </div>
-
-                  {/* Show Hooks Checkbox */}
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="showHooks"
-                      checked={settings.showHooks}
-                      onChange={(e) =>
-                        handleSettingChange("showHooks", e.target.checked)
-                      }
-                    />
-                    <label htmlFor="showHooks">Show Hooks</label>
-                  </div>
-
-                  {/* Show File Dependencies Checkbox - TO BE REMOVED */}
-                  {/*
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="showFileDeps"
-                      checked={settings.showFileDeps}
-                      onChange={(e) =>
-                        handleSettingChange("showFileDeps", e.target.checked)
-                      }
-                    />
-                    <label htmlFor="showFileDeps">Show File Dependencies</label>
-                  </div>
-                  */}
-
-                  {/* Show Library Dependencies Checkbox */}
-                  <div>
-                    <input
-                      type="checkbox"
-                      id="showLibDeps"
-                      checked={settings.showLibDeps}
-                      onChange={(e) =>
-                        handleSettingChange("showLibDeps", e.target.checked)
-                      }
-                    />
-                    <label htmlFor="showLibDeps">
-                      Show Library Dependencies
-                    </label>
-                  </div>
-
-                  {/* You might need a close button if not using backdrop click-away */}
-                  {/* <button onClick={() => close()}>Close</button> */}
-                </PopoverPanel>
-              </Popover>
-            </div>
-
-            {/* Target File Input */}
+      <div className="app-container">
+        <div className="left-panel">
+          {/* ... existing left panel header ... */}
+          {/* File Path Display/Input - Simplified */}
+          <div style={{ marginBottom: "15px" }}>
             <label
-              htmlFor="targetFile"
-              style={{ marginBottom: "5px", flexShrink: 0 }}
+              htmlFor="currentFileDisplay"
+              style={{ display: "block", marginBottom: "5px" }}
             >
-              Target File:
+              Current File:
             </label>
-            <textarea
-              id="targetFile"
-              rows={3} // Set the number of visible rows
-              value={targetFile}
-              onChange={(e) => setTargetFile(e.target.value)}
-              placeholder="/path/to/your/component.tsx"
+            <input
+              type="text"
+              id="currentFileDisplay"
+              readOnly
+              value={currentAnalysisTarget || "No file selected"}
               style={{
-                marginBottom: "15px",
                 width: "100%",
                 padding: "5px",
+                boxSizing: "border-box",
                 backgroundColor: "#3c3c3c",
                 color: "#ccc",
                 border: "1px solid #555",
-                boxSizing: "border-box", // Include padding in width
-                flexShrink: 0,
-                resize: "vertical", // Allow vertical resizing
               }}
             />
+          </div>
 
-            {/* Tree View Panel */}
-            <div
-              style={{
-                flexGrow: 1,
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {" "}
-              {/* Container for TreeView */}
-              <h3 style={{ marginTop: 0, marginBottom: "15px", flexShrink: 0 }}>
-                Structure View
-              </h3>
-              {/* Render the TreeView component */}
-              <div style={{ flexGrow: 1 }}>
-                {" "}
-                {/* Allows TreeView content to scroll */}
-                <TreeView
-                  nodes={rawAnalysisData.nodes}
-                  edges={rawAnalysisData.edges}
-                  workspaceRoot={workspaceRoot}
-                />
-              </div>
-            </div>
-
-            {/* Run Analysis Button */}
+          <h4>View Mode</h4>
+          <div className="view-toggle">
             <button
-              onClick={() => runAnalysis(targetFile, settings)}
-              disabled={isLoading || !targetFile}
-              style={{
-                marginTop: "15px", // Add some space above the button
-                padding: "8px 15px",
-                cursor: "pointer",
-                backgroundColor: isLoading ? "#555" : "#0e639c",
-                color: "white",
-                border: "none",
-                borderRadius: "3px",
-                opacity: !targetFile ? 0.6 : 1,
-                flexShrink: 0, // Prevent button from shrinking
+              onClick={() => {
+                setActiveView("graph");
+                if (
+                  currentAnalysisTarget &&
+                  (!rawAnalysisData ||
+                    currentAnalysisTarget !==
+                      rawAnalysisData?.id?.split(":")[0])
+                ) {
+                  requestGraphData(currentAnalysisTarget);
+                }
               }}
+              className={activeView === "graph" ? "active" : ""}
             >
-              {isLoading ? "Analyzing..." : "Run Analysis"}
+              Graph
+            </button>
+            <button
+              onClick={() => {
+                setActiveView("treemap");
+                if (
+                  currentAnalysisTarget &&
+                  (!scopeTreeData || scopeTreeData.id !== currentAnalysisTarget)
+                ) {
+                  requestTreemapData(currentAnalysisTarget);
+                }
+              }}
+              className={activeView === "treemap" ? "active" : ""}
+            >
+              Treemap
             </button>
           </div>
-
-          {/* React Flow Canvas Area */}
-          <div
-            className="right-panel"
-            style={{ flex: 1, position: "relative", overflow: "hidden" }}
-          >
-            {isLoading && (
-              <div className="loading-overlay">Analyzing... Please wait.</div>
-            )}
-            <FlowCanvas
-              // Pass the raw data, FlowCanvas handles layout
-              initialNodes={rawAnalysisData.nodes}
-              initialEdges={rawAnalysisData.edges}
-              settings={settings}
-            />
-          </div>
+          {/* Settings Popover and other controls from original App.tsx should be here */}
+          {/* Make sure to re-integrate your settings popover and other controls from original App.tsx */}
         </div>
-      </ReactFlowProvider>
+
+        <div
+          className="right-panel"
+          style={{ flex: 1, position: "relative", overflow: "hidden" }}
+        >
+          {isLoading && activeView === "graph" && (
+            <div className="loading-overlay">
+              Analyzing Dependencies for Graph...
+            </div>
+          )}
+          {error && activeView === "graph" && (
+            <div className="error-overlay">Graph Error: {error}</div>
+          )}
+          {isTreemapLoading && activeView === "treemap" && (
+            <div className="loading-overlay">Generating Treemap...</div>
+          )}
+          {treemapError && activeView === "treemap" && (
+            <div className="error-overlay">Treemap Error: {treemapError}</div>
+          )}
+
+          {activeView === "graph" && rawAnalysisData && (
+            <ReactFlowProvider>
+              {" "}
+              {/* Ensure ReactFlowProvider wraps FlowCanvas */}
+              <FlowCanvas
+                initialNodes={rawAnalysisData.nodes}
+                initialEdges={rawAnalysisData.edges}
+                settings={settings}
+              />
+            </ReactFlowProvider>
+          )}
+
+          {activeView === "treemap" && scopeTreeData && (
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+            >
+              <TreemapDisplay data={scopeTreeData} />
+            </div>
+          )}
+
+          {activeView === "treemap" &&
+            !scopeTreeData &&
+            !isTreemapLoading &&
+            !treemapError && (
+              <div className="placeholder-overlay">
+                {currentAnalysisTarget
+                  ? `Select/Re-select a file or click "Treemap" to generate for ${currentAnalysisTarget
+                      .split("/")
+                      .pop()}.`
+                  : "Select a file to generate a treemap."}
+              </div>
+            )}
+
+          {activeView === "graph" &&
+            !rawAnalysisData &&
+            !isLoading &&
+            !error && (
+              <div className="placeholder-overlay">
+                {currentAnalysisTarget
+                  ? `Select/Re-select a file or click "Graph" to generate for ${currentAnalysisTarget
+                      .split("/")
+                      .pop()}.`
+                  : "Select a file to generate a graph."}
+              </div>
+            )}
+        </div>
+      </div>
     </SettingsContext.Provider>
   );
 };

@@ -1,0 +1,1571 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scope tree from a fixture file and match snapshot > AdvancedComponent 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "Function",
+      "children": [
+        {
+          "category": "Block",
+          "children": [
+            {
+              "category": "ReactHook",
+              "children": [
+                {
+                  "category": "ArrowFunction",
+                  "children": [
+                    {
+                      "category": "Block",
+                      "children": [
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:153-192",
+                          "kind": 213,
+                          "label": "console.log",
+                          "loc": {
+                            "end": {
+                              "column": 43,
+                              "line": 6,
+                            },
+                            "start": {
+                              "column": 4,
+                              "line": 6,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "console.log(\`\${componentName} mounted\`)",
+                          "value": 39,
+                        },
+                        {
+                          "category": "ArrowFunction",
+                          "children": [
+                            {
+                              "category": "Call",
+                              "children": [],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:211-252",
+                              "kind": 213,
+                              "label": "console.log",
+                              "loc": {
+                                "end": {
+                                  "column": 58,
+                                  "line": 7,
+                                },
+                                "start": {
+                                  "column": 17,
+                                  "line": 7,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "console.log(\`\${componentName} unmounted\`)",
+                              "value": 41,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:205-252",
+                          "kind": 219,
+                          "label": "ArrowFunction",
+                          "loc": {
+                            "end": {
+                              "column": 58,
+                              "line": 7,
+                            },
+                            "start": {
+                              "column": 11,
+                              "line": 7,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "() => console.log(\`\${componentName} unmounted\`)",
+                          "value": 47,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:147-257",
+                      "kind": 241,
+                      "label": "Block",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 8,
+                        },
+                        "start": {
+                          "column": 18,
+                          "line": 5,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "{
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }",
+                      "value": 110,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:141-257",
+                  "kind": 219,
+                  "label": "ArrowFunction",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 8,
+                    },
+                    "start": {
+                      "column": 12,
+                      "line": 5,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "() => {
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }",
+                  "value": 116,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:131-275",
+              "kind": 213,
+              "label": "useEffect",
+              "loc": {
+                "end": {
+                  "column": 21,
+                  "line": 8,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 5,
+                },
+              },
+              "meta": {
+                "hookName": "useEffect",
+              },
+              "source": "useEffect(() => {
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }, [componentName])",
+              "value": 144,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:127-278",
+          "kind": 241,
+          "label": "Block",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 9,
+            },
+            "start": {
+              "column": 42,
+              "line": 4,
+            },
+          },
+          "meta": undefined,
+          "source": "{
+  useEffect(() => {
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }, [componentName]);
+}",
+          "value": 151,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:85-278",
+      "kind": 262,
+      "label": "useLogger",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 9,
+        },
+        "start": {
+          "column": 0,
+          "line": 4,
+        },
+      },
+      "meta": undefined,
+      "source": "function useLogger(componentName: string) {
+  useEffect(() => {
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }, [componentName]);
+}",
+      "value": 193,
+    },
+    {
+      "category": "Variable",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:410-454",
+      "kind": 260,
+      "label": "initialState",
+      "loc": {
+        "end": {
+          "column": 50,
+          "line": 14,
+        },
+        "start": {
+          "column": 6,
+          "line": 14,
+        },
+      },
+      "meta": {
+        "initializer": "{ count: 0, text: "" }",
+      },
+      "source": "initialState: State = { count: 0, text: "" }",
+      "value": 44,
+    },
+    {
+      "category": "Function",
+      "children": [
+        {
+          "category": "Block",
+          "children": [
+            {
+              "category": "Other",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:536-717",
+              "kind": 269,
+              "label": "CaseBlock",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 24,
+                },
+                "start": {
+                  "column": 23,
+                  "line": 17,
+                },
+              },
+              "meta": undefined,
+              "source": "{
+    case "INCREMENT":
+      return { ...state, count: state.count + 1 };
+    case "SET_TEXT":
+      return { ...state, text: action.payload };
+    default:
+      return state;
+  }",
+              "value": 181,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:511-719",
+          "kind": 241,
+          "label": "Block",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 25,
+            },
+            "start": {
+              "column": 54,
+              "line": 16,
+            },
+          },
+          "meta": undefined,
+          "source": "{
+  switch (action.type) {
+    case "INCREMENT":
+      return { ...state, count: state.count + 1 };
+    case "SET_TEXT":
+      return { ...state, text: action.payload };
+    default:
+      return state;
+  }
+}",
+          "value": 208,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:457-719",
+      "kind": 262,
+      "label": "reducer",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 25,
+        },
+        "start": {
+          "column": 0,
+          "line": 16,
+        },
+      },
+      "meta": undefined,
+      "source": "function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "INCREMENT":
+      return { ...state, count: state.count + 1 };
+    case "SET_TEXT":
+      return { ...state, text: action.payload };
+    default:
+      return state;
+  }
+}",
+      "value": 262,
+    },
+    {
+      "category": "Other",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:783-806",
+      "kind": 184,
+      "label": "FunctionType",
+      "loc": {
+        "end": {
+          "column": 36,
+          "line": 29,
+        },
+        "start": {
+          "column": 13,
+          "line": 29,
+        },
+      },
+      "meta": undefined,
+      "source": "(count: number) => void",
+      "value": 23,
+    },
+    {
+      "category": "Variable",
+      "children": [
+        {
+          "category": "ArrowFunction",
+          "children": [
+            {
+              "category": "Block",
+              "children": [
+                {
+                  "category": "ReactHook",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:902-938",
+                  "kind": 213,
+                  "label": "useLogger",
+                  "loc": {
+                    "end": {
+                      "column": 38,
+                      "line": 36,
+                    },
+                    "start": {
+                      "column": 2,
+                      "line": 36,
+                    },
+                  },
+                  "meta": {
+                    "hookName": "useLogger",
+                  },
+                  "source": "useLogger(\`AdvancedComponent-\${id}\`)",
+                  "value": 36,
+                },
+                {
+                  "category": "Variable",
+                  "children": [
+                    {
+                      "category": "ReactHook",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:968-1001",
+                      "kind": 213,
+                      "label": "useReducer",
+                      "loc": {
+                        "end": {
+                          "column": 61,
+                          "line": 37,
+                        },
+                        "start": {
+                          "column": 28,
+                          "line": 37,
+                        },
+                      },
+                      "meta": {
+                        "hookName": "useReducer",
+                      },
+                      "source": "useReducer(reducer, initialState)",
+                      "value": 33,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:948-1001",
+                  "kind": 260,
+                  "label": "VariableDeclaration",
+                  "loc": {
+                    "end": {
+                      "column": 61,
+                      "line": 37,
+                    },
+                    "start": {
+                      "column": 8,
+                      "line": 37,
+                    },
+                  },
+                  "meta": {
+                    "initializer": "useReducer(reducer, initialState)",
+                  },
+                  "source": "[state, dispatch] = useReducer(reducer, initialState)",
+                  "value": 53,
+                },
+                {
+                  "category": "Variable",
+                  "children": [
+                    {
+                      "category": "ReactHook",
+                      "children": [
+                        {
+                          "category": "ArrowFunction",
+                          "children": [
+                            {
+                              "category": "Block",
+                              "children": [
+                                {
+                                  "category": "Call",
+                                  "children": [],
+                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1054-1085",
+                                  "kind": 213,
+                                  "label": "dispatch",
+                                  "loc": {
+                                    "end": {
+                                      "column": 35,
+                                      "line": 40,
+                                    },
+                                    "start": {
+                                      "column": 4,
+                                      "line": 40,
+                                    },
+                                  },
+                                  "meta": undefined,
+                                  "source": "dispatch({ type: "INCREMENT" })",
+                                  "value": 31,
+                                },
+                                {
+                                  "category": "Block",
+                                  "children": [
+                                    {
+                                      "category": "Call",
+                                      "children": [],
+                                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1113-1138",
+                                      "kind": 213,
+                                      "label": "onUpdate",
+                                      "loc": {
+                                        "end": {
+                                          "column": 31,
+                                          "line": 42,
+                                        },
+                                        "start": {
+                                          "column": 6,
+                                          "line": 42,
+                                        },
+                                      },
+                                      "meta": undefined,
+                                      "source": "onUpdate(state.count + 1)",
+                                      "value": 25,
+                                    },
+                                  ],
+                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1105-1145",
+                                  "kind": 241,
+                                  "label": "Block",
+                                  "loc": {
+                                    "end": {
+                                      "column": 5,
+                                      "line": 43,
+                                    },
+                                    "start": {
+                                      "column": 18,
+                                      "line": 41,
+                                    },
+                                  },
+                                  "meta": undefined,
+                                  "source": "{
+      onUpdate(state.count + 1);
+    }",
+                                  "value": 40,
+                                },
+                              ],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1048-1149",
+                              "kind": 241,
+                              "label": "Block",
+                              "loc": {
+                                "end": {
+                                  "column": 3,
+                                  "line": 44,
+                                },
+                                "start": {
+                                  "column": 44,
+                                  "line": 39,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "{
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }",
+                              "value": 101,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1042-1149",
+                          "kind": 219,
+                          "label": "ArrowFunction",
+                          "loc": {
+                            "end": {
+                              "column": 3,
+                              "line": 44,
+                            },
+                            "start": {
+                              "column": 38,
+                              "line": 39,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }",
+                          "value": 107,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1030-1175",
+                      "kind": 213,
+                      "label": "useCallback",
+                      "loc": {
+                        "end": {
+                          "column": 29,
+                          "line": 44,
+                        },
+                        "start": {
+                          "column": 26,
+                          "line": 39,
+                        },
+                      },
+                      "meta": {
+                        "hookName": "useCallback",
+                      },
+                      "source": "useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate])",
+                      "value": 145,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1012-1175",
+                  "kind": 260,
+                  "label": "handleIncrement",
+                  "loc": {
+                    "end": {
+                      "column": 29,
+                      "line": 44,
+                    },
+                    "start": {
+                      "column": 8,
+                      "line": 39,
+                    },
+                  },
+                  "meta": {
+                    "initializer": "useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate])",
+                  },
+                  "source": "handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate])",
+                  "value": 163,
+                },
+                {
+                  "category": "Variable",
+                  "children": [
+                    {
+                      "category": "ArrowFunction",
+                      "children": [
+                        {
+                          "category": "Block",
+                          "children": [
+                            {
+                              "category": "Call",
+                              "children": [],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1259-1318",
+                              "kind": 213,
+                              "label": "dispatch",
+                              "loc": {
+                                "end": {
+                                  "column": 63,
+                                  "line": 47,
+                                },
+                                "start": {
+                                  "column": 4,
+                                  "line": 47,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "dispatch({ type: "SET_TEXT", payload: event.target.value })",
+                              "value": 59,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1253-1323",
+                          "kind": 241,
+                          "label": "Block",
+                          "loc": {
+                            "end": {
+                              "column": 3,
+                              "line": 48,
+                            },
+                            "start": {
+                              "column": 75,
+                              "line": 46,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "{
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+                          "value": 70,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1205-1323",
+                      "kind": 219,
+                      "label": "ArrowFunction",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 48,
+                        },
+                        "start": {
+                          "column": 27,
+                          "line": 46,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "(event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+                      "value": 118,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1186-1323",
+                  "kind": 260,
+                  "label": "handleTextChange",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 48,
+                    },
+                    "start": {
+                      "column": 8,
+                      "line": 46,
+                    },
+                  },
+                  "meta": {
+                    "initializer": "(event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+                  },
+                  "source": "handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+                  "value": 137,
+                },
+                {
+                  "category": "Function",
+                  "children": [
+                    {
+                      "category": "Block",
+                      "children": [
+                        {
+                          "category": "Block",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1471-1502",
+                          "kind": 241,
+                          "label": "Block",
+                          "loc": {
+                            "end": {
+                              "column": 5,
+                              "line": 54,
+                            },
+                            "start": {
+                              "column": 25,
+                              "line": 52,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "{
+      return value * 2;
+    }",
+                          "value": 31,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1444-1528",
+                      "kind": 241,
+                      "label": "Block",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 56,
+                        },
+                        "start": {
+                          "column": 42,
+                          "line": 51,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "{
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }",
+                      "value": 84,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1404-1528",
+                  "kind": 262,
+                  "label": "utilityFunction",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 56,
+                    },
+                    "start": {
+                      "column": 2,
+                      "line": 51,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }",
+                  "value": 124,
+                },
+                {
+                  "category": "ReactHook",
+                  "children": [
+                    {
+                      "category": "ArrowFunction",
+                      "children": [
+                        {
+                          "category": "Block",
+                          "children": [
+                            {
+                              "category": "Variable",
+                              "children": [
+                                {
+                                  "category": "Call",
+                                  "children": [],
+                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1569-1597",
+                                  "kind": 213,
+                                  "label": "utilityFunction",
+                                  "loc": {
+                                    "end": {
+                                      "column": 47,
+                                      "line": 59,
+                                    },
+                                    "start": {
+                                      "column": 19,
+                                      "line": 59,
+                                    },
+                                  },
+                                  "meta": undefined,
+                                  "source": "utilityFunction(state.count)",
+                                  "value": 28,
+                                },
+                              ],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1560-1597",
+                              "kind": 260,
+                              "label": "result",
+                              "loc": {
+                                "end": {
+                                  "column": 47,
+                                  "line": 59,
+                                },
+                                "start": {
+                                  "column": 10,
+                                  "line": 59,
+                                },
+                              },
+                              "meta": {
+                                "initializer": "utilityFunction(state.count)",
+                              },
+                              "source": "result = utilityFunction(state.count)",
+                              "value": 37,
+                            },
+                            {
+                              "category": "Call",
+                              "children": [],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1603-1650",
+                              "kind": 213,
+                              "label": "console.log",
+                              "loc": {
+                                "end": {
+                                  "column": 51,
+                                  "line": 60,
+                                },
+                                "start": {
+                                  "column": 4,
+                                  "line": 60,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "console.log("Utility function result:", result)",
+                              "value": 47,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1548-1655",
+                          "kind": 241,
+                          "label": "Block",
+                          "loc": {
+                            "end": {
+                              "column": 3,
+                              "line": 61,
+                            },
+                            "start": {
+                              "column": 18,
+                              "line": 58,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "{
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }",
+                          "value": 107,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1542-1655",
+                      "kind": 219,
+                      "label": "ArrowFunction",
+                      "loc": {
+                        "end": {
+                          "column": 3,
+                          "line": 61,
+                        },
+                        "start": {
+                          "column": 12,
+                          "line": 58,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }",
+                      "value": 113,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1532-1671",
+                  "kind": 213,
+                  "label": "useEffect",
+                  "loc": {
+                    "end": {
+                      "column": 19,
+                      "line": 61,
+                    },
+                    "start": {
+                      "column": 2,
+                      "line": 58,
+                    },
+                  },
+                  "meta": {
+                    "hookName": "useEffect",
+                  },
+                  "source": "useEffect(() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }, [state.count])",
+                  "value": 139,
+                },
+                {
+                  "category": "JSX",
+                  "children": [
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1760-1794",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 40,
+                          "line": 65,
+                        },
+                        "start": {
+                          "column": 6,
+                          "line": 65,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<h2>Advanced Component ({id})</h2>",
+                      "value": 34,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1801-1836",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 41,
+                          "line": 66,
+                        },
+                        "start": {
+                          "column": 6,
+                          "line": 66,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<p>Current Count: {state.count}</p>",
+                      "value": 35,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1843-1974",
+                      "kind": 285,
+                      "label": "input",
+                      "loc": {
+                        "end": {
+                          "column": 8,
+                          "line": 72,
+                        },
+                        "start": {
+                          "column": 6,
+                          "line": 67,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />",
+                      "value": 131,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1981-2014",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 39,
+                          "line": 73,
+                        },
+                        "start": {
+                          "column": 6,
+                          "line": 73,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<p>Current Text: {state.text}</p>",
+                      "value": 33,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2021-2073",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 58,
+                          "line": 74,
+                        },
+                        "start": {
+                          "column": 6,
+                          "line": 74,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<button onClick={handleIncrement}>Increment</button>",
+                      "value": 52,
+                    },
+                    {
+                      "category": "JSX",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2110-2168",
+                      "kind": 284,
+                      "label": "JsxElement",
+                      "loc": {
+                        "end": {
+                          "column": 66,
+                          "line": 76,
+                        },
+                        "start": {
+                          "column": 8,
+                          "line": 76,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "<p style={{ color: "green" }}>Count is greater than 5!</p>",
+                      "value": 58,
+                    },
+                    {
+                      "category": "Call",
+                      "children": [
+                        {
+                          "category": "ArrowFunction",
+                          "children": [
+                            {
+                              "category": "Block",
+                              "children": [
+                                {
+                                  "category": "Block",
+                                  "children": [
+                                    {
+                                      "category": "JSX",
+                                      "children": [
+                                        {
+                                          "category": "Call",
+                                          "children": [],
+                                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2313-2337",
+                                          "kind": 213,
+                                          "label": "state.text.toUpperCase",
+                                          "loc": {
+                                            "end": {
+                                              "column": 58,
+                                              "line": 81,
+                                            },
+                                            "start": {
+                                              "column": 34,
+                                              "line": 81,
+                                            },
+                                          },
+                                          "meta": undefined,
+                                          "source": "state.text.toUpperCase()",
+                                          "value": 24,
+                                        },
+                                      ],
+                                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2296-2342",
+                                      "kind": 284,
+                                      "label": "JsxElement",
+                                      "loc": {
+                                        "end": {
+                                          "column": 63,
+                                          "line": 81,
+                                        },
+                                        "start": {
+                                          "column": 17,
+                                          "line": 81,
+                                        },
+                                      },
+                                      "meta": undefined,
+                                      "source": "<p>You entered: {state.text.toUpperCase()}</p>",
+                                      "value": 46,
+                                    },
+                                  ],
+                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2277-2353",
+                                  "kind": 241,
+                                  "label": "Block",
+                                  "loc": {
+                                    "end": {
+                                      "column": 9,
+                                      "line": 82,
+                                    },
+                                    "start": {
+                                      "column": 35,
+                                      "line": 80,
+                                    },
+                                  },
+                                  "meta": undefined,
+                                  "source": "{
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }",
+                                  "value": 76,
+                                },
+                              ],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2192-2382",
+                              "kind": 241,
+                              "label": "Block",
+                              "loc": {
+                                "end": {
+                                  "column": 7,
+                                  "line": 84,
+                                },
+                                "start": {
+                                  "column": 14,
+                                  "line": 78,
+                                },
+                              },
+                              "meta": undefined,
+                              "source": "{
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      }",
+                              "value": 190,
+                            },
+                          ],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2186-2382",
+                          "kind": 219,
+                          "label": "ArrowFunction",
+                          "loc": {
+                            "end": {
+                              "column": 7,
+                              "line": 84,
+                            },
+                            "start": {
+                              "column": 8,
+                              "line": 78,
+                            },
+                          },
+                          "meta": undefined,
+                          "source": "() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      }",
+                          "value": 196,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2185-2385",
+                      "kind": 213,
+                      "label": "(() => {",
+                      "loc": {
+                        "end": {
+                          "column": 10,
+                          "line": 84,
+                        },
+                        "start": {
+                          "column": 7,
+                          "line": 78,
+                        },
+                      },
+                      "meta": undefined,
+                      "source": "(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()",
+                      "value": 200,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1689-2397",
+                  "kind": 284,
+                  "label": "JsxElement",
+                  "loc": {
+                    "end": {
+                      "column": 10,
+                      "line": 85,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 64,
+                    },
+                  },
+                  "meta": undefined,
+                  "source": "<div className={\`advanced-component advanced-component--\${id}\`}>
+      <h2>Advanced Component ({id})</h2>
+      <p>Current Count: {state.count}</p>
+      <input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />
+      <p>Current Text: {state.text}</p>
+      <button onClick={handleIncrement}>Increment</button>
+      {state.count > 5 && (
+        <p style={{ color: "green" }}>Count is greater than 5!</p>
+      )}
+      {(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()}
+    </div>",
+                  "value": 708,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:898-2404",
+              "kind": 241,
+              "label": "Block",
+              "loc": {
+                "end": {
+                  "column": 1,
+                  "line": 87,
+                },
+                "start": {
+                  "column": 6,
+                  "line": 35,
+                },
+              },
+              "meta": undefined,
+              "source": "{
+  useLogger(\`AdvancedComponent-\${id}\`);
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate]);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  };
+
+  // Example of a nested function not necessarily a React component or hook
+  function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }
+
+  useEffect(() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }, [state.count]);
+
+  return (
+    <div className={\`advanced-component advanced-component--\${id}\`}>
+      <h2>Advanced Component ({id})</h2>
+      <p>Current Count: {state.count}</p>
+      <input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />
+      <p>Current Text: {state.text}</p>
+      <button onClick={handleIncrement}>Increment</button>
+      {state.count > 5 && (
+        <p style={{ color: "green" }}>Count is greater than 5!</p>
+      )}
+      {(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()}
+    </div>
+  );
+}",
+              "value": 1506,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:871-2404",
+          "kind": 219,
+          "label": "ArrowFunction",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 87,
+            },
+            "start": {
+              "column": 60,
+              "line": 32,
+            },
+          },
+          "meta": undefined,
+          "source": "({
+  id,
+  onUpdate,
+}) => {
+  useLogger(\`AdvancedComponent-\${id}\`);
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate]);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  };
+
+  // Example of a nested function not necessarily a React component or hook
+  function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }
+
+  useEffect(() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }, [state.count]);
+
+  return (
+    <div className={\`advanced-component advanced-component--\${id}\`}>
+      <h2>Advanced Component ({id})</h2>
+      <p>Current Count: {state.count}</p>
+      <input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />
+      <p>Current Text: {state.text}</p>
+      <button onClick={handleIncrement}>Increment</button>
+      {state.count > 5 && (
+        <p style={{ color: "green" }}>Count is greater than 5!</p>
+      )}
+      {(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()}
+    </div>
+  );
+}",
+          "value": 1533,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:817-2404",
+      "kind": 260,
+      "label": "AdvancedComponent",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 87,
+        },
+        "start": {
+          "column": 6,
+          "line": 32,
+        },
+      },
+      "meta": {
+        "initializer": "({
+  id,
+  onUpdate,
+}) => {
+  useLogger(\`AdvancedComponent-\${id}\`);
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate]);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  };
+
+  // Example of a nested function not necessarily a React component or hook
+  function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }
+
+  useEffect(() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }, [state.count]);
+
+  return (
+    <div className={\`advanced-component advanced-component--\${id}\`}>
+      <h2>Advanced Component ({id})</h2>
+      <p>Current Count: {state.count}</p>
+      <input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />
+      <p>Current Text: {state.text}</p>
+      <button onClick={handleIncrement}>Increment</button>
+      {state.count > 5 && (
+        <p style={{ color: "green" }}>Count is greater than 5!</p>
+      )}
+      {(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()}
+    </div>
+  );
+}",
+      },
+      "source": "AdvancedComponent: React.FC<AdvancedComponentProps> = ({
+  id,
+  onUpdate,
+}) => {
+  useLogger(\`AdvancedComponent-\${id}\`);
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate]);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  };
+
+  // Example of a nested function not necessarily a React component or hook
+  function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }
+
+  useEffect(() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }, [state.count]);
+
+  return (
+    <div className={\`advanced-component advanced-component--\${id}\`}>
+      <h2>Advanced Component ({id})</h2>
+      <p>Current Count: {state.count}</p>
+      <input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />
+      <p>Current Text: {state.text}</p>
+      <button onClick={handleIncrement}>Increment</button>
+      {state.count > 5 && (
+        <p style={{ color: "green" }}>Count is greater than 5!</p>
+      )}
+      {(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()}
+    </div>
+  );
+}",
+      "value": 1587,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx",
+  "kind": 307,
+  "label": "AdvancedComponent.tsx",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 91,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "import React, { useEffect, useCallback, useReducer } from "react";
+
+// A custom hook
+function useLogger(componentName: string) {
+  useEffect(() => {
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }, [componentName]);
+}
+
+type State = { count: number; text: string };
+type Action = { type: "INCREMENT" } | { type: "SET_TEXT"; payload: string };
+
+const initialState: State = { count: 0, text: "" };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "INCREMENT":
+      return { ...state, count: state.count + 1 };
+    case "SET_TEXT":
+      return { ...state, text: action.payload };
+    default:
+      return state;
+  }
+}
+
+interface AdvancedComponentProps {
+  id: string;
+  onUpdate?: (count: number) => void;
+}
+
+const AdvancedComponent: React.FC<AdvancedComponentProps> = ({
+  id,
+  onUpdate,
+}) => {
+  useLogger(\`AdvancedComponent-\${id}\`);
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate]);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  };
+
+  // Example of a nested function not necessarily a React component or hook
+  function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }
+
+  useEffect(() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }, [state.count]);
+
+  return (
+    <div className={\`advanced-component advanced-component--\${id}\`}>
+      <h2>Advanced Component ({id})</h2>
+      <p>Current Count: {state.count}</p>
+      <input
+        type="text"
+        value={state.text}
+        onChange={handleTextChange}
+        placeholder="Enter text"
+      />
+      <p>Current Text: {state.text}</p>
+      <button onClick={handleIncrement}>Increment</button>
+      {state.count > 5 && (
+        <p style={{ color: "green" }}>Count is greater than 5!</p>
+      )}
+      {(() => {
+        // IIFE for conditional rendering logic
+        if (state.text.length > 0) {
+          return <p>You entered: {state.text.toUpperCase()}</p>;
+        }
+        return null;
+      })()}
+    </div>
+  );
+};
+
+export { AdvancedComponent, useLogger };
+export default AdvancedComponent;
+",
+  "value": 2482,
+}
+`;

@@ -99,4 +99,37 @@ export interface PropDefinition {
   location?: SymbolLocation; // Where the prop is defined (e.g., in interface or type alias)
 }
 
+export interface Position {
+  line: number; // 1-based
+  column: number; // 0-based
+}
+
+export enum NodeCategory {
+  Program = "Program",
+  Module = "Module",
+  Class = "Class",
+  Function = "Function",
+  ArrowFunction = "ArrowFunction",
+  Block = "Block",
+  ControlFlow = "ControlFlow",
+  Variable = "Variable",
+  Call = "Call",
+  ReactComponent = "ReactComponent",
+  ReactHook = "ReactHook",
+  JSX = "JSX",
+  Other = "Other",
+}
+
+export interface ScopeNode {
+  id: string; // `${file}:${start}-${end}`
+  kind: number; // raw TypeScript ts.SyntaxKind
+  category: NodeCategory; // high-level bucket
+  label: string; // human-readable (e.g. function name)
+  loc: { start: Position; end: Position };
+  source: string; // exact slice of original text
+  value: number; // #chars or LOC — used by treemap layout
+  meta?: Record<string, any>; // hooks, props, anything extra
+  children: ScopeNode[];
+}
+
 // Add more types as needed for tracing, etc.
