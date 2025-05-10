@@ -91,6 +91,28 @@ export function setupWebviewPanelMessageHandler(
             );
           }
           return;
+
+        case "showInformationMessage":
+          if (message.text && typeof message.text === "string") {
+            vscode.window.showInformationMessage(message.text);
+          }
+          return;
+
+        case "showErrorMessage":
+          if (message.text && typeof message.text === "string") {
+            vscode.window.showErrorMessage(message.text);
+          }
+          return;
+
+        // It's good practice to have a default case, though not strictly necessary
+        // if all known commands are handled.
+        default:
+          outputChannel.appendLine(
+            `[Extension] Received unknown command from webview: ${message.command}`
+          );
+          // Optionally, inform the webview or user about the unknown command
+          // vscode.window.showWarningMessage(`Unknown command received: ${message.command}`);
+          return;
       }
     },
     undefined,

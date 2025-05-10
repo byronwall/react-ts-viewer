@@ -8,6 +8,9 @@ import {
 import { NodeCategory, ScopeNode } from "../types"; // Assuming src/types.ts
 import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleton
 
+// Import for save-svg-as-png if you install it
+import { saveSvgAsPng, svgAsPngUri } from "save-svg-as-png";
+
 // Remove the standalone vscode API implementation - use the imported singleton instead
 // let vscodeApiInstance: any;
 // function getVsCodeApi() {
@@ -182,6 +185,102 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const [isolatedNode, setIsolatedNode] = useState<ScopeNode | null>(null);
   const [isolationPath, setIsolationPath] = useState<ScopeNode[]>([]);
 
+  // Helper function to extract filename
+  const getFileName = (data: ScopeNode) => {
+    if (data.category === NodeCategory.Program && data.label) {
+      return data.label;
+    }
+    const idString = data.id || "";
+    const idParts = idString.split(":");
+    const pathCandidate = idParts[0];
+
+    if (pathCandidate) {
+      if (pathCandidate.includes("/")) {
+        return pathCandidate.split("/").pop() || pathCandidate;
+      }
+      return pathCandidate;
+    }
+    return idString || "Untitled";
+  };
+
+  const fileName = getFileName(initialData);
+
+  const handleExportToJson = useCallback(async () => {
+    const jsonString = JSON.stringify(initialData, null, 2);
+    try {
+      await navigator.clipboard.writeText(jsonString);
+      vscodeApi.postMessage({
+        command: "showInformationMessage",
+        text: "JSON data copied to clipboard!",
+      });
+    } catch (err) {
+      console.error("Failed to copy JSON to clipboard:", err);
+      vscodeApi.postMessage({
+        command: "showErrorMessage",
+        text: "Failed to copy JSON to clipboard. See dev console (Webview) for details.",
+      });
+    }
+  }, [initialData, vscodeApi]);
+
+  const handleExportToPng = useCallback(async () => {
+    const svgElement = document.querySelector(".nivo-treemap-container svg");
+    if (svgElement) {
+      try {
+        const dataUri = await svgAsPngUri(svgElement as SVGSVGElement, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+        });
+        if (!dataUri) {
+          throw new Error("Failed to generate PNG data URI.");
+        }
+
+        const response = await fetch(dataUri);
+        const blob = await response.blob();
+
+        if (!(blob instanceof Blob)) {
+          throw new Error("Fetched data is not a Blob.");
+        }
+        if (blob.type !== "image/png") {
+          console.warn(
+            `Expected Blob type 'image/png' but got '${blob.type}'. Attempting to copy anyway.`
+          );
+          // Optionally, you could try to re-create the blob with the correct type if you are sure of the format
+          // const newBlob = new Blob([blob], {type: 'image/png'});
+          // await navigator.clipboard.write([new ClipboardItem({ 'image/png': newBlob })]);
+        }
+
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob }),
+        ]);
+
+        vscodeApi.postMessage({
+          command: "showInformationMessage",
+          text: "PNG image copied to clipboard!",
+        });
+      } catch (err: any) {
+        console.error("Failed to copy PNG to clipboard:", err);
+        let errorMessage =
+          "Failed to copy PNG to clipboard. See dev console (Webview) for details.";
+        if (err.name === "NotAllowedError") {
+          errorMessage =
+            "Clipboard write access denied. The webview might not have focus or permissions.";
+        } else if (err.message) {
+          errorMessage = `Failed to copy PNG: ${err.message}`;
+        }
+        vscodeApi.postMessage({
+          command: "showErrorMessage",
+          text: errorMessage,
+        });
+      }
+    } else {
+      console.error("SVG element not found for PNG export.");
+      vscodeApi.postMessage({
+        command: "showErrorMessage",
+        text: "Could not find SVG element to export for PNG.",
+      });
+    }
+  }, [vscodeApi]); // Removed fileName as it's not used
+
   const handleNodeClick = (
     node: ComputedNode<ScopeNode>,
     event: React.MouseEvent
@@ -295,143 +394,198 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     availablePalettes[settings.colorPalette] || defaultPalette;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {(isolatedNode || isolationPath.length > 0) && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            zIndex: 10,
-            display: "flex",
-            gap: "5px",
-          }}
-        >
-          {isolatedNode && <button onClick={resetIsolation}>Reset Zoom</button>}
-          {isolationPath.length > 0 && (
-            <button onClick={goUpOneLevel}>Up One Level</button>
-          )}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+      }}
+    >
+      <div
+        style={{
+          padding: "8px 10px",
+          backgroundColor: "#252526", // VS Code dark theme background
+          color: "#cccccc", // Light text
+          borderBottom: "1px solid #333333",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexShrink: 0,
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
+          Treemap: {fileName}
+        </h3>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={handleExportToJson}
+            style={{ padding: "5px 10px", fontSize: "0.9em" }}
+            title="Export tree data as JSON"
+          >
+            Export JSON
+          </button>
+          <button
+            onClick={handleExportToPng}
+            style={{ padding: "5px 10px", fontSize: "0.9em" }}
+            title="Export treemap as PNG (implementation placeholder)"
+          >
+            Export PNG
+          </button>
         </div>
-      )}
-      <ResponsiveTreeMap
-        data={displayData}
-        identity="id"
-        value="value"
-        valueFormat=".02s"
-        margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-        labelTextColor={{
-          from: "color",
-          modifiers: [["darker", 2]],
+      </div>
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          flexGrow: 1,
+          overflow: "hidden",
         }}
-        parentLabel={(
-          node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-        ) =>
-          `${node.data.category} [${node.data.loc.start.line}-${node.data.loc.end.line}]`
-        }
-        colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
-          const category = nodeWithData.data.category;
-          // return categoryColors[category] || categoryColors[NodeCategory.Other];
-          return activePalette[category] || activePalette[NodeCategory.Other];
-        }}
-        borderColor={{
-          from: "color",
-          modifiers: [["darker", 0.8]],
-        }}
-        onClick={(node, event) =>
-          handleNodeClick(node, event as React.MouseEvent)
-        }
-        tooltip={
-          settings.enableTooltip
-            ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
-                const scopeNode = node.data;
-                const snippetLength = Math.max(
-                  0,
-                  settings.tooltipSourceSnippetLength
-                );
-                return (
-                  <div
-                    style={{
-                      padding: "8px 12px",
-                      background: "white",
-                      color: "#333",
-                      border: "1px solid #ccc",
-                      borderRadius: "3px",
-                      fontSize: "12px",
-                      maxWidth: "400px",
-                      boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    {settings.showTooltipId && (
-                      <>
-                        <strong>{scopeNode.id.split(":").pop()}</strong>
-                        {settings.showTooltipCategory &&
-                          ` (${scopeNode.category})`}
-                        <br />
-                      </>
-                    )}
-                    {!settings.showTooltipId &&
-                      settings.showTooltipCategory && (
+        className="nivo-treemap-container"
+      >
+        {(isolatedNode || isolationPath.length > 0) && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              zIndex: 10,
+              display: "flex",
+              gap: "5px",
+            }}
+          >
+            {isolatedNode && (
+              <button onClick={resetIsolation}>Reset Zoom</button>
+            )}
+            {isolationPath.length > 0 && (
+              <button onClick={goUpOneLevel}>Up One Level</button>
+            )}
+          </div>
+        )}
+        <ResponsiveTreeMap
+          data={displayData}
+          identity="id"
+          value="value"
+          valueFormat=".02s"
+          margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+          labelTextColor={{
+            from: "color",
+            modifiers: [["darker", 2]],
+          }}
+          parentLabel={(
+            node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
+          ) =>
+            `${node.data.category} [${node.data.loc.start.line}-${node.data.loc.end.line}]`
+          }
+          colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
+            const category = nodeWithData.data.category;
+            // return categoryColors[category] || categoryColors[NodeCategory.Other];
+            return activePalette[category] || activePalette[NodeCategory.Other];
+          }}
+          borderColor={{
+            from: "color",
+            modifiers: [["darker", 0.8]],
+          }}
+          onClick={(node, event) =>
+            handleNodeClick(node, event as React.MouseEvent)
+          }
+          tooltip={
+            settings.enableTooltip
+              ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
+                  const scopeNode = node.data;
+                  const snippetLength = Math.max(
+                    0,
+                    settings.tooltipSourceSnippetLength
+                  );
+                  return (
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        background: "white",
+                        color: "#333",
+                        border: "1px solid #ccc",
+                        borderRadius: "3px",
+                        fontSize: "12px",
+                        maxWidth: "400px",
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                      }}
+                    >
+                      {settings.showTooltipId && (
                         <>
-                          <strong>{scopeNode.category}</strong>
+                          <strong>{scopeNode.id.split(":").pop()}</strong>
+                          {settings.showTooltipCategory &&
+                            ` (${scopeNode.category})`}
                           <br />
                         </>
                       )}
-                    {settings.showTooltipValue && (
-                      <>
-                        Value: {node.formattedValue} ({scopeNode.value} chars)
-                        <br />
-                      </>
-                    )}
-                    {settings.showTooltipLines && (
-                      <>
-                        Lines: {scopeNode.loc.start.line} -{" "}
-                        {scopeNode.loc.end.line}
-                        <br />
-                      </>
-                    )}
-                    {settings.showTooltipSourceSnippet && scopeNode.source && (
-                      <>
-                        <div
-                          style={{
-                            marginTop: "5px",
-                            paddingTop: "5px",
-                            borderTop: "1px solid #eee",
-                          }}
-                        >
-                          Source snippet (first {snippetLength} chars):
-                        </div>
-                        <pre
-                          style={{
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-all",
-                            maxHeight: "100px",
-                            overflowY: "auto",
-                            background: "#f0f0f0",
-                            padding: "5px",
-                            marginTop: "3px",
-                          }}
-                        >
-                          {scopeNode.source.substring(0, snippetLength)}
-                          {scopeNode.source.length > snippetLength ? "..." : ""}
-                        </pre>
-                      </>
-                    )}
-                  </div>
-                );
-              }
-            : (node) => null
-        }
-        isInteractive={true}
-        animate={false}
-        tile={settings.tile}
-        leavesOnly={settings.leavesOnly}
-        innerPadding={settings.innerPadding}
-        outerPadding={settings.outerPadding}
-        enableLabel={settings.enableLabel}
-        labelSkipSize={settings.labelSkipSize}
-        nodeOpacity={settings.nodeOpacity}
-        borderWidth={settings.borderWidth}
-      />
+                      {!settings.showTooltipId &&
+                        settings.showTooltipCategory && (
+                          <>
+                            <strong>{scopeNode.category}</strong>
+                            <br />
+                          </>
+                        )}
+                      {settings.showTooltipValue && (
+                        <>
+                          Value: {node.formattedValue} ({scopeNode.value} chars)
+                          <br />
+                        </>
+                      )}
+                      {settings.showTooltipLines && (
+                        <>
+                          Lines: {scopeNode.loc.start.line} -{" "}
+                          {scopeNode.loc.end.line}
+                          <br />
+                        </>
+                      )}
+                      {settings.showTooltipSourceSnippet &&
+                        scopeNode.source && (
+                          <>
+                            <div
+                              style={{
+                                marginTop: "5px",
+                                paddingTop: "5px",
+                                borderTop: "1px solid #eee",
+                              }}
+                            >
+                              Source snippet (first {snippetLength} chars):
+                            </div>
+                            <pre
+                              style={{
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-all",
+                                maxHeight: "100px",
+                                overflowY: "auto",
+                                background: "#f0f0f0",
+                                padding: "5px",
+                                marginTop: "3px",
+                              }}
+                            >
+                              {scopeNode.source.substring(0, snippetLength)}
+                              {scopeNode.source.length > snippetLength
+                                ? "..."
+                                : ""}
+                            </pre>
+                          </>
+                        )}
+                    </div>
+                  );
+                }
+              : (node) => null
+          }
+          isInteractive={true}
+          animate={false}
+          tile={settings.tile}
+          leavesOnly={settings.leavesOnly}
+          innerPadding={settings.innerPadding}
+          outerPadding={settings.outerPadding}
+          enableLabel={settings.enableLabel}
+          labelSkipSize={settings.labelSkipSize}
+          nodeOpacity={settings.nodeOpacity}
+          borderWidth={settings.borderWidth}
+        />
+      </div>
     </div>
   );
 };

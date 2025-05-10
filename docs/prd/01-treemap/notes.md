@@ -20,9 +20,17 @@ Todo:
 - Add a button to export the raw data structure - drop into LLM to get better suggestions
 - Run prettier on the code snippets + syntax highlight
 - Make the container text slightly smaller and reduce padding as much as possible
+- Tree map should probably render on the side of code - open existing editor when clicking.
+
+Tree creation
+
+- ArrowFunction -> Block can be combined into a single element (probably just drop the block one)
+- Drop the `Program` node - not needed as a parent
+- Add a symbol or marker to indicate if something is exported
 
 Design:
 
+- Set a min size to prevent things from getting too small
 - Reduce border weight & recursion outline
   - 2 px borders for every level generate moiré patterns; switch to 1 px for children and 0 px for leaves, or draw only the hovered branch.
 - Make the file path scannable
@@ -30,6 +38,7 @@ Design:
 - Introduce scale-aware typography
   - Auto-hide or truncate labels below a minimum pixel area; reveal full label on hover/focus.
   - Use a semi-transparent label background so text remains legible over coloured fills.
+- Revise header and node color black/white based on background contrast
 
 UX:
 
@@ -42,3 +51,4 @@ UX:
   - Consider an HTML export that includes tooltips or other interactions
 - Perf goals
   - Enforce < 200 ms initial render for 1 k-line files; if exceeded, lazy-render deeper levels.
+- Add a keyboard shortcut to disable tooltip

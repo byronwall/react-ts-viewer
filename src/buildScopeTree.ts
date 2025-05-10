@@ -273,6 +273,13 @@ export function buildScopeTree(
   // The root ScopeNode represents the file, its children will be top-level statements/declarations.
   ts.forEachChild(sourceFile, (child) => walk(child, root, sourceFile));
 
+  console.log("Raw source code for:", filePath, fileText);
+  console.log(
+    "Final ScopeTree output for:",
+    filePath,
+    JSON.stringify(root, null, 2)
+  );
+
   return root;
 }
 

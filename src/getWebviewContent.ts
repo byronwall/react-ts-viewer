@@ -51,7 +51,9 @@ export function getWebviewContent(
         webview.cspSource
       } 'unsafe-inline'; img-src ${
     webview.cspSource
-  } https: data:; script-src 'nonce-${nonce}';">
+  } https: data:; script-src 'nonce-${nonce}'; connect-src ${
+    webview.cspSource
+  } https: data:;">
 			<link href="${styleUri}" rel="stylesheet">
 			<title>Dependency Analyzer</title>
 			<script nonce="${nonce}">
