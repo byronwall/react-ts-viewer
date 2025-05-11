@@ -210,7 +210,7 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   }
   if (ts.isJsxFragment(node)) {
     // Handles <>...</>
-    return "<>";
+    return " "; // will yield `<>`
   }
   // The original check for JsxOpeningElement is removed as it's covered by the more specific JsxElement,
   // and JsxOpeningElement isn't typically the primary AST node for which a ScopeNode is created.
