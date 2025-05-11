@@ -173,6 +173,32 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   if (ts.isModuleDeclaration(node))
     return node.name.getText(sourceFile) || node.name.text;
 
+  if (ts.isImportDeclaration(node)) {
+    const moduleSpecifier = node.moduleSpecifier;
+    let rawImportPath: string | undefined = undefined;
+
+    if (ts.isStringLiteral(moduleSpecifier)) {
+      rawImportPath = moduleSpecifier.text;
+    } else {
+      const text = moduleSpecifier.getText(sourceFile)?.trim();
+      if (text) {
+        if (
+          (text.startsWith("'") && text.endsWith("'")) ||
+          (text.startsWith('"') && text.endsWith('"'))
+        ) {
+          rawImportPath = text.substring(1, text.length - 1);
+        } else {
+          rawImportPath = text;
+        }
+      }
+    }
+
+    if (rawImportPath) {
+      return path.basename(rawImportPath); // Use path.basename to get the file or library name
+    }
+    return "Import"; // Fallback if text is empty or not available
+  }
+
   // Updated JSX handling:
   if (ts.isJsxElement(node)) {
     // Handles <Foo>...</Foo>
