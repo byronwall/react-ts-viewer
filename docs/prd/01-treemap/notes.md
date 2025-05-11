@@ -31,8 +31,8 @@ Tree creation
 - Synthetic groups for the hooks is not useful - breaks seeing code - probably just remove those.
 - Probably just avoid `Block` altogether
 - Create a synthetic group for imports - ensure all code is visible on hover
+- Create a synthetic group for types
 - Drop group for mutations and hooks
-- If there is a Conditional with only If, then just show the If
 
 Design:
 

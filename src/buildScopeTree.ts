@@ -306,7 +306,6 @@ export function buildScopeTree(
         children: [],
         meta: {},
       };
-      parentNodeInTree.children.push(conditionalBlockNode);
 
       let currentIfStmtNode: ts.IfStatement | undefined = node;
       let clauseCategory = NodeCategory.IfClause;
@@ -377,6 +376,21 @@ export function buildScopeTree(
           currentIfStmtNode = undefined; // End of the chain, no else
         }
       }
+
+      // Conditionally add the ConditionalBlock or its single IfClause child
+      if (
+        conditionalBlockNode.children.length === 1 &&
+        conditionalBlockNode.children[0] &&
+        conditionalBlockNode.children[0].category === NodeCategory.IfClause
+      ) {
+        // Single 'if' statement with no 'else' or 'else if'. Promote the IfClause.
+        parentNodeInTree.children.push(conditionalBlockNode.children[0]);
+      } else {
+        // Contains 'else', 'else if', or is empty (should not happen for a valid 'if').
+        // Keep the ConditionalBlock wrapper.
+        parentNodeInTree.children.push(conditionalBlockNode);
+      }
+
       return; // IMPORTANT: Prevent default child traversal for the IfStatement itself and its components by the outer loop
     }
     // --- END: Special handling for IfStatement chains ---
