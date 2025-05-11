@@ -73,6 +73,12 @@ interface TreemapSettings {
   showImports: boolean;
   showTypes: boolean;
   showLiterals: boolean;
+
+  // New settings for label rendering from TreemapDisplay
+  minLabelHeight: number;
+  truncateLabel: boolean;
+  labelMaxChars: number;
+  avgCharPixelWidth: number;
 }
 
 // Global declarations specific to App.tsx initialization
@@ -263,6 +269,12 @@ const defaultTreemapSettings: TreemapSettings = {
   showImports: true, // On by default
   showTypes: true, // On by default
   showLiterals: false, // Off by default as there could be many literals
+
+  // Defaults for new label rendering settings
+  minLabelHeight: 15, // Default minimum height in pixels to show a label
+  truncateLabel: true, // Default to enable label truncation
+  labelMaxChars: 128, // Default max characters for a label
+  avgCharPixelWidth: 7, // Default estimated average pixel width of a character
 };
 
 // --- Settings Context ---
@@ -1192,6 +1204,73 @@ const App: React.FC = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* New Label Rendering Settings */}
+              <div className="setting-item">
+                <label htmlFor="minLabelHeight">Min Label Height (px):</label>
+                <input
+                  type="number"
+                  id="minLabelHeight"
+                  value={treemapSettings.minLabelHeight}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "minLabelHeight",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="0"
+                />
+              </div>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="truncateLabel"
+                  checked={treemapSettings.truncateLabel}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "truncateLabel",
+                      e.target.checked
+                    )
+                  }
+                />
+                <label htmlFor="truncateLabel">Truncate Long Labels</label>
+              </div>
+              <div className="setting-item">
+                <label htmlFor="labelMaxChars">
+                  Max Label Chars (if truncating):
+                </label>
+                <input
+                  type="number"
+                  id="labelMaxChars"
+                  value={treemapSettings.labelMaxChars}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "labelMaxChars",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="3" // At least 3 for "..."
+                  disabled={!treemapSettings.truncateLabel}
+                />
+              </div>
+              <div className="setting-item">
+                <label htmlFor="avgCharPixelWidth">
+                  Avg Char Width (px for truncation):
+                </label>
+                <input
+                  type="number"
+                  id="avgCharPixelWidth"
+                  value={treemapSettings.avgCharPixelWidth}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "avgCharPixelWidth",
+                      parseInt(e.target.value, 10)
+                    )
+                  }
+                  min="1"
+                  disabled={!treemapSettings.truncateLabel}
+                />
               </div>
             </div>
           )}

@@ -290,6 +290,11 @@ interface TreemapSettings {
   showTooltipLines: boolean;
   showTooltipSourceSnippet: boolean;
   tooltipSourceSnippetLength: number;
+  // New settings for label rendering
+  minLabelHeight: number; // Minimum height of a node to display a label
+  truncateLabel: boolean; // Whether to truncate labels that are too long
+  labelMaxChars: number; // Absolute maximum characters for a label, respected during truncation
+  avgCharPixelWidth: number; // Estimated average pixel width of a character for truncation based on node width
 }
 
 interface TreemapDisplayProps {
@@ -323,8 +328,8 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 }
 
 // Helper function to generate display labels based on node category and PRD notes
-const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
-  const { category, label, loc } = nodeData;
+const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
+  const { category, label, loc, source } = nodeData; // Ensure source is destructured if used, like for Literals
   const lineRange = loc ? ` [${loc.start.line}-${loc.end.line}]` : "";
 
   switch (category) {
@@ -353,7 +358,11 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
     case NodeCategory.Module:
       return `Module: ${label}${lineRange}`;
     case NodeCategory.Block:
-      return `Block${lineRange}`; // Blocks usually don't have a meaningful label themselves
+      // Blocks usually don't have a meaningful label themselves
+      // For very small blocks, an empty string might be better if they are numerous.
+      return loc && loc.start.line === loc.end.line
+        ? `Block (inline)${lineRange}`
+        : `Block${lineRange}`;
     case NodeCategory.ControlFlow:
       return `Control: ${label || category}${lineRange}`;
     case NodeCategory.Call:
@@ -368,7 +377,8 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
       return `interface ${label}${lineRange}`;
     case NodeCategory.Literal:
       // For literals, the 'source' might be more descriptive if 'label' is generic
-      return `Literal: ${label !== "Literal" ? label : nodeData.source.substring(0, 20)}${lineRange}`;
+      // Ensure 'source' is available on Omit<ScopeNode, 'children'> if used like this
+      return `Literal: ${label !== "Literal" && label ? label : source ? source.substring(0, 20) : ""}${lineRange}`;
     case NodeCategory.SyntheticGroup:
       return `Group: ${label}${lineRange}`;
     case NodeCategory.JSXElementDOM:
@@ -378,6 +388,54 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
     default:
       return `${category}: ${label}${lineRange}`;
   }
+};
+
+// Define a type for the node object passed to the label rendering helper
+// It needs at least data, width, and height from Nivo's computed node.
+interface NivoNodeForLabeling {
+  data: Omit<ScopeNode, "children">; // Align with Nivo's apparent type for node.data in these callbacks
+  width: number;
+  height: number;
+  // Include other properties from ComputedNodeWithoutStyles if they were directly used,
+  // but getNodeDisplayLabel only needs 'data', and truncation logic needs width/height.
+}
+
+// Helper function to dynamically determine node label display based on size and settings
+const getDynamicNodeDisplayLabel = (
+  node: NivoNodeForLabeling, // Use the defined interface
+  settings: TreemapSettings
+): string => {
+  // Check height threshold
+  if (node.height < settings.minLabelHeight) {
+    return "";
+  }
+
+  // Get the base label from existing logic
+  let displayLabel = getNodeDisplayLabel(node.data);
+
+  // Apply truncation if enabled
+  if (settings.truncateLabel) {
+    let maxCharsAllowed = settings.labelMaxChars;
+
+    // Calculate max characters based on node width, if avgCharPixelWidth is valid
+    if (settings.avgCharPixelWidth > 0) {
+      const maxCharsByWidth = Math.floor(
+        node.width / settings.avgCharPixelWidth
+      );
+      // Use the more restrictive limit between width-based and absolute max chars
+      maxCharsAllowed = Math.min(maxCharsAllowed, maxCharsByWidth);
+    }
+
+    if (displayLabel.length > maxCharsAllowed) {
+      if (maxCharsAllowed < 3) {
+        // Not enough space for "..."
+        return "";
+      }
+      displayLabel = displayLabel.substring(0, maxCharsAllowed - 3) + "...";
+    }
+  }
+
+  return displayLabel;
 };
 
 // Helper function to determine contrasting text color (black or white)
@@ -759,13 +817,21 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           ) => getContrastingTextColor(node.color)}
           parentLabel={(
             node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-          ) => getNodeDisplayLabel(node.data as ScopeNode)}
+          ) =>
+            getDynamicNodeDisplayLabel(node as NivoNodeForLabeling, settings)
+          }
           label={(
             node: Omit<
               ComputedNodeWithoutStyles<ScopeNode>,
               "label" | "parentLabel"
             >
-          ) => getNodeDisplayLabel(node.data as ScopeNode)}
+          ) => {
+            // console.log("node", node); // Keep for debugging if needed
+            return getDynamicNodeDisplayLabel(
+              node as NivoNodeForLabeling,
+              settings
+            );
+          }}
           colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
             const category = nodeWithData.data.category;
             // return categoryColors[category] || categoryColors[NodeCategory.Other];

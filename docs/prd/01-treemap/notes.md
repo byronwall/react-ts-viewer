@@ -10,7 +10,6 @@ First version generates tree maps with several options
 
 Todo:
 
-- All nodes should identify their type
 - Node sizes are not well determined - figure out how to keep things more consistent
 - Tree map should probably render on the side of code - open existing editor when clicking.
 
