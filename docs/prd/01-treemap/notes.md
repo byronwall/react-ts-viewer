@@ -29,7 +29,6 @@ Tree creation
 - Add a symbol or marker to indicate if something is exported
 - Give some ability to track props and other "incoming" edges
 - Synthetic groups for the hooks is not useful - breaks seeing code - probably just remove those.
-- Probably just avoid `Block` altogether
 - Create a synthetic group for imports - ensure all code is visible on hover
 - Create a synthetic group for types
 - Drop group for mutations and hooks
@@ -47,6 +46,7 @@ Design:
 - Revise header and node color black/white based on background contrast
 - Add overflow to the settings panel on left
 - Give different colors to DOM elements vs. custom react elements
+- Put a min height on elements so that text is visible if there's space somewhere
 
 UX:
 
