@@ -13,11 +13,6 @@ Todo:
 - Node sizes are not well determined - figure out how to keep things more consistent
 - Tree map should probably render on the side of code - open existing editor when clicking.
 
-Tree creation
-
-- Add a symbol or marker to indicate if something is exported
-- Give some ability to track props and other "incoming" edges
-
 Design:
 
 - Set a min size to prevent things from getting too small
@@ -29,9 +24,19 @@ Design:
   - Auto-hide or truncate labels below a minimum pixel area; reveal full label on hover/focus.
   - Use a semi-transparent label background so text remains legible over coloured fills.
 - Put a min height on elements so that text is visible if there's space somewhere
+- App sidebar needs to collapse
 
 UX:
 
 - Expose quick search / filter
   - Let me type “useState” and instantly highlight every hook invocation node.
   - Show a list of variable names and hover to show where they are used
+- Change import label to show full name of external import (just use the file part for internal and aliased imports)
+- Conditional block labels are too long - shorten to if/else/else if based on contents
+
+Tree creation
+
+- Add a symbol or marker to indicate if something is exported
+- Give some ability to track props and other "incoming" edges
+- Switch statements need some love in the parsing, see `Other:` in places
+- Variable settings/assignment need nodes - currently not showing up

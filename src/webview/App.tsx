@@ -274,7 +274,7 @@ const defaultTreemapSettings: TreemapSettings = {
   minLabelHeight: 15, // Default minimum height in pixels to show a label
   truncateLabel: true, // Default to enable label truncation
   labelMaxChars: 128, // Default max characters for a label
-  avgCharPixelWidth: 7, // Default estimated average pixel width of a character
+  avgCharPixelWidth: 6, // Default estimated average pixel width of a character
 };
 
 // --- Settings Context ---

@@ -366,7 +366,7 @@ const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
     case NodeCategory.ControlFlow:
       return `Control: ${label || category}${lineRange}`;
     case NodeCategory.Call:
-      return `Call: ${label || "call"}()${lineRange}`;
+      return `${label || "call"}()${lineRange}`;
     case NodeCategory.ReactComponent:
       return `<${label || "Component"} />${lineRange}`;
     case NodeCategory.ReactHook:
@@ -385,6 +385,10 @@ const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
       return `JSXElementDOM: ${label}${lineRange}`;
     case NodeCategory.JSXElementCustom:
       return `JSXElementCustom: ${label}${lineRange}`;
+    case NodeCategory.IfClause:
+    case NodeCategory.ElseClause:
+    case NodeCategory.ElseIfClause:
+      return `${label}${lineRange}`;
     default:
       return `${category}: ${label}${lineRange}`;
   }
