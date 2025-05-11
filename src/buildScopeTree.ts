@@ -699,16 +699,20 @@ function groupRelatedNodes(nodes: ScopeNode[], parentId: string): ScopeNode[] {
         );
         const groupId = `synthetic:${parentId}:${groupName}:${firstNode.id}`;
         const firstNodeLoc = firstNode.loc;
+        // Concatenate source code from all nodes in the group
+        const combinedSource = groupNodes
+          .map((node) => node.source)
+          .join("\n\n");
 
         result.push({
           id: groupId,
           category: NodeCategory.SyntheticGroup,
           label: groupName,
           kind: ts.SyntaxKind.Unknown,
-          value: groupValue,
-          loc: firstNodeLoc,
-          source: "",
-          children: groupNodes,
+          value: groupValue, // This remains the sum of original values
+          loc: firstNodeLoc, // loc of the first node for navigation
+          source: combinedSource, // Store the combined source
+          children: groupNodes, // Keep original children for inspection if needed, or for tooltip detail
           meta: {
             syntheticGroup: true,
             contains: groupNodes.length,
