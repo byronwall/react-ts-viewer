@@ -323,7 +323,7 @@ const getLayoutedElements = (
         node.data?.conceptualType === "FileContainer" ||
         node.data?.conceptualType === "LibraryContainer"
           ? 20 // Provide a small, nominal height for container nodes
-          : node.height ?? nodeHeight, // Use specified or default height for other nodes
+          : (node.height ?? nodeHeight), // Use specified or default height for other nodes
       children: [], // Initialize children array for potential parent nodes
       // layoutOptions for individual nodes can be set here if needed
     };
@@ -992,7 +992,10 @@ const App: React.FC = () => {
   return (
     <SettingsContext.Provider value={settings}>
       <div className="app-container">
-        <div className="left-panel">
+        <div
+          className="left-panel"
+          style={{ maxHeight: "100vh", overflowY: "auto" }}
+        >
           {/* ... existing left panel header ... */}
           {/* File Path Display/Input - Simplified */}
           <div style={{ marginBottom: "15px" }}>

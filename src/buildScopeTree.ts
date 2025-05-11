@@ -122,12 +122,18 @@ function mapKindToCategory(
     }
     return NodeCategory.Call;
   }
-  if (
-    ts.isJsxElement(node) ||
-    ts.isJsxSelfClosingElement(node) ||
-    ts.isJsxFragment(node)
-  )
-    return NodeCategory.JSX;
+  if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+    const tagNameNode = ts.isJsxElement(node)
+      ? node.openingElement.tagName
+      : node.tagName;
+    const tagName = tagNameNode.getText(sourceFile);
+    if (tagName && /^[a-z]/.test(tagName)) {
+      return NodeCategory.JSXElementDOM;
+    } else {
+      return NodeCategory.JSXElementCustom;
+    }
+  }
+  if (ts.isJsxFragment(node)) return NodeCategory.JSX;
 
   // Add new mappings
   if (ts.isImportDeclaration(node)) return NodeCategory.Import;

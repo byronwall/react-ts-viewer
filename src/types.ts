@@ -117,6 +117,8 @@ export enum NodeCategory {
   ReactComponent = "ReactComponent",
   ReactHook = "ReactHook",
   JSX = "JSX",
+  JSXElementDOM = "JSXElementDOM",
+  JSXElementCustom = "JSXElementCustom",
   Import = "Import",
   TypeAlias = "TypeAlias",
   Interface = "Interface",

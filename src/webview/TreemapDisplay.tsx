@@ -39,6 +39,8 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#bc80bd",
   [NodeCategory.ReactHook]: "#ccebc5",
   [NodeCategory.JSX]: "#ffed6f",
+  [NodeCategory.JSXElementDOM]: "#d4e157",
+  [NodeCategory.JSXElementCustom]: "#ffc0cb",
   [NodeCategory.Import]: "#c1e7ff",
   [NodeCategory.TypeAlias]: "#ffe8b3",
   [NodeCategory.Interface]: "#f0e68c",
@@ -64,6 +66,8 @@ const materialVibrant: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#673ab7", // deep-purple
   [NodeCategory.ReactHook]: "#607d8b", // blue-gray
   [NodeCategory.JSX]: "#795548", // brown
+  [NodeCategory.JSXElementDOM]: "#cddc39",
+  [NodeCategory.JSXElementCustom]: "#e91e63",
   [NodeCategory.Import]: "#00bcd4", // cyan
   [NodeCategory.TypeAlias]: "#cddc39", // lime
   [NodeCategory.Interface]: "#3f51b5", // indigo
@@ -89,6 +93,8 @@ const okabeIto: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#66A61E", // olive-green
   [NodeCategory.ReactHook]: "#C44E52", // rose-red
   [NodeCategory.JSX]: "#8172B3", // lavender
+  [NodeCategory.JSXElementDOM]: "#117733",
+  [NodeCategory.JSXElementCustom]: "#AA4499",
   [NodeCategory.Import]: "#0072B2", // blue (shared)
   [NodeCategory.TypeAlias]: "#F0E442", // yellow (shared)
   [NodeCategory.Interface]: "#E69F00", // orange (shared)
@@ -114,6 +120,8 @@ const neutralAccents: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#42a5f5", // blue accent
   [NodeCategory.ReactHook]: "#ab47bc", // purple accent
   [NodeCategory.JSX]: "#8d6e63", // brownish accent
+  [NodeCategory.JSXElementDOM]: "#d4e157",
+  [NodeCategory.JSXElementCustom]: "#ef5350",
   [NodeCategory.Import]: "#78909c", // blue-grey
   [NodeCategory.TypeAlias]: "#ffee58", // yellow accent
   [NodeCategory.Interface]: "#5c6bc0", // indigo accent
@@ -139,6 +147,8 @@ const defaultPalette: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#c5b0d5",
   [NodeCategory.ReactHook]: "#8c564b",
   [NodeCategory.JSX]: "#c49c94",
+  [NodeCategory.JSXElementDOM]: "#98df8a",
+  [NodeCategory.JSXElementCustom]: "#fdbf6f",
   [NodeCategory.Import]: "#add8e6", // lightblue
   [NodeCategory.TypeAlias]: "#ffffe0", // lightyellow
   [NodeCategory.Interface]: "#e0ffff", // lightcyan
@@ -159,6 +169,108 @@ export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
   "Neutral with Accents": neutralAccents,
 };
 // --- END: Color Palette Definitions ---
+
+// Helper to get enum keys - Object.keys filters out reverse mappings for numeric enums
+const getNodeCategoryKeys = () => {
+  return Object.values(NodeCategory).filter(
+    (value) => typeof value === "string"
+  ) as string[];
+};
+
+// --- START: TreemapLegend Component ---
+// This will be adapted into the Popover content
+interface TreemapLegendContentProps {
+  activePalette: Record<NodeCategory, string>;
+}
+
+const TreemapLegendContent: React.FC<TreemapLegendContentProps> = ({
+  activePalette,
+}) => {
+  const legendCategories = getNodeCategoryKeys().filter(
+    (key) => activePalette[key as NodeCategory]
+  );
+
+  if (legendCategories.length === 0) {
+    return (
+      <div style={{ padding: "10px", textAlign: "center" }}>
+        No categories to display in legend.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {legendCategories.map((categoryKey) => {
+        const categoryName = categoryKey as NodeCategory;
+        const color = activePalette[categoryName];
+        return (
+          <div
+            key={categoryName}
+            style={{ display: "flex", alignItems: "center" }}
+          >
+            <span
+              style={{
+                width: "12px",
+                height: "12px",
+                backgroundColor: color,
+                marginRight: "5px",
+                border: "1px solid #555",
+                display: "inline-block",
+              }}
+            ></span>
+            {categoryName}
+          </div>
+        );
+      })}
+    </>
+  );
+};
+
+// --- START: TreemapLegendPopover Component ---
+interface TreemapLegendPopoverProps {
+  activePalette: Record<NodeCategory, string>;
+  isOpen: boolean;
+  onClose: () => void; // Or a toggle function
+  anchorElement: HTMLElement | null; // To position relative to the button
+}
+
+const TreemapLegendPopover: React.FC<TreemapLegendPopoverProps> = ({
+  activePalette,
+  isOpen,
+  onClose, // We might not use onClose directly if the button toggles
+  anchorElement,
+}) => {
+  if (!isOpen) return null;
+
+  // Basic positioning logic - can be refined
+  const popoverStyle: React.CSSProperties = {
+    position: "absolute",
+    top: anchorElement
+      ? anchorElement.offsetTop + anchorElement.offsetHeight + 5
+      : "60px", // Below the anchor + 5px margin
+    right: "10px", // Align to the right of the header area
+    backgroundColor: "#2c2c2c",
+    color: "#cccccc",
+    border: "1px solid #444444",
+    borderRadius: "4px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+    padding: "10px 15px",
+    zIndex: 1000,
+    minWidth: "200px",
+    maxHeight: "250px",
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  };
+
+  return (
+    <div style={popoverStyle} className="treemap-legend-popover">
+      <TreemapLegendContent activePalette={activePalette} />
+    </div>
+  );
+};
+// --- END: TreemapLegendPopover Component ---
 
 interface TreemapSettings {
   tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
@@ -259,9 +371,35 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
       return `Literal: ${label !== "Literal" ? label : nodeData.source.substring(0, 20)}${lineRange}`;
     case NodeCategory.SyntheticGroup:
       return `Group: ${label}${lineRange}`;
+    case NodeCategory.JSXElementDOM:
+      return `JSXElementDOM: ${label}${lineRange}`;
+    case NodeCategory.JSXElementCustom:
+      return `JSXElementCustom: ${label}${lineRange}`;
     default:
       return `${category}: ${label}${lineRange}`;
   }
+};
+
+// Helper function to determine contrasting text color (black or white)
+const getContrastingTextColor = (hexBackgroundColor: string): string => {
+  if (!hexBackgroundColor) return "#000000"; // Default to black if no color provided
+
+  // Remove # if present
+  const hex = hexBackgroundColor.replace("#", "");
+
+  // Convert hex to RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Calculate luminance (per WCAG 2.0)
+  // Formula: 0.2126 * R + 0.7152 * G + 0.0722 * B
+  // Note: RGB values should be in sRGB linear space (0-1 range)
+  // For simplicity, we'll use the 0-255 range directly, which is common for this heuristic.
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+
+  // Use a threshold (0.5 is common) to decide text color
+  return luminance > 0.5 ? "#000000" : "#ffffff"; // Dark text on light bg, White text on dark bg
 };
 
 const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
@@ -271,6 +409,9 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 }) => {
   const [isolatedNode, setIsolatedNode] = useState<ScopeNode | null>(null);
   const [isolationPath, setIsolationPath] = useState<ScopeNode[]>([]);
+  const [isLegendVisible, setIsLegendVisible] = useState<boolean>(false); // State for legend popover
+  const [legendButtonRef, setLegendButtonRef] =
+    useState<HTMLButtonElement | null>(null);
 
   // Helper function to extract filename
   const getFileName = (data: ScopeNode) => {
@@ -369,42 +510,64 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   }, [vscodeApi]); // Removed fileName as it's not used
 
   const handleNodeClick = (
-    node: ComputedNode<ScopeNode>,
+    node: ComputedNode<ScopeNode>, // This is Nivo's computed node, node.data is our ScopeNode
     event: React.MouseEvent
   ) => {
-    const clickedNodeId = node.data.id; // Get ID from Nivo's node data
+    const clickedNivoNodeData = node.data; // This is the ScopeNode object from the data fed to Nivo
 
-    // Use event.metaKey for Command key on macOS, event.ctrlKey for Control key on Windows/Linux
     if (event.metaKey || event.ctrlKey) {
-      event.preventDefault(); // Prevent default browser behavior for CMD/CTRL+click
-      const fullNode = findNodeInTree(initialData, clickedNodeId);
-      if (fullNode) {
-        setIsolatedNode(fullNode);
-        setIsolationPath((prevPath) => [...prevPath, fullNode]);
-      } else {
-        // Fallback or error: Node not found in initialData, though this should ideally not happen.
-        // This could happen if node.data.id is not an ID that exists in initialData.
-        // For safety, we could log an error or handle it gracefully.
-        // As a fallback, use node.data directly, knowing it might lack children.
-        console.warn(
-          `Node with id "${clickedNodeId}" not found in initialData tree.`
-        );
-        setIsolatedNode(node.data as ScopeNode); // Potentially problematic
-        setIsolationPath((prevPath) => [...prevPath, node.data as ScopeNode]); // Potentially problematic
-      }
-    } else {
-      // Original click behavior: reveal code
-      // We can use node.data here as it should contain loc and id for revealCode.
-      const scopeNodeForReveal = node.data;
-      if (scopeNodeForReveal.loc && scopeNodeForReveal.id) {
-        const idParts = scopeNodeForReveal.id.split(":");
-        const filePath =
-          idParts.length > 1 ? idParts.slice(0, -1).join(":") : idParts[0];
+      // CMD/CTRL + Click: Open file
+      event.preventDefault();
+      if (clickedNivoNodeData.loc && clickedNivoNodeData.id) {
+        const idParts = clickedNivoNodeData.id.split(":");
+        const filePath = idParts[0]; // Assumes filePath is the first part, before any colons.
+
+        if (!filePath) {
+          console.error(
+            "Could not determine filePath from node ID:",
+            clickedNivoNodeData.id
+          );
+          return; // Cannot proceed if filePath is missing
+        }
+
         vscodeApi.postMessage({
           command: "revealCode",
           filePath: filePath,
-          loc: scopeNodeForReveal.loc,
+          loc: clickedNivoNodeData.loc,
         });
+      }
+    } else {
+      // Single Click: Expand/Collapse (Zoom)
+      // Find the canonical version of the node from the original full tree (`initialData`)
+      // This ensures we have the complete children information for accurate zooming.
+      const fullNodeFromInitialTree = findNodeInTree(
+        initialData,
+        clickedNivoNodeData.id
+      );
+
+      if (fullNodeFromInitialTree) {
+        if (
+          fullNodeFromInitialTree.children &&
+          fullNodeFromInitialTree.children.length > 0
+        ) {
+          // If the node (from the full tree) has children, zoom into it
+          setIsolatedNode(fullNodeFromInitialTree);
+          setIsolationPath((prevPath) => [
+            ...prevPath,
+            fullNodeFromInitialTree,
+          ]);
+        } else {
+          // It's a leaf node in the full tree, do nothing on single click
+          console.log(
+            "Single click on a leaf node (in original tree):",
+            fullNodeFromInitialTree.label
+          );
+        }
+      } else {
+        // This scenario should ideally not occur if IDs are consistent and initialData is complete.
+        console.warn(
+          `Node with id "${clickedNivoNodeData.id}" not found in initialData tree. Cannot perform zoom based on full tree.`
+        );
       }
     }
   };
@@ -518,6 +681,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           justifyContent: "space-between",
           alignItems: "center",
           flexShrink: 0,
+          position: "relative", // For positioning the popover relative to the header
         }}
       >
         <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
@@ -560,6 +724,14 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           >
             Export PNG
           </button>
+          <button
+            ref={setLegendButtonRef} // Set the ref for positioning
+            onClick={() => setIsLegendVisible(!isLegendVisible)}
+            style={{ padding: "5px 10px", fontSize: "0.9em" }}
+            title="Toggle Legend"
+          >
+            {isLegendVisible ? "Hide Legend" : "Show Legend"}
+          </button>
         </div>
       </div>
       <div
@@ -579,10 +751,12 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           value="value"
           valueFormat=".02s"
           margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-          labelTextColor={{
-            from: "color",
-            modifiers: [["darker", 2]],
-          }}
+          labelTextColor={(
+            node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+          ) => getContrastingTextColor(node.color)}
+          parentLabelTextColor={(
+            node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+          ) => getContrastingTextColor(node.color)}
           parentLabel={(
             node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
           ) => getNodeDisplayLabel(node.data as ScopeNode)}
@@ -726,6 +900,13 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           borderWidth={settings.borderWidth}
         />
       </div>
+      {/* Render the Popover */}
+      <TreemapLegendPopover
+        activePalette={activePalette}
+        isOpen={isLegendVisible}
+        onClose={() => setIsLegendVisible(false)} // Button toggles, so onClose is more for potential future use (e.g. click outside)
+        anchorElement={legendButtonRef}
+      />
     </div>
   );
 };
