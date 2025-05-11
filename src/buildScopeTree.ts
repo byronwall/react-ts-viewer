@@ -163,8 +163,22 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   if (ts.isIdentifier(node)) return node.text;
   if (ts.isModuleDeclaration(node))
     return node.name.getText(sourceFile) || node.name.text;
-  if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))
+
+  // Updated JSX handling:
+  if (ts.isJsxElement(node)) {
+    // Handles <Foo>...</Foo>
+    return node.openingElement.tagName.getText(sourceFile) || "JSXElement";
+  }
+  if (ts.isJsxSelfClosingElement(node)) {
+    // Handles <Foo/>
     return node.tagName.getText(sourceFile) || "JSXElement";
+  }
+  if (ts.isJsxFragment(node)) {
+    // Handles <>...</>
+    return "Fragment";
+  }
+  // The original check for JsxOpeningElement is removed as it's covered by the more specific JsxElement,
+  // and JsxOpeningElement isn't typically the primary AST node for which a ScopeNode is created.
 
   const kindName = ts.SyntaxKind[node.kind];
   return kindName || "UnknownNode"; // Ensure a string is always returned

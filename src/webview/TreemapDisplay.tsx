@@ -190,6 +190,60 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   return null;
 }
 
+// Helper function to generate display labels based on node category and PRD notes
+const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
+  const { category, label, loc } = nodeData;
+  const lineRange = loc ? ` [${loc.start.line}-${loc.end.line}]` : "";
+
+  switch (category) {
+    case NodeCategory.JSX:
+      return `<${label || "JSXElement"}>${lineRange}`;
+    case NodeCategory.Function:
+      return `${label || "fn"}()${lineRange}`;
+    case NodeCategory.ArrowFunction:
+      // If label is generic like "ArrowFunction" or empty, use default, else use specific label
+      return (
+        (label && label !== "ArrowFunction" ? `${label}() => {}` : `() => {}`) +
+        lineRange
+      );
+    case NodeCategory.Variable:
+      return `[${label || "var"}]${lineRange}`;
+    case NodeCategory.Class:
+      return `[${label || "class"}]${lineRange}`;
+    case NodeCategory.Import:
+      return `[${label || "import"}]${lineRange}`;
+    // For exports, we don't have a specific category.
+    // The label of the Variable, Function, or Class node would be the export name.
+    // We can't easily add an "Export: " prefix here without more info (e.g., nodeData.meta.isExported)
+    // So, we rely on the specific category's formatting.
+    case NodeCategory.Program:
+      return `${label}${lineRange}`; // Usually the filename
+    case NodeCategory.Module:
+      return `Module: ${label}${lineRange}`;
+    case NodeCategory.Block:
+      return `Block${lineRange}`; // Blocks usually don't have a meaningful label themselves
+    case NodeCategory.ControlFlow:
+      return `Control: ${label || category}${lineRange}`;
+    case NodeCategory.Call:
+      return `Call: ${label || "call"}()${lineRange}`;
+    case NodeCategory.ReactComponent:
+      return `<${label || "Component"} />${lineRange}`;
+    case NodeCategory.ReactHook:
+      return `${label || "useHook"}()${lineRange}`;
+    case NodeCategory.TypeAlias:
+      return `type ${label}${lineRange}`;
+    case NodeCategory.Interface:
+      return `interface ${label}${lineRange}`;
+    case NodeCategory.Literal:
+      // For literals, the 'source' might be more descriptive if 'label' is generic
+      return `Literal: ${label !== "Literal" ? label : nodeData.source.substring(0, 20)}${lineRange}`;
+    case NodeCategory.SyntheticGroup:
+      return `Group: ${label}${lineRange}`;
+    default:
+      return `${category}: ${label}${lineRange}`;
+  }
+};
+
 const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   data: initialData,
   settings,
@@ -510,9 +564,13 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           }}
           parentLabel={(
             node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-          ) =>
-            `${node.data.category} [${node.data.loc.start.line}-${node.data.loc.end.line}]`
-          }
+          ) => getNodeDisplayLabel(node.data as ScopeNode)}
+          label={(
+            node: Omit<
+              ComputedNodeWithoutStyles<ScopeNode>,
+              "label" | "parentLabel"
+            >
+          ) => getNodeDisplayLabel(node.data as ScopeNode)}
           colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
             const category = nodeWithData.data.category;
             // return categoryColors[category] || categoryColors[NodeCategory.Other];

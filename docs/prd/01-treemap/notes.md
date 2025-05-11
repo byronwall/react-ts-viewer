@@ -15,10 +15,10 @@ Todo:
   - JSX = `<div>`
   - Function = `fn()`
   - ArrowFunction = `() => {}`
-  - Variable = `const x = 1;`
-  - Class = `class X`
-  - Import = `import x from 'y'`
-  - Export = `export default x`
+  - Variable = `[var name]`
+  - Class = `[class name]`
+  - Import = `[name of lib]`
+  - Export = `[name of export]`
 - Single left click should expand/collapse; cmd+click should open the file with a visual change in the node border
 - Need to show if and other control flows as parents or differently
 - Node sizes are not well determined - figure out how to keep things more consistent
@@ -26,9 +26,9 @@ Todo:
 
 Tree creation
 
-- Drop the `Program` node - not needed as a parent -- attempted this but it created a synthetic node, might be struck with a root
 - Add a symbol or marker to indicate if something is exported
 - Give some ability to track props and other "incoming" edges
+- Synthetic groups for the hooks is not useful - breaks seeing code - probably just remove those.
 
 Design:
 
@@ -41,6 +41,7 @@ Design:
   - Auto-hide or truncate labels below a minimum pixel area; reveal full label on hover/focus.
   - Use a semi-transparent label background so text remains legible over coloured fills.
 - Revise header and node color black/white based on background contrast
+- Add overflow to the settings panel on left
 
 UX:
 
