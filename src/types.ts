@@ -117,12 +117,19 @@ export enum NodeCategory {
   ReactComponent = "ReactComponent",
   ReactHook = "ReactHook",
   JSX = "JSX",
-  Other = "Other",
   Import = "Import",
   TypeAlias = "TypeAlias",
   Interface = "Interface",
   Literal = "Literal",
   SyntheticGroup = "SyntheticGroup",
+
+  // Add these new categories:
+  ConditionalBlock = "ConditionalBlock",
+  IfClause = "IfClause",
+  ElseIfClause = "ElseIfClause",
+  ElseClause = "ElseClause",
+
+  Other = "Other", // Ensure 'Other' is still present
 }
 
 export interface ScopeNode {

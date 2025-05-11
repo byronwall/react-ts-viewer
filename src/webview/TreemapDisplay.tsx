@@ -39,12 +39,16 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#bc80bd",
   [NodeCategory.ReactHook]: "#ccebc5",
   [NodeCategory.JSX]: "#ffed6f",
-  [NodeCategory.Other]: "#a6cee3",
   [NodeCategory.Import]: "#c1e7ff",
   [NodeCategory.TypeAlias]: "#ffe8b3",
   [NodeCategory.Interface]: "#f0e68c",
   [NodeCategory.Literal]: "#dcdcdc",
   [NodeCategory.SyntheticGroup]: "#e6e6fa",
+  [NodeCategory.ConditionalBlock]: "#b3e2cd",
+  [NodeCategory.IfClause]: "#fdcdac",
+  [NodeCategory.ElseIfClause]: "#cbd5e8",
+  [NodeCategory.ElseClause]: "#f4cae4",
+  [NodeCategory.Other]: "#a6cee3",
 };
 
 const materialVibrant: Record<NodeCategory, string> = {
@@ -60,12 +64,16 @@ const materialVibrant: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#673ab7", // deep-purple
   [NodeCategory.ReactHook]: "#607d8b", // blue-gray
   [NodeCategory.JSX]: "#795548", // brown
-  [NodeCategory.Other]: "#e91e63", // pink
   [NodeCategory.Import]: "#00bcd4", // cyan
   [NodeCategory.TypeAlias]: "#cddc39", // lime
   [NodeCategory.Interface]: "#3f51b5", // indigo
   [NodeCategory.Literal]: "#bdbdbd", // grey
   [NodeCategory.SyntheticGroup]: "#9e9e9e", // grey (slightly darker for groups)
+  [NodeCategory.ConditionalBlock]: "#4db6ac",
+  [NodeCategory.IfClause]: "#ff8a65",
+  [NodeCategory.ElseIfClause]: "#7986cb",
+  [NodeCategory.ElseClause]: "#f06292",
+  [NodeCategory.Other]: "#e91e63", // pink
 };
 
 const okabeIto: Record<NodeCategory, string> = {
@@ -81,12 +89,16 @@ const okabeIto: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#66A61E", // olive-green
   [NodeCategory.ReactHook]: "#C44E52", // rose-red
   [NodeCategory.JSX]: "#8172B3", // lavender
-  [NodeCategory.Other]: "#5F9EA0", // cadet-blue
   [NodeCategory.Import]: "#0072B2", // blue (shared)
   [NodeCategory.TypeAlias]: "#F0E442", // yellow (shared)
   [NodeCategory.Interface]: "#E69F00", // orange (shared)
   [NodeCategory.Literal]: "#AAAAAA", // light-gray (new)
   [NodeCategory.SyntheticGroup]: "#D55E00", // vermilion (shared, for distinct group)
+  [NodeCategory.ConditionalBlock]: "#117733",
+  [NodeCategory.IfClause]: "#88CCEE",
+  [NodeCategory.ElseIfClause]: "#DDCC77",
+  [NodeCategory.ElseClause]: "#AA4499",
+  [NodeCategory.Other]: "#5F9EA0", // cadet-blue
 };
 
 const neutralAccents: Record<NodeCategory, string> = {
@@ -102,12 +114,16 @@ const neutralAccents: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#42a5f5", // blue accent
   [NodeCategory.ReactHook]: "#ab47bc", // purple accent
   [NodeCategory.JSX]: "#8d6e63", // brownish accent
-  [NodeCategory.Other]: "#cfd8dc", // very light gray
   [NodeCategory.Import]: "#78909c", // blue-grey
   [NodeCategory.TypeAlias]: "#ffee58", // yellow accent
   [NodeCategory.Interface]: "#5c6bc0", // indigo accent
   [NodeCategory.Literal]: "#e0e0e0", // lighter gray
   [NodeCategory.SyntheticGroup]: "#757575", // darker mid-gray for group
+  [NodeCategory.ConditionalBlock]: "#7cb342",
+  [NodeCategory.IfClause]: "#d4e157",
+  [NodeCategory.ElseIfClause]: "#4dd0e1",
+  [NodeCategory.ElseClause]: "#ba68c8",
+  [NodeCategory.Other]: "#cfd8dc", // very light gray
 };
 
 const defaultPalette: Record<NodeCategory, string> = {
@@ -123,12 +139,16 @@ const defaultPalette: Record<NodeCategory, string> = {
   [NodeCategory.ReactComponent]: "#c5b0d5",
   [NodeCategory.ReactHook]: "#8c564b",
   [NodeCategory.JSX]: "#c49c94",
-  [NodeCategory.Other]: "#7f7f7f",
   [NodeCategory.Import]: "#add8e6", // lightblue
   [NodeCategory.TypeAlias]: "#ffffe0", // lightyellow
   [NodeCategory.Interface]: "#e0ffff", // lightcyan
   [NodeCategory.Literal]: "#d3d3d3", // lightgrey
   [NodeCategory.SyntheticGroup]: "#dda0dd", // plum
+  [NodeCategory.ConditionalBlock]: "#6baed6",
+  [NodeCategory.IfClause]: "#fd8d3c",
+  [NodeCategory.ElseIfClause]: "#74c476",
+  [NodeCategory.ElseClause]: "#9e9ac8",
+  [NodeCategory.Other]: "#7f7f7f",
 };
 
 export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
@@ -554,6 +574,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
       >
         <ResponsiveTreeMap
           data={displayData}
+          orientLabel={false}
           identity="id"
           value="value"
           valueFormat=".02s"

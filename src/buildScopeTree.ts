@@ -96,8 +96,11 @@ function mapKindToCategory(
   }
   if (ts.isBlock(node)) return NodeCategory.Block;
   if (ts.isVariableDeclaration(node)) return NodeCategory.Variable; // Note: ts.VariableDeclarationList is the parent for `const a=1,b=2`
+
+  // IfStatement will be handled specially to create ConditionalBlock, IfClause, etc.
+  // but its underlying kind can still be ControlFlow if categorized directly.
   if (
-    ts.isIfStatement(node) ||
+    ts.isIfStatement(node) || // Keep this for direct categorization if needed
     ts.isSwitchStatement(node) ||
     ts.isForStatement(node) ||
     ts.isForInStatement(node) ||
@@ -249,10 +252,140 @@ export function buildScopeTree(
   };
 
   function walk(node: ts.Node, parentNodeInTree: ScopeNode, sf: ts.SourceFile) {
+    // --- START: Special handling for IfStatement chains ---
+    if (ts.isIfStatement(node)) {
+      const conditionalBlockStartPos = node.getStart(sf);
+
+      // Determine the end of the entire if-else if-else chain for accurate source and loc
+      let lastKnownStatementInChain: ts.Node = node.thenStatement; // Start with the first 'then'
+      let currentChainLink: ts.IfStatement | undefined = node;
+      while (currentChainLink) {
+        const thenStatementForCurrentLink = currentChainLink.thenStatement;
+        // Update lastKnownStatementInChain with the 'then' of the current link if it exists
+        if (thenStatementForCurrentLink) {
+          lastKnownStatementInChain = thenStatementForCurrentLink;
+        }
+
+        if (currentChainLink.elseStatement) {
+          lastKnownStatementInChain = currentChainLink.elseStatement; // Update with the else statement
+          if (ts.isIfStatement(currentChainLink.elseStatement)) {
+            currentChainLink = currentChainLink.elseStatement; // It's an 'else if', continue
+            // The 'then' of this 'else if' could be the new last known statement
+            if (currentChainLink.thenStatement) {
+              // Check if this new currentChainLink has a thenStatement
+              lastKnownStatementInChain = currentChainLink.thenStatement;
+            }
+          } else {
+            // It's a final 'else' block. lastKnownStatementInChain is already set to it.
+            currentChainLink = undefined;
+          }
+        } else {
+          // No more 'else' parts.
+          // lastKnownStatementInChain should be the 'then' of the final if/else if.
+          // This is handled by updating it with thenStatementForCurrentLink at the start of the loop.
+          currentChainLink = undefined;
+        }
+      }
+      const conditionalBlockEndPos = lastKnownStatementInChain.getEnd();
+
+      const conditionalBlockId = `${filePath}:${conditionalBlockStartPos}-${conditionalBlockEndPos}`;
+      const conditionalBlockNode: ScopeNode = {
+        id: conditionalBlockId,
+        kind: ts.SyntaxKind.Unknown, // Custom kind for ConditionalBlock
+        category: NodeCategory.ConditionalBlock,
+        label: "Conditional Block",
+        loc: {
+          start: lineColOfPos(sf, conditionalBlockStartPos),
+          end: lineColOfPos(sf, conditionalBlockEndPos),
+        },
+        source: fileText.substring(
+          conditionalBlockStartPos,
+          conditionalBlockEndPos
+        ),
+        value: conditionalBlockEndPos - conditionalBlockStartPos,
+        children: [],
+        meta: {},
+      };
+      parentNodeInTree.children.push(conditionalBlockNode);
+
+      let currentIfStmtNode: ts.IfStatement | undefined = node;
+      let clauseCategory = NodeCategory.IfClause;
+
+      while (currentIfStmtNode) {
+        const conditionText = currentIfStmtNode.expression.getText(sf);
+        const thenStatement = currentIfStmtNode.thenStatement;
+
+        // Clause spans from 'if(...)' or 'else if(...)' to the end of its 'then' block
+        const clauseStartPos = currentIfStmtNode.getStart(sf);
+        const clauseEndPos = thenStatement.getEnd();
+        const clauseNodeId = `${filePath}:${clauseStartPos}-${clauseEndPos}`;
+        const clauseLabel =
+          clauseCategory === NodeCategory.IfClause
+            ? `if (${conditionText})`
+            : `else if (${conditionText})`;
+
+        const clauseNode: ScopeNode = {
+          id: clauseNodeId,
+          kind: currentIfStmtNode.kind, // ts.SyntaxKind.IfStatement
+          category: clauseCategory,
+          label: clauseLabel,
+          loc: {
+            start: lineColOfPos(sf, clauseStartPos),
+            end: lineColOfPos(sf, clauseEndPos),
+          },
+          source: fileText.substring(clauseStartPos, clauseEndPos), // Source for 'if(cond) then_block'
+          value: clauseEndPos - clauseStartPos,
+          children: [], // Children will be from the 'then' block
+          meta: { condition: conditionText },
+        };
+        conditionalBlockNode.children.push(clauseNode);
+
+        // Recursively walk the 'then' statement; its children will be added to clauseNode
+        walk(thenStatement, clauseNode, sf);
+
+        const elseStatement: ts.Statement | undefined =
+          currentIfStmtNode.elseStatement;
+        if (elseStatement) {
+          if (ts.isIfStatement(elseStatement)) {
+            // This is an 'else if'
+            currentIfStmtNode = elseStatement;
+            clauseCategory = NodeCategory.ElseIfClause;
+          } else {
+            // This is a final 'else' block
+            const elseNodeStartPos = elseStatement.getStart(sf);
+            const elseNodeEndPos = elseStatement.getEnd();
+            const elseNodeId = `${filePath}:${elseNodeStartPos}-${elseNodeEndPos}`;
+            const elseClauseNode: ScopeNode = {
+              id: elseNodeId,
+              kind: elseStatement.kind,
+              category: NodeCategory.ElseClause,
+              label: "else",
+              loc: {
+                start: lineColOfPos(sf, elseNodeStartPos),
+                end: lineColOfPos(sf, elseNodeEndPos),
+              },
+              source: fileText.substring(elseNodeStartPos, elseNodeEndPos),
+              value: elseNodeEndPos - elseNodeStartPos,
+              children: [],
+              meta: {},
+            };
+            conditionalBlockNode.children.push(elseClauseNode);
+            walk(elseStatement, elseClauseNode, sf); // process children of the elseStatement under the elseClauseNode
+            currentIfStmtNode = undefined; // End of the chain
+          }
+        } else {
+          currentIfStmtNode = undefined; // End of the chain, no else
+        }
+      }
+      return; // IMPORTANT: Prevent default child traversal for the IfStatement itself and its components by the outer loop
+    }
+    // --- END: Special handling for IfStatement chains ---
+
     let currentContainer = parentNodeInTree;
     const category = mapKindToCategory(node, sf);
 
-    // Create a new scope node if it's a scope boundary OR a significant non-boundary element like a variable declaration or call
+    // Create a new scope node if it's a scope boundary OR a significant non-boundary element
+    // Ensure IfStatement itself isn't re-processed here to create a plain ControlFlow node if already handled.
     if (
       isScopeBoundary(node) ||
       category === NodeCategory.Variable ||
@@ -261,9 +394,10 @@ export function buildScopeTree(
       category === NodeCategory.JSX ||
       category === NodeCategory.Import ||
       category === NodeCategory.TypeAlias ||
-      category === NodeCategory.Interface
+      category === NodeCategory.Interface ||
+      (category === NodeCategory.ControlFlow && !ts.isIfStatement(node)) // Process other control flows
     ) {
-      const startPos = node.getStart(sf, /*includeJsDoc*/ false); // false to get actual start
+      const startPos = node.getStart(sf, /*includeJsDoc*/ false);
       const endPos = node.getEnd();
 
       // Skip zero-width nodes or nodes outside parent's range (can happen with some synthetic nodes)
