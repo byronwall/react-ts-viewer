@@ -244,7 +244,10 @@ export function buildScopeTree(
       category === NodeCategory.Variable ||
       category === NodeCategory.ReactHook ||
       category === NodeCategory.Call ||
-      category === NodeCategory.JSX
+      category === NodeCategory.JSX ||
+      category === NodeCategory.Import ||
+      category === NodeCategory.TypeAlias ||
+      category === NodeCategory.Interface
     ) {
       const startPos = node.getStart(sf, /*includeJsDoc*/ false); // false to get actual start
       const endPos = node.getEnd();

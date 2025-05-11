@@ -12,6 +12,13 @@ Todo:
 
 - All nodes should identify their type
 - All nodes + containers should have more info in the label with a truncate - add the node type for JSX, variable name etc.
+  - JSX = `<div>`
+  - Function = `fn()`
+  - ArrowFunction = `() => {}`
+  - Variable = `const x = 1;`
+  - Class = `class X`
+  - Import = `import x from 'y'`
+  - Export = `export default x`
 - Single left click should expand/collapse; cmd+click should open the file with a visual change in the node border
 - Need to show if and other control flows as parents or differently
 - Node sizes are not well determined - figure out how to keep things more consistent
@@ -19,8 +26,9 @@ Todo:
 
 Tree creation
 
-- Drop the `Program` node - not needed as a parent -- attempted this but it created a synthetic node...
+- Drop the `Program` node - not needed as a parent -- attempted this but it created a synthetic node, might be struck with a root
 - Add a symbol or marker to indicate if something is exported
+- Give some ability to track props and other "incoming" edges
 
 Design:
 
