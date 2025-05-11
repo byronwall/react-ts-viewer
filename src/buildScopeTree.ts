@@ -482,7 +482,7 @@ export function buildScopeTree(
     processedTree = flattenTree(processedTree, mergedOptions);
   }
   if (mergedOptions.createSyntheticGroups) {
-    processedTree = createSyntheticGroups(processedTree); // Pass options if createSyntheticGroups needs them (currently doesn't in plan)
+    processedTree = createSyntheticGroups(processedTree, true); // Pass true for the initial call
   }
 
   console.log("Raw source code for:", filePath, /*fileText*/ "(text omitted)"); // Avoid logging full source
@@ -659,7 +659,46 @@ function collapseArrowFunction(
   };
 }
 
-function createSyntheticGroups(rootNode: ScopeNode): ScopeNode {
+// Helper function to create a synthetic group
+function createActualSyntheticGroup(
+  groupNodes: ScopeNode[],
+  groupName: string,
+  parentId: string
+): ScopeNode | null {
+  if (groupNodes.length <= 1) return null; // Only group if more than one item
+
+  const firstNode = groupNodes[0];
+  // Guard against empty groupNodes though length check should prevent this
+  if (!firstNode) return null;
+
+  const groupValue = groupNodes.reduce((sum, node) => sum + node.value, 0);
+  // Ensure a unique enough ID for the synthetic group
+  const groupId = `synthetic:${parentId}:${groupName}:${firstNode.id}`;
+  const firstNodeLoc = firstNode.loc; // Use loc of the first node for simplicity
+  // Concatenate source code from all nodes in the group
+  const combinedSource = groupNodes.map((node) => node.source).join("\n\n"); // Join with double newline for readability in tooltips
+
+  return {
+    id: groupId,
+    category: NodeCategory.SyntheticGroup,
+    label: groupName,
+    kind: ts.SyntaxKind.Unknown, // Synthetic nodes don't have a direct TS kind
+    value: groupValue,
+    loc: firstNodeLoc,
+    source: combinedSource,
+    children: groupNodes, // Embed original nodes as children
+    meta: {
+      syntheticGroup: true,
+      contains: groupNodes.length,
+      originalNodesCategories: groupNodes.map((n) => n.category),
+    },
+  };
+}
+
+function createSyntheticGroups(
+  rootNode: ScopeNode,
+  isTopLevelCall: boolean = false
+): ScopeNode {
   // Ensure children are initialized and cloned properly at the start
   const initialChildrenToProcess = rootNode.children
     ? rootNode.children.map((c) => ({ ...c }))
@@ -673,97 +712,109 @@ function createSyntheticGroups(rootNode: ScopeNode): ScopeNode {
   // Now, result.children is guaranteed to be an array (possibly empty)
   if (result.children.length > 0) {
     // Recursively call on children. Each child from result.children is a clone.
+    // For recursive calls, isTopLevelCall is false.
     const childrenAfterRecursiveCall = result.children.map((child) =>
-      createSyntheticGroups(child)
+      createSyntheticGroups(child, false)
     );
-    // Then, group the (already processed) children nodes.
-    result.children = groupRelatedNodes(childrenAfterRecursiveCall, result.id);
+    // Then, group the (already processed) children nodes. Pass the flag.
+    result.children = groupRelatedNodes(
+      childrenAfterRecursiveCall,
+      result.id,
+      isTopLevelCall
+    );
   }
   return result;
 }
 
-function groupRelatedNodes(nodes: ScopeNode[], parentId: string): ScopeNode[] {
-  const result: ScopeNode[] = [];
-  const groupCandidates: Map<string, ScopeNode[]> = new Map();
-  const ungroupedNodes: ScopeNode[] = [];
+function groupRelatedNodes(
+  nodes: ScopeNode[],
+  parentId: string,
+  isTopLevel: boolean
+): ScopeNode[] {
+  const collectedGroups: {
+    Imports: ScopeNode[];
+    "Type defs": ScopeNode[];
+    Hooks: ScopeNode[];
+  } = {
+    Imports: [],
+    "Type defs": [],
+    Hooks: [],
+  };
+  const remainingNodes: ScopeNode[] = [];
 
   for (const node of nodes) {
-    let grouped = false;
-    if (
-      node.category === NodeCategory.ReactHook ||
-      (node.category === NodeCategory.Call &&
-        node.label.startsWith("use") &&
-        /[A-Z]/.test(node.label[3] || ""))
-    ) {
-      const groupName = "Hooks";
-      const group = groupCandidates.get(groupName) || [];
-      group.push(node);
-      groupCandidates.set(groupName, group);
-      grouped = true;
-    }
-    // Original plan had 'Mutations' group based on meta.initializer.
-    // Let's adapt: if a variable's name or inferred type suggests mutation hook.
-    // This is more robust if initializer text isn't always available or consistent.
-    else if (
-      node.category === NodeCategory.Variable &&
-      (node.label.toLowerCase().includes("mutation") ||
-        node.meta?.initializer?.toString().includes("Mutation"))
-    ) {
-      const groupName = "Mutations";
-      const group = groupCandidates.get(groupName) || [];
-      group.push(node);
-      groupCandidates.set(groupName, group);
-      grouped = true;
-    }
-
-    if (!grouped) {
-      ungroupedNodes.push(node);
-    }
-  }
-
-  for (const [groupName, groupNodes] of groupCandidates.entries()) {
-    if (groupNodes.length > 1) {
-      const firstNode = groupNodes[0];
-      // Guard clause for firstNode before accessing its properties
-      if (firstNode) {
-        const groupValue = groupNodes.reduce(
-          (sum, node) => sum + node.value,
-          0
-        );
-        const groupId = `synthetic:${parentId}:${groupName}:${firstNode.id}`;
-        const firstNodeLoc = firstNode.loc;
-        // Concatenate source code from all nodes in the group
-        const combinedSource = groupNodes
-          .map((node) => node.source)
-          .join("\n\n");
-
-        result.push({
-          id: groupId,
-          category: NodeCategory.SyntheticGroup,
-          label: groupName,
-          kind: ts.SyntaxKind.Unknown,
-          value: groupValue, // This remains the sum of original values
-          loc: firstNodeLoc, // loc of the first node for navigation
-          source: combinedSource, // Store the combined source
-          children: groupNodes, // Keep original children for inspection if needed, or for tooltip detail
-          meta: {
-            syntheticGroup: true,
-            contains: groupNodes.length,
-            originalNodesCategories: groupNodes.map((n) => n.category),
-          },
-        });
-      } else {
-        // Fallback: if firstNode is somehow undefined despite length > 1, add to ungrouped.
-        ungroupedNodes.push(...groupNodes);
+    let assignedToGroup = false;
+    if (isTopLevel) {
+      if (node.category === NodeCategory.Import) {
+        collectedGroups["Imports"].push(node);
+        assignedToGroup = true;
+      } else if (
+        node.category === NodeCategory.TypeAlias ||
+        node.category === NodeCategory.Interface
+      ) {
+        if (!assignedToGroup) {
+          // Should be redundant if Import/Type/Interface are mutually exclusive categories
+          collectedGroups["Type defs"].push(node);
+          assignedToGroup = true;
+        }
       }
-    } else {
-      ungroupedNodes.push(...groupNodes);
+    }
+
+    if (!assignedToGroup) {
+      const label = node.label;
+      let isHookLike = false;
+      if (node.category === NodeCategory.ReactHook) {
+        isHookLike = true;
+      } else if (
+        node.category === NodeCategory.Call &&
+        typeof label === "string" &&
+        label.startsWith("use") &&
+        label.length > 3
+      ) {
+        const charAtIndex3 = label[3]; // Access character
+        if (typeof charAtIndex3 === "string" && /[A-Z]/.test(charAtIndex3)) {
+          // Check if char is string and test
+          isHookLike = true;
+        }
+      }
+
+      if (isHookLike) {
+        collectedGroups["Hooks"].push(node);
+        assignedToGroup = true;
+      }
+    }
+
+    if (!assignedToGroup) {
+      remainingNodes.push(node);
     }
   }
 
-  // Add back ungrouped nodes, preserving original order as much as possible is tricky here.
-  // For now, append ungrouped nodes. Consider sorting or merging if order is critical.
-  return [...result, ...ungroupedNodes];
+  const finalResultNodes: ScopeNode[] = [];
+  // Now groupOrder keys will correctly map to ScopeNode[] types in collectedGroups
+  const groupOrder: Array<keyof typeof collectedGroups> = [
+    "Imports",
+    "Type defs",
+    "Hooks",
+  ];
+
+  for (const groupName of groupOrder) {
+    const groupNodes = collectedGroups[groupName]; // groupNodes is now ScopeNode[]
+    if (groupNodes.length > 0) {
+      const syntheticGroup = createActualSyntheticGroup(
+        groupNodes,
+        groupName,
+        parentId
+      );
+      if (syntheticGroup) {
+        finalResultNodes.push(syntheticGroup);
+      } else {
+        remainingNodes.push(...groupNodes); // groupNodes is ScopeNode[], spreadable
+      }
+    }
+  }
+
+  finalResultNodes.push(...remainingNodes);
+  return finalResultNodes;
 }
 
 // --- END: Node Flattening and Grouping Logic ---

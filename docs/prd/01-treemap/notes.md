@@ -28,10 +28,6 @@ Tree creation
 
 - Add a symbol or marker to indicate if something is exported
 - Give some ability to track props and other "incoming" edges
-- Synthetic groups for the hooks is not useful - breaks seeing code - probably just remove those.
-- Create a synthetic group for imports - ensure all code is visible on hover
-- Create a synthetic group for types
-- Drop group for mutations and hooks
 
 Design:
 
