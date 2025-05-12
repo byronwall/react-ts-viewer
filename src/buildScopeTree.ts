@@ -294,7 +294,7 @@ export function buildScopeTree(
       end: rootLocEnd,
     },
     source: fileText,
-    value: fileText.length, // Could be LOC too: sourceFile.getLineAndCharacterOfPosition(fileText.length).line + 1
+    value: 1, // Changed from fileText.length
     children: [],
   };
 
@@ -349,7 +349,7 @@ export function buildScopeTree(
           conditionalBlockStartPos,
           conditionalBlockEndPos
         ),
-        value: conditionalBlockEndPos - conditionalBlockStartPos,
+        value: 1, // Changed
         children: [],
         meta: {},
       };
@@ -380,7 +380,7 @@ export function buildScopeTree(
             end: lineColOfPos(sf, clauseEndPos),
           },
           source: fileText.substring(clauseStartPos, clauseEndPos), // Source for 'if(cond) then_block'
-          value: clauseEndPos - clauseStartPos,
+          value: 1, // Changed
           children: [], // Children will be from the 'then' block
           meta: { condition: conditionText },
         };
@@ -411,7 +411,7 @@ export function buildScopeTree(
                 end: lineColOfPos(sf, elseNodeEndPos),
               },
               source: fileText.substring(elseNodeStartPos, elseNodeEndPos),
-              value: elseNodeEndPos - elseNodeStartPos,
+              value: 1, // Changed
               children: [],
               meta: {},
             };
@@ -491,7 +491,7 @@ export function buildScopeTree(
         label: deriveLabel(node, sf),
         loc: { start: startLoc, end: endLoc },
         source: nodeSourceText,
-        value: nodeSourceText.length, // char length
+        value: 1, // Changed
         meta: collectMeta(node, category, sf),
         children: [],
       };
@@ -720,7 +720,7 @@ function createActualSyntheticGroup(
   // Guard against empty groupNodes though length check should prevent this
   if (!firstNode) return null;
 
-  const groupValue = groupNodes.reduce((sum, node) => sum + node.value, 0);
+  const groupValue = 1; // Changed: All nodes, including synthetic, have value 1
   // Ensure a unique enough ID for the synthetic group
   const groupId = `synthetic:${parentId}:${groupName}:${firstNode.id}`;
   const firstNodeLoc = firstNode.loc; // Use loc of the first node for simplicity
