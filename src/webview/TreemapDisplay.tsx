@@ -382,9 +382,9 @@ const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
     case NodeCategory.SyntheticGroup:
       return `Group: ${label}${lineRange}`;
     case NodeCategory.JSXElementDOM:
-      return `JSXElementDOM: ${label}${lineRange}`;
+      return `${label}${lineRange}`;
     case NodeCategory.JSXElementCustom:
-      return `JSXElementCustom: ${label}${lineRange}`;
+      return `${label}${lineRange}`;
     case NodeCategory.IfClause:
     case NodeCategory.ElseClause:
     case NodeCategory.ElseIfClause:

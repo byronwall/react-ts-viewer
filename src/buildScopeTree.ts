@@ -199,14 +199,29 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
     return "Import"; // Fallback if text is empty or not available
   }
 
+  console.log("node before jsx checks", node);
+
   // Updated JSX handling:
   if (ts.isJsxElement(node)) {
     // Handles <Foo>...</Foo>
-    return node.openingElement.tagName.getText(sourceFile) || "JSXElement";
+    console.log("node jsx isJsxElement", node);
+    const tagNameNode = node.openingElement.tagName;
+    let tagNameString = tagNameNode.getText(sourceFile);
+    if (tagNameString === "" && ts.isIdentifier(tagNameNode)) {
+      tagNameString = tagNameNode.text; // Fallback to .text for Identifiers if getText() is empty
+    }
+    return tagNameString ? `<${tagNameString}>` : "<JSXElement>";
   }
   if (ts.isJsxSelfClosingElement(node)) {
+    console.log("node jsx isJsxSelfClosingElement", node);
+
     // Handles <Foo/>
-    return node.tagName.getText(sourceFile) || "JSXElement";
+    const tagNameNode = node.tagName;
+    let tagNameString = tagNameNode.getText(sourceFile);
+    if (tagNameString === "" && ts.isIdentifier(tagNameNode)) {
+      tagNameString = tagNameNode.text; // Fallback to .text for Identifiers if getText() is empty
+    }
+    return tagNameString ? `<${tagNameString}>` : "<JSXElement>";
   }
   if (ts.isJsxFragment(node)) {
     // Handles <>...</>
@@ -438,6 +453,8 @@ export function buildScopeTree(
       category === NodeCategory.ReactHook ||
       category === NodeCategory.Call ||
       category === NodeCategory.JSX ||
+      category === NodeCategory.JSXElementDOM ||
+      category === NodeCategory.JSXElementCustom ||
       category === NodeCategory.Import ||
       category === NodeCategory.TypeAlias ||
       category === NodeCategory.Interface ||
