@@ -32,7 +32,6 @@ UX:
   - Let me type “useState” and instantly highlight every hook invocation node.
   - Show a list of variable names and hover to show where they are used
 - Change import label to show full name of external import (just use the file part for internal and aliased imports)
-- Conditional block labels are too long - shorten to if/else/else if based on contents
 - Improve display [val, setVal] and other destructuring assignments - current show as `VariableDeclaration`
 - Consider some sort of max height to prevent large islands of nothing when graph is small -- or change the layout to prevent a simple code like view with bars on top of each other (like `slice`)
 - Export JSON should focus only on the rendered tree, not the entire code

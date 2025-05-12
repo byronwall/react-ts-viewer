@@ -340,7 +340,7 @@ export function buildScopeTree(
         id: conditionalBlockId,
         kind: ts.SyntaxKind.Unknown, // Custom kind for ConditionalBlock
         category: NodeCategory.ConditionalBlock,
-        label: "Conditional Block",
+        label: "Conditional Block", // Placeholder, will be updated after children are processed
         loc: {
           start: lineColOfPos(sf, conditionalBlockStartPos),
           end: lineColOfPos(sf, conditionalBlockEndPos),
@@ -423,6 +423,46 @@ export function buildScopeTree(
           currentIfStmtNode = undefined; // End of the chain, no else
         }
       }
+
+      // ---- START: Update ConditionalBlock label based on its children ----
+      if (conditionalBlockNode.children.length > 0) {
+        const clauseTypes: string[] = [];
+        if (
+          conditionalBlockNode.children.some(
+            (c) => c.category === NodeCategory.IfClause
+          )
+        ) {
+          clauseTypes.push("if");
+        }
+        if (
+          conditionalBlockNode.children.some(
+            (c) => c.category === NodeCategory.ElseIfClause
+          )
+        ) {
+          if (!clauseTypes.includes("else if")) {
+            // Add "else if" only once
+            clauseTypes.push("else if");
+          }
+        }
+        if (
+          conditionalBlockNode.children.some(
+            (c) => c.category === NodeCategory.ElseClause
+          )
+        ) {
+          clauseTypes.push("else");
+        }
+
+        if (clauseTypes.length > 0) {
+          conditionalBlockNode.label = clauseTypes.join("/");
+        } else {
+          // Fallback if somehow no known clauses were found, though this shouldn't happen with valid if statements
+          conditionalBlockNode.label = "Conditional";
+        }
+      } else {
+        // Should not happen for a valid if statement that creates a conditional block
+        conditionalBlockNode.label = "Empty Conditional";
+      }
+      // ---- END: Update ConditionalBlock label based on its children ----
 
       // Conditionally add the ConditionalBlock or its single IfClause child
       if (

@@ -305,12 +305,6 @@ interface TreemapDisplayProps {
   // height: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
 }
 
-// Define a more specific type for Nivo node data if possible, or use any and cast
-// interface NivoNodeExtensions { // This can be removed or kept for other Nivo specific props if needed
-//   data: ScopeNode; // We are sure node.data will be our ScopeNode
-//   // other Nivo specific properties if needed, like formattedValue, color etc.
-// }
-
 // Helper function to find a node by ID in the ScopeNode tree
 function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   if (node.id === id) {
@@ -328,8 +322,8 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 }
 
 // Helper function to generate display labels based on node category and PRD notes
-const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
-  const { category, label, loc, source } = nodeData; // Ensure source is destructured if used, like for Literals
+const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
+  const { category, label, loc, source } = nodeData; // children is part of nodeData
   const lineRange = loc ? ` [${loc.start.line}-${loc.end.line}]` : "";
 
   switch (category) {
@@ -385,6 +379,9 @@ const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
       return `${label}${lineRange}`;
     case NodeCategory.JSXElementCustom:
       return `${label}${lineRange}`;
+    case NodeCategory.ConditionalBlock: {
+      return `${label}${lineRange}`;
+    }
     case NodeCategory.IfClause:
     case NodeCategory.ElseClause:
     case NodeCategory.ElseIfClause:
@@ -394,28 +391,25 @@ const getNodeDisplayLabel = (nodeData: Omit<ScopeNode, "children">): string => {
   }
 };
 
-// Define a type for the node object passed to the label rendering helper
-// It needs at least data, width, and height from Nivo's computed node.
-interface NivoNodeForLabeling {
-  data: Omit<ScopeNode, "children">; // Align with Nivo's apparent type for node.data in these callbacks
+// Define a type for the parts of a Nivo node needed for labeling
+interface NodePartsForLabeling {
+  data: ScopeNode;
   width: number;
   height: number;
-  // Include other properties from ComputedNodeWithoutStyles if they were directly used,
-  // but getNodeDisplayLabel only needs 'data', and truncation logic needs width/height.
 }
 
 // Helper function to dynamically determine node label display based on size and settings
 const getDynamicNodeDisplayLabel = (
-  node: NivoNodeForLabeling, // Use the defined interface
+  parts: NodePartsForLabeling,
   settings: TreemapSettings
 ): string => {
   // Check height threshold
-  if (node.height < settings.minLabelHeight) {
+  if (parts.height < settings.minLabelHeight) {
     return "";
   }
 
   // Get the base label from existing logic
-  let displayLabel = getNodeDisplayLabel(node.data);
+  let displayLabel = getNodeDisplayLabel(parts.data); // parts.data is ScopeNode
 
   // Apply truncation if enabled
   if (settings.truncateLabel) {
@@ -424,7 +418,7 @@ const getDynamicNodeDisplayLabel = (
     // Calculate max characters based on node width, if avgCharPixelWidth is valid
     if (settings.avgCharPixelWidth > 0) {
       const maxCharsByWidth = Math.floor(
-        node.width / settings.avgCharPixelWidth
+        parts.width / settings.avgCharPixelWidth
       );
       // Use the more restrictive limit between width-based and absolute max chars
       maxCharsAllowed = Math.min(maxCharsAllowed, maxCharsByWidth);
@@ -822,7 +816,14 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           parentLabel={(
             node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
           ) =>
-            getDynamicNodeDisplayLabel(node as NivoNodeForLabeling, settings)
+            getDynamicNodeDisplayLabel(
+              {
+                data: node.data as ScopeNode,
+                width: node.width,
+                height: node.height,
+              },
+              settings
+            )
           }
           label={(
             node: Omit<
@@ -832,7 +833,11 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           ) => {
             // console.log("node", node); // Keep for debugging if needed
             return getDynamicNodeDisplayLabel(
-              node as NivoNodeForLabeling,
+              {
+                data: node.data as ScopeNode,
+                width: node.width,
+                height: node.height,
+              },
               settings
             );
           }}
