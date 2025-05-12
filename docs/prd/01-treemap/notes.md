@@ -15,7 +15,7 @@ Todo:
 
 Design:
 
-- Set a min size to prevent things from getting too small
+- Set a min size to prevent things from getting too small - really need a min height - some examples have whitespace and small nodes
 - Reduce border weight & recursion outline
   - 2 px borders for every level generate moiré patterns; switch to 1 px for children and 0 px for leaves, or draw only the hovered branch.
 - Make the file path scannable
@@ -33,6 +33,11 @@ UX:
   - Show a list of variable names and hover to show where they are used
 - Change import label to show full name of external import (just use the file part for internal and aliased imports)
 - Conditional block labels are too long - shorten to if/else/else if based on contents
+- Improve display [val, setVal] and other destructuring assignments - current show as `VariableDeclaration`
+- Consider some sort of max height to prevent large islands of nothing when graph is small -- or change the layout to prevent a simple code like view with bars on top of each other (like `slice`)
+- Export JSON should focus only on the rendered tree, not the entire code
+- Tooltip position is awful when tall, getting clipped by edges - likely need to implement a custom tooltip component based on mouse events
+- Ideally allow interaction with the tooltip - do not move with the mouse, but stay in the same position
 
 Tree creation
 
