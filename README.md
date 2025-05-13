@@ -2,7 +2,9 @@
 
 Provides static analysis, visualization, and code navigation features for React + TypeScript projects within Visual Studio Code.
 
-See `docs/prd/00-init.md` for detailed requirements.
+Example treemap of itself:
+
+![Treemap](docs/treemap.png)
 
 ## Features (Planned)
 
