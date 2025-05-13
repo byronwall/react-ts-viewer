@@ -2,10 +2,11 @@
   "name": "react-ts-code-analysis",
   "displayName": "React TypeScript Code Analysis",
   "description": "Provides static analysis and visualization for React/TypeScript codebases.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "byronwall",
   "private": false,
   "license": "MIT",
+  "icon": "./docs/treemap_icon-min.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/byronwall/react-ts-viewer.git"

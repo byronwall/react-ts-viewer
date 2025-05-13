@@ -1029,8 +1029,8 @@ export function buildDependencyGraph(
       const skipReason = exploredComponentIds.has(targetComponentId)
         ? "already explored"
         : nextDepth > maxDepth
-        ? `depth limit exceeded (${nextDepth} > ${maxDepth})`
-        : undefined;
+          ? `depth limit exceeded (${nextDepth} > ${maxDepth})`
+          : undefined;
 
       if (!skipReason) {
         outputChannel.appendLine(

@@ -1,10 +1,4 @@
 // create sample TS code that contains a lot of control flow
-// try/catch, if/else, for/while, switch/case, etc.
-// try to make it as complex as possible
-// try to make it as realistic as possible
-// try to make it as long as possible
-// try to make it as interesting as possible
-// try to make it as fun as possible
 
 function controlFlows() {
   try {

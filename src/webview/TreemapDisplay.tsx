@@ -295,7 +295,10 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 
 // Helper function to generate display labels based on node category and PRD notes
 const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
-  const { category, label, loc, source } = nodeData; // children is part of nodeData
+  const { category, label, loc, source, kind } = nodeData; // children is part of nodeData
+  console.log(
+    `getNodeDisplayLabel: Received node - Kind: ${kind}, Category: ${category}, Label: ${label}`
+  ); // Log input
   const lineRange = loc ? ` [${loc.start.line}-${loc.end.line}]` : "";
 
   switch (category) {
@@ -330,7 +333,7 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
         ? `Block (inline)${lineRange}`
         : `Block${lineRange}`;
     case NodeCategory.ControlFlow:
-      return `Control: ${label || category}${lineRange}`;
+      return `${label}${lineRange}`;
     case NodeCategory.Call:
       return `${label || "call"}()${lineRange}`;
     case NodeCategory.ReactComponent:
@@ -787,24 +790,8 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           ) => getContrastingTextColor(node.color)}
           parentLabel={(
             node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-          ) =>
-            getDynamicNodeDisplayLabel(
-              {
-                data: node.data as ScopeNode,
-                width: node.width,
-                height: node.height,
-              },
-              settings
-            )
-          }
-          label={(
-            node: Omit<
-              ComputedNodeWithoutStyles<ScopeNode>,
-              "label" | "parentLabel"
-            >
           ) => {
-            // console.log("node", node); // Keep for debugging if needed
-            return getDynamicNodeDisplayLabel(
+            const displayLabel = getDynamicNodeDisplayLabel(
               {
                 data: node.data as ScopeNode,
                 width: node.width,
@@ -812,6 +799,30 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               },
               settings
             );
+            console.log(
+              `Treemap Rendering - Parent Label: ${displayLabel} for node ID: ${node.id}`
+            ); // Log final label
+            return displayLabel;
+          }}
+          label={(
+            node: Omit<
+              ComputedNodeWithoutStyles<ScopeNode>,
+              "label" | "parentLabel"
+            >
+          ) => {
+            // console.log("node", node); // Keep for debugging if needed
+            const displayLabel = getDynamicNodeDisplayLabel(
+              {
+                data: node.data as ScopeNode,
+                width: node.width,
+                height: node.height,
+              },
+              settings
+            );
+            console.log(
+              `Treemap Rendering - Leaf Label: ${displayLabel} for node ID: ${node.id}`
+            ); // Log final label
+            return displayLabel;
           }}
           colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
             const category = nodeWithData.data.category;

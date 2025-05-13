@@ -33,7 +33,7 @@ function isScopeBoundary(node: ts.Node): boolean {
     ts.isFunctionLike(node) || // Catches functions, methods, arrow functions, constructors
     ts.isBlock(node) || // Catches block statements {}
     ts.isCatchClause(node) || // catch (e) {}
-    ts.isCaseBlock(node) || // case clauses in a switch actually form a block
+    // ts.isCaseBlock(node) || // case clauses in a switch actually form a block -- REMOVED
     // ts.isCaseClause(node) || // case x: individual case, might be too granular
     // ts.isDefaultClause(node) || // default: individual default, might be too granular
     ts.isForStatement(node) || // for (;;) {}
@@ -108,7 +108,9 @@ function mapKindToCategory(
     ts.isDoStatement(node) ||
     ts.isWhileStatement(node) ||
     ts.isTryStatement(node) || // try {} catch {} finally {}
-    ts.isCatchClause(node)
+    ts.isCatchClause(node) ||
+    ts.isCaseClause(node) || // Added
+    ts.isDefaultClause(node) // Added
   )
     return NodeCategory.ControlFlow;
 
@@ -152,6 +154,28 @@ function mapKindToCategory(
 }
 
 function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
+  // --- Control Flow concise labeling ---
+  if (ts.isTryStatement(node)) {
+    console.log("deriveLabel: Matched ts.isTryStatement, returning 'try'");
+    return "try";
+  }
+  if (ts.isCatchClause(node)) return "catch";
+  if (ts.isForStatement(node)) return "for";
+  if (ts.isForOfStatement(node)) return "for of";
+  if (ts.isForInStatement(node)) return "for in";
+  if (ts.isWhileStatement(node)) return "while";
+  if (ts.isDoStatement(node)) return "do";
+  if (ts.isSwitchStatement(node)) return "switch";
+  // CaseClause and DefaultClause are now mapped to ControlFlow
+  if (ts.isCaseClause(node)) {
+    // CaseClause: label as 'case <value>'
+    const expr = node.expression?.getText(sourceFile);
+    return expr ? `case ${expr}` : "case"; // Simplified check
+  }
+  if (ts.isDefaultClause(node)) return "default";
+
+  // --- End control flow concise labeling ---
+
   if (ts.isFunctionLike(node) && node.name && ts.isIdentifier(node.name))
     return node.name.text;
   if (ts.isClassLike(node) && node.name && ts.isIdentifier(node.name))
@@ -230,7 +254,18 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   // The original check for JsxOpeningElement is removed as it's covered by the more specific JsxElement,
   // and JsxOpeningElement isn't typically the primary AST node for which a ScopeNode is created.
 
+  // Fallback: If this is a ControlFlow node, return an empty string (prevents TryStatement/CatchClause fallback)
+  if (mapKindToCategory(node, sourceFile) === NodeCategory.ControlFlow) {
+    console.log(
+      `deriveLabel: Matched ControlFlow fallback for kind ${ts.SyntaxKind[node.kind]}, returning empty string.`
+    );
+    return "";
+  }
+
   const kindName = ts.SyntaxKind[node.kind];
+  console.log(
+    `deriveLabel: Reached final fallback for kind ${ts.SyntaxKind[node.kind]}, returning label: ${kindName || "UnknownNode"}`
+  );
   return kindName || "UnknownNode"; // Ensure a string is always returned
 }
 
@@ -270,6 +305,7 @@ export function buildScopeTree(
   fileText: string = fs.readFileSync(filePath, "utf8"),
   options?: BuildScopeTreeOptions
 ): ScopeNode {
+  console.log("####### buildScopeTree EXECUTING - VERSION X #######", filePath); // Add a version number
   const mergedOptions: Required<BuildScopeTreeOptions> = {
     ...defaultBuildOptions,
     ...(options || {}),
@@ -500,6 +536,36 @@ export function buildScopeTree(
       category === NodeCategory.Interface ||
       (category === NodeCategory.ControlFlow && !ts.isIfStatement(node)) // Process other control flows
     ) {
+      // Special handling: For CatchClause, skip creating a node for the catch parameter (error variable)
+      if (ts.isCatchClause(node)) {
+        const startPos = node.getStart(sf, /*includeJsDoc*/ false);
+        const endPos = node.getEnd();
+        if (endPos === startPos) {
+          ts.forEachChild(node, (child) => walk(child, currentContainer, sf));
+          return;
+        }
+        const startLoc = lineColOfPos(sf, startPos);
+        const endLoc = lineColOfPos(sf, endPos);
+        const nodeSourceText = fileText.substring(startPos, endPos);
+        const nodeId = `${filePath}:${startPos}-${endPos}`;
+        const newNode: ScopeNode = {
+          id: nodeId,
+          kind: node.kind,
+          category: category,
+          label: deriveLabel(node, sf),
+          loc: { start: startLoc, end: endLoc },
+          source: nodeSourceText,
+          value: 1,
+          meta: collectMeta(node, category, sf),
+          children: [],
+        };
+        // Only walk the block (body) of the catch, not the catch variable
+        if (node.block) {
+          walk(node.block, newNode, sf);
+        }
+        parentNodeInTree.children.push(newNode);
+        return;
+      }
       const startPos = node.getStart(sf, /*includeJsDoc*/ false);
       const endPos = node.getEnd();
 
@@ -524,30 +590,23 @@ export function buildScopeTree(
       const nodeSourceText = fileText.substring(startPos, endPos);
       const nodeId = `${filePath}:${startPos}-${endPos}`; // Unique ID
 
+      // Get label *before* creating node
+      const derivedLabel = deriveLabel(node, sf);
+      console.log(
+        `walk: Creating node for kind ${ts.SyntaxKind[node.kind]}, category ${category}, derived label: ${derivedLabel}`
+      );
+
       const newNode: ScopeNode = {
         id: nodeId,
         kind: node.kind,
         category: category,
-        label: deriveLabel(node, sf),
+        label: derivedLabel,
         loc: { start: startLoc, end: endLoc },
         source: nodeSourceText,
         value: 1, // Changed
         meta: collectMeta(node, category, sf),
         children: [],
       };
-
-      // Check for duplicate IDs (can happen with overlapping nodes or incorrect walk logic)
-      // This check is more for debugging the walk logic itself.
-      // const checkExisting = (nodes: ScopeNode[], id: string): boolean => {
-      //     if (nodes.find(n => n.id === id)) return true;
-      //     for (const n of nodes) {
-      //         if (checkExisting(n.children, id)) return true;
-      //     }
-      //     return false;
-      // };
-      // if (checkExisting([root], newNode.id)) {
-      //     console.warn("Duplicate node ID:", newNode.id, "Label:", newNode.label);
-      // }
 
       // Attach to the correct parent in the tree
       // This logic ensures nodes are nested under the *current* semantic container.
@@ -573,13 +632,6 @@ export function buildScopeTree(
   if (mergedOptions.createSyntheticGroups) {
     processedTree = createSyntheticGroups(processedTree, true); // Pass true for the initial call
   }
-
-  console.log("Raw source code for:", filePath, /*fileText*/ "(text omitted)"); // Avoid logging full source
-  console.log(
-    "Final ScopeTree output for:",
-    filePath,
-    JSON.stringify(processedTree, null, 2) // Log the processed tree
-  );
 
   return processedTree; // Return the processed tree
 }
