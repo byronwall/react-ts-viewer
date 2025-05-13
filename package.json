@@ -2,13 +2,13 @@
   "name": "react-ts-code-analysis",
   "displayName": "React TypeScript Code Analysis",
   "description": "Provides static analysis and visualization for React/TypeScript codebases.",
-  "version": "0.0.1",
-  "publisher": "your-publisher-name",
-  "private": true,
+  "version": "0.1.1",
+  "publisher": "byronwall",
+  "private": false,
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-repo/react-ts-viewer.git"
+    "url": "https://github.com/byronwall/react-ts-viewer.git"
   },
   "engines": {
     "vscode": "^1.80.0"
@@ -135,10 +135,10 @@
     "vscode:prepublish": "npm run build",
     "build": "npm run compile-ext && npm run build-webview",
     "compile": "npm run compile-ext",
-    "compile-ext": "tsc -p ./",
+    "compile-ext": "esbuild ./src/extension.ts --bundle --outfile=./out/extension.js --platform=node --format=cjs --external:vscode --target=es2020 --sourcemap",
     "build-webview": "esbuild ./src/webview/main.tsx --bundle --outfile=./out/webview/bundle.js --format=iife --loader:.css=css --external:vscode",
     "watch": "npm-run-all -p watch-ext watch-webview",
-    "watch-ext": "tsc -watch -p ./",
+    "watch-ext": "esbuild ./src/extension.ts --bundle --outfile=./out/extension.js --platform=node --format=cjs --external:vscode --target=es2020 --sourcemap --watch",
     "watch-webview": "esbuild ./src/webview/main.tsx --bundle --outfile=./out/webview/bundle.js --format=iife --loader:.css=css --external:vscode --watch",
     "pretest": "npm run compile-ext && npm run lint",
     "lint": "eslint src --ext ts,tsx",
@@ -164,7 +164,6 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-syntax-highlighter": "15.6.1",
-    "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
   "dependencies": {
@@ -174,6 +173,7 @@
     "elkjs": "^0.10.0",
     "reactflow": "^11.11.3",
     "save-svg-as-png": "^1.4.17",
-    "ts-morph": "^22.0.0"
+    "ts-morph": "^22.0.0",
+    "typescript": "^5.4.5"
   }
 }

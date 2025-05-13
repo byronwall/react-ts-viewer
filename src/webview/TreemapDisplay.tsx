@@ -53,33 +53,6 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.Other]: "#a6cee3",
 };
 
-const materialVibrant: Record<NodeCategory, string> = {
-  [NodeCategory.Program]: "#2196f3", // blue
-  [NodeCategory.Module]: "#03a9f4", // light-blue
-  [NodeCategory.Class]: "#009688", // teal
-  [NodeCategory.Function]: "#4caf50", // green
-  [NodeCategory.ArrowFunction]: "#8bc34a", // light-green
-  [NodeCategory.Block]: "#ffc107", // amber
-  [NodeCategory.ControlFlow]: "#ff9800", // orange
-  [NodeCategory.Variable]: "#ff5722", // deep-orange
-  [NodeCategory.Call]: "#9c27b0", // purple
-  [NodeCategory.ReactComponent]: "#673ab7", // deep-purple
-  [NodeCategory.ReactHook]: "#607d8b", // blue-gray
-  [NodeCategory.JSX]: "#795548", // brown
-  [NodeCategory.JSXElementDOM]: "#cddc39",
-  [NodeCategory.JSXElementCustom]: "#e91e63",
-  [NodeCategory.Import]: "#00bcd4", // cyan
-  [NodeCategory.TypeAlias]: "#cddc39", // lime
-  [NodeCategory.Interface]: "#3f51b5", // indigo
-  [NodeCategory.Literal]: "#bdbdbd", // grey
-  [NodeCategory.SyntheticGroup]: "#9e9e9e", // grey (slightly darker for groups)
-  [NodeCategory.ConditionalBlock]: "#4db6ac",
-  [NodeCategory.IfClause]: "#ff8a65",
-  [NodeCategory.ElseIfClause]: "#7986cb",
-  [NodeCategory.ElseClause]: "#f06292",
-  [NodeCategory.Other]: "#e91e63", // pink
-};
-
 const okabeIto: Record<NodeCategory, string> = {
   [NodeCategory.Program]: "#000000", // black
   [NodeCategory.Module]: "#0072B2", // blue
@@ -164,7 +137,6 @@ const defaultPalette: Record<NodeCategory, string> = {
 export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
   Default: defaultPalette,
   "Pastel Set": pastelSet,
-  "Material Vibrant": materialVibrant,
   "Okabe-Ito": okabeIto,
   "Neutral with Accents": neutralAccents,
 };

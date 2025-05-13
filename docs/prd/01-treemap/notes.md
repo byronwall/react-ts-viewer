@@ -37,6 +37,8 @@ UX:
 - Export JSON should focus only on the rendered tree, not the entire code
 - Tooltip position is awful when tall, getting clipped by edges - likely need to implement a custom tooltip component based on mouse events
 - Ideally allow interaction with the tooltip - do not move with the mouse, but stay in the same position
+- Need to reset webview when run on a new file
+- Need to retain webview settings when changing tabs
 
 Tree creation
 

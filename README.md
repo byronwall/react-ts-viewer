@@ -6,6 +6,11 @@ See `docs/prd/00-init.md` for detailed requirements.
 
 ## Features (Planned)
 
+- **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
+  - Node sizes can represent lines of code or character counts, providing an intuitive overview of code distribution.
+  - Color-coded categories for different code elements (modules, components, functions, etc.).
+  - Interactive features like zoom, tooltips with detailed information (ID, category, value, source snippet), and customizable display settings.
+  - Export the treemap as a PNG image or the underlying data as JSON.
 - Component hierarchy visualization
 - Hook and state inspection
 - Props and data-flow tracing
