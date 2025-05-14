@@ -1027,11 +1027,11 @@ function groupRelatedNodes(
   const collectedGroups: {
     Imports: ScopeNode[];
     "Type defs": ScopeNode[];
-    Hooks: ScopeNode[];
+    // Hooks: ScopeNode[]; // Removed "Hooks" group
   } = {
     Imports: [],
     "Type defs": [],
-    Hooks: [],
+    // Hooks: [], // Removed "Hooks" group
   };
   const remainingNodes: ScopeNode[] = [];
 
@@ -1072,8 +1072,10 @@ function groupRelatedNodes(
       }
 
       if (isHookLike) {
-        collectedGroups["Hooks"].push(node);
-        assignedToGroup = true;
+        // Instead of adding to a "Hooks" group, add directly to remainingNodes
+        // collectedGroups["Hooks"].push(node);
+        // assignedToGroup = true;
+        // No longer assigning to a group, so these lines are effectively replaced by pushing to remainingNodes later
       }
     }
 
@@ -1087,7 +1089,7 @@ function groupRelatedNodes(
   const groupOrder: Array<keyof typeof collectedGroups> = [
     "Imports",
     "Type defs",
-    "Hooks",
+    // "Hooks", // Removed "Hooks" from groupOrder
   ];
 
   for (const groupName of groupOrder) {
