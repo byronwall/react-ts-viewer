@@ -41,7 +41,7 @@ import {
 import SettingsControl from "./SettingsControl";
 
 // Explicitly type CustomNodeProps to include width and height
-interface CustomNodeProps extends NodeProps {
+export interface CustomNodeProps extends NodeProps {
   width?: number;
   height?: number;
 }
@@ -49,6 +49,9 @@ interface CustomNodeProps extends NodeProps {
 // Import custom node components
 import { ScopeNode } from "../types";
 import ComponentNodeDisplay from "./ComponentNodeDisplay";
+import { FileContainerNodeDisplay } from "./FileContainerNodeDisplay";
+import { LibraryContainerNodeDisplay } from "./LibraryContainerNodeDisplay";
+import { ExportedItemNodeDisplay } from "./ExportedItemNodeDisplay";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
@@ -60,113 +63,6 @@ declare global {
     initialWorkspaceRoot?: string;
   }
 }
-
-// Placeholder components for new node types
-const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
-  const { getNodes } = useReactFlow();
-  const filePath = props.data?.filePath || props.data?.label || "";
-  const parts = filePath.split("/");
-  const fileName = parts.pop() || filePath;
-  const dirPath = parts.length > 0 ? parts.join("/") : "";
-
-  const childNodesCount = useMemo(() => {
-    const allNodes = getNodes();
-    return allNodes.filter((n) => n.parentId === props.id && !n.hidden).length;
-  }, [props.id, getNodes, props.data]);
-
-  return (
-    <div
-      style={{
-        padding: 5,
-        border: "1px solid #3E863E",
-        background: "#1f3d1f",
-        color: "#E0E0E0",
-        borderRadius: "5px",
-        width: props.width || nodeWidth,
-        height: props.height || nodeHeight,
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "flex-start",
-      }}
-    >
-      <strong style={{ fontSize: "0.9em", marginBottom: "1px" }}>
-        {fileName}
-      </strong>
-      {childNodesCount > 0 && (
-        <span
-          style={{ fontSize: "0.7em", color: "#A0A0A0", marginBottom: "2px" }}
-        >
-          ({childNodesCount} item{childNodesCount === 1 ? "" : "s"})
-        </span>
-      )}
-      {dirPath && (
-        <span style={{ fontSize: "0.65em", color: "#909090" }}>{dirPath}</span>
-      )}
-    </div>
-  );
-};
-
-const LibraryContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
-  const { getNodes } = useReactFlow();
-
-  const childNodesCount = useMemo(() => {
-    const allNodes = getNodes();
-    return allNodes.filter((n) => n.parentId === props.id && !n.hidden).length;
-  }, [props.id, getNodes, props.data]);
-
-  return (
-    <div
-      style={{
-        padding: 5,
-        border: "1px solid #8B4513",
-        background: "#4a2f19",
-        color: "#E0E0E0",
-        borderRadius: "5px",
-        width: props.width || nodeWidth,
-        height: props.height || nodeHeight,
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "flex-start",
-      }}
-    >
-      <strong style={{ fontSize: "0.9em", marginBottom: "1px" }}>
-        {props.data?.label || "Library"}
-      </strong>
-      {childNodesCount > 0 && (
-        <span
-          style={{ fontSize: "0.7em", color: "#A0A0A0", marginBottom: "2px" }}
-        >
-          ({childNodesCount} import{childNodesCount === 1 ? "" : "s"})
-        </span>
-      )}
-    </div>
-  );
-};
-
-const ExportedItemNodeDisplay: React.FC<CustomNodeProps> = (props) => {
-  return (
-    <div
-      style={{
-        padding: 10,
-        border: "1px solid purple",
-        background: "#f3e7f3",
-        borderRadius: "5px",
-        width: props.width || nodeWidth,
-        height: props.height || nodeHeight,
-      }}
-    >
-      <strong>Exported Item</strong> ({props.data?.actualType || "Unknown Type"}
-      )<br />
-      ID: {props.id}
-      <br />
-      Label: {props.data?.label || "N/A"}
-    </div>
-  );
-};
 
 // Interface for settings managed by the App
 interface AnalysisSettings {
@@ -200,8 +96,8 @@ const elkOptions = {
   "elk.padding": "[top=10,left=10,bottom=10,right=10]",
 };
 
-const nodeWidth = 172;
-const nodeHeight = 100;
+export const nodeWidth = 172;
+export const nodeHeight = 100;
 
 // Explicitly type the return value
 const getLayoutedElements = (
@@ -300,153 +196,21 @@ const getLayoutedElements = (
         edges: edges,
       };
     })
-    .catch((err) => {
+    .catch(() => {
       return;
     });
 };
 
-const transformDataForFlow = (
-  rawNodes: Node[],
-  rawEdges: Edge[]
-): { nodes: Node[]; edges: Edge[] } => {
-  const newNodes: Node[] = [];
-
-  rawNodes.forEach((rawNode) => {
-    let flowNodeType: string | undefined;
-    const dataPayload: any = { ...rawNode.data };
-    let decisionType = rawNode.data?.type;
-    if (
-      !decisionType &&
-      rawNode.type &&
-      !["default", "input", "output", "group"].includes(rawNode.type)
-    ) {
-      decisionType = rawNode.type;
-    }
-
-    if (!decisionType) {
-      if (
-        [
-          "FileContainerNode",
-          "LibraryContainerNode",
-          "ExportedItemNode",
-          "ComponentNode",
-        ].includes(rawNode.type || "")
-      ) {
-        flowNodeType = rawNode.type;
-      } else {
-        return;
-      }
-    }
-
-    if (!flowNodeType) {
-      switch (decisionType) {
-        case "File":
-          flowNodeType = "FileContainerNode";
-          dataPayload.conceptualType = "FileContainer";
-          break;
-        case "LibraryReferenceGroup":
-          flowNodeType = "LibraryContainerNode";
-          dataPayload.conceptualType = "LibraryContainer";
-          break;
-        case "Component":
-          flowNodeType = "ComponentNode";
-          dataPayload.conceptualType = "ExportedItem";
-          dataPayload.actualType = "Component";
-          break;
-        case "Hook":
-        case "Function":
-        case "Variable":
-          flowNodeType = "ExportedItemNode";
-          dataPayload.conceptualType = "ExportedItem";
-          dataPayload.actualType = decisionType;
-          break;
-        case "LibraryImport":
-          flowNodeType = "ExportedItemNode";
-          dataPayload.conceptualType = "LibraryImportItem";
-          dataPayload.actualType = rawNode.data?.label || decisionType;
-          break;
-        case "HookUsage":
-          return;
-        default:
-          if (
-            [
-              "FileContainerNode",
-              "LibraryContainerNode",
-              "ExportedItemNode",
-              "ComponentNode",
-            ].includes(decisionType ?? "")
-          ) {
-            flowNodeType = decisionType;
-            if (
-              decisionType === "FileContainerNode" &&
-              !dataPayload.conceptualType
-            )
-              dataPayload.conceptualType = "FileContainer";
-            else if (
-              decisionType === "LibraryContainerNode" &&
-              !dataPayload.conceptualType
-            )
-              dataPayload.conceptualType = "LibraryContainer";
-            else if (
-              (decisionType === "ExportedItemNode" ||
-                decisionType === "ComponentNode") &&
-              !dataPayload.conceptualType
-            )
-              dataPayload.conceptualType = "ExportedItem";
-          } else {
-            if (rawNode.data?.label) {
-              flowNodeType = "ExportedItemNode";
-              dataPayload.conceptualType = "UnknownExport";
-              dataPayload.actualType = String(decisionType);
-            } else {
-              return;
-            }
-          }
-      }
-    }
-
-    if (!flowNodeType) {
-      return;
-    }
-
-    let parentIdToAssign = rawNode.parentNode;
-    if (
-      flowNodeType === "FileContainerNode" ||
-      flowNodeType === "LibraryContainerNode"
-    ) {
-      parentIdToAssign = undefined;
-    }
-
-    const newNode: Node = {
-      ...rawNode,
-      type: flowNodeType,
-      data: dataPayload,
-      parentId: parentIdToAssign,
-      width: rawNode.width ?? nodeWidth,
-      height: rawNode.height ?? nodeHeight,
-    };
-    if (newNode.parentId) {
-      newNode.extent = "parent";
-    }
-    newNodes.push(newNode);
-  });
-
-  const newNodeIds = new Set(newNodes.map((n) => n.id));
-  const newEdges = rawEdges.filter((edge) => {
-    const sourceExists = newNodeIds.has(edge.source);
-    const targetExists = newNodeIds.has(edge.target);
-    return sourceExists && targetExists;
-  });
-
-  return { nodes: newNodes, edges: newEdges };
-};
-
 // Inner component to handle React Flow instance and layout
-const FlowCanvas: React.FC<{
+function FlowCanvas({
+  initialNodes,
+  initialEdges,
+  settings,
+}: {
   initialNodes: Node[];
   initialEdges: Edge[];
   settings: AnalysisSettings;
-}> = ({ initialNodes, initialEdges, settings }) => {
+}) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView } = useReactFlow();
@@ -475,7 +239,7 @@ const FlowCanvas: React.FC<{
             });
           }
         })
-        .catch((err) => {});
+        .catch(() => {});
     } else {
       setNodes([]);
       setEdges([]);
@@ -578,7 +342,7 @@ const FlowCanvas: React.FC<{
       <Background gap={12} size={1} />
     </ReactFlow>
   );
-};
+}
 
 const HEADER_HEIGHT = 60; // Define header height
 
