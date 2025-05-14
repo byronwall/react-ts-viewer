@@ -1,31 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-// import { ResponsiveTreeMapCanvas, TreeMapDatum } from "@nivo/treemap"; // TreeMapDatum might not be exported
 import {
-  ResponsiveTreeMap,
   ComputedNode,
   ComputedNodeWithoutStyles,
+  ResponsiveTreeMap,
 } from "@nivo/treemap";
+import React, { useCallback, useEffect, useState } from "react";
+import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../types"; // Assuming src/types.ts
+import { CodeBlock } from "./CodeBlock";
 import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleton
 
-// Import for save-svg-as-png if you install it
-import { saveSvgAsPng, svgAsPngUri } from "save-svg-as-png";
-
-// Import the new CodeBlock component
-import { CodeBlock } from "./CodeBlock";
-
-// Remove the standalone vscode API implementation - use the imported singleton instead
-// let vscodeApiInstance: any;
-// function getVsCodeApi() {
-//   if (!vscodeApiInstance) {
-//     // @ts-expect-error - Standard VS Code webview API acquisition
-//     vscodeApiInstance = acquireVsCodeApi();
-//   }
-//   return vscodeApiInstance;
-// }
-// const vscode = getVsCodeApi();
-
-// --- START: Color Palette Definitions ---
 const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.Program]: "#8dd3c7",
   [NodeCategory.Module]: "#ffffb3",
@@ -188,6 +171,9 @@ interface TreemapSettings {
   // New settings for depth limiting
   enableDepthLimit: boolean;
   maxDepth: number;
+  // New settings for node visibility
+  showImports: boolean;
+  showTypes: boolean;
 }
 
 interface TreemapDisplayProps {
@@ -656,6 +642,19 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
       return null;
     }
 
+    // Visibility checks for Synthetic Groups FIRST
+    if (originalNode.category === NodeCategory.SyntheticGroup) {
+      if (!settings.showImports && originalNode.label === "Imports") {
+        return null;
+      }
+      // Assuming "Type Definitions" is the label for the group.
+      // If it's "Type defs" or similar, this string needs to match exactly.
+      if (!settings.showTypes && originalNode.label === "Type defs") {
+        return null;
+      }
+    }
+
+    // THEN depth limit checks
     if (limitEnabled && currentDepth > maxDepthSetting) {
       return null; // Prune this node and its children
     }
@@ -753,7 +752,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   // Apply depth filtering if enabled
   const finalDisplayData = settings.enableDepthLimit
     ? transformNodeForDepthLimit(baseDisplayData, 0, settings.maxDepth, true)
-    : baseDisplayData;
+    : transformNodeForDepthLimit(baseDisplayData, 0, 0, false); // Apply visibility filters even if depth limit is off
 
   // Basic color scale based on category - extend as needed
   // const activePalette =
