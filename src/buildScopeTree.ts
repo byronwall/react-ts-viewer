@@ -25,6 +25,28 @@ const defaultBuildOptions: Required<BuildScopeTreeOptions> = {
   includeLiterals: false, // Literals often off by default due to volume
 };
 
+// Helper function to check for assignment operator kinds
+function isAssignmentOperatorKind(kind: ts.SyntaxKind): boolean {
+  return (
+    kind === ts.SyntaxKind.EqualsToken ||
+    kind === ts.SyntaxKind.PlusEqualsToken ||
+    kind === ts.SyntaxKind.MinusEqualsToken ||
+    kind === ts.SyntaxKind.AsteriskEqualsToken ||
+    kind === ts.SyntaxKind.AsteriskAsteriskEqualsToken ||
+    kind === ts.SyntaxKind.SlashEqualsToken ||
+    kind === ts.SyntaxKind.PercentEqualsToken ||
+    kind === ts.SyntaxKind.LessThanLessThanEqualsToken ||
+    kind === ts.SyntaxKind.GreaterThanGreaterThanEqualsToken ||
+    kind === ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken ||
+    kind === ts.SyntaxKind.AmpersandEqualsToken ||
+    kind === ts.SyntaxKind.BarEqualsToken ||
+    kind === ts.SyntaxKind.CaretEqualsToken ||
+    kind === ts.SyntaxKind.BarBarEqualsToken || // Logical OR assignment
+    kind === ts.SyntaxKind.AmpersandAmpersandEqualsToken || // Logical AND assignment
+    kind === ts.SyntaxKind.QuestionQuestionEqualsToken
+  ); // Nullish coalescing
+}
+
 function isScopeBoundary(node: ts.Node): boolean {
   return (
     ts.isSourceFile(node) ||
@@ -144,7 +166,7 @@ function mapKindToCategory(
   if (ts.isReturnStatement(node)) return NodeCategory.ReturnStatement;
   if (
     ts.isBinaryExpression(node) &&
-    ts.isAssignmentOperator(node.operatorToken.kind)
+    isAssignmentOperatorKind(node.operatorToken.kind)
   ) {
     return NodeCategory.Assignment;
   }
@@ -167,9 +189,28 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
     return "try";
   }
   if (ts.isCatchClause(node)) return "catch";
-  if (ts.isForStatement(node)) return "for";
-  if (ts.isForOfStatement(node)) return "for of";
-  if (ts.isForInStatement(node)) return "for in";
+  if (ts.isForStatement(node)) {
+    const init = node.initializer
+      ? node.initializer.getText(sourceFile).trim()
+      : "";
+    const cond = node.condition
+      ? node.condition.getText(sourceFile).trim()
+      : "";
+    const incr = node.incrementor
+      ? node.incrementor.getText(sourceFile).trim()
+      : "";
+    return `for (${init}; ${cond}; ${incr})`;
+  }
+  if (ts.isForOfStatement(node)) {
+    const init = node.initializer.getText(sourceFile).trim();
+    const expr = node.expression.getText(sourceFile).trim();
+    return `for (${init} of ${expr})`;
+  }
+  if (ts.isForInStatement(node)) {
+    const init = node.initializer.getText(sourceFile).trim();
+    const expr = node.expression.getText(sourceFile).trim();
+    return `for (${init} in ${expr})`;
+  }
   if (ts.isWhileStatement(node)) return "while";
   if (ts.isDoStatement(node)) return "do";
   if (ts.isSwitchStatement(node)) return "switch";
@@ -273,7 +314,7 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   // New: Label for AssignmentExpression
   if (
     ts.isBinaryExpression(node) &&
-    ts.isAssignmentOperator(node.operatorToken.kind)
+    isAssignmentOperatorKind(node.operatorToken.kind)
   ) {
     const leftText = node.left.getText(sourceFile);
     const operatorText = node.operatorToken.getText(sourceFile);
@@ -546,6 +587,110 @@ export function buildScopeTree(
     }
     // --- END: Special handling for IfStatement chains ---
 
+    // --- START: Special handling for TryStatement ---
+    if (ts.isTryStatement(node)) {
+      const startPos = node.getStart(sf, false);
+      const endPos = node.getEnd();
+      const category = NodeCategory.ControlFlow; // Or mapKindToCategory for consistency
+
+      const tryNode: ScopeNode = {
+        id: `${filePath}:${startPos}-${endPos}`,
+        kind: node.kind,
+        category: category,
+        label: deriveLabel(node, sf), // Should be "try"
+        loc: {
+          start: lineColOfPos(sf, startPos),
+          end: lineColOfPos(sf, endPos),
+        },
+        source: fileText.substring(startPos, endPos),
+        value: 1,
+        meta: collectMeta(node, category, sf),
+        children: [],
+      };
+      parentNodeInTree.children.push(tryNode);
+
+      // Hoist children of the tryBlock
+      if (node.tryBlock) {
+        // tryBlock is ts.Block
+        node.tryBlock.statements.forEach((statement) =>
+          walk(statement, tryNode, sf)
+        );
+      }
+
+      // Process catchClause as a child of tryNode
+      if (node.catchClause) {
+        walk(node.catchClause, tryNode, sf); // catchClause handler will manage its own block's children
+      }
+
+      // Process finallyBlock as a child of tryNode
+      if (node.finallyBlock) {
+        const finallyBlock = node.finallyBlock; // Type is ts.Block
+        const finallyStartPos = finallyBlock.getStart(sf);
+        const finallyEndPos = finallyBlock.getEnd();
+        const finallyNodeId = `${filePath}:${finallyStartPos}-${finallyEndPos}`;
+
+        const finallyScopeNode: ScopeNode = {
+          id: finallyNodeId,
+          kind: finallyBlock.kind, // ts.SyntaxKind.Block
+          category: NodeCategory.Block, // Or a new FinallyCategory, but Block seems consistent
+          label: "finally", // Explicit label
+          loc: {
+            start: lineColOfPos(sf, finallyStartPos),
+            end: lineColOfPos(sf, finallyEndPos),
+          },
+          source: fileText.substring(finallyStartPos, finallyEndPos),
+          value: 1,
+          children: [],
+        };
+        tryNode.children.push(finallyScopeNode);
+        // Hoist children of the finallyBlock
+        finallyBlock.statements.forEach((statement) =>
+          walk(statement, finallyScopeNode, sf)
+        );
+      }
+      return;
+    }
+    // --- END: Special handling for TryStatement ---
+
+    // --- START: Special handling for ForStatement, ForOfStatement, ForInStatement ---
+    if (
+      ts.isForStatement(node) ||
+      ts.isForOfStatement(node) ||
+      ts.isForInStatement(node)
+    ) {
+      const startPos = node.getStart(sf, false);
+      const endPos = node.getEnd();
+      const category = NodeCategory.ControlFlow; // mapKindToCategory(node, sf);
+
+      const loopNode: ScopeNode = {
+        id: `${filePath}:${startPos}-${endPos}`,
+        kind: node.kind,
+        category: category,
+        label: deriveLabel(node, sf), // Uses updated deriveLabel for detailed loop header
+        loc: {
+          start: lineColOfPos(sf, startPos),
+          end: lineColOfPos(sf, endPos),
+        },
+        source: fileText.substring(startPos, endPos),
+        value: 1,
+        meta: collectMeta(node, category, sf),
+        children: [],
+      };
+      parentNodeInTree.children.push(loopNode);
+
+      // Process only the statement (body) of the loop as children of loopNode
+      const statement = node.statement; // ts.ForStatement.statement, ts.ForOfStatement.statement, etc.
+      if (ts.isBlock(statement)) {
+        statement.statements.forEach((childStmt) =>
+          walk(childStmt, loopNode, sf)
+        );
+      } else {
+        walk(statement, loopNode, sf);
+      }
+      return; // Prevent default ts.forEachChild on the ForStatement/ForOfStatement/ForInStatement itself
+    }
+    // --- END: Special handling for ForStatement, ForOfStatement, ForInStatement ---
+
     let currentContainer = parentNodeInTree;
     const category = mapKindToCategory(node, sf);
 
@@ -564,9 +709,16 @@ export function buildScopeTree(
       category === NodeCategory.Interface ||
       category === NodeCategory.ReturnStatement ||
       category === NodeCategory.Assignment ||
-      (category === NodeCategory.ControlFlow && !ts.isIfStatement(node)) // Process other control flows
+      (category === NodeCategory.ControlFlow &&
+        !ts.isIfStatement(node) && // Already handled
+        !ts.isTryStatement(node) && // Already handled
+        !ts.isForStatement(node) && // Already handled
+        !ts.isForOfStatement(node) && // Already handled
+        !ts.isForInStatement(node) && // Already handled
+        !ts.isCatchClause(node)) // CatchClause has its own specific handling below
     ) {
       // Special handling: For CatchClause, skip creating a node for the catch parameter (error variable)
+      // AND hoist children of its block.
       if (ts.isCatchClause(node)) {
         const startPos = node.getStart(sf, /*includeJsDoc*/ false);
         const endPos = node.getEnd();
@@ -591,7 +743,7 @@ export function buildScopeTree(
         };
         // Only walk the block (body) of the catch, not the catch variable
         if (node.block) {
-          walk(node.block, newNode, sf);
+          node.block.statements.forEach((stmt) => walk(stmt, newNode, sf)); // New: hoists block's children
         }
         parentNodeInTree.children.push(newNode);
         return;
@@ -668,11 +820,11 @@ export function buildScopeTree(
 
 // Example Usage (for testing - remove or comment out in production extension code):
 // if (require.main === module) {
-//   const exampleFilePath = path.join(__dirname, '../../src/webview/App.tsx'); // Adjust path as needed
+//   const exampleFilePath = path.join(__dirname, '../../src/__tests__/__fixtures__/controlFlows.ts'); // Adjust path as needed
 //   if (fs.existsSync(exampleFilePath)) {
 //     const tree = buildScopeTree(exampleFilePath);
-//     fs.writeFileSync(path.join(__dirname, 'scopeTreeOutput.json'), JSON.stringify(tree, null, 2));
-//     console.log('Scope tree generated to scopeTreeOutput.json');
+//     fs.writeFileSync(path.join(__dirname, 'scopeTreeOutput_controlFlows.json'), JSON.stringify(tree, null, 2));
+//     console.log('Scope tree generated to scopeTreeOutput_controlFlows.json');
 //   } else {
 //     console.error('Example file not found:', exampleFilePath);
 //   }
