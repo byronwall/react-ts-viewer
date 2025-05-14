@@ -8,6 +8,7 @@ import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../types"; // Assuming src/types.ts
 import { CodeBlock } from "./CodeBlock";
 import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleton
+import { TreemapSettings } from "./settingsConfig"; // Corrected import path
 
 const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.Program]: "#8dd3c7",
@@ -145,36 +146,6 @@ const TreemapLegendPopover: React.FC<TreemapLegendPopoverProps> = ({
   );
 };
 // --- END: TreemapLegendPopover Component ---
-
-interface TreemapSettings {
-  tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
-  leavesOnly: boolean;
-  innerPadding: number;
-  outerPadding: number;
-  enableLabel: boolean;
-  labelSkipSize: number;
-  nodeOpacity: number;
-  borderWidth: number;
-  // Tooltip settings
-  enableTooltip: boolean;
-  showTooltipId: boolean;
-  showTooltipCategory: boolean;
-  showTooltipValue: boolean;
-  showTooltipLines: boolean;
-  showTooltipSourceSnippet: boolean;
-  tooltipSourceSnippetLength: number;
-  // New settings for label rendering
-  minLabelHeight: number; // Minimum height of a node to display a label
-  truncateLabel: boolean; // Whether to truncate labels that are too long
-  labelMaxChars: number; // Absolute maximum characters for a label, respected during truncation
-  avgCharPixelWidth: number; // Estimated average pixel width of a character for truncation based on node width
-  // New settings for depth limiting
-  enableDepthLimit: boolean;
-  maxDepth: number;
-  // New settings for node visibility
-  showImports: boolean;
-  showTypes: boolean;
-}
 
 interface TreemapDisplayProps {
   data: ScopeNode;
