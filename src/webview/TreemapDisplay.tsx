@@ -303,11 +303,14 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 
 // Helper function to generate display labels based on node category and PRD notes
 const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
-  const { category, label, loc, source, kind } = nodeData; // children is part of nodeData
+  const { category, label, loc, source, kind, children } = nodeData; // children is part of nodeData
   console.log(
     `getNodeDisplayLabel: Received node - Kind: ${kind}, Category: ${category}, Label: ${label}`
   ); // Log input
-  const lineRange = loc ? ` [${loc.start.line}-${loc.end.line}]` : "";
+  const lineRange =
+    loc && children && children.length > 0
+      ? ` [${loc.start.line}-${loc.end.line}]`
+      : "";
 
   switch (category) {
     case NodeCategory.JSX:
@@ -383,6 +386,7 @@ interface NodePartsForLabeling {
   data: ScopeNode;
   width: number;
   height: number;
+  // depth: number; // Removed for nesting depth
 }
 
 // Helper function to dynamically determine node label display based on size and settings
@@ -805,9 +809,10 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           ) => {
             const displayLabel = getDynamicNodeDisplayLabel(
               {
-                data: node.data as ScopeNode,
+                data: node.data as ScopeNode, // Use the node from our tree
                 width: node.width,
                 height: node.height,
+                // depth: foundInfo.depth, // Removed
               },
               settings
             );
@@ -822,12 +827,12 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               "label" | "parentLabel"
             >
           ) => {
-            // console.log("node", node); // Keep for debugging if needed
             const displayLabel = getDynamicNodeDisplayLabel(
               {
-                data: node.data as ScopeNode,
+                data: node.data as ScopeNode, // Use the node from our tree
                 width: node.width,
                 height: node.height,
+                // depth: foundInfo.depth, // Removed
               },
               settings
             );
