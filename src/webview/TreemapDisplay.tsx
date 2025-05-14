@@ -275,6 +275,9 @@ interface TreemapSettings {
   truncateLabel: boolean; // Whether to truncate labels that are too long
   labelMaxChars: number; // Absolute maximum characters for a label, respected during truncation
   avgCharPixelWidth: number; // Estimated average pixel width of a character for truncation based on node width
+  // New settings for depth limiting
+  enableDepthLimit: boolean;
+  maxDepth: number;
 }
 
 interface TreemapDisplayProps {
@@ -303,82 +306,105 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 
 // Helper function to generate display labels based on node category and PRD notes
 const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
-  const { category, label, loc, source, kind, children } = nodeData; // children is part of nodeData
+  const { category, label, loc, source, kind, children, meta } = nodeData; // children is part of nodeData, meta added
   console.log(
     `getNodeDisplayLabel: Received node - Kind: ${kind}, Category: ${category}, Label: ${label}`
-  ); // Log input
+  );
   const lineRange =
     loc && children && children.length > 0
       ? ` [${loc.start.line}-${loc.end.line}]`
       : "";
 
+  let baseLabel = "";
+
   switch (category) {
     case NodeCategory.JSX:
-      return `<${label || "JSXElement"}>${lineRange}`;
+      baseLabel = `<${label || "JSXElement"}>${lineRange}`;
+      break;
     case NodeCategory.Function:
-      return `${label || "fn"}()${lineRange}`;
+      baseLabel = `${label || "fn"}()${lineRange}`;
+      break;
     case NodeCategory.ArrowFunction:
-      // If label is generic like "ArrowFunction" or empty, use default, else use specific label
-      return (
+      baseLabel =
         (label && label !== "ArrowFunction" ? `${label}() => {}` : `() => {}`) +
-        lineRange
-      );
+        lineRange;
+      break;
     case NodeCategory.Variable:
-      return `[${label || "var"}]${lineRange}`;
+      baseLabel = `[${label || "var"}]${lineRange}`;
+      break;
     case NodeCategory.Class:
-      return `[${label || "class"}]${lineRange}`;
+      baseLabel = `[${label || "class"}]${lineRange}`;
+      break;
     case NodeCategory.Import:
-      return `[${label || "import"}]${lineRange}`;
-    // For exports, we don't have a specific category.
-    // The label of the Variable, Function, or Class node would be the export name.
-    // We can't easily add an "Export: " prefix here without more info (e.g., nodeData.meta.isExported)
-    // So, we rely on the specific category's formatting.
+      baseLabel = `[${label || "import"}]${lineRange}`;
+      break;
     case NodeCategory.Program:
-      return `${label}${lineRange}`; // Usually the filename
+      baseLabel = `${label}${lineRange}`; // Usually the filename
+      break;
     case NodeCategory.Module:
-      return `Module: ${label}${lineRange}`;
+      baseLabel = `Module: ${label}${lineRange}`;
+      break;
     case NodeCategory.Block:
-      // Blocks usually don't have a meaningful label themselves
-      // For very small blocks, an empty string might be better if they are numerous.
-      return loc && loc.start.line === loc.end.line
-        ? `Block (inline)${lineRange}`
-        : `Block${lineRange}`;
+      baseLabel =
+        loc && loc.start.line === loc.end.line
+          ? `Block (inline)${lineRange}`
+          : `Block${lineRange}`;
+      break;
     case NodeCategory.ControlFlow:
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     case NodeCategory.Call:
-      return `${label || "call"}()${lineRange}`;
+      baseLabel = `${label || "call"}()${lineRange}`;
+      break;
     case NodeCategory.ReactComponent:
-      return `<${label || "Component"} />${lineRange}`;
+      baseLabel = `<${label || "Component"} />${lineRange}`;
+      break;
     case NodeCategory.ReactHook:
-      return `${label || "useHook"}()${lineRange}`;
+      baseLabel = `${label || "useHook"}()${lineRange}`;
+      break;
     case NodeCategory.TypeAlias:
-      return `type ${label}${lineRange}`;
+      baseLabel = `type ${label}${lineRange}`;
+      break;
     case NodeCategory.Interface:
-      return `interface ${label}${lineRange}`;
+      baseLabel = `interface ${label}${lineRange}`;
+      break;
     case NodeCategory.Literal:
-      // For literals, the 'source' might be more descriptive if 'label' is generic
-      // Ensure 'source' is available on Omit<ScopeNode, 'children'> if used like this
-      return `Literal: ${label !== "Literal" && label ? label : source ? source.substring(0, 20) : ""}${lineRange}`;
+      baseLabel = `Literal: ${label !== "Literal" && label ? label : source ? source.substring(0, 20) : ""}${lineRange}`;
+      break;
     case NodeCategory.SyntheticGroup:
-      return `Group: ${label}${lineRange}`;
+      baseLabel = `Group: ${label}${lineRange}`;
+      break;
     case NodeCategory.JSXElementDOM:
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     case NodeCategory.JSXElementCustom:
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     case NodeCategory.ConditionalBlock: {
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     }
     case NodeCategory.IfClause:
     case NodeCategory.ElseClause:
     case NodeCategory.ElseIfClause:
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     case NodeCategory.ReturnStatement:
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     case NodeCategory.Assignment:
-      return `${label}${lineRange}`;
+      baseLabel = `${label}${lineRange}`;
+      break;
     default:
-      return `${category}: ${label}${lineRange}`;
+      baseLabel = `${category}: ${label}${lineRange}`;
+      break;
   }
+
+  // Prepend glyph if constrained by depth
+  if (meta?.isConstrainedByDepth) {
+    return `▼ ${baseLabel}`;
+  }
+  return baseLabel;
 };
 
 // Define a type for the parts of a Nivo node needed for labeling
@@ -668,10 +694,17 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [goUpOneLevel]);
 
-  // New useEffect for tooltip toggle shortcut
+  // useEffect for tooltip toggle shortcut (keep this one)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "t") {
+      if (
+        event.key === "t" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
+        // Ensure no modifiers
         event.preventDefault();
         onSettingsChange("enableTooltip", !settings.enableTooltip);
         vscodeApi.postMessage({
@@ -687,25 +720,168 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [settings.enableTooltip, onSettingsChange, vscodeApi]);
 
+  // New useEffect for depth limit shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if the event target is an input, select, or textarea
+      const target = event.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "SELECT" ||
+          target.tagName === "TEXTAREA")
+      ) {
+        // If the event originates from an input field, don't process the shortcut
+        return;
+      }
+
+      const keyNum = parseInt(event.key, 10);
+      if (
+        !isNaN(keyNum) &&
+        keyNum >= 0 &&
+        keyNum <= 9 &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+        if (keyNum === 0) {
+          onSettingsChange("enableDepthLimit", false);
+          // vscodeApi.postMessage({
+          //   command: "showInformationMessage",
+          //   text: "Treemap depth limit disabled.",
+          // });
+        } else {
+          onSettingsChange("enableDepthLimit", true);
+          onSettingsChange("maxDepth", keyNum);
+          // vscodeApi.postMessage({
+          //   command: "showInformationMessage",
+          //   text: `Treemap depth limit set to ${keyNum}.`,
+          // });
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onSettingsChange, vscodeApi]);
+
   const displayData = isolatedNode || initialData;
 
-  // Basic color scale based on category - extend as needed
-  // const categoryColors: Record<NodeCategory, string> = {
-  //   [NodeCategory.Program]: "#1f77b4",
-  //   [NodeCategory.Module]: "#aec7e8",
-  //   [NodeCategory.Class]: "#ff7f0e",
-  //   [NodeCategory.Function]: "#ffbb78",
-  //   [NodeCategory.ArrowFunction]: "#2ca02c",
-  //   [NodeCategory.Block]: "#98df8a",
-  //   [NodeCategory.ControlFlow]: "#d62728",
-  //   [NodeCategory.Variable]: "#ff9896",
-  //   [NodeCategory.Call]: "#9467bd",
-  //   [NodeCategory.ReactComponent]: "#c5b0d5",
-  //   [NodeCategory.ReactHook]: "#8c564b",
-  //   [NodeCategory.JSX]: "#c49c94",
-  //   [NodeCategory.Other]: "#7f7f7f",
-  // };
+  // Helper function to recursively transform/filter nodes based on depth limit
+  const transformNodeForDepthLimit = (
+    originalNode: ScopeNode | null,
+    currentDepth: number,
+    maxDepthSetting: number,
+    limitEnabled: boolean
+  ): ScopeNode | null => {
+    if (!originalNode) {
+      return null;
+    }
 
+    if (limitEnabled && currentDepth > maxDepthSetting) {
+      return null; // Prune this node and its children
+    }
+
+    // If the node itself is kept, process its children
+    let newChildren: ScopeNode[] | undefined = undefined;
+    let isConstrained = false; // Default to not constrained
+
+    const hadOriginalChildren =
+      originalNode.children && originalNode.children.length > 0;
+
+    if (hadOriginalChildren) {
+      if (limitEnabled) {
+        // Case 1: Node is AT the maxDepth setting.
+        if (currentDepth === maxDepthSetting) {
+          isConstrained = true; // This node is at the limit, its direct children are pruned.
+          newChildren = undefined;
+        }
+        // Case 2: Node is BELOW the maxDepth setting.
+        else if (currentDepth < maxDepthSetting) {
+          const processedChildren = originalNode
+            .children! // Safe due to hadOriginalChildren
+            .map((child) =>
+              transformNodeForDepthLimit(
+                child,
+                currentDepth + 1,
+                maxDepthSetting,
+                limitEnabled
+              )
+            )
+            .filter((child): child is ScopeNode => child !== null);
+
+          if (processedChildren.length === 0) {
+            // All children were pruned by deeper limits.
+            isConstrained = true;
+            newChildren = undefined;
+          } else {
+            newChildren = processedChildren;
+            // isConstrained remains false as it has visible children.
+          }
+        }
+        // Case 3: currentDepth > maxDepthSetting (This node itself should have been pruned by the entry check)
+        // This path should ideally not be reached if the entry pruning `if (limitEnabled && currentDepth > maxDepthSetting) return null;` works.
+        // If it is reached, it means children are pruned. Consider it constrained.
+        else {
+          isConstrained = true;
+          newChildren = undefined;
+        }
+      } else {
+        // limitEnabled is false
+        // Process children normally without depth constraints
+        newChildren = originalNode
+          .children! // Safe due to hadOriginalChildren
+          .map((child) =>
+            transformNodeForDepthLimit(
+              child,
+              currentDepth + 1,
+              maxDepthSetting,
+              limitEnabled
+            )
+          ) // limitEnabled is false
+          .filter((child): child is ScopeNode => child !== null);
+        if (newChildren.length === 0) newChildren = undefined;
+        // isConstrained remains false
+      }
+    } else {
+      // No original children
+      // isConstrained remains false
+      newChildren = undefined; // Ensure consistency, though originalNode.children was empty/undefined
+    }
+
+    // Create a new node with potentially filtered children and updated meta
+    // Preserve other meta properties and explicitly manage isConstrainedByDepth
+    const existingMeta = originalNode.meta || {};
+    const updatedMeta: Partial<
+      typeof existingMeta & { isConstrainedByDepth?: boolean }
+    > = { ...existingMeta };
+
+    if (isConstrained) {
+      updatedMeta.isConstrainedByDepth = true;
+    } else {
+      delete updatedMeta.isConstrainedByDepth; // Remove the flag if not constrained
+    }
+
+    return {
+      ...originalNode,
+      children: newChildren,
+      // Assign meta only if it has properties or was originally defined and still has properties after potential deletion
+      meta: Object.keys(updatedMeta).length > 0 ? updatedMeta : undefined,
+    } as ScopeNode;
+  };
+
+  const baseDisplayData = isolatedNode || initialData;
+
+  // Apply depth filtering if enabled
+  const finalDisplayData = settings.enableDepthLimit
+    ? transformNodeForDepthLimit(baseDisplayData, 0, settings.maxDepth, true)
+    : baseDisplayData;
+
+  // Basic color scale based on category - extend as needed
   const activePalette =
     availablePalettes[settings.colorPalette] || defaultPalette;
 
@@ -791,189 +967,199 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         }}
         className="nivo-treemap-container"
       >
-        <ResponsiveTreeMap
-          data={displayData}
-          orientLabel={false}
-          identity="id"
-          value="value"
-          valueFormat=".02s"
-          margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-          labelTextColor={(
-            node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-          ) => getContrastingTextColor(node.color)}
-          parentLabelTextColor={(
-            node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-          ) => getContrastingTextColor(node.color)}
-          parentLabel={(
-            node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-          ) => {
-            const displayLabel = getDynamicNodeDisplayLabel(
-              {
-                data: node.data as ScopeNode, // Use the node from our tree
-                width: node.width,
-                height: node.height,
-                // depth: foundInfo.depth, // Removed
-              },
-              settings
-            );
-            console.log(
-              `Treemap Rendering - Parent Label: ${displayLabel} for node ID: ${node.id}`
-            ); // Log final label
-            return displayLabel;
-          }}
-          label={(
-            node: Omit<
-              ComputedNodeWithoutStyles<ScopeNode>,
-              "label" | "parentLabel"
-            >
-          ) => {
-            const displayLabel = getDynamicNodeDisplayLabel(
-              {
-                data: node.data as ScopeNode, // Use the node from our tree
-                width: node.width,
-                height: node.height,
-                // depth: foundInfo.depth, // Removed
-              },
-              settings
-            );
-            console.log(
-              `Treemap Rendering - Leaf Label: ${displayLabel} for node ID: ${node.id}`
-            ); // Log final label
-            return displayLabel;
-          }}
-          colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
-            const category = nodeWithData.data.category;
-            // return categoryColors[category] || categoryColors[NodeCategory.Other];
-            return activePalette[category] || activePalette[NodeCategory.Other];
-          }}
-          borderColor={{
-            from: "color",
-            modifiers: [["darker", 0.8]],
-          }}
-          onClick={(node, event) =>
-            handleNodeClick(node, event as React.MouseEvent)
-          }
-          tooltip={
-            settings.enableTooltip
-              ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
-                  const scopeNode = node.data;
-                  const snippetLength = Math.max(
-                    0,
-                    settings.tooltipSourceSnippetLength
-                  );
-                  return (
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        background: "white",
-                        color: "#333",
-                        border: "1px solid #ccc",
-                        borderRadius: "3px",
-                        fontSize: "12px",
-                        maxWidth: "400px",
-                        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-                      }}
-                    >
-                      {settings.showTooltipId && (
-                        <>
-                          <strong>{scopeNode.id.split(":").pop()}</strong>
-                          {settings.showTooltipCategory &&
-                            ` (${scopeNode.category})`}
-                          <br />
-                        </>
-                      )}
-                      {!settings.showTooltipId &&
-                        settings.showTooltipCategory && (
+        {finalDisplayData ? (
+          <ResponsiveTreeMap
+            data={finalDisplayData}
+            orientLabel={false}
+            identity="id"
+            value="value"
+            valueFormat=".02s"
+            margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+            labelTextColor={(
+              node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+            ) => getContrastingTextColor(node.color)}
+            parentLabelTextColor={(
+              node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+            ) => getContrastingTextColor(node.color)}
+            parentLabel={(
+              node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
+            ) => {
+              const displayLabel = getDynamicNodeDisplayLabel(
+                {
+                  data: node.data as ScopeNode, // Use the node from our tree
+                  width: node.width,
+                  height: node.height,
+                  // depth: foundInfo.depth, // Removed
+                },
+                settings
+              );
+              console.log(
+                `Treemap Rendering - Parent Label: ${displayLabel} for node ID: ${node.id}`
+              ); // Log final label
+              return displayLabel;
+            }}
+            label={(
+              node: Omit<
+                ComputedNodeWithoutStyles<ScopeNode>,
+                "label" | "parentLabel"
+              >
+            ) => {
+              const displayLabel = getDynamicNodeDisplayLabel(
+                {
+                  data: node.data as ScopeNode, // Use the node from our tree
+                  width: node.width,
+                  height: node.height,
+                  // depth: foundInfo.depth, // Removed
+                },
+                settings
+              );
+              console.log(
+                `Treemap Rendering - Leaf Label: ${displayLabel} for node ID: ${node.id}`
+              ); // Log final label
+              return displayLabel;
+            }}
+            colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
+              const category = nodeWithData.data.category;
+              // return categoryColors[category] || categoryColors[NodeCategory.Other];
+              return (
+                activePalette[category] || activePalette[NodeCategory.Other]
+              );
+            }}
+            borderColor={{
+              from: "color",
+              modifiers: [["darker", 0.8]],
+            }}
+            onClick={(node, event) =>
+              handleNodeClick(node, event as React.MouseEvent)
+            }
+            tooltip={
+              settings.enableTooltip
+                ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
+                    const scopeNode = node.data;
+                    const snippetLength = Math.max(
+                      0,
+                      settings.tooltipSourceSnippetLength
+                    );
+                    return (
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          background: "white",
+                          color: "#333",
+                          border: "1px solid #ccc",
+                          borderRadius: "3px",
+                          fontSize: "12px",
+                          maxWidth: "400px",
+                          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                        }}
+                      >
+                        {settings.showTooltipId && (
                           <>
-                            <strong>{scopeNode.category}</strong>
+                            <strong>{scopeNode.id.split(":").pop()}</strong>
+                            {settings.showTooltipCategory &&
+                              ` (${scopeNode.category})`}
                             <br />
                           </>
                         )}
-                      {settings.showTooltipValue && (
-                        <>
-                          Value: {node.formattedValue} ({scopeNode.value} chars)
-                          <br />
-                        </>
-                      )}
-                      {settings.showTooltipLines && (
-                        <>
-                          Lines: {scopeNode.loc.start.line} -{" "}
-                          {scopeNode.loc.end.line}
-                          <br />
-                        </>
-                      )}
-                      {(scopeNode.meta?.collapsed ||
-                        scopeNode.meta?.syntheticGroup) && (
-                        <div
-                          style={{
-                            marginTop: "5px",
-                            paddingTop: "5px",
-                            borderTop: "1px solid #eee",
-                            color: "#555",
-                          }}
-                        >
-                          {scopeNode.meta?.collapsed && (
-                            <div style={{ fontStyle: "italic" }}>
-                              Collapsed{" "}
-                              {scopeNode.meta.originalCategory ||
-                                scopeNode.category}
-                              {scopeNode.meta.collapsed === "arrowFunction" &&
-                                scopeNode.meta.call && (
-                                  <> (calls: {scopeNode.meta.call})</>
-                                )}
-                            </div>
+                        {!settings.showTooltipId &&
+                          settings.showTooltipCategory && (
+                            <>
+                              <strong>{scopeNode.category}</strong>
+                              <br />
+                            </>
                           )}
-                          {scopeNode.meta?.syntheticGroup && (
-                            <div style={{ fontWeight: "bold" }}>
-                              Group containing {scopeNode.meta.contains} nodes
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {settings.showTooltipSourceSnippet &&
-                        scopeNode.source && (
+                        {settings.showTooltipValue && (
                           <>
-                            <div
-                              style={{
-                                marginTop: "5px",
-                                paddingTop: "5px",
-                                borderTop: "1px solid #eee",
-                              }}
-                            >
-                              Source snippet (first {snippetLength} chars):
-                            </div>
-                            <div
-                              style={{
-                                maxHeight: "200px", // Example max height for the block
-                                overflowY: "auto",
-                                background: "#f0f0f0", // Background for the container
-                                padding: "5px",
-                                marginTop: "3px",
-                              }}
-                            >
-                              <CodeBlock
-                                raw={scopeNode.source.trim()}
-                                lang="tsx"
-                              />
-                            </div>
+                            Value: {node.formattedValue} ({scopeNode.value}{" "}
+                            chars)
+                            <br />
                           </>
                         )}
-                    </div>
-                  );
-                }
-              : (node) => null
-          }
-          isInteractive={true}
-          animate={false}
-          tile={settings.tile}
-          leavesOnly={settings.leavesOnly}
-          innerPadding={settings.innerPadding}
-          outerPadding={settings.outerPadding}
-          enableLabel={settings.enableLabel}
-          labelSkipSize={settings.labelSkipSize}
-          nodeOpacity={settings.nodeOpacity}
-          borderWidth={settings.borderWidth}
-        />
+                        {settings.showTooltipLines && (
+                          <>
+                            Lines: {scopeNode.loc.start.line} -{" "}
+                            {scopeNode.loc.end.line}
+                            <br />
+                          </>
+                        )}
+                        {(scopeNode.meta?.collapsed ||
+                          scopeNode.meta?.syntheticGroup) && (
+                          <div
+                            style={{
+                              marginTop: "5px",
+                              paddingTop: "5px",
+                              borderTop: "1px solid #eee",
+                              color: "#555",
+                            }}
+                          >
+                            {scopeNode.meta?.collapsed && (
+                              <div style={{ fontStyle: "italic" }}>
+                                Collapsed{" "}
+                                {scopeNode.meta.originalCategory ||
+                                  scopeNode.category}
+                                {scopeNode.meta.collapsed === "arrowFunction" &&
+                                  scopeNode.meta.call && (
+                                    <> (calls: {scopeNode.meta.call})</>
+                                  )}
+                              </div>
+                            )}
+                            {scopeNode.meta?.syntheticGroup && (
+                              <div style={{ fontWeight: "bold" }}>
+                                Group containing {scopeNode.meta.contains} nodes
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {settings.showTooltipSourceSnippet &&
+                          scopeNode.source && (
+                            <>
+                              <div
+                                style={{
+                                  marginTop: "5px",
+                                  paddingTop: "5px",
+                                  borderTop: "1px solid #eee",
+                                }}
+                              >
+                                Source snippet (first {snippetLength} chars):
+                              </div>
+                              <div
+                                style={{
+                                  maxHeight: "200px", // Example max height for the block
+                                  overflowY: "auto",
+                                  background: "#f0f0f0", // Background for the container
+                                  padding: "5px",
+                                  marginTop: "3px",
+                                }}
+                              >
+                                <CodeBlock
+                                  raw={scopeNode.source.trim()}
+                                  lang="tsx"
+                                />
+                              </div>
+                            </>
+                          )}
+                      </div>
+                    );
+                  }
+                : (node) => null
+            }
+            isInteractive={true}
+            animate={false}
+            tile={settings.tile}
+            leavesOnly={settings.leavesOnly}
+            innerPadding={settings.innerPadding}
+            outerPadding={settings.outerPadding}
+            enableLabel={settings.enableLabel}
+            labelSkipSize={settings.labelSkipSize}
+            nodeOpacity={settings.nodeOpacity}
+            borderWidth={settings.borderWidth}
+          />
+        ) : (
+          <div style={{ textAlign: "center", padding: "20px", color: "#ccc" }}>
+            No data to display (possibly all filtered by depth limit or data is
+            null).
+          </div>
+        )}
       </div>
       {/* Render the Popover */}
       <TreemapLegendPopover

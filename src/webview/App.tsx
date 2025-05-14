@@ -79,6 +79,9 @@ interface TreemapSettings {
   truncateLabel: boolean;
   labelMaxChars: number;
   avgCharPixelWidth: number;
+  // New settings for depth limiting from TreemapDisplay
+  enableDepthLimit: boolean;
+  maxDepth: number;
 }
 
 // Global declarations specific to App.tsx initialization
@@ -275,6 +278,9 @@ const defaultTreemapSettings: TreemapSettings = {
   truncateLabel: true, // Default to enable label truncation
   labelMaxChars: 128, // Default max characters for a label
   avgCharPixelWidth: 6, // Default estimated average pixel width of a character
+  // Defaults for new depth limiting settings
+  enableDepthLimit: false,
+  maxDepth: 5, // Default max depth if enabled
 };
 
 // --- Settings Context ---
@@ -1270,6 +1276,52 @@ const App: React.FC = () => {
                   }
                   min="1"
                   disabled={!treemapSettings.truncateLabel}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Depth Limit Settings - Placed after Label Rendering Settings and before Node Structure */}
+          {activeView === "treemap" && (
+            <div className="settings-group" style={{ marginTop: "10px" }}>
+              <h5>Depth Limiting</h5>
+              <div className="setting-item-checkbox">
+                <input
+                  type="checkbox"
+                  id="enableDepthLimit"
+                  checked={treemapSettings.enableDepthLimit}
+                  onChange={(e) =>
+                    handleTreemapSettingChange(
+                      "enableDepthLimit",
+                      e.target.checked
+                    )
+                  }
+                />
+                <label htmlFor="enableDepthLimit">
+                  Enable Depth Limit (Keys 0-9)
+                </label>
+              </div>
+              <div className="setting-item">
+                <label htmlFor="maxDepth">Max Depth:</label>
+                <input
+                  type="number"
+                  id="maxDepth"
+                  value={treemapSettings.maxDepth}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 0) {
+                      // Allow 0 for root only
+                      handleTreemapSettingChange("maxDepth", val);
+                    }
+                  }}
+                  min="0" // Depth 0 means only the root node
+                  disabled={!treemapSettings.enableDepthLimit}
+                  style={{
+                    backgroundColor: treemapSettings.enableDepthLimit
+                      ? ""
+                      : "#4a4a4a",
+                    color: treemapSettings.enableDepthLimit ? "" : "#888",
+                  }}
                 />
               </div>
             </div>
