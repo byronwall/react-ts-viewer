@@ -6,7 +6,7 @@
   "publisher": "byronwall",
   "private": false,
   "license": "MIT",
-  "icon": "./docs/treemap_icon-min.png",
+  "icon": "docs/treemap_icon-min.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/byronwall/react-ts-viewer.git"

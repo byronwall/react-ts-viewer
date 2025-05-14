@@ -51,6 +51,8 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.ElseIfClause]: "#cbd5e8",
   [NodeCategory.ElseClause]: "#f4cae4",
   [NodeCategory.Other]: "#a6cee3",
+  [NodeCategory.ReturnStatement]: "#66c2a5",
+  [NodeCategory.Assignment]: "#ffd92f",
 };
 
 const okabeIto: Record<NodeCategory, string> = {
@@ -78,6 +80,8 @@ const okabeIto: Record<NodeCategory, string> = {
   [NodeCategory.ElseIfClause]: "#DDCC77",
   [NodeCategory.ElseClause]: "#AA4499",
   [NodeCategory.Other]: "#5F9EA0", // cadet-blue
+  [NodeCategory.ReturnStatement]: "#48D1CC",
+  [NodeCategory.Assignment]: "#FFD700",
 };
 
 const neutralAccents: Record<NodeCategory, string> = {
@@ -105,6 +109,8 @@ const neutralAccents: Record<NodeCategory, string> = {
   [NodeCategory.ElseIfClause]: "#4dd0e1",
   [NodeCategory.ElseClause]: "#ba68c8",
   [NodeCategory.Other]: "#cfd8dc", // very light gray
+  [NodeCategory.ReturnStatement]: "#26c6da",
+  [NodeCategory.Assignment]: "#ffca28",
 };
 
 const defaultPalette: Record<NodeCategory, string> = {
@@ -132,6 +138,8 @@ const defaultPalette: Record<NodeCategory, string> = {
   [NodeCategory.ElseIfClause]: "#74c476",
   [NodeCategory.ElseClause]: "#9e9ac8",
   [NodeCategory.Other]: "#7f7f7f",
+  [NodeCategory.ReturnStatement]: "#66c2a5",
+  [NodeCategory.Assignment]: "#ffd92f",
 };
 
 export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
@@ -360,6 +368,10 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
     case NodeCategory.IfClause:
     case NodeCategory.ElseClause:
     case NodeCategory.ElseIfClause:
+      return `${label}${lineRange}`;
+    case NodeCategory.ReturnStatement:
+      return `${label}${lineRange}`;
+    case NodeCategory.Assignment:
       return `${label}${lineRange}`;
     default:
       return `${category}: ${label}${lineRange}`;

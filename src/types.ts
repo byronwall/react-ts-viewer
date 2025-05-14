@@ -130,7 +130,8 @@ export enum NodeCategory {
   IfClause = "IfClause",
   ElseIfClause = "ElseIfClause",
   ElseClause = "ElseClause",
-
+  ReturnStatement = "ReturnStatement",
+  Assignment = "Assignment",
   Other = "Other", // Ensure 'Other' is still present
 }
 

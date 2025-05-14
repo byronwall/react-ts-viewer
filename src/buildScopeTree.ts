@@ -141,6 +141,13 @@ function mapKindToCategory(
   if (ts.isImportDeclaration(node)) return NodeCategory.Import;
   if (ts.isTypeAliasDeclaration(node)) return NodeCategory.TypeAlias;
   if (ts.isInterfaceDeclaration(node)) return NodeCategory.Interface;
+  if (ts.isReturnStatement(node)) return NodeCategory.ReturnStatement;
+  if (
+    ts.isBinaryExpression(node) &&
+    ts.isAssignmentOperator(node.operatorToken.kind)
+  ) {
+    return NodeCategory.Assignment;
+  }
   if (
     ts.isStringLiteral(node) ||
     ts.isNumericLiteral(node) ||
@@ -253,6 +260,27 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   }
   // The original check for JsxOpeningElement is removed as it's covered by the more specific JsxElement,
   // and JsxOpeningElement isn't typically the primary AST node for which a ScopeNode is created.
+
+  // New: Label for ReturnStatement
+  if (ts.isReturnStatement(node)) {
+    const exprText = node.expression?.getText(sourceFile) || "";
+    const truncatedExpr = exprText.substring(0, 30);
+    return exprText
+      ? `return ${truncatedExpr}${exprText.length > 30 ? "..." : ""}`
+      : "return";
+  }
+
+  // New: Label for AssignmentExpression
+  if (
+    ts.isBinaryExpression(node) &&
+    ts.isAssignmentOperator(node.operatorToken.kind)
+  ) {
+    const leftText = node.left.getText(sourceFile);
+    const operatorText = node.operatorToken.getText(sourceFile);
+    const rightText = node.right.getText(sourceFile);
+    const truncatedRightText = rightText.substring(0, 20);
+    return `${leftText} ${operatorText} ${truncatedRightText}${rightText.length > 20 ? "..." : ""}`;
+  }
 
   // Fallback: If this is a ControlFlow node, return an empty string (prevents TryStatement/CatchClause fallback)
   if (mapKindToCategory(node, sourceFile) === NodeCategory.ControlFlow) {
@@ -534,6 +562,8 @@ export function buildScopeTree(
       category === NodeCategory.Import ||
       category === NodeCategory.TypeAlias ||
       category === NodeCategory.Interface ||
+      category === NodeCategory.ReturnStatement ||
+      category === NodeCategory.Assignment ||
       (category === NodeCategory.ControlFlow && !ts.isIfStatement(node)) // Process other control flows
     ) {
       // Special handling: For CatchClause, skip creating a node for the catch parameter (error variable)
