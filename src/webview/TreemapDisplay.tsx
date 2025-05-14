@@ -30,26 +30,26 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.Program]: "#8dd3c7",
   [NodeCategory.Module]: "#ffffb3",
   [NodeCategory.Class]: "#bebada",
-  [NodeCategory.Function]: "#fb8072",
+  [NodeCategory.Function]: "#fb8072", // Coral pink
   [NodeCategory.ArrowFunction]: "#80b1d3",
   [NodeCategory.Block]: "#fdb462",
   [NodeCategory.ControlFlow]: "#b3de69",
   [NodeCategory.Variable]: "#fccde5",
-  [NodeCategory.Call]: "#d9d9d9",
+  [NodeCategory.Call]: "#d9d9d9", // Dull gray, good for console
   [NodeCategory.ReactComponent]: "#bc80bd",
   [NodeCategory.ReactHook]: "#ccebc5",
   [NodeCategory.JSX]: "#ffed6f",
   [NodeCategory.JSXElementDOM]: "#d4e157",
-  [NodeCategory.JSXElementCustom]: "#ffc0cb",
+  [NodeCategory.JSXElementCustom]: "#bde4e8", // Was #ffc0cb (pink), changed to light blue/teal
   [NodeCategory.Import]: "#c1e7ff",
   [NodeCategory.TypeAlias]: "#ffe8b3",
   [NodeCategory.Interface]: "#f0e68c",
   [NodeCategory.Literal]: "#dcdcdc",
   [NodeCategory.SyntheticGroup]: "#e6e6fa",
-  [NodeCategory.ConditionalBlock]: "#b3e2cd",
-  [NodeCategory.IfClause]: "#fdcdac",
-  [NodeCategory.ElseIfClause]: "#cbd5e8",
-  [NodeCategory.ElseClause]: "#f4cae4",
+  [NodeCategory.ConditionalBlock]: "#b3e2cd", // Mint green (base for conditionals)
+  [NodeCategory.IfClause]: "#c6f0e0", // Lighter mint
+  [NodeCategory.ElseIfClause]: "#a0d8c0", // Medium mint
+  [NodeCategory.ElseClause]: "#8ccbad", // Darker mint
   [NodeCategory.Other]: "#a6cee3",
   [NodeCategory.ReturnStatement]: "#66c2a5",
   [NodeCategory.Assignment]: "#ffd92f",
@@ -59,19 +59,19 @@ const okabeIto: Record<NodeCategory, string> = {
   [NodeCategory.Program]: "#000000", // black
   [NodeCategory.Module]: "#0072B2", // blue
   [NodeCategory.Class]: "#E69F00", // orange
-  [NodeCategory.Function]: "#009E73", // green
-  [NodeCategory.ArrowFunction]: "#F0E442", // yellow
-  [NodeCategory.Block]: "#56B4E9", // sky-blue
-  [NodeCategory.ControlFlow]: "#D55E00", // vermilion
-  [NodeCategory.Variable]: "#CC79A7", // reddish-purple
-  [NodeCategory.Call]: "#999999", // med-gray
-  [NodeCategory.ReactComponent]: "#66A61E", // olive-green
-  [NodeCategory.ReactHook]: "#C44E52", // rose-red
-  [NodeCategory.JSX]: "#8172B3", // lavender
-  [NodeCategory.JSXElementDOM]: "#117733",
-  [NodeCategory.JSXElementCustom]: "#AA4499",
-  [NodeCategory.Import]: "#0072B2", // blue (shared)
-  [NodeCategory.TypeAlias]: "#F0E442", // yellow (shared)
+  [NodeCategory.Function]: "#ffbb78", // Light orange
+  [NodeCategory.ArrowFunction]: "#2ca02c",
+  [NodeCategory.Block]: "#98df8a",
+  [NodeCategory.ControlFlow]: "#d62728",
+  [NodeCategory.Variable]: "#ff9896",
+  [NodeCategory.Call]: "#9467bd",
+  [NodeCategory.ReactComponent]: "#c5b0d5",
+  [NodeCategory.ReactHook]: "#8c564b",
+  [NodeCategory.JSX]: "#c49c94",
+  [NodeCategory.JSXElementDOM]: "#98df8a",
+  [NodeCategory.JSXElementCustom]: "#a0d8ef", // Was #fdbf6f (light orange), changed to a distinct light blue
+  [NodeCategory.Import]: "#add8e6", // lightblue
+  [NodeCategory.TypeAlias]: "#ffffe0", // lightyellow
   [NodeCategory.Interface]: "#E69F00", // orange (shared)
   [NodeCategory.Literal]: "#AAAAAA", // light-gray (new)
   [NodeCategory.SyntheticGroup]: "#D55E00", // vermilion (shared, for distinct group)
@@ -127,7 +127,7 @@ const defaultPalette: Record<NodeCategory, string> = {
   [NodeCategory.ReactHook]: "#8c564b",
   [NodeCategory.JSX]: "#c49c94",
   [NodeCategory.JSXElementDOM]: "#98df8a",
-  [NodeCategory.JSXElementCustom]: "#fdbf6f",
+  [NodeCategory.JSXElementCustom]: "#a0d8ef", // Was #fdbf6f (light orange), changed to a distinct light blue
   [NodeCategory.Import]: "#add8e6", // lightblue
   [NodeCategory.TypeAlias]: "#ffffe0", // lightyellow
   [NodeCategory.Interface]: "#e0ffff", // lightcyan

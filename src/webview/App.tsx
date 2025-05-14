@@ -247,13 +247,13 @@ const defaultSettings: AnalysisSettings = {
 const defaultTreemapSettings: TreemapSettings = {
   tile: "binary",
   leavesOnly: false,
-  innerPadding: 3,
-  outerPadding: 3,
+  innerPadding: 2,
+  outerPadding: 1,
   enableLabel: true,
   labelSkipSize: 12,
   nodeOpacity: 1,
-  borderWidth: 2,
-  colorPalette: "Default",
+  borderWidth: 1,
+  colorPalette: "Pastel Set",
   // Default tooltip settings
   enableTooltip: true,
   showTooltipId: true,
