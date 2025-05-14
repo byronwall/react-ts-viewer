@@ -194,8 +194,9 @@ interface TreemapDisplayProps {
   data: ScopeNode;
   settings: TreemapSettings;
   onSettingsChange: (settingName: keyof TreemapSettings, value: any) => void;
-  // width: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
-  // height: number; // Not needed if ResponsiveTreeMapCanvas is used correctly
+  isSettingsPanelOpen: boolean;
+  onToggleSettingsPanel: () => void;
+  fileName: string;
 }
 
 // Helper function to find a node by ID in the ScopeNode tree
@@ -389,32 +390,15 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   data: initialData,
   settings,
   onSettingsChange,
+  isSettingsPanelOpen,
+  onToggleSettingsPanel,
+  fileName,
 }) => {
   const [isolatedNode, setIsolatedNode] = useState<ScopeNode | null>(null);
   const [isolationPath, setIsolationPath] = useState<ScopeNode[]>([]);
   const [isLegendVisible, setIsLegendVisible] = useState<boolean>(false); // State for legend popover
   const [legendButtonRef, setLegendButtonRef] =
     useState<HTMLButtonElement | null>(null);
-
-  // Helper function to extract filename
-  const getFileName = (data: ScopeNode) => {
-    if (data.category === NodeCategory.Program && data.label) {
-      return data.label;
-    }
-    const idString = data.id || "";
-    const idParts = idString.split(":");
-    const pathCandidate = idParts[0];
-
-    if (pathCandidate) {
-      if (pathCandidate.includes("/")) {
-        return pathCandidate.split("/").pop() || pathCandidate;
-      }
-      return pathCandidate;
-    }
-    return idString || "Untitled";
-  };
-
-  const fileName = getFileName(initialData);
 
   const handleExportToJson = useCallback(async () => {
     const jsonString = JSON.stringify(initialData, null, 2);
@@ -817,9 +801,12 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           flexShrink: 0,
           position: "relative", // For positioning the popover relative to the header
         }}
+        className="treemap-internal-header" // Added class for clarity
       >
         <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
-          Treemap: {fileName}
+          {/* Title removed from here, will be handled by App.tsx's main header */}
+          Treemap:{" "}
+          <span style={{ color: "#ddd", fontStyle: "italic" }}>{fileName}</span>
         </h3>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {(isolatedNode || isolationPath.length > 0) && (
@@ -827,7 +814,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               {isolatedNode && (
                 <button
                   onClick={resetIsolation}
-                  style={{ padding: "5px 10px", fontSize: "0.9em" }}
+                  className="treemap-action-button"
                   title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
                 >
                   Reset Zoom
@@ -836,7 +823,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               {isolationPath.length > 0 && (
                 <button
                   onClick={goUpOneLevel}
-                  style={{ padding: "5px 10px", fontSize: "0.9em" }}
+                  className="treemap-action-button"
                   title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
                 >
                   Up One Level
@@ -846,25 +833,61 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           )}
           <button
             onClick={handleExportToJson}
-            style={{ padding: "5px 10px", fontSize: "0.9em" }}
+            className="treemap-action-button"
             title="Export tree data as JSON"
           >
             Export JSON
           </button>
           <button
             onClick={handleExportToPng}
-            style={{ padding: "5px 10px", fontSize: "0.9em" }}
-            title="Export treemap as PNG (implementation placeholder)"
+            className="treemap-action-button"
+            title="Export treemap as PNG"
           >
             Export PNG
           </button>
           <button
-            ref={setLegendButtonRef} // Set the ref for positioning
+            ref={setLegendButtonRef}
             onClick={() => setIsLegendVisible(!isLegendVisible)}
-            style={{ padding: "5px 10px", fontSize: "0.9em" }}
+            className="treemap-action-button"
             title="Toggle Legend"
           >
             {isLegendVisible ? "Hide Legend" : "Show Legend"}
+          </button>
+          <button
+            onClick={onToggleSettingsPanel}
+            title={isSettingsPanelOpen ? "Hide Settings" : "Show Settings"}
+            style={{
+              padding: "6px",
+              backgroundColor: isSettingsPanelOpen ? "#0056b3" : "#007bff",
+              color: "white",
+              border: isSettingsPanelOpen
+                ? "2px solid #ffc107"
+                : "2px solid transparent",
+              borderRadius: "50%",
+              cursor: "pointer",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+              width: "32px",
+              height: "32px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background-color 0.2s, border-color 0.2s",
+            }}
+            className="settings-cog-button-treemap"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.68,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
           </button>
         </div>
       </div>
@@ -897,16 +920,12 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             ) => {
               const displayLabel = getDynamicNodeDisplayLabel(
                 {
-                  data: node.data as ScopeNode, // Use the node from our tree
+                  data: node.data as ScopeNode,
                   width: node.width,
                   height: node.height,
-                  // depth: foundInfo.depth, // Removed
                 },
                 settings
               );
-              console.log(
-                `Treemap Rendering - Parent Label: ${displayLabel} for node ID: ${node.id}`
-              ); // Log final label
               return displayLabel;
             }}
             label={(
@@ -917,21 +936,16 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             ) => {
               const displayLabel = getDynamicNodeDisplayLabel(
                 {
-                  data: node.data as ScopeNode, // Use the node from our tree
+                  data: node.data as ScopeNode,
                   width: node.width,
                   height: node.height,
-                  // depth: foundInfo.depth, // Removed
                 },
                 settings
               );
-              console.log(
-                `Treemap Rendering - Leaf Label: ${displayLabel} for node ID: ${node.id}`
-              ); // Log final label
               return displayLabel;
             }}
             colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
               const category = nodeWithData.data.category;
-              // return categoryColors[category] || categoryColors[NodeCategory.Other];
               return (
                 activePalette[category] || activePalette[NodeCategory.Other]
               );
@@ -1035,9 +1049,9 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                               </div>
                               <div
                                 style={{
-                                  maxHeight: "200px", // Example max height for the block
+                                  maxHeight: "200px",
                                   overflowY: "auto",
-                                  background: "#f0f0f0", // Background for the container
+                                  background: "#f0f0f0",
                                   padding: "5px",
                                   marginTop: "3px",
                                 }}
@@ -1072,11 +1086,10 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           </div>
         )}
       </div>
-      {/* Render the Popover */}
       <TreemapLegendPopover
         activePalette={activePalette}
         isOpen={isLegendVisible}
-        onClose={() => setIsLegendVisible(false)} // Button toggles, so onClose is more for potential future use (e.g. click outside)
+        onClose={() => setIsLegendVisible(false)}
         anchorElement={legendButtonRef}
       />
     </div>
@@ -1084,3 +1097,19 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 };
 
 export default TreemapDisplay;
+
+// Basic styles for placeholder buttons can be injected by App.tsx or defined globally
+// This ensures consistency if TreemapDisplay is used elsewhere.
+// For example, in a global CSS:
+// .treemap-action-button {
+//   background-color: #4a4a4a;
+//   color: #ddd;
+//   border: 1px solid #555;
+//   padding: 5px 10px; /* Adjusted for toolbar */
+//   border-radius: 4px;
+//   font-size: 0.85em;
+//   cursor: pointer;
+// }
+// .treemap-action-button:hover {
+//   background-color: #5a5a5a;
+// }

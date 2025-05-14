@@ -27,8 +27,18 @@ import "@reactflow/controls/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
-import TreemapDisplay from "./TreemapDisplay"; // Import the new TreemapDisplay component
-import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi instance
+import TreemapDisplay from "./TreemapDisplay";
+import { vscodeApi } from "./vscodeApi";
+
+// Import new settings components and types
+import SettingsControl from "./SettingsControl";
+import CollapsibleSection from "./CollapsibleSection";
+import {
+  TreemapSettings,
+  treemapSettingsConfig,
+  settingGroupOrder,
+  defaultTreemapSettings as newDefaultTreemapSettings, // Renamed to avoid conflict
+} from "./settingsConfig";
 
 // Explicitly type CustomNodeProps to include width and height
 interface CustomNodeProps extends NodeProps {
@@ -42,47 +52,6 @@ import { ScopeNode } from "../types";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
-
-// Add TreemapSettings type, ensure it's consistent with TreemapDisplay.tsx
-interface TreemapSettings {
-  tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
-  leavesOnly: boolean;
-  innerPadding: number;
-  outerPadding: number;
-  enableLabel: boolean;
-  labelSkipSize: number;
-  nodeOpacity: number;
-  borderWidth: number;
-  // colorPalette: string;
-  // Tooltip settings
-  enableTooltip: boolean;
-  showTooltipId: boolean;
-  showTooltipCategory: boolean;
-  showTooltipValue: boolean;
-  showTooltipLines: boolean;
-  showTooltipSourceSnippet: boolean;
-  tooltipSourceSnippetLength: number;
-
-  // New settings for flattening from plan
-  enableNodeFlattening: boolean;
-  flattenBlocks: boolean;
-  flattenArrowFunctions: boolean;
-  createSyntheticGroups: boolean;
-
-  // Category visibility toggles from plan
-  showImports: boolean;
-  showTypes: boolean;
-  showLiterals: boolean;
-
-  // New settings for label rendering from TreemapDisplay
-  minLabelHeight: number;
-  truncateLabel: boolean;
-  labelMaxChars: number;
-  avgCharPixelWidth: number;
-  // New settings for depth limiting from TreemapDisplay
-  enableDepthLimit: boolean;
-  maxDepth: number;
-}
 
 // Global declarations specific to App.tsx initialization
 declare global {
@@ -98,38 +67,28 @@ const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
   const filePath = props.data?.filePath || props.data?.label || "";
   const parts = filePath.split("/");
   const fileName = parts.pop() || filePath;
-  const dirPath = parts.length > 0 ? parts.join("/") : ""; // Display empty string if no dirPath
+  const dirPath = parts.length > 0 ? parts.join("/") : "";
 
   const childNodesCount = useMemo(() => {
     const allNodes = getNodes();
-    // Only count direct children that are not themselves hidden
     return allNodes.filter((n) => n.parentId === props.id && !n.hidden).length;
-  }, [props.id, getNodes, props.data]); // Added props.data to re-calc if children change affecting parent data somehow
+  }, [props.id, getNodes, props.data]);
 
-  console.log(
-    "[Webview FlowCanvas] Rendering FileContainerNodeDisplay for node:",
-    props.id,
-    "Data:",
-    props.data,
-    "W/H:",
-    props.width,
-    props.height
-  );
   return (
     <div
       style={{
         padding: 5,
-        border: "1px solid #3E863E", // Darker green
-        background: "#1f3d1f", // Dark green background
-        color: "#E0E0E0", // Light text
+        border: "1px solid #3E863E",
+        background: "#1f3d1f",
+        color: "#E0E0E0",
         borderRadius: "5px",
-        width: props.width || nodeWidth, // Use ELK width, fallback to default
-        height: props.height || nodeHeight, // Use ELK height, fallback to default
+        width: props.width || nodeWidth,
+        height: props.height || nodeHeight,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center", // Center content vertically
-        alignItems: "flex-start", // Align content to the start (left)
+        justifyContent: "center",
+        alignItems: "flex-start",
       }}
     >
       <strong style={{ fontSize: "0.9em", marginBottom: "1px" }}>
@@ -145,7 +104,6 @@ const FileContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
       {dirPath && (
         <span style={{ fontSize: "0.65em", color: "#909090" }}>{dirPath}</span>
       )}
-      {/* <div style={{ fontSize: '0.7em', color: '#777', marginTop: 'auto' }}>ID: {props.id}</div> */}
     </div>
   );
 };
@@ -155,29 +113,19 @@ const LibraryContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
 
   const childNodesCount = useMemo(() => {
     const allNodes = getNodes();
-    // Only count direct children that are not themselves hidden
     return allNodes.filter((n) => n.parentId === props.id && !n.hidden).length;
-  }, [props.id, getNodes, props.data]); // Added props.data
+  }, [props.id, getNodes, props.data]);
 
-  console.log(
-    "[Webview FlowCanvas] Rendering LibraryContainerNodeDisplay for node:",
-    props.id,
-    "Data:",
-    props.data,
-    "W/H:",
-    props.width,
-    props.height
-  );
   return (
     <div
       style={{
         padding: 5,
-        border: "1px solid #8B4513", // Darker orange/brown
-        background: "#4a2f19", // Dark orange/brown background
-        color: "#E0E0E0", // Light text
+        border: "1px solid #8B4513",
+        background: "#4a2f19",
+        color: "#E0E0E0",
         borderRadius: "5px",
-        width: props.width || nodeWidth, // Use ELK width, fallback to default
-        height: props.height || nodeHeight, // Use ELK height, fallback to default
+        width: props.width || nodeWidth,
+        height: props.height || nodeHeight,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -195,18 +143,11 @@ const LibraryContainerNodeDisplay: React.FC<CustomNodeProps> = (props) => {
           ({childNodesCount} import{childNodesCount === 1 ? "" : "s"})
         </span>
       )}
-      {/* <div style={{ fontSize: '0.7em', color: '#777', marginTop: 'auto' }}>ID: {props.id}</div> */}
     </div>
   );
 };
 
 const ExportedItemNodeDisplay: React.FC<CustomNodeProps> = (props) => {
-  console.log(
-    "[Webview FlowCanvas] Rendering ExportedItemNodeDisplay (placeholder) for node:",
-    props.id,
-    "Data:",
-    props.data
-  );
   return (
     <div
       style={{
@@ -214,6 +155,8 @@ const ExportedItemNodeDisplay: React.FC<CustomNodeProps> = (props) => {
         border: "1px solid purple",
         background: "#f3e7f3",
         borderRadius: "5px",
+        width: props.width || nodeWidth,
+        height: props.height || nodeHeight,
       }}
     >
       <strong>Exported Item</strong> ({props.data?.actualType || "Unknown Type"}
@@ -230,70 +173,24 @@ interface AnalysisSettings {
   maxDepth: number;
   showMinimap: boolean;
   showHooks: boolean;
-  // showFileDeps: boolean; // To be removed
   showLibDeps: boolean;
 }
 
-// Initial default settings (moved before context creation)
 const defaultSettings: AnalysisSettings = {
   maxDepth: 3,
   showMinimap: false,
-  showHooks: true, // Default to showing
-  // showFileDeps: true, // To be removed
-  showLibDeps: true, // Default to showing
+  showHooks: true,
+  showLibDeps: true,
 };
 
-// Default Treemap settings
-const defaultTreemapSettings: TreemapSettings = {
-  tile: "binary",
-  leavesOnly: false,
-  innerPadding: 2,
-  outerPadding: 1,
-  enableLabel: true,
-  labelSkipSize: 12,
-  nodeOpacity: 1,
-  borderWidth: 1,
-  // colorPalette: "Pastel Set",
-  // Default tooltip settings
-  enableTooltip: true,
-  showTooltipId: true,
-  showTooltipCategory: true,
-  showTooltipValue: true,
-  showTooltipLines: true,
-  showTooltipSourceSnippet: true,
-  tooltipSourceSnippetLength: 250,
+// Use the imported defaultTreemapSettings
+// const defaultTreemapSettings: TreemapSettings = { ... }; // Removed
 
-  // New settings defaults from plan
-  enableNodeFlattening: true,
-  flattenBlocks: true,
-  flattenArrowFunctions: true,
-  createSyntheticGroups: true,
-
-  showImports: true, // On by default
-  showTypes: true, // On by default
-  showLiterals: false, // Off by default as there could be many literals
-
-  // Defaults for new label rendering settings
-  minLabelHeight: 15, // Default minimum height in pixels to show a label
-  truncateLabel: true, // Default to enable label truncation
-  labelMaxChars: 128, // Default max characters for a label
-  avgCharPixelWidth: 6, // Default estimated average pixel width of a character
-  // Defaults for new depth limiting settings
-  enableDepthLimit: false,
-  maxDepth: 5, // Default max depth if enabled
-};
-
-// --- Settings Context ---
-// Export the context
 export const SettingsContext =
   React.createContext<AnalysisSettings>(defaultSettings);
-// --- End Settings Context ---
 
-// --- ELK Layout ---
 const elk = new ELK();
 
-// ELK layout options
-// See https://www.eclipse.org/elk/reference/options.html
 const elkOptions = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "80",
@@ -303,10 +200,8 @@ const elkOptions = {
   "elk.padding": "[top=10,left=10,bottom=10,right=10]",
 };
 
-// Hardcoded node dimensions for ELK layout
-// TODO: Consider making these dynamic based on node type/content
 const nodeWidth = 172;
-const nodeHeight = 100; // Increased height estimate
+const nodeHeight = 100;
 
 // Explicitly type the return value
 const getLayoutedElements = (
@@ -335,15 +230,12 @@ const getLayoutedElements = (
       targetPosition: isHorizontal ? "left" : "top",
       sourcePosition: isHorizontal ? "right" : "bottom",
       width: node.width ?? nodeWidth,
-      // For parent types, provide a minimal height to ELK to avoid errors with `undefined`,
-      // but small enough that ELK must expand it based on children and padding.
       height:
         node.data?.conceptualType === "FileContainer" ||
         node.data?.conceptualType === "LibraryContainer"
-          ? 20 // Provide a small, nominal height for container nodes
-          : (node.height ?? nodeHeight), // Use specified or default height for other nodes
-      children: [], // Initialize children array for potential parent nodes
-      // layoutOptions for individual nodes can be set here if needed
+          ? 20
+          : (node.height ?? nodeHeight),
+      children: [],
     };
     elkNodesMap.set(node.id, elkNode);
   });
@@ -353,27 +245,15 @@ const getLayoutedElements = (
     if (node.parentId && elkNodesMap.has(node.parentId)) {
       const parentElkNode = elkNodesMap.get(node.parentId);
       parentElkNode.children.push(elkNode);
-      console.log(
-        `[Webview getLayoutedElements] Node ${node.id} added as child to ${node.parentId}`
-      );
     } else {
       rootElkNodes.push(elkNode);
-      if (node.parentId) {
-        console.warn(
-          `[Webview getLayoutedElements] Node ${node.id} has parentId ${node.parentId} but parent not found in map. Adding as root.`
-        );
-      }
     }
   });
-  console.log(
-    "[Webview getLayoutedElements] Transformed root ELK nodes for layout - Count:",
-    rootElkNodes.length
-  );
 
   const graph: any = {
     id: "root",
     layoutOptions: layoutOptions,
-    children: rootElkNodes, // Use the transformed hierarchical nodes
+    children: rootElkNodes,
     edges: edges.map((edge) => ({
       ...edge,
       sources: [edge.source],
@@ -392,83 +272,55 @@ const getLayoutedElements = (
       }
 
       const finalLayoutedNodes: Node[] = [];
-
-      // Recursive function to process ELK nodes and create React Flow nodes
-      // elkNode: node from ELK layout output
-      // elkParentId: ID of the parent node in the ELK layout structure (undefined for roots)
       const mapElkNodeToReactFlowNode = (
         elkNode: any,
         elkParentId?: string
       ) => {
         const originalNode = nodes.find((n) => n.id === elkNode.id);
         if (!originalNode) {
-          console.warn(
-            `[Webview getLayoutedElements] Original node not found for ELK node id ${elkNode.id}`
-          );
           return;
         }
 
         const rfNode: Node = {
-          ...originalNode, // Spread original data, type, etc.
+          ...originalNode,
           id: elkNode.id,
-          // Position from ELK: for roots it's absolute, for children it's relative to their ELK parent.
           position: { x: elkNode.x ?? 0, y: elkNode.y ?? 0 },
           width: elkNode.width,
           height: elkNode.height,
-          // parentId for React Flow is determined by the ELK hierarchy.
         };
 
         if (elkParentId) {
-          // This node is a child in the ELK layout; its position is relative to elkParentId.
           rfNode.parentId = elkParentId;
         } else {
-          // This node is a root in the ELK layout; its position is absolute.
-          // We remove any pre-existing parentId from originalNode for React Flow's layouting,
-          // as ELK has positioned it as a root.
           delete rfNode.parentId;
         }
-
         finalLayoutedNodes.push(rfNode);
 
         if (elkNode.children && elkNode.children.length > 0) {
           elkNode.children.forEach((childElkNode: any) => {
-            // Recursively call for children, passing current elkNode.id as their ELK parent ID.
             mapElkNodeToReactFlowNode(childElkNode, elkNode.id);
           });
         }
       };
-
-      // Start processing from the root children of the layouted graph
       layoutedGraph.children?.forEach((rootElkNode: any) => {
-        mapElkNodeToReactFlowNode(rootElkNode); // Root ELK nodes have no elkParentId
+        mapElkNodeToReactFlowNode(rootElkNode);
       });
-
-      console.log(
-        "[Webview getLayoutedElements] Final flattened layouted nodes for React Flow - Count:",
-        finalLayoutedNodes.length
-      );
-
       return {
         nodes: finalLayoutedNodes,
-        edges: edges, // Edges are assumed to be correct as per current ELK usage
+        edges: edges,
       };
     })
     .catch((err) => {
       console.error("[Webview] ELK layout promise error:", err);
-      // Return void in case of error
       return;
     });
 };
-// --- End ELK Layout ---
 
-// --- START: transformDataForFlow Function ---
 const transformDataForFlow = (
   rawNodes: Node[],
   rawEdges: Edge[]
 ): { nodes: Node[]; edges: Edge[] } => {
   const newNodes: Node[] = [];
-  // const nodeMap = new Map(rawNodes.map(n => [n.id, n])); // Not strictly needed if parentId IDs are correct
-
   console.log(
     "[App.tsx transformDataForFlow] Starting transformation. Raw nodes count:",
     rawNodes.length
@@ -476,28 +328,17 @@ const transformDataForFlow = (
 
   rawNodes.forEach((rawNode) => {
     let flowNodeType: string | undefined;
-    const dataPayload: any = { ...rawNode.data }; // Copy existing data
-
-    // Determine the primary type identifier from rawNode.data.type or rawNode.type (ReactFlow type)
-    let decisionType = rawNode.data?.type; // Prefer semantic type from analysis
+    const dataPayload: any = { ...rawNode.data };
+    let decisionType = rawNode.data?.type;
     if (
       !decisionType &&
       rawNode.type &&
       !["default", "input", "output", "group"].includes(rawNode.type)
     ) {
-      // If rawNode.data.type is missing, but rawNode.type is a meaningful custom type (not a generic RF type)
       decisionType = rawNode.type;
-      console.log(
-        `[App.tsx transformDataForFlow] Using rawNode.type "${decisionType}" as decisionType for node ${rawNode.id} as data.type was missing.`
-      );
     }
 
-    // Fallback if decisionType is still not determined from relevant fields
     if (!decisionType) {
-      console.warn(
-        `[App.tsx transformDataForFlow] Node ${rawNode.id} has no clear 'data.type' or custom 'rawNode.type'. Label: ${rawNode.data?.label}. Skipping transformation for this node if it's not a known RF type.`
-      );
-      // If it's one of our already known React Flow types, preserve it.
       if (
         [
           "FileContainerNode",
@@ -508,12 +349,11 @@ const transformDataForFlow = (
       ) {
         flowNodeType = rawNode.type;
       } else {
-        return; // Skip node if no type can be determined
+        return;
       }
     }
 
     if (!flowNodeType) {
-      // if not set by the block above, determine it now
       switch (decisionType) {
         case "File":
           flowNodeType = "FileContainerNode";
@@ -524,7 +364,7 @@ const transformDataForFlow = (
           dataPayload.conceptualType = "LibraryContainer";
           break;
         case "Component":
-          flowNodeType = "ComponentNode"; // Use dedicated component node type
+          flowNodeType = "ComponentNode";
           dataPayload.conceptualType = "ExportedItem";
           dataPayload.actualType = "Component";
           break;
@@ -533,21 +373,16 @@ const transformDataForFlow = (
         case "Variable":
           flowNodeType = "ExportedItemNode";
           dataPayload.conceptualType = "ExportedItem";
-          dataPayload.actualType = decisionType; // "Hook", "Function", "Variable"
+          dataPayload.actualType = decisionType;
           break;
         case "LibraryImport":
-          flowNodeType = "ExportedItemNode"; // Represent imports as items, parented by LibraryContainer
+          flowNodeType = "ExportedItemNode";
           dataPayload.conceptualType = "LibraryImportItem";
-          // actualType might be the imported name, e.g. 'useState'
           dataPayload.actualType = rawNode.data?.label || decisionType;
           break;
-        case "HookUsage": // Explicitly filter out HookUsage nodes
-          console.log(
-            `[App.tsx transformDataForFlow] Filtering out HookUsage node: ${rawNode.id} ('${rawNode.data?.label}')`
-          );
-          return; // Skip creating a node for HookUsage
+        case "HookUsage":
+          return;
         default:
-          // Check if decisionType itself is one of the direct React Flow node types
           if (
             [
               "FileContainerNode",
@@ -557,7 +392,6 @@ const transformDataForFlow = (
             ].includes(decisionType ?? "")
           ) {
             flowNodeType = decisionType;
-            // Infer conceptualType if possible
             if (
               decisionType === "FileContainerNode" &&
               !dataPayload.conceptualType
@@ -575,92 +409,52 @@ const transformDataForFlow = (
             )
               dataPayload.conceptualType = "ExportedItem";
           } else {
-            console.warn(
-              `[App.tsx transformDataForFlow] Unhandled decision type: "${decisionType}" for node ${rawNode.id} ('${rawNode.data?.label}'). Treating as generic ExportedItem or skipping.`
-            );
-            // Fallback for unknown types that might be part of the hierarchy
             if (rawNode.data?.label) {
               flowNodeType = "ExportedItemNode";
               dataPayload.conceptualType = "UnknownExport";
               dataPayload.actualType = String(decisionType);
             } else {
-              return; // Skip if no label and totally unknown
+              return;
             }
           }
       }
     }
 
     if (!flowNodeType) {
-      console.warn(
-        `[App.tsx transformDataForFlow] flowNodeType is still undefined for node ${rawNode.id} ('${rawNode.data?.label}'). Skipping.`
-      );
       return;
     }
 
     let parentIdToAssign = rawNode.parentNode;
-
-    // If this node is a FileContainerNode or LibraryContainerNode,
-    // it should always be a root element in the React Flow graph.
-    // This prevents one such container from inadvertently dragging another
-    // if rawNode.parentNode was set unexpectedly.
     if (
       flowNodeType === "FileContainerNode" ||
       flowNodeType === "LibraryContainerNode"
     ) {
-      if (parentIdToAssign) {
-        // Log if we are overriding an existing parentNode
-        console.log(
-          `[App.tsx transformDataForFlow] Forcing ${flowNodeType} ${rawNode.id} to be a root node. Original parentNode ('${parentIdToAssign}') is being cleared.`
-        );
-      }
       parentIdToAssign = undefined;
     }
 
     const newNode: Node = {
-      ...rawNode, // Spread original props (id, position will be re-calculated by ELK)
+      ...rawNode,
       type: flowNodeType,
       data: dataPayload,
-      parentId: parentIdToAssign, // Use the potentially modified parentId
-      // Ensure width/height are at least defaults if not specified, ELK might override
+      parentId: parentIdToAssign,
       width: rawNode.width ?? nodeWidth,
       height: rawNode.height ?? nodeHeight,
     };
-
-    // If the node has a parent (now correctly sourced), set its extent to 'parent'
     if (newNode.parentId) {
       newNode.extent = "parent";
     }
-
     newNodes.push(newNode);
   });
-  console.log(
-    "[App.tsx transformDataForFlow] Transformation complete. New nodes count:",
-    newNodes.length
-  );
 
-  // Filter edges to ensure both source and target nodes exist in the newNodes list
   const newNodeIds = new Set(newNodes.map((n) => n.id));
   const newEdges = rawEdges.filter((edge) => {
     const sourceExists = newNodeIds.has(edge.source);
     const targetExists = newNodeIds.has(edge.target);
-    if (!sourceExists)
-      console.warn(
-        `[App.tsx transformDataForFlow] Edge ${edge.id} source ${edge.source} missing in new nodes.`
-      );
-    if (!targetExists)
-      console.warn(
-        `[App.tsx transformDataForFlow] Edge ${edge.id} target ${edge.target} missing in new nodes.`
-      );
     return sourceExists && targetExists;
   });
-  console.log(
-    "[App.tsx transformDataForFlow] Edges filtered. New edges count:",
-    newEdges.length
-  );
 
   return { nodes: newNodes, edges: newEdges };
 };
-// --- END: transformDataForFlow Function ---
 
 // Inner component to handle React Flow instance and layout
 const FlowCanvas: React.FC<{
@@ -670,9 +464,8 @@ const FlowCanvas: React.FC<{
 }> = ({ initialNodes, initialEdges, settings }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView } = useReactFlow(); // Hook for fitView
+  const { fitView } = useReactFlow();
 
-  // React Flow change handlers
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
       setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -684,82 +477,45 @@ const FlowCanvas: React.FC<{
     []
   );
 
-  // Layout effect to run ELK when initial nodes/edges change
   useLayoutEffect(() => {
-    console.log(
-      "[Webview FlowCanvas] Layout effect triggered. Initial nodes count:",
-      initialNodes.length
-    );
     if (initialNodes.length > 0) {
-      console.log("[Webview FlowCanvas] Running ELK layout...");
       getLayoutedElements(initialNodes, initialEdges)
         .then((layoutResult) => {
-          // Check if the layout result is valid before destructuring
           if (layoutResult && layoutResult.nodes && layoutResult.edges) {
             const { nodes: layoutedNodes, edges: layoutedEdges } = layoutResult;
             setNodes(layoutedNodes);
             setEdges(layoutedEdges);
-            // Use timeout to ensure layout is applied before fitting view
             window.requestAnimationFrame(() => {
-              fitView({ duration: 300 }); // Smooth transition
+              fitView({ duration: 300 });
             });
-            console.log("[Webview] ELK layout applied.");
-          } else {
-            console.error("[Webview] ELK layout failed to return nodes/edges.");
           }
         })
         .catch((err) => console.error("[Webview] ELK layout error:", err));
     } else {
-      // Clear nodes/edges if initial data is empty
       setNodes([]);
       setEdges([]);
     }
-    // Depend on the raw initial data passed as props
   }, [initialNodes, initialEdges, fitView]);
 
-  // Effect to update node/edge visibility based on settings
-  // This runs *after* layouting and initial state setting
   useEffect(() => {
-    console.log(
-      "[Webview FlowCanvas] Settings or nodes/edges changed, updating visibility. Settings:",
-      settings
-    );
-    // console.log("[Webview FlowCanvas] Current nodes for visibility update:", nodes);
-    // console.log("[Webview FlowCanvas] Current edges for visibility update:", edges);
-
     let nodesChanged = false;
     const nextNodes = nodes.map((node) => {
       let newHidden = false;
-
-      // Logic for ExportedItemNode (e.g., Hooks)
       if (
         node.type === "ExportedItemNode" &&
         node.data?.actualType === "Hook" &&
         !settings.showHooks
       ) {
-        console.log(
-          `[Webview FlowCanvas] Node ${node.id} (ExportedItem Hook) hidden due to showHooks: ${settings.showHooks}`
-        );
         newHidden = true;
       }
-
-      // Logic for LibraryContainerNode
       if (node.type === "LibraryContainerNode" && !settings.showLibDeps) {
-        console.log(
-          `[Webview FlowCanvas] Node ${node.id} (LibraryContainer) hidden due to showLibDeps: ${settings.showLibDeps}`
-        );
         newHidden = true;
       }
-
-      // Remove old LibDep logic (FileDep already removed from settings)
-      // if (node.data?.type === "LibDep" && !settings.showLibDeps) { ... }
-
       if (node.hidden !== newHidden) {
         nodesChanged = true;
-        // console.log(`[Webview FlowCanvas] Node ${node.id} visibility changed to ${newHidden}`);
         return { ...node, hidden: newHidden };
       }
-      return node; // Return same instance if no change
+      return node;
     });
 
     let edgesChanged = false;
@@ -769,30 +525,20 @@ const FlowCanvas: React.FC<{
       const targetNode = nextNodes.find((n) => n.id === edge.target);
 
       if (sourceNode?.hidden || targetNode?.hidden) {
-        // console.log(`[Webview FlowCanvas] Edge ${edge.id} hidden because source/target node (${sourceNode?.id}/${targetNode?.id}) is hidden.`);
         newHidden = true;
       } else {
-        // Logic for edges connected to ExportedItemNode (Hooks)
         if (
           targetNode?.type === "ExportedItemNode" &&
           targetNode.data?.actualType === "Hook" &&
           !settings.showHooks
         ) {
-          console.log(
-            `[Webview FlowCanvas] Edge ${edge.id} to ExportedItem Hook ${targetNode.id} hidden due to showHooks: ${settings.showHooks}`
-          );
           newHidden = true;
         }
-        // Logic for edges connected to LibraryContainerNode
-        // Also check sourceNode in case the edge direction is from a library (less common but possible)
         if (
           !newHidden &&
           targetNode?.type === "LibraryContainerNode" &&
           !settings.showLibDeps
         ) {
-          console.log(
-            `[Webview FlowCanvas] Edge ${edge.id} to LibraryContainer ${targetNode.id} hidden due to showLibDeps: ${settings.showLibDeps}`
-          );
           newHidden = true;
         }
         if (
@@ -800,38 +546,27 @@ const FlowCanvas: React.FC<{
           sourceNode?.type === "LibraryContainerNode" &&
           !settings.showLibDeps
         ) {
-          console.log(
-            `[Webview FlowCanvas] Edge ${edge.id} from LibraryContainer ${sourceNode.id} hidden due to showLibDeps: ${settings.showLibDeps}`
-          );
           newHidden = true;
         }
-
-        // Remove old LibDep edge logic
-        // if (targetNode?.data?.type === "LibDep" && !settings.showLibDeps) { ... }
       }
-
       if (edge.hidden !== newHidden) {
         edgesChanged = true;
-        // console.log(`[Webview FlowCanvas] Edge ${edge.id} visibility changed to ${newHidden}`);
         return { ...edge, hidden: newHidden };
       }
-      return edge; // Return same instance if no change
+      return edge;
     });
 
     if (nodesChanged) {
-      // console.log("[Webview FlowCanvas] Applying node visibility changes:", nextNodes.filter(n => n.hidden).map(n => n.id));
       setNodes(nextNodes);
     }
     if (edgesChanged) {
-      // console.log("[Webview FlowCanvas] Applying edge visibility changes:", nextEdges.filter(e => e.hidden).map(e => e.id));
       setEdges(nextEdges);
     }
   }, [settings, nodes, edges, setNodes, setEdges]);
 
-  // Define nodeTypes mapping
   const nodeTypes = useMemo(
     () => ({
-      ComponentNode: ComponentNodeDisplay, // This might become a more generic 'ExportedItemNode' or be part of it
+      ComponentNode: ComponentNodeDisplay,
       FileContainerNode: FileContainerNodeDisplay,
       LibraryContainerNode: LibraryContainerNodeDisplay,
       ExportedItemNode: ExportedItemNodeDisplay,
@@ -845,31 +580,28 @@ const FlowCanvas: React.FC<{
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
-      fitView // fitView is now called manually after layout
       nodeTypes={nodeTypes}
       defaultEdgeOptions={{
         markerEnd: { type: MarkerType.ArrowClosed },
         style: { strokeWidth: 1.5 },
       }}
-      // Add explicit background color for contrast if needed
-      // style={{ backgroundColor: '#1e1e1e' }}
     >
       <Controls />
       {settings.showMinimap && (
         <MiniMap nodeStrokeWidth={3} zoomable pannable />
       )}
       <Background gap={12} size={1} />
-      {/* Panel for layout buttons could be added here later */}
-      {/* <Panel position="top-right"> ... </Panel> */}
     </ReactFlow>
   );
 };
-// --- End FlowCanvas ---
+
+const HEADER_HEIGHT = 60; // Define header height
 
 const App: React.FC = () => {
   const [filePath, setFilePath] = useState<string | null>(
     window.initialData?.filePath || null
   );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(
     window.initialWorkspaceRoot || null
   );
@@ -877,8 +609,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultSettings);
+
   const [treemapSettings, setTreemapSettings] = useState<TreemapSettings>(
-    defaultTreemapSettings
+    newDefaultTreemapSettings
   );
 
   const [activeView, setActiveView] = useState<
@@ -890,16 +623,8 @@ const App: React.FC = () => {
   const [currentAnalysisTarget, setCurrentAnalysisTarget] = useState<
     string | null
   >(filePath);
-
-  useEffect(() => {
-    if (filePath && activeView === "treemap") {
-      // Initial load, if treemap is default
-      requestTreemapData(filePath);
-    } else if (filePath && activeView === "graph") {
-      // Or if graph is default
-      requestGraphData(filePath);
-    }
-  }, []); // Run once on initial mount with initial filePath
+  const [isSettingsPanelOpen, setIsSettingsPanelOpen] =
+    useState<boolean>(false);
 
   const requestGraphData = useCallback(
     (fp: string) => {
@@ -921,7 +646,6 @@ const App: React.FC = () => {
         command: "getScopeTree",
         filePath: fp,
         options: {
-          // Options payload as per plan
           flattenTree: treemapSettings.enableNodeFlattening,
           flattenBlocks: treemapSettings.flattenBlocks,
           flattenArrowFunctions: treemapSettings.flattenArrowFunctions,
@@ -933,28 +657,31 @@ const App: React.FC = () => {
       });
       setIsTreemapLoading(true);
       setTreemapError(null);
-      setRawAnalysisData(null); // Clear other view's data
-      setError(null); // Clear other view's error
+      setRawAnalysisData(null);
+      setError(null);
       setCurrentAnalysisTarget(fp);
     },
-    [vscodeApi, treemapSettings] // Added treemapSettings to dependency array
+    [vscodeApi, treemapSettings]
   );
+
+  useEffect(() => {
+    if (filePath) {
+      if (activeView === "treemap") {
+        requestTreemapData(filePath);
+      } else if (activeView === "graph") {
+        requestGraphData(filePath);
+      }
+    }
+  }, [filePath, activeView, requestGraphData, requestTreemapData]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
-      console.log(
-        "[Webview App] Received message:",
-        message.command,
-        message.filePath || ""
-      );
-
       switch (message.command) {
         case "analysisResult":
           setRawAnalysisData(message.data);
           setIsLoading(false);
           setError(null);
-          // setActiveView("graph"); // Comment out: let button clicks control active view
           break;
         case "analysisError":
           setError(message.error);
@@ -965,7 +692,6 @@ const App: React.FC = () => {
           setScopeTreeData(message.data);
           setIsTreemapLoading(false);
           setTreemapError(null);
-          // setActiveView("treemap"); // Comment out: let button clicks control active view
           break;
         case "showScopeTreeError":
           setTreemapError(message.error);
@@ -973,29 +699,20 @@ const App: React.FC = () => {
           setScopeTreeData(null);
           break;
         case "fileOpened":
-          console.log("[Webview App] File opened event:", message.filePath);
-          setFilePath(message.filePath); // Update filePath state
-          // setCurrentAnalysisTarget(message.filePath); // This is set by request functions
-          // Automatically trigger analysis for the new file based on the active view
+          setFilePath(message.filePath);
           if (activeView === "treemap") {
             requestTreemapData(message.filePath);
           } else if (activeView === "graph") {
             requestGraphData(message.filePath);
           }
-          // If other views, they should handle their data request or have a default
           break;
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [vscodeApi, activeView, requestGraphData, requestTreemapData]); // Added request functions to deps
+  }, [activeView, requestGraphData, requestTreemapData, vscodeApi]); // Added vscodeApi just in case, though it's stable
 
-  // ... handleSettingChange ...
-
-  const HEADER_HEIGHT_PX = 50; // Example
-
-  // Handler for Treemap settings changes
   const handleTreemapSettingChange = (
     settingName: keyof TreemapSettings,
     value: any
@@ -1006,658 +723,476 @@ const App: React.FC = () => {
     }));
   };
 
-  // Main return statement for the App component's JSX
+  useEffect(() => {
+    if (activeView === "treemap" && currentAnalysisTarget) {
+      // Debounce or ensure this doesn't fire excessively if settings change rapidly
+      // For now, direct refetch:
+      requestTreemapData(currentAnalysisTarget);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // Dependencies that trigger re-fetch for treemap structure
+    treemapSettings.enableNodeFlattening,
+    treemapSettings.flattenBlocks,
+    treemapSettings.flattenArrowFunctions,
+    treemapSettings.createSyntheticGroups,
+    treemapSettings.showImports,
+    treemapSettings.showTypes,
+    treemapSettings.showLiterals,
+    // requestTreemapData itself depends on treemapSettings, so including it here
+    // along with activeView and currentAnalysisTarget ensures correctness.
+    activeView,
+    currentAnalysisTarget,
+    requestTreemapData,
+  ]);
+
+  const renderTreemapSettings = () => {
+    return settingGroupOrder.map((groupName) => {
+      const settingsInGroup = treemapSettingsConfig.filter(
+        (s) => s.group === groupName
+      );
+      if (settingsInGroup.length === 0) return null;
+
+      const defaultOpenGroup =
+        groupName === "Treemap Display" ||
+        groupName === "Node Visibility" ||
+        groupName === "Node Structure";
+
+      return (
+        <CollapsibleSection
+          title={groupName}
+          key={groupName}
+          defaultOpen={defaultOpenGroup}
+        >
+          {settingsInGroup.map((config) => (
+            <SettingsControl
+              key={config.id}
+              config={config}
+              currentSettings={treemapSettings}
+              onChange={handleTreemapSettingChange}
+            />
+          ))}
+        </CollapsibleSection>
+      );
+    });
+  };
+
+  const currentFileName = currentAnalysisTarget
+    ? currentAnalysisTarget.split("/").pop()
+    : "No file";
+
   return (
     <SettingsContext.Provider value={settings}>
-      <div className="app-container">
+      <div
+        className="app-container"
+        style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      >
+        {/* Main Header / Toolbar */}
         <div
-          className="left-panel"
-          style={{ maxHeight: "100vh", overflowY: "auto" }}
+          className="main-header"
+          style={{
+            height: `${activeView === "treemap" ? 0 : HEADER_HEIGHT}px`, // Set to 0 for treemap view
+            backgroundColor: "#252526",
+            color: "#ccc",
+            display: "flex",
+            alignItems: "center",
+            padding: `${activeView === "treemap" ? "0" : "0 15px"}`,
+            borderBottom: `${activeView === "treemap" ? "none" : "1px solid #3a3a3a"}`,
+            flexShrink: 0,
+            justifyContent: "space-between",
+            overflow: "hidden", // Hide content if height is 0
+          }}
         >
-          {/* ... existing left panel header ... */}
-          {/* File Path Display/Input - Simplified */}
-          <div style={{ marginBottom: "15px" }}>
-            <label
-              htmlFor="currentFileDisplay"
-              style={{ display: "block", marginBottom: "5px" }}
-            >
-              Current File:
-            </label>
-            <input
-              type="text"
-              id="currentFileDisplay"
-              readOnly
-              value={currentAnalysisTarget || "No file selected"}
-              style={{
-                width: "100%",
-                padding: "5px",
-                boxSizing: "border-box",
-                backgroundColor: "#3c3c3c",
-                color: "#ccc",
-                border: "1px solid #555",
-              }}
-            />
-          </div>
-
-          <h4>View Mode</h4>
-          <div className="view-toggle">
-            <button
-              onClick={() => {
-                setActiveView("graph");
-                if (
-                  currentAnalysisTarget &&
-                  (!rawAnalysisData ||
-                    currentAnalysisTarget !==
-                      rawAnalysisData?.id?.split(":")[0])
-                ) {
-                  requestGraphData(currentAnalysisTarget);
-                }
-              }}
-              className={activeView === "graph" ? "active" : ""}
-            >
-              Graph
-            </button>
-            <button
-              onClick={() => {
-                setActiveView("treemap");
-                if (
-                  currentAnalysisTarget &&
-                  (!scopeTreeData || scopeTreeData.id !== currentAnalysisTarget)
-                ) {
-                  requestTreemapData(currentAnalysisTarget);
-                }
-              }}
-              className={activeView === "treemap" ? "active" : ""}
-            >
-              Treemap
-            </button>
-          </div>
-
-          {/* Treemap Specific Settings - Shown only when Treemap view is active */}
-          {activeView === "treemap" && (
-            <div className="settings-group" style={{ marginTop: "15px" }}>
-              <h4>Treemap Settings</h4>
-              <div className="setting-item">
-                <label htmlFor="tile">Tiling Algorithm:</label>
-                <select
-                  id="tile"
-                  value={treemapSettings.tile}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "tile",
-                      e.target.value as TreemapSettings["tile"]
-                    )
-                  }
-                >
-                  <option value="squarify">Squarify</option>
-                  <option value="binary">Binary</option>
-                  <option value="dice">Dice</option>
-                  <option value="slice">Slice</option>
-                  <option value="sliceDice">SliceDice</option>
-                </select>
-              </div>
-              <div className="setting-item">
-                <label htmlFor="leavesOnly">Leaves Only:</label>
-                <input
-                  type="checkbox"
-                  id="leavesOnly"
-                  checked={treemapSettings.leavesOnly}
-                  onChange={(e) =>
-                    handleTreemapSettingChange("leavesOnly", e.target.checked)
-                  }
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="enableLabel">Enable Labels:</label>
-                <input
-                  type="checkbox"
-                  id="enableLabel"
-                  checked={treemapSettings.enableLabel}
-                  onChange={(e) =>
-                    handleTreemapSettingChange("enableLabel", e.target.checked)
-                  }
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="labelSkipSize">Label Skip Size:</label>
-                <input
-                  type="number"
-                  id="labelSkipSize"
-                  value={treemapSettings.labelSkipSize}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "labelSkipSize",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="0"
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="innerPadding">Inner Padding (px):</label>
-                <input
-                  type="number"
-                  id="innerPadding"
-                  value={treemapSettings.innerPadding}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "innerPadding",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="0"
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="outerPadding">Outer Padding (px):</label>
-                <input
-                  type="number"
-                  id="outerPadding"
-                  value={treemapSettings.outerPadding}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "outerPadding",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="0"
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="nodeOpacity">Node Opacity (0-1):</label>
-                <input
-                  type="number"
-                  id="nodeOpacity"
-                  value={treemapSettings.nodeOpacity}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "nodeOpacity",
-                      parseFloat(e.target.value)
-                    )
-                  }
-                  min="0"
-                  max="1"
-                  step="0.1"
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="borderWidth">Border Width (px):</label>
-                <input
-                  type="number"
-                  id="borderWidth"
-                  value={treemapSettings.borderWidth}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "borderWidth",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="0"
-                />
-              </div>
-
-              {/* New Label Rendering Settings */}
-              <div className="setting-item">
-                <label htmlFor="minLabelHeight">Min Label Height (px):</label>
-                <input
-                  type="number"
-                  id="minLabelHeight"
-                  value={treemapSettings.minLabelHeight}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "minLabelHeight",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="0"
-                />
-              </div>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="truncateLabel"
-                  checked={treemapSettings.truncateLabel}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "truncateLabel",
-                      e.target.checked
-                    )
-                  }
-                />
-                <label htmlFor="truncateLabel">Truncate Long Labels</label>
-              </div>
-              <div className="setting-item">
-                <label htmlFor="labelMaxChars">
-                  Max Label Chars (if truncating):
-                </label>
-                <input
-                  type="number"
-                  id="labelMaxChars"
-                  value={treemapSettings.labelMaxChars}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "labelMaxChars",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="3" // At least 3 for "..."
-                  disabled={!treemapSettings.truncateLabel}
-                />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="avgCharPixelWidth">
-                  Avg Char Width (px for truncation):
-                </label>
-                <input
-                  type="number"
-                  id="avgCharPixelWidth"
-                  value={treemapSettings.avgCharPixelWidth}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "avgCharPixelWidth",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="1"
-                  disabled={!treemapSettings.truncateLabel}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Depth Limit Settings - Placed after Label Rendering Settings and before Node Structure */}
-          {activeView === "treemap" && (
-            <div className="settings-group" style={{ marginTop: "10px" }}>
-              <h5>Depth Limiting</h5>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="enableDepthLimit"
-                  checked={treemapSettings.enableDepthLimit}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "enableDepthLimit",
-                      e.target.checked
-                    )
-                  }
-                />
-                <label htmlFor="enableDepthLimit">
-                  Enable Depth Limit (Keys 0-9)
-                </label>
-              </div>
-              <div className="setting-item">
-                <label htmlFor="maxDepth">Max Depth:</label>
-                <input
-                  type="number"
-                  id="maxDepth"
-                  value={treemapSettings.maxDepth}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val) && val >= 0) {
-                      // Allow 0 for root only
-                      handleTreemapSettingChange("maxDepth", val);
-                    }
-                  }}
-                  min="0" // Depth 0 means only the root node
-                  disabled={!treemapSettings.enableDepthLimit}
-                  style={{
-                    backgroundColor: treemapSettings.enableDepthLimit
-                      ? ""
-                      : "#4a4a4a",
-                    color: treemapSettings.enableDepthLimit ? "" : "#888",
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* START: Node Flattening, Grouping, and Visibility Settings from Plan */}
-          <div className="settings-group" style={{ marginTop: "10px" }}>
-            <h5>Node Structure Settings</h5>
-            <div className="setting-item-checkbox">
-              <input
-                type="checkbox"
-                id="enableNodeFlattening"
-                checked={treemapSettings.enableNodeFlattening}
-                onChange={(e) =>
-                  handleTreemapSettingChange(
-                    "enableNodeFlattening",
-                    e.target.checked
-                  )
-                }
-              />
-              <label htmlFor="enableNodeFlattening">
-                Enable Node Optimizations
-              </label>
-            </div>
-
-            {treemapSettings.enableNodeFlattening && (
+          {/* Left Section: View Title */}
+          <div style={{ fontSize: "1.1em", fontWeight: 500 }}>
+            {/* Content removed, header might be empty or show other global app info if any */}
+            {activeView === "graph" && (
               <>
-                <div className="setting-item-checkbox indented">
-                  <input
-                    type="checkbox"
-                    id="flattenBlocks"
-                    checked={treemapSettings.flattenBlocks}
-                    onChange={(e) =>
-                      handleTreemapSettingChange(
-                        "flattenBlocks",
-                        e.target.checked
-                      )
-                    }
-                  />
-                  <label htmlFor="flattenBlocks">Optimize Simple Blocks</label>
-                </div>
-
-                <div className="setting-item-checkbox indented">
-                  <input
-                    type="checkbox"
-                    id="flattenArrowFunctions"
-                    checked={treemapSettings.flattenArrowFunctions}
-                    onChange={(e) =>
-                      handleTreemapSettingChange(
-                        "flattenArrowFunctions",
-                        e.target.checked
-                      )
-                    }
-                  />
-                  <label htmlFor="flattenArrowFunctions">
-                    Optimize Arrow Functions
-                  </label>
-                </div>
-
-                <div className="setting-item-checkbox indented">
-                  <input
-                    type="checkbox"
-                    id="createSyntheticGroups"
-                    checked={treemapSettings.createSyntheticGroups}
-                    onChange={(e) =>
-                      handleTreemapSettingChange(
-                        "createSyntheticGroups",
-                        e.target.checked
-                      )
-                    }
-                  />
-                  <label htmlFor="createSyntheticGroups">
-                    Group Related Nodes
-                  </label>
-                </div>
+                Graph:{" "}
+                <span style={{ color: "#ddd", fontStyle: "italic" }}>
+                  {currentFileName || "No file"}
+                </span>
               </>
             )}
           </div>
 
-          <div className="settings-group" style={{ marginTop: "10px" }}>
-            <h5>Node Visibility Settings</h5>{" "}
-            {/* Changed heading slightly from plan for consistency */}
-            <div className="setting-item-checkbox">
-              <input
-                type="checkbox"
-                id="showImports"
-                checked={treemapSettings.showImports}
-                onChange={(e) =>
-                  handleTreemapSettingChange("showImports", e.target.checked)
-                }
-              />
-              <label htmlFor="showImports">Show Imports</label>
-            </div>
-            <div className="setting-item-checkbox">
-              <input
-                type="checkbox"
-                id="showTypes"
-                checked={treemapSettings.showTypes}
-                onChange={(e) =>
-                  handleTreemapSettingChange("showTypes", e.target.checked)
-                }
-              />
-              <label htmlFor="showTypes">Show Type Definitions</label>
-            </div>
-            <div className="setting-item-checkbox">
-              <input
-                type="checkbox"
-                id="showLiterals"
-                checked={treemapSettings.showLiterals}
-                onChange={(e) =>
-                  handleTreemapSettingChange("showLiterals", e.target.checked)
-                }
-              />
-              <label htmlFor="showLiterals">Show Literals</label>
-            </div>
-          </div>
-          {/* END: Node Flattening, Grouping, and Visibility Settings from Plan */}
+          {/* Right Section: Action Buttons & Settings Cog */}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {/* Placeholder View-Specific Action Buttons (e.g., from TreemapDisplay) */}
+            {/* activeView === "treemap" && (
+              <>
+                <button
+                  className="action-button-placeholder"
+                  title="Export as JSON"
+                >
+                  Export JSON
+                </button>
+                <button
+                  className="action-button-placeholder"
+                  title="Export as PNG"
+                >
+                  Export PNG
+                </button>
+                <button
+                  className="action-button-placeholder"
+                  title="Show Legend"
+                >
+                  Show Legend
+                </button>
+              </>
+            ) */}
+            {/* Add similar placeholders for graph view if needed */}
 
-          {/* Treemap Tooltip Settings - Shown only when Treemap view is active */}
-          {activeView === "treemap" && (
-            <div className="settings-group" style={{ marginTop: "10px" }}>
-              <h5>Tooltip Settings</h5>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="enableTooltip"
-                  checked={treemapSettings.enableTooltip}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "enableTooltip",
-                      e.target.checked
-                    )
-                  }
-                />
-                <label htmlFor="enableTooltip">Enable Tooltip</label>
-              </div>
-              <hr style={{ margin: "8px 0", borderColor: "#555" }} />
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="showTooltipId"
-                  checked={treemapSettings.showTooltipId}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "showTooltipId",
-                      e.target.checked
-                    )
-                  }
-                  disabled={!treemapSettings.enableTooltip}
-                />
-                <label
-                  htmlFor="showTooltipId"
-                  style={{
-                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
-                  }}
-                >
-                  Show ID
-                </label>
-              </div>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="showTooltipCategory"
-                  checked={treemapSettings.showTooltipCategory}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "showTooltipCategory",
-                      e.target.checked
-                    )
-                  }
-                  disabled={!treemapSettings.enableTooltip}
-                />
-                <label
-                  htmlFor="showTooltipCategory"
-                  style={{
-                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
-                  }}
-                >
-                  Show Category
-                </label>
-              </div>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="showTooltipValue"
-                  checked={treemapSettings.showTooltipValue}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "showTooltipValue",
-                      e.target.checked
-                    )
-                  }
-                  disabled={!treemapSettings.enableTooltip}
-                />
-                <label
-                  htmlFor="showTooltipValue"
-                  style={{
-                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
-                  }}
-                >
-                  Show Value
-                </label>
-              </div>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="showTooltipLines"
-                  checked={treemapSettings.showTooltipLines}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "showTooltipLines",
-                      e.target.checked
-                    )
-                  }
-                  disabled={!treemapSettings.enableTooltip}
-                />
-                <label
-                  htmlFor="showTooltipLines"
-                  style={{
-                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
-                  }}
-                >
-                  Show Lines
-                </label>
-              </div>
-              <div className="setting-item-checkbox">
-                <input
-                  type="checkbox"
-                  id="showTooltipSourceSnippet"
-                  checked={treemapSettings.showTooltipSourceSnippet}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "showTooltipSourceSnippet",
-                      e.target.checked
-                    )
-                  }
-                  disabled={!treemapSettings.enableTooltip}
-                />
-                <label
-                  htmlFor="showTooltipSourceSnippet"
-                  style={{
-                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
-                  }}
-                >
-                  Show Source Snippet
-                </label>
-              </div>
-              <div className="setting-item">
-                <label
-                  htmlFor="tooltipSourceSnippetLength"
-                  style={{
-                    color: treemapSettings.enableTooltip ? "inherit" : "#888",
-                  }}
-                >
-                  Snippet Length:
-                </label>
-                <input
-                  type="number"
-                  id="tooltipSourceSnippetLength"
-                  value={treemapSettings.tooltipSourceSnippetLength}
-                  onChange={(e) =>
-                    handleTreemapSettingChange(
-                      "tooltipSourceSnippetLength",
-                      parseInt(e.target.value, 10)
-                    )
-                  }
-                  min="0"
-                  max="1000" // Max length for snippet
-                  disabled={
-                    !treemapSettings.enableTooltip ||
-                    !treemapSettings.showTooltipSourceSnippet
-                  }
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Settings Popover and other controls from original App.tsx should be here */}
-          {/* Make sure to re-integrate your settings popover and other controls from original App.tsx */}
-        </div>
-
-        <div
-          className="right-panel"
-          style={{ flex: 1, position: "relative", overflow: "hidden" }}
-        >
-          {isLoading && activeView === "graph" && (
-            <div className="loading-overlay">
-              Analyzing Dependencies for Graph...
-            </div>
-          )}
-          {error && activeView === "graph" && (
-            <div className="error-overlay">Graph Error: {error}</div>
-          )}
-          {isTreemapLoading && activeView === "treemap" && (
-            <div className="loading-overlay">Generating Treemap...</div>
-          )}
-          {treemapError && activeView === "treemap" && (
-            <div className="error-overlay">Treemap Error: {treemapError}</div>
-          )}
-
-          {activeView === "graph" && rawAnalysisData && (
-            <ReactFlowProvider>
-              {" "}
-              {/* Ensure ReactFlowProvider wraps FlowCanvas */}
-              <FlowCanvas
-                initialNodes={rawAnalysisData.nodes}
-                initialEdges={rawAnalysisData.edges}
-                settings={settings}
-              />
-            </ReactFlowProvider>
-          )}
-
-          {activeView === "treemap" && scopeTreeData && (
-            <div
+            {/* Settings Toggle Button - REMOVED FROM HERE */}
+            {/* <button
+              onClick={() => setIsSettingsPanelOpen(!isSettingsPanelOpen)}
+              title={isSettingsPanelOpen ? "Hide Settings" : "Show Settings"}
               style={{
-                width: "100%",
-                height: "100%",
+                marginLeft: "15px",
+                padding: "8px",
+                backgroundColor: isSettingsPanelOpen ? "#0056b3" : "#007bff",
+                color: "white",
+                border: isSettingsPanelOpen
+                  ? "2px solid #ffc107"
+                  : "2px solid transparent", // Gold border when open
+                borderRadius: "50%",
+                cursor: "pointer",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background-color 0.2s, border-color 0.2s",
               }}
             >
-              <TreemapDisplay
-                data={scopeTreeData}
-                settings={treemapSettings}
-                onSettingsChange={handleTreemapSettingChange}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.68,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button> */}
+          </div>
+        </div>
+
+        {/* Main Content and Settings Panel Wrapper */}
+        <div style={{ display: "flex", flexGrow: 1, overflow: "hidden" }}>
+          {/* Main Content Panel */}
+          <div
+            className="main-content-panel"
+            style={{
+              flexGrow: 1,
+              position: "relative",
+              overflow: "auto", // Allow content within to scroll
+              height: "100%",
+              backgroundColor: "#121212",
+            }}
+          >
+            {/* ... loading states and view rendering (Graph/Treemap) ... */}
+            {isLoading && activeView === "graph" && (
+              <div className="loading-overlay">
+                Analyzing Dependencies for Graph...
+              </div>
+            )}
+            {error && activeView === "graph" && (
+              <div className="error-overlay">Graph Error: {error}</div>
+            )}
+            {isTreemapLoading && activeView === "treemap" && (
+              <div className="loading-overlay">Generating Treemap...</div>
+            )}
+            {treemapError && activeView === "treemap" && (
+              <div className="error-overlay">Treemap Error: {treemapError}</div>
+            )}
+
+            {activeView === "graph" && rawAnalysisData && (
+              <ReactFlowProvider>
+                <FlowCanvas
+                  initialNodes={rawAnalysisData.nodes}
+                  initialEdges={rawAnalysisData.edges}
+                  settings={settings}
+                />
+              </ReactFlowProvider>
+            )}
+
+            {activeView === "treemap" && scopeTreeData && (
+              <div style={{ width: "100%", height: "100%" }}>
+                <TreemapDisplay
+                  data={scopeTreeData}
+                  settings={treemapSettings}
+                  onSettingsChange={handleTreemapSettingChange}
+                  isSettingsPanelOpen={isSettingsPanelOpen}
+                  onToggleSettingsPanel={() =>
+                    setIsSettingsPanelOpen(!isSettingsPanelOpen)
+                  }
+                  fileName={currentFileName || "No file selected"}
+                />
+              </div>
+            )}
+            {/* ... placeholder overlays ... */}
+            {activeView === "treemap" &&
+              !scopeTreeData &&
+              !isTreemapLoading &&
+              !treemapError && (
+                <div className="placeholder-overlay">
+                  {currentAnalysisTarget
+                    ? `Select/Re-select a file or click "Treemap" to generate for ${currentFileName}.`
+                    : "Select a file to generate a treemap."}
+                </div>
+              )}
+
+            {activeView === "graph" &&
+              !rawAnalysisData &&
+              !isLoading &&
+              !error && (
+                <div className="placeholder-overlay">
+                  {currentAnalysisTarget
+                    ? `Select/Re-select a file or click "Graph" to generate for ${currentFileName}.`
+                    : "Select a file to generate a graph."}
+                </div>
+              )}
+          </div>
+
+          {/* Settings Panel (Right Side) */}
+          <div
+            className="settings-panel-right"
+            style={{
+              width: isSettingsPanelOpen ? "320px" : "0px", // Control width for transition
+              minWidth: isSettingsPanelOpen ? "320px" : "0px", // Ensure it doesn't collapse too early
+              transform: isSettingsPanelOpen
+                ? "translateX(0)"
+                : "translateX(100%)",
+              transition:
+                "transform 0.3s ease-in-out, width 0.3s ease-in-out, min-width 0.3s ease-in-out",
+              right: 0,
+              zIndex: 999,
+              overflowY: "auto",
+              overflowX: "hidden", // Prevent horizontal scrollbar during transition
+              backgroundColor: "#1e1e1e",
+              borderLeft: isSettingsPanelOpen ? "1px solid #333" : "none",
+              padding: isSettingsPanelOpen ? "15px" : "0px",
+              height: "100%",
+              flexShrink: 0,
+              visibility: isSettingsPanelOpen ? "visible" : "hidden", // Use visibility for better transition
+            }}
+          >
+            {/* Current File Input - Moved here */}
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                htmlFor="currentFileDisplaySettings" // Unique ID
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  color: "#bbb",
+                  fontSize: "0.9em",
+                  fontWeight: 500,
+                }}
+              >
+                Analysis Target:
+              </label>
+              <input
+                type="text"
+                id="currentFileDisplaySettings"
+                readOnly
+                value={currentAnalysisTarget || "No file selected"}
+                title={currentAnalysisTarget || "No file selected"}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  boxSizing: "border-box",
+                  backgroundColor: "#2e2e2e",
+                  color: "#ddd",
+                  border: "1px solid #4a4a4a",
+                  borderRadius: "4px",
+                  fontSize: "0.9em",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
               />
             </div>
-          )}
 
-          {activeView === "treemap" &&
-            !scopeTreeData &&
-            !isTreemapLoading &&
-            !treemapError && (
-              <div className="placeholder-overlay">
-                {currentAnalysisTarget
-                  ? `Select/Re-select a file or click "Treemap" to generate for ${currentAnalysisTarget
-                      .split("/")
-                      .pop()}.`
-                  : "Select a file to generate a treemap."}
+            {/* View Mode Toggles - Moved here */}
+            <h5
+              style={{
+                marginTop: "0px",
+                marginBottom: "10px",
+                color: "#bbb",
+                borderBottom: "1px solid #444",
+                paddingBottom: "8px",
+              }}
+            >
+              View Mode
+            </h5>
+            <div className="view-toggle" style={{ marginBottom: "20px" }}>
+              <button
+                onClick={() => {
+                  setActiveView("graph");
+                  if (
+                    currentAnalysisTarget &&
+                    (!rawAnalysisData ||
+                      currentAnalysisTarget !==
+                        rawAnalysisData?.id?.split(":")[0])
+                  ) {
+                    requestGraphData(currentAnalysisTarget);
+                  }
+                }}
+                className={activeView === "graph" ? "active" : ""}
+                title="Switch to Graph View"
+              >
+                Graph
+              </button>
+              <button
+                onClick={() => {
+                  setActiveView("treemap");
+                  if (
+                    currentAnalysisTarget &&
+                    (!scopeTreeData ||
+                      scopeTreeData.id !== currentAnalysisTarget)
+                  ) {
+                    requestTreemapData(currentAnalysisTarget);
+                  }
+                }}
+                className={activeView === "treemap" ? "active" : ""}
+                title="Switch to Treemap View"
+              >
+                Treemap
+              </button>
+            </div>
+
+            {/* Settings Sections */}
+            {activeView === "treemap" && (
+              <div>
+                <h5
+                  style={{
+                    marginBottom: "10px",
+                    color: "#bbb",
+                    borderBottom: "1px solid #444",
+                    paddingBottom: "8px",
+                  }}
+                >
+                  Treemap Settings
+                </h5>
+                {renderTreemapSettings()}
               </div>
             )}
-
-          {activeView === "graph" &&
-            !rawAnalysisData &&
-            !isLoading &&
-            !error && (
-              <div className="placeholder-overlay">
-                {currentAnalysisTarget
-                  ? `Select/Re-select a file or click "Graph" to generate for ${currentAnalysisTarget
-                      .split("/")
-                      .pop()}.`
-                  : "Select a file to generate a graph."}
+            {activeView === "graph" && (
+              <div>
+                <h5
+                  style={{
+                    marginBottom: "10px",
+                    color: "#bbb",
+                    borderBottom: "1px solid #444",
+                    paddingBottom: "8px",
+                  }}
+                >
+                  Graph Settings
+                </h5>
+                <CollapsibleSection title="Graph Display" defaultOpen={true}>
+                  <div style={{ paddingLeft: "0px", marginBottom: "12px" }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={settings.showMinimap}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...s,
+                            showMinimap: e.target.checked,
+                          }))
+                        }
+                        style={{ marginRight: "8px", accentColor: "#007bff" }}
+                      />
+                      <span
+                        style={{
+                          color: "#ddd",
+                          verticalAlign: "middle",
+                          fontSize: "0.9em",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Show Minimap
+                      </span>
+                    </label>
+                  </div>
+                  <div style={{ paddingLeft: "0px", marginBottom: "12px" }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={settings.showHooks}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...s,
+                            showHooks: e.target.checked,
+                          }))
+                        }
+                        style={{ marginRight: "8px", accentColor: "#007bff" }}
+                      />
+                      <span
+                        style={{
+                          color: "#ddd",
+                          verticalAlign: "middle",
+                          fontSize: "0.9em",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Show Hooks
+                      </span>
+                    </label>
+                  </div>
+                  <div style={{ paddingLeft: "0px", marginBottom: "12px" }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={settings.showLibDeps}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...s,
+                            showLibDeps: e.target.checked,
+                          }))
+                        }
+                        style={{ marginRight: "8px", accentColor: "#007bff" }}
+                      />
+                      <span
+                        style={{
+                          color: "#ddd",
+                          verticalAlign: "middle",
+                          fontSize: "0.9em",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Show Library Dependencies
+                      </span>
+                    </label>
+                  </div>
+                </CollapsibleSection>
               </div>
             )}
+          </div>
         </div>
       </div>
     </SettingsContext.Provider>
@@ -1665,3 +1200,31 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+// Basic styles for placeholder buttons, assuming App.css might not be directly editable by me
+// Or these could be inline styles if preferred
+const placeholderStyles = `
+.action-button-placeholder {
+  background-color: #4a4a4a;
+  color: #ddd;
+  border: 1px solid #555;
+  padding: 6px 12px;
+  margin-left: 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  cursor: default; /* Indicates they are placeholders */
+}
+.action-button-placeholder:hover {
+  background-color: #5a5a5a;
+}
+`;
+
+// Inject styles if not already present - this is a bit of a hack for webview environments
+// In a typical React app, you'd put this in a CSS file.
+if (!document.getElementById("placeholder-button-styles")) {
+  const styleSheet = document.createElement("style");
+  styleSheet.id = "placeholder-button-styles";
+  styleSheet.type = "text/css";
+  styleSheet.innerText = placeholderStyles;
+  document.head.appendChild(styleSheet);
+}
