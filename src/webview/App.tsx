@@ -27,7 +27,7 @@ import "@reactflow/controls/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
-import TreemapDisplay, { availablePalettes } from "./TreemapDisplay"; // Import the new TreemapDisplay component
+import TreemapDisplay from "./TreemapDisplay"; // Import the new TreemapDisplay component
 import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi instance
 
 // Explicitly type CustomNodeProps to include width and height
@@ -53,7 +53,7 @@ interface TreemapSettings {
   labelSkipSize: number;
   nodeOpacity: number;
   borderWidth: number;
-  colorPalette: string;
+  // colorPalette: string;
   // Tooltip settings
   enableTooltip: boolean;
   showTooltipId: boolean;
@@ -253,7 +253,7 @@ const defaultTreemapSettings: TreemapSettings = {
   labelSkipSize: 12,
   nodeOpacity: 1,
   borderWidth: 1,
-  colorPalette: "Pastel Set",
+  // colorPalette: "Pastel Set",
   // Default tooltip settings
   enableTooltip: true,
   showTooltipId: true,
@@ -1194,22 +1194,6 @@ const App: React.FC = () => {
                   }
                   min="0"
                 />
-              </div>
-              <div className="setting-item">
-                <label htmlFor="colorPalette">Color Palette:</label>
-                <select
-                  id="colorPalette"
-                  value={treemapSettings.colorPalette}
-                  onChange={(e) =>
-                    handleTreemapSettingChange("colorPalette", e.target.value)
-                  }
-                >
-                  {Object.keys(availablePalettes).map((paletteName) => (
-                    <option key={paletteName} value={paletteName}>
-                      {paletteName}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* New Label Rendering Settings */}

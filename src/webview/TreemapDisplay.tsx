@@ -55,98 +55,9 @@ const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.Assignment]: "#ffd92f",
 };
 
-const okabeIto: Record<NodeCategory, string> = {
-  [NodeCategory.Program]: "#000000", // black
-  [NodeCategory.Module]: "#0072B2", // blue
-  [NodeCategory.Class]: "#E69F00", // orange
-  [NodeCategory.Function]: "#ffbb78", // Light orange
-  [NodeCategory.ArrowFunction]: "#2ca02c",
-  [NodeCategory.Block]: "#98df8a",
-  [NodeCategory.ControlFlow]: "#d62728",
-  [NodeCategory.Variable]: "#ff9896",
-  [NodeCategory.Call]: "#9467bd",
-  [NodeCategory.ReactComponent]: "#c5b0d5",
-  [NodeCategory.ReactHook]: "#8c564b",
-  [NodeCategory.JSX]: "#c49c94",
-  [NodeCategory.JSXElementDOM]: "#98df8a",
-  [NodeCategory.JSXElementCustom]: "#a0d8ef", // Was #fdbf6f (light orange), changed to a distinct light blue
-  [NodeCategory.Import]: "#add8e6", // lightblue
-  [NodeCategory.TypeAlias]: "#ffffe0", // lightyellow
-  [NodeCategory.Interface]: "#E69F00", // orange (shared)
-  [NodeCategory.Literal]: "#AAAAAA", // light-gray (new)
-  [NodeCategory.SyntheticGroup]: "#D55E00", // vermilion (shared, for distinct group)
-  [NodeCategory.ConditionalBlock]: "#117733",
-  [NodeCategory.IfClause]: "#88CCEE",
-  [NodeCategory.ElseIfClause]: "#DDCC77",
-  [NodeCategory.ElseClause]: "#AA4499",
-  [NodeCategory.Other]: "#5F9EA0", // cadet-blue
-  [NodeCategory.ReturnStatement]: "#48D1CC",
-  [NodeCategory.Assignment]: "#FFD700",
-};
-
-const neutralAccents: Record<NodeCategory, string> = {
-  [NodeCategory.Program]: "#4e4e4e", // dark gray
-  [NodeCategory.Module]: "#7a7a7a", // gray
-  [NodeCategory.Class]: "#9e9e9e", // mid gray
-  [NodeCategory.Function]: "#ff7043", // accent orange
-  [NodeCategory.ArrowFunction]: "#ffa726", // lighter orange
-  [NodeCategory.Block]: "#bdbdbd", // light gray
-  [NodeCategory.ControlFlow]: "#ef5350", // red accent
-  [NodeCategory.Variable]: "#26a69a", // teal accent
-  [NodeCategory.Call]: "#66bb6a", // green accent
-  [NodeCategory.ReactComponent]: "#42a5f5", // blue accent
-  [NodeCategory.ReactHook]: "#ab47bc", // purple accent
-  [NodeCategory.JSX]: "#8d6e63", // brownish accent
-  [NodeCategory.JSXElementDOM]: "#d4e157",
-  [NodeCategory.JSXElementCustom]: "#ef5350",
-  [NodeCategory.Import]: "#78909c", // blue-grey
-  [NodeCategory.TypeAlias]: "#ffee58", // yellow accent
-  [NodeCategory.Interface]: "#5c6bc0", // indigo accent
-  [NodeCategory.Literal]: "#e0e0e0", // lighter gray
-  [NodeCategory.SyntheticGroup]: "#757575", // darker mid-gray for group
-  [NodeCategory.ConditionalBlock]: "#7cb342",
-  [NodeCategory.IfClause]: "#d4e157",
-  [NodeCategory.ElseIfClause]: "#4dd0e1",
-  [NodeCategory.ElseClause]: "#ba68c8",
-  [NodeCategory.Other]: "#cfd8dc", // very light gray
-  [NodeCategory.ReturnStatement]: "#26c6da",
-  [NodeCategory.Assignment]: "#ffca28",
-};
-
-const defaultPalette: Record<NodeCategory, string> = {
-  [NodeCategory.Program]: "#1f77b4",
-  [NodeCategory.Module]: "#aec7e8",
-  [NodeCategory.Class]: "#ff7f0e",
-  [NodeCategory.Function]: "#ffbb78",
-  [NodeCategory.ArrowFunction]: "#2ca02c",
-  [NodeCategory.Block]: "#98df8a",
-  [NodeCategory.ControlFlow]: "#d62728",
-  [NodeCategory.Variable]: "#ff9896",
-  [NodeCategory.Call]: "#9467bd",
-  [NodeCategory.ReactComponent]: "#c5b0d5",
-  [NodeCategory.ReactHook]: "#8c564b",
-  [NodeCategory.JSX]: "#c49c94",
-  [NodeCategory.JSXElementDOM]: "#98df8a",
-  [NodeCategory.JSXElementCustom]: "#a0d8ef", // Was #fdbf6f (light orange), changed to a distinct light blue
-  [NodeCategory.Import]: "#add8e6", // lightblue
-  [NodeCategory.TypeAlias]: "#ffffe0", // lightyellow
-  [NodeCategory.Interface]: "#e0ffff", // lightcyan
-  [NodeCategory.Literal]: "#d3d3d3", // lightgrey
-  [NodeCategory.SyntheticGroup]: "#dda0dd", // plum
-  [NodeCategory.ConditionalBlock]: "#6baed6",
-  [NodeCategory.IfClause]: "#fd8d3c",
-  [NodeCategory.ElseIfClause]: "#74c476",
-  [NodeCategory.ElseClause]: "#9e9ac8",
-  [NodeCategory.Other]: "#7f7f7f",
-  [NodeCategory.ReturnStatement]: "#66c2a5",
-  [NodeCategory.Assignment]: "#ffd92f",
-};
-
+// Simplified for direct use of pastelSet
 export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
-  Default: defaultPalette,
   "Pastel Set": pastelSet,
-  "Okabe-Ito": okabeIto,
-  "Neutral with Accents": neutralAccents,
 };
 // --- END: Color Palette Definitions ---
 
@@ -261,7 +172,6 @@ interface TreemapSettings {
   labelSkipSize: number;
   nodeOpacity: number;
   borderWidth: number;
-  colorPalette: string; // Key for availablePalettes
   // Tooltip settings
   enableTooltip: boolean;
   showTooltipId: boolean;
@@ -882,8 +792,9 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     : baseDisplayData;
 
   // Basic color scale based on category - extend as needed
-  const activePalette =
-    availablePalettes[settings.colorPalette] || defaultPalette;
+  // const activePalette =
+  //   availablePalettes[settings.colorPalette] || defaultPalette;
+  const activePalette = pastelSet; // Directly use pastelSet
 
   return (
     <div
