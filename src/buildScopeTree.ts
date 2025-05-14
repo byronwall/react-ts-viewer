@@ -8,12 +8,6 @@ import {
   BuildScopeTreeOptions,
 } from "./types";
 
-// Position helper (already in types.ts, but ts.LineAndCharacter is 0-based for line)
-// export interface Position {
-//   line: number; // 1-based
-//   column: number; // 0-based
-// }
-
 // Default options for buildScopeTree
 const defaultBuildOptions: Required<BuildScopeTreeOptions> = {
   flattenTree: true, // Enable overall flattening pass
@@ -185,7 +179,6 @@ function mapKindToCategory(
 function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
   // --- Control Flow concise labeling ---
   if (ts.isTryStatement(node)) {
-    console.log("deriveLabel: Matched ts.isTryStatement, returning 'try'");
     return "try";
   }
   if (ts.isCatchClause(node)) return "catch";
@@ -271,12 +264,9 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
     return "Import"; // Fallback if text is empty or not available
   }
 
-  console.log("node before jsx checks", node);
-
   // Updated JSX handling:
   if (ts.isJsxElement(node)) {
     // Handles <Foo>...</Foo>
-    console.log("node jsx isJsxElement", node);
     const tagNameNode = node.openingElement.tagName;
     let tagNameString = tagNameNode.getText(sourceFile);
     if (tagNameString === "" && ts.isIdentifier(tagNameNode)) {
@@ -285,8 +275,6 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
     return tagNameString ? `<${tagNameString}>` : "<JSXElement>";
   }
   if (ts.isJsxSelfClosingElement(node)) {
-    console.log("node jsx isJsxSelfClosingElement", node);
-
     // Handles <Foo/>
     const tagNameNode = node.tagName;
     let tagNameString = tagNameNode.getText(sourceFile);
@@ -325,16 +313,10 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
 
   // Fallback: If this is a ControlFlow node, return an empty string (prevents TryStatement/CatchClause fallback)
   if (mapKindToCategory(node, sourceFile) === NodeCategory.ControlFlow) {
-    console.log(
-      `deriveLabel: Matched ControlFlow fallback for kind ${ts.SyntaxKind[node.kind]}, returning empty string.`
-    );
     return "";
   }
 
   const kindName = ts.SyntaxKind[node.kind];
-  console.log(
-    `deriveLabel: Reached final fallback for kind ${ts.SyntaxKind[node.kind]}, returning label: ${kindName || "UnknownNode"}`
-  );
   return kindName || "UnknownNode"; // Ensure a string is always returned
 }
 
@@ -760,23 +742,11 @@ export function buildScopeTree(
       const startLoc = lineColOfPos(sf, startPos);
       const endLoc = lineColOfPos(sf, endPos);
 
-      // Ensure node is within parent's text span.
-      // const parentStartOffset = parentNodeInTree.source === fileText ? 0 : sf.text.indexOf(parentNodeInTree.source);
-      // if (parentStartOffset === -1 && parentNodeInTree.category !== NodeCategory.Program) { /* handle error or skip */ }
-      // const parentEndOffset = parentStartOffset + parentNodeInTree.source.length;
-      // if (startPos < parentStartOffset || endPos > parentEndOffset) {
-      //   // This node is outside its AST parent's source range, potentially problematic
-      //   // For now, we'll allow it but this could be refined
-      // }
-
       const nodeSourceText = fileText.substring(startPos, endPos);
       const nodeId = `${filePath}:${startPos}-${endPos}`; // Unique ID
 
       // Get label *before* creating node
       const derivedLabel = deriveLabel(node, sf);
-      console.log(
-        `walk: Creating node for kind ${ts.SyntaxKind[node.kind]}, category ${category}, derived label: ${derivedLabel}`
-      );
 
       const newNode: ScopeNode = {
         id: nodeId,

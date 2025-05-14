@@ -218,9 +218,6 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 // Helper function to generate display labels based on node category and PRD notes
 const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
   const { category, label, loc, source, kind, children, meta } = nodeData; // children is part of nodeData, meta added
-  console.log(
-    `getNodeDisplayLabel: Received node - Kind: ${kind}, Category: ${category}, Label: ${label}`
-  );
   const lineRange =
     loc && children && children.length > 0
       ? ` [${loc.start.line}-${loc.end.line}]`
@@ -409,7 +406,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         text: "JSON data copied to clipboard!",
       });
     } catch (err) {
-      console.error("Failed to copy JSON to clipboard:", err);
       vscodeApi.postMessage({
         command: "showErrorMessage",
         text: "Failed to copy JSON to clipboard. See dev console (Webview) for details.",
@@ -436,9 +432,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           throw new Error("Fetched data is not a Blob.");
         }
         if (blob.type !== "image/png") {
-          console.warn(
-            `Expected Blob type 'image/png' but got '${blob.type}'. Attempting to copy anyway.`
-          );
           // Optionally, you could try to re-create the blob with the correct type if you are sure of the format
           // const newBlob = new Blob([blob], {type: 'image/png'});
           // await navigator.clipboard.write([new ClipboardItem({ 'image/png': newBlob })]);
@@ -453,7 +446,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           text: "PNG image copied to clipboard!",
         });
       } catch (err: any) {
-        console.error("Failed to copy PNG to clipboard:", err);
         let errorMessage =
           "Failed to copy PNG to clipboard. See dev console (Webview) for details.";
         if (err.name === "NotAllowedError") {
@@ -468,7 +460,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         });
       }
     } else {
-      console.error("SVG element not found for PNG export.");
       vscodeApi.postMessage({
         command: "showErrorMessage",
         text: "Could not find SVG element to export for PNG.",
@@ -490,10 +481,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         const filePath = idParts[0]; // Assumes filePath is the first part, before any colons.
 
         if (!filePath) {
-          console.error(
-            "Could not determine filePath from node ID:",
-            clickedNivoNodeData.id
-          );
           return; // Cannot proceed if filePath is missing
         }
 
@@ -525,16 +512,9 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           ]);
         } else {
           // It's a leaf node in the full tree, do nothing on single click
-          console.log(
-            "Single click on a leaf node (in original tree):",
-            fullNodeFromInitialTree.label
-          );
         }
       } else {
         // This scenario should ideally not occur if IDs are consistent and initialData is complete.
-        console.warn(
-          `Node with id "${clickedNivoNodeData.id}" not found in initialData tree. Cannot perform zoom based on full tree.`
-        );
       }
     }
   };

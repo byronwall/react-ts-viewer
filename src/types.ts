@@ -1,4 +1,3 @@
-import * as ts from "typescript";
 import * as vscode from "vscode";
 
 /** Represents the location of a symbol within a file. */

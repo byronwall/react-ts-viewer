@@ -31,14 +31,14 @@ import TreemapDisplay from "./TreemapDisplay";
 import { vscodeApi } from "./vscodeApi";
 
 // Import new settings components and types
-import SettingsControl from "./SettingsControl";
 import CollapsibleSection from "./CollapsibleSection";
 import {
+  defaultTreemapSettings as newDefaultTreemapSettings,
+  settingGroupOrder,
   TreemapSettings,
   treemapSettingsConfig,
-  settingGroupOrder,
-  defaultTreemapSettings as newDefaultTreemapSettings, // Renamed to avoid conflict
 } from "./settingsConfig";
+import SettingsControl from "./SettingsControl";
 
 // Explicitly type CustomNodeProps to include width and height
 interface CustomNodeProps extends NodeProps {
@@ -47,8 +47,8 @@ interface CustomNodeProps extends NodeProps {
 }
 
 // Import custom node components
-import ComponentNodeDisplay from "./ComponentNodeDisplay";
 import { ScopeNode } from "../types";
+import ComponentNodeDisplay from "./ComponentNodeDisplay";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
@@ -209,13 +209,6 @@ const getLayoutedElements = (
   edges: Edge[],
   options = {}
 ): Promise<{ nodes: Node[]; edges: Edge[] } | void> => {
-  console.log(
-    "[Webview getLayoutedElements] Initial nodes for ELK - Count:",
-    nodes.length,
-    "Edges count:",
-    edges.length
-  );
-
   const layoutOptions = { ...elkOptions, ...options };
   const isHorizontal = layoutOptions["elk.direction"] === "RIGHT";
 
@@ -265,9 +258,6 @@ const getLayoutedElements = (
     .layout(graph)
     .then((layoutedGraph) => {
       if (!layoutedGraph || !layoutedGraph.children) {
-        console.error(
-          "[Webview getLayoutedElements] ELK layout failed: No graph or children returned."
-        );
         return;
       }
 
@@ -311,7 +301,6 @@ const getLayoutedElements = (
       };
     })
     .catch((err) => {
-      console.error("[Webview] ELK layout promise error:", err);
       return;
     });
 };
@@ -321,10 +310,6 @@ const transformDataForFlow = (
   rawEdges: Edge[]
 ): { nodes: Node[]; edges: Edge[] } => {
   const newNodes: Node[] = [];
-  console.log(
-    "[App.tsx transformDataForFlow] Starting transformation. Raw nodes count:",
-    rawNodes.length
-  );
 
   rawNodes.forEach((rawNode) => {
     let flowNodeType: string | undefined;
@@ -490,7 +475,7 @@ const FlowCanvas: React.FC<{
             });
           }
         })
-        .catch((err) => console.error("[Webview] ELK layout error:", err));
+        .catch((err) => {});
     } else {
       setNodes([]);
       setEdges([]);
@@ -729,7 +714,6 @@ const App: React.FC = () => {
       // For now, direct refetch:
       requestTreemapData(currentAnalysisTarget);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     // Dependencies that trigger re-fetch for treemap structure
     treemapSettings.enableNodeFlattening,
@@ -817,70 +801,7 @@ const App: React.FC = () => {
           </div>
 
           {/* Right Section: Action Buttons & Settings Cog */}
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {/* Placeholder View-Specific Action Buttons (e.g., from TreemapDisplay) */}
-            {/* activeView === "treemap" && (
-              <>
-                <button
-                  className="action-button-placeholder"
-                  title="Export as JSON"
-                >
-                  Export JSON
-                </button>
-                <button
-                  className="action-button-placeholder"
-                  title="Export as PNG"
-                >
-                  Export PNG
-                </button>
-                <button
-                  className="action-button-placeholder"
-                  title="Show Legend"
-                >
-                  Show Legend
-                </button>
-              </>
-            ) */}
-            {/* Add similar placeholders for graph view if needed */}
-
-            {/* Settings Toggle Button - REMOVED FROM HERE */}
-            {/* <button
-              onClick={() => setIsSettingsPanelOpen(!isSettingsPanelOpen)}
-              title={isSettingsPanelOpen ? "Hide Settings" : "Show Settings"}
-              style={{
-                marginLeft: "15px",
-                padding: "8px",
-                backgroundColor: isSettingsPanelOpen ? "#0056b3" : "#007bff",
-                color: "white",
-                border: isSettingsPanelOpen
-                  ? "2px solid #ffc107"
-                  : "2px solid transparent", // Gold border when open
-                borderRadius: "50%",
-                cursor: "pointer",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                width: "40px",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background-color 0.2s, border-color 0.2s",
-              }}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.68,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button> */}
-          </div>
+          <div style={{ display: "flex", alignItems: "center" }}></div>
         </div>
 
         {/* Main Content and Settings Panel Wrapper */}
@@ -904,9 +825,6 @@ const App: React.FC = () => {
             )}
             {error && activeView === "graph" && (
               <div className="error-overlay">Graph Error: {error}</div>
-            )}
-            {isTreemapLoading && activeView === "treemap" && (
-              <div className="loading-overlay">Generating Treemap...</div>
             )}
             {treemapError && activeView === "treemap" && (
               <div className="error-overlay">Treemap Error: {treemapError}</div>
@@ -1200,31 +1118,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-// Basic styles for placeholder buttons, assuming App.css might not be directly editable by me
-// Or these could be inline styles if preferred
-const placeholderStyles = `
-.action-button-placeholder {
-  background-color: #4a4a4a;
-  color: #ddd;
-  border: 1px solid #555;
-  padding: 6px 12px;
-  margin-left: 8px;
-  border-radius: 4px;
-  font-size: 0.85em;
-  cursor: default; /* Indicates they are placeholders */
-}
-.action-button-placeholder:hover {
-  background-color: #5a5a5a;
-}
-`;
-
-// Inject styles if not already present - this is a bit of a hack for webview environments
-// In a typical React app, you'd put this in a CSS file.
-if (!document.getElementById("placeholder-button-styles")) {
-  const styleSheet = document.createElement("style");
-  styleSheet.id = "placeholder-button-styles";
-  styleSheet.type = "text/css";
-  styleSheet.innerText = placeholderStyles;
-  document.head.appendChild(styleSheet);
-}
