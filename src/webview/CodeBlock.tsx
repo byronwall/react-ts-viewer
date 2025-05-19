@@ -29,13 +29,8 @@ export function CodeBlock({
           setFormattedCode(pretty);
         }
       } catch (e) {
-        console.warn("Error formatting code with Prettier:", e);
         if (isMounted) {
-          setFormattedCode(
-            raw +
-              "\\n\\n// Formatting error: " +
-              (e instanceof Error ? e.message : String(e))
-          ); // Show raw + error
+          setFormattedCode(raw.trim()); // Show trimmed raw on error
         }
       }
     }
@@ -61,6 +56,7 @@ export function CodeBlock({
       language={lang}
       style={atomDark}
       customStyle={{ margin: 0 }}
+      wrapLongLines={true}
     >
       {formattedCode}
     </SyntaxHighlighter>

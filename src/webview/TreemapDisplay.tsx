@@ -959,6 +959,10 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                       0,
                       settings.tooltipSourceSnippetLength
                     );
+                    const codeBlockLang =
+                      fileName.endsWith(".md") || fileName.endsWith(".mdx")
+                        ? "markdown"
+                        : "tsx";
                     return (
                       <div
                         style={{
@@ -1052,7 +1056,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                               >
                                 <CodeBlock
                                   raw={scopeNode.source.trim()}
-                                  lang="tsx"
+                                  lang={codeBlockLang}
                                 />
                               </div>
                             </>
