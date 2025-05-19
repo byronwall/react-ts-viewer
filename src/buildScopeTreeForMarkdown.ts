@@ -2,7 +2,7 @@ import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 import * as path from "path";
-import { visit } from "unist-util-visit";
+import { visit, SKIP } from "unist-util-visit";
 import { ScopeNode, NodeCategory, Position } from "./types";
 
 // --- END: Node Filtering Logic ---
@@ -184,6 +184,12 @@ export function buildScopeTreeForMarkdown(
       }
 
       actualParentScopeNode!.children.push(scopeNode);
+
+      // If the current node is a list, we've created its ScopeNode.
+      // Now, we want to prevent visit from processing its children (list items).
+      if (node.type === "list") {
+        return SKIP; // Use the imported SKIP directly
+      }
 
       // 'SKIP' is not returned, allowing visit to process children.
       // Unwanted children (like 'text' within a paragraph) are filtered by category check at the start.
