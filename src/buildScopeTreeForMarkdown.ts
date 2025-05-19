@@ -29,7 +29,7 @@ export function buildScopeTreeForMarkdown(
         : { line: fileText.split("\\n").length, column: 0 },
     },
     source: fileText,
-    value: 1, // All nodes have value 1
+    value: fileText.length, // All nodes have value 1
     children: [],
     meta: {}, // Ensure meta exists
   };
@@ -105,7 +105,7 @@ export function buildScopeTreeForMarkdown(
         label, // Initial label, might be updated for headings
         loc,
         source,
-        value: 1, // All nodes have value 1
+        value: source.length, // All nodes have value 1
         children: [], // Children will be populated by this new logic
         meta: {},
       };
