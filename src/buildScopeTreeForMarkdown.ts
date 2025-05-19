@@ -26,10 +26,10 @@ export function buildScopeTreeForMarkdown(
       // mdastTree.position is optional. If not present, estimate or use fixed end.
       end: mdastTree.position
         ? unistPositionToScopePosition(mdastTree.position.end)
-        : { line: fileText.split("\\n").length, column: 0 },
+        : { line: fileText.split("\n").length, column: 0 },
     },
-    source: fileText,
-    value: fileText.length, // All nodes have value 1
+    source: fileText, // Root source is the entire file
+    value: fileText.length, // Root value is the length of the entire file
     children: [],
     meta: {}, // Ensure meta exists
   };
@@ -104,9 +104,9 @@ export function buildScopeTreeForMarkdown(
         category,
         label, // Initial label, might be updated for headings
         loc,
-        source,
-        value: source.length, // All nodes have value 1
-        children: [], // Children will be populated by this new logic
+        source, // Node's direct source initially
+        value: source.length, // Node's direct value initially
+        children: [],
         meta: {},
       };
 
@@ -189,6 +189,40 @@ export function buildScopeTreeForMarkdown(
       // Unwanted children (like 'text' within a paragraph) are filtered by category check at the start.
     }
   );
+
+  // After the initial tree build, recursively aggregate source text upwards.
+  function aggregateSourcePostOrder(scopeNode: ScopeNode): void {
+    if (!scopeNode.children || scopeNode.children.length === 0) {
+      // Leaf node or node with no actual children in the ScopeNode tree.
+      // Its source and value are already its direct content.
+      return;
+    }
+
+    // Recursively call for children first, so their sources are aggregated.
+    for (const child of scopeNode.children) {
+      aggregateSourcePostOrder(child);
+    }
+
+    // Now, aggregate children's (already aggregated) sources into this node.
+    // Start with the node's own direct source text.
+    let newAggregatedSource = scopeNode.source;
+
+    for (const child of scopeNode.children) {
+      if (child.source && child.source.length > 0) {
+        newAggregatedSource += "\n" + child.source;
+      }
+    }
+
+    scopeNode.source = newAggregatedSource;
+    scopeNode.value = newAggregatedSource.length;
+  }
+
+  // Aggregate sources for all top-level children of the root.
+  // The root node itself keeps its source as the full fileText and its value as fileText.length.
+  // Its direct children will have their sources and values updated by the post-order traversal.
+  for (const child of root.children) {
+    aggregateSourcePostOrder(child);
+  }
 
   return root;
 }
