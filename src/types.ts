@@ -132,6 +132,17 @@ export enum NodeCategory {
   ReturnStatement = "ReturnStatement",
   Assignment = "Assignment",
   Other = "Other", // Ensure 'Other' is still present
+
+  // Markdown specific categories
+  MarkdownHeading = "MarkdownHeading",
+  MarkdownParagraph = "MarkdownParagraph",
+  MarkdownBlockquote = "MarkdownBlockquote",
+  MarkdownCodeBlock = "MarkdownCodeBlock",
+  MarkdownList = "MarkdownList",
+  MarkdownListItem = "MarkdownListItem",
+  MarkdownTable = "MarkdownTable",
+  MarkdownImage = "MarkdownImage",
+  MarkdownThematicBreak = "MarkdownThematicBreak", // for horizontal rules
 }
 
 export interface ScopeNode {

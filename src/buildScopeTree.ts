@@ -1,6 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as ts from "typescript";
+import { fromMarkdown } from "mdast-util-from-markdown";
+import { gfm } from "micromark-extension-gfm";
+import { gfmFromMarkdown } from "mdast-util-gfm";
+import { visit } from "unist-util-visit";
 import {
   Position,
   NodeCategory,
@@ -352,6 +356,23 @@ function lineColOfPos(sourceFile: ts.SourceFile, pos: number): Position {
 }
 
 export function buildScopeTree(
+  filePath: string,
+  fileText: string = fs.readFileSync(filePath, "utf8"),
+  options?: BuildScopeTreeOptions
+): ScopeNode {
+  console.log("####### buildScopeTree EXECUTING - VERSION X #######", filePath); // Add a version number
+
+  const fileExtension = path.extname(filePath).toLowerCase();
+
+  if (fileExtension === ".md" || fileExtension === ".mdx") {
+    // TODO: add options back in
+    return buildScopeTreeForMarkdown(filePath, fileText);
+  } else {
+    return buildScopeTreeTs(filePath, fileText, options);
+  }
+}
+
+export function buildScopeTreeTs(
   filePath: string,
   fileText: string = fs.readFileSync(filePath, "utf8"),
   options?: BuildScopeTreeOptions
@@ -1162,3 +1183,203 @@ function filterNodesByOptions(
   return clonedRoot;
 }
 // --- END: Node Filtering Logic ---
+
+function buildScopeTreeForMarkdown(
+  filePath: string,
+  fileText: string
+): ScopeNode {
+  const mdastTree = fromMarkdown(fileText, {
+    extensions: [gfm()],
+    mdastExtensions: [gfmFromMarkdown()],
+  });
+
+  const rootNodeId = filePath; // Using filePath as the root ID
+  const root: ScopeNode = {
+    id: rootNodeId,
+    kind: 0, // Using a generic kind for Markdown root, not a ts.SyntaxKind
+    category: NodeCategory.Program, // Treat Markdown file as a Program
+    label: path.basename(filePath),
+    loc: {
+      start: { line: 1, column: 0 },
+      // mdastTree.position is optional. If not present, estimate or use fixed end.
+      end: mdastTree.position
+        ? unistPositionToScopePosition(mdastTree.position.end)
+        : { line: fileText.split("\\n").length, column: 0 },
+    },
+    source: fileText,
+    value: 1, // All nodes have value 1
+    children: [],
+  };
+
+  let nodeIdCounter = 0; // For unique IDs within the file if positions are not enough
+
+  visit(mdastTree, (node: any) => {
+    // We are only interested in block-level elements that have a position.
+    // We will not create nodes for 'text', 'emphasis', 'strong', 'inlineCode', 'link' etc.
+    // Also, skip 'root' itself as we've created a ScopeNode for it.
+    if (!node.position || node.type === "root") {
+      return; // Skip nodes without position or the root mdast node
+    }
+
+    const category = mapMdastTypeToCategory(node.type);
+
+    // Filter out categories we don't want to create nodes for
+    if (
+      category === NodeCategory.Other || // Skip 'Other' from mapMdastTypeToCategory
+      // Explicitly skip these types even if they have positions:
+      node.type === "text" ||
+      node.type === "emphasis" || // italic
+      node.type === "strong" || // bold
+      node.type === "inlineCode" ||
+      node.type === "link" ||
+      node.type === "linkReference" ||
+      node.type === "imageReference" || // image is handled, not reference
+      node.type === "footnoteReference" ||
+      node.type === "footnoteDefinition" ||
+      node.type === "definition" || // for link references
+      node.type === "html" || // raw HTML
+      node.type === "yaml" || // frontmatter
+      node.type === "tableRow" || // Handled by Table
+      node.type === "tableCell" // Handled by Table
+    ) {
+      return;
+    }
+
+    // For Markdown, we typically don't have the same concept of "kind" as ts.SyntaxKind
+    // We can use a placeholder or a new enum if necessary. For now, 0.
+    const kind = 0;
+    const label = deriveMarkdownLabel(node, fileText);
+    const loc = {
+      start: unistPositionToScopePosition(node.position.start),
+      end: unistPositionToScopePosition(node.position.end),
+    };
+    // Ensure startPos and endPos are valid before substring
+    const startOffset = node.position.start.offset;
+    const endOffset = node.position.end.offset;
+
+    let source = "";
+    if (
+      typeof startOffset === "number" &&
+      typeof endOffset === "number" &&
+      startOffset <= endOffset
+    ) {
+      source = fileText.substring(startOffset, endOffset);
+    }
+
+    const scopeNodeId = `${filePath}:${node.position.start.line}:${node.position.start.column}:${nodeIdCounter++}`;
+
+    const scopeNode: ScopeNode = {
+      id: scopeNodeId,
+      kind,
+      category,
+      label,
+      loc,
+      source,
+      value: 1, // All nodes have value 1
+      children: [], // Markdown nodes are generally flat in this representation for now
+      meta: {},
+    };
+
+    if (node.type === "code" && node.lang) {
+      scopeNode.meta = { lang: node.lang };
+    }
+    if (node.type === "heading" && node.depth) {
+      scopeNode.meta = { ...scopeNode.meta, depth: node.depth };
+      scopeNode.label = `H${node.depth}: ${scopeNode.label.replace("Heading", "").trim()}`;
+    }
+
+    // Simple parenting: all direct children of root for now.
+    // More complex parenting (e.g. list items under lists) could be added.
+    root.children.push(scopeNode);
+
+    // 'SKIP' will prevent visiting children of this node.
+    // For markdown, we are creating a flat list of block elements under the root.
+    // If we wanted nested structures (e.g. list items inside lists), we'd need a parent stack.
+    return "skip";
+  });
+
+  return root;
+}
+
+// Helper to convert micromark/unist Position to our Position
+function unistPositionToScopePosition(unistPos: any): Position {
+  return {
+    line: unistPos.line, // unist line is 1-based
+    column: unistPos.column - 1, // unist column is 1-based, our column is 0-based
+  };
+}
+
+// Helper to map mdast node types to NodeCategory
+function mapMdastTypeToCategory(mdastType: string): NodeCategory {
+  switch (mdastType) {
+    case "heading":
+      return NodeCategory.MarkdownHeading;
+    case "paragraph":
+      return NodeCategory.MarkdownParagraph;
+    case "blockquote":
+      return NodeCategory.MarkdownBlockquote;
+    case "code": // This is for code blocks
+      return NodeCategory.MarkdownCodeBlock;
+    case "list":
+      return NodeCategory.MarkdownList;
+    case "listItem":
+      return NodeCategory.MarkdownListItem;
+    case "table":
+      return NodeCategory.MarkdownTable;
+    case "image":
+      return NodeCategory.MarkdownImage;
+    case "thematicBreak":
+      return NodeCategory.MarkdownThematicBreak;
+    // mdast types not creating ScopeNodes:
+    // 'text', 'emphasis', 'strong', 'inlineCode', 'link', 'linkReference', 'imageReference',
+    // 'footnoteReference', 'footnoteDefinition', 'definition', 'html', 'yaml' (frontmatter)
+    // 'tableRow', 'tableCell' (children of Table, not direct ScopeNodes for now)
+    default:
+      return NodeCategory.Other; // Or a more specific Markdown "Other" if needed
+  }
+}
+
+// Helper to derive label from mdast node
+function deriveMarkdownLabel(mdastNode: any, fileText: string): string {
+  switch (mdastNode.type) {
+    case "heading":
+      // Concatenate text content of heading children
+      return (
+        mdastNode.children
+          ?.map((child: any) => (child.type === "text" ? child.value : ""))
+          .join("") || "Heading"
+      );
+    case "paragraph": {
+      // First few words or characters
+      const paragraphText = mdastNode.children
+        ?.map((child: any) => (child.type === "text" ? child.value : ""))
+        .join("");
+      return paragraphText
+        ? paragraphText.substring(0, 30) +
+            (paragraphText.length > 30 ? "..." : "")
+        : "Paragraph";
+    }
+    case "blockquote":
+      return "Blockquote";
+    case "code":
+      return mdastNode.lang ? `Code (${mdastNode.lang})` : "Code Block";
+    case "list":
+      return mdastNode.ordered ? "Ordered List" : "Unordered List";
+    case "listItem": {
+      // For list items, we might take the first line of text content
+      const listItemText = mdastNode.children?.[0]?.children?.[0]?.value; // Assuming listItem > paragraph > text
+      return listItemText
+        ? listItemText.substring(0, 20) +
+            (listItemText.length > 20 ? "..." : "")
+        : "List Item";
+    }
+    case "table":
+      return "Table";
+    case "image":
+      return mdastNode.alt || mdastNode.title || "Image";
+    case "thematicBreak":
+      return "---";
+    default:
+      return mdastNode.type;
+  }
+}

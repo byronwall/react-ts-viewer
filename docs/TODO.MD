@@ -69,6 +69,7 @@
   - Works oddly well for HTML - consider improving colors with subtle variation
 - For an array of nodes, consider showing the first 10 or something
 - Improve results for export or barrel file
+- Web view needs to work without resetting state
 
 ### Barrel file
 
