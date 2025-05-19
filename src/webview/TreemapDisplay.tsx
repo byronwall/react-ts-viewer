@@ -287,9 +287,39 @@ const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
       // Label might include language if available in meta, e.g., meta.lang
       baseLabel = `Code (${nodeData.meta?.lang || ""})${lineRange}`;
       break;
-    case NodeCategory.MarkdownList:
-      baseLabel = `List${lineRange}`;
+    case NodeCategory.MarkdownList: {
+      // Show a preview of the first list item's text, if available
+      let preview = "";
+      let listChildren = children;
+      if (!listChildren && nodeData.children) {
+        listChildren = nodeData.children;
+      }
+      if (listChildren && listChildren.length > 0) {
+        const firstListItem = listChildren.find(
+          (child) => child.category === NodeCategory.MarkdownListItem
+        );
+        if (firstListItem && typeof firstListItem.label === "string") {
+          preview =
+            firstListItem.label.substring(0, 20) +
+            (firstListItem.label.length > 20 ? "..." : "");
+        }
+      } else if (nodeData.source && typeof nodeData.source === "string") {
+        // Fallback: extract first list item from the source string
+        const lines = nodeData.source.split(/\r?\n/);
+        const firstItemLine = lines.find((line) =>
+          /^\s*([-*]|\d+\.)\s+/.test(line)
+        );
+        if (firstItemLine) {
+          // Remove the list marker and trim
+          preview = firstItemLine
+            .replace(/^\s*([-*]|\d+\.)\s+/, "")
+            .substring(0, 20);
+          if (firstItemLine.length > 20) preview += "...";
+        }
+      }
+      baseLabel = preview ? `List: ${preview}${lineRange}` : `List${lineRange}`;
       break;
+    }
     case NodeCategory.MarkdownListItem:
       baseLabel = `Item: ${label.substring(0, 15)}${label.length > 15 ? "..." : ""}${lineRange}`;
       break;

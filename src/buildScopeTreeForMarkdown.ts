@@ -298,12 +298,58 @@ function deriveMarkdownLabel(mdastNode: any, fileText: string): string {
     case "list":
       return mdastNode.ordered ? "Ordered List" : "Unordered List";
     case "listItem": {
-      // For list items, we might take the first line of text content
-      const listItemText = mdastNode.children?.[0]?.children?.[0]?.value; // Assuming listItem > paragraph > text
-      return listItemText
-        ? listItemText.substring(0, 20) +
-            (listItemText.length > 20 ? "..." : "")
-        : "List Item";
+      // For list items, attempt to concatenate text content from their children
+      let itemTextContent = "";
+      if (mdastNode.children && Array.isArray(mdastNode.children)) {
+        for (const child of mdastNode.children) {
+          // Typically, child is a paragraph node
+          if (
+            child.type === "paragraph" &&
+            child.children &&
+            Array.isArray(child.children)
+          ) {
+            for (const grandchild of child.children) {
+              // grandchild is inline content like text, emphasis, etc.
+              if (
+                grandchild.type === "text" &&
+                typeof grandchild.value === "string"
+              ) {
+                itemTextContent += grandchild.value;
+              } else if (
+                grandchild.type === "inlineCode" &&
+                typeof grandchild.value === "string"
+              ) {
+                itemTextContent += grandchild.value;
+              } else if (
+                (grandchild.type === "emphasis" ||
+                  grandchild.type === "strong") &&
+                grandchild.children &&
+                Array.isArray(grandchild.children)
+              ) {
+                // Concatenate text from children of emphasis/strong
+                for (const formattedTextNode of grandchild.children) {
+                  if (
+                    formattedTextNode.type === "text" &&
+                    typeof formattedTextNode.value === "string"
+                  ) {
+                    itemTextContent += formattedTextNode.value;
+                  }
+                }
+              }
+            }
+          } else if (child.type === "text" && typeof child.value === "string") {
+            // Case where list item might have text nodes directly (less common for complex items)
+            itemTextContent += child.value;
+          }
+          // Add a space if joining content from multiple top-level children of the list item (e.g., multiple paragraphs)
+          itemTextContent += " ";
+        }
+      }
+      itemTextContent = itemTextContent.replace(/\s+/g, " ").trim(); // Consolidate spaces and trim
+      return itemTextContent
+        ? itemTextContent.substring(0, 30) +
+            (itemTextContent.length > 30 ? "..." : "")
+        : "List Item"; // Default if no text content found
     }
     case "table":
       return "Table";
