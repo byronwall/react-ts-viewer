@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { CodeBlock } from "../CodeBlock";
@@ -24,6 +24,8 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   onDrillIntoNode,
   width,
 }) => {
+  const [wordWrapEnabled, setWordWrapEnabled] = useState<boolean>(true);
+
   if (!isOpen || !node) {
     return null;
   }
@@ -168,22 +170,42 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 marginTop: "5px",
                 paddingTop: "5px",
                 borderTop: "1px solid #444",
+                display: "flex", // Added for inline layout
+                justifyContent: "space-between", // Align items
+                alignItems: "center", // Vertically align items
               }}
             >
-              Source snippet:
+              <span>Source snippet:</span>
+              {/* Checkbox for word wrap */}
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  fontSize: "0.9em",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={wordWrapEnabled}
+                  onChange={() => setWordWrapEnabled(!wordWrapEnabled)}
+                  style={{ marginRight: "4px" }}
+                />
+                Word Wrap
+              </label>
             </div>
             <div
               style={{
-                // maxHeight: "150px", // Remove maxHeight to show full snippet
-                overflowY: "auto", // Keep for very long snippets, though parent div also has it
+                overflowY: "auto",
                 background: "#1e1e1e",
-                padding: "5px",
-                marginTop: "3px",
+                padding: "5px", // Reset padding as button is gone
+                marginTop: "3px", // Added margin top back
               }}
             >
               <CodeBlock
-                raw={node.source.trim()} // Show full source
+                raw={node.source.trim()}
                 lang={codeBlockLang}
+                wordWrapEnabled={wordWrapEnabled}
               />
             </div>
           </>

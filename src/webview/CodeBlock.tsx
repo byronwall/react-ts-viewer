@@ -11,9 +11,11 @@ import estreeParser from "prettier/plugins/estree"; // estree is a dependency fo
 export function CodeBlock({
   raw,
   lang = "tsx",
+  wordWrapEnabled,
 }: {
   raw: string;
   lang?: string;
+  wordWrapEnabled: boolean;
 }) {
   const [formattedCode, setFormattedCode] = useState<string>(raw);
 
@@ -57,15 +59,15 @@ export function CodeBlock({
       style={atomDark}
       customStyle={{
         margin: 0,
-        // whiteSpace: "pre-wrap",
-        overflowWrap: "break-word",
-        wordWrap: "break-word",
-        overflowX: "hidden",
+        whiteSpace: wordWrapEnabled ? "pre-wrap" : "pre",
+        overflowWrap: wordWrapEnabled ? "break-word" : "normal",
+        wordWrap: wordWrapEnabled ? "break-word" : "normal",
+        overflowX: "auto", // Always allow horizontal scroll
         overflowY: "auto",
       }}
       codeTagProps={{
         style: {
-          whiteSpace: "pre-wrap",
+          whiteSpace: wordWrapEnabled ? "pre-wrap" : "pre",
         },
       }}
     >

@@ -717,9 +717,20 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                 const category = nodeWithData.data.category;
                 return pastelSet[category] || pastelSet[NodeCategory.Other];
               }}
-              borderColor={{
-                from: "color",
-                modifiers: [["darker", 0.8]],
+              borderColor={(
+                node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+              ) => {
+                if (
+                  selectedNodeForDrawer &&
+                  node.data.id === selectedNodeForDrawer.id
+                ) {
+                  return "red";
+                }
+                // For non-selected nodes, use a standard border color.
+                // The original behavior used: { from: "color", modifiers: [["darker", 0.8]] }
+                // Since a function must return a string, we'll use a fixed color.
+                // You might want to derive this from node.color if needed, but that adds complexity.
+                return "#555555"; // Default border for other nodes
               }}
               onClick={(node, event) =>
                 handleNodeClick(node, event as React.MouseEvent)
@@ -768,7 +779,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               enableLabel={settings.enableLabel}
               labelSkipSize={settings.labelSkipSize}
               nodeOpacity={settings.nodeOpacity}
-              borderWidth={settings.borderWidth}
+              borderWidth={settings.borderWidth} // Reverted to settings, as function is not type-compatible
             />
           ) : (
             <div
