@@ -55,8 +55,19 @@ export function CodeBlock({
     <SyntaxHighlighter
       language={lang}
       style={atomDark}
-      customStyle={{ margin: 0 }}
-      wrapLongLines={true}
+      customStyle={{
+        margin: 0,
+        // whiteSpace: "pre-wrap",
+        overflowWrap: "break-word",
+        wordWrap: "break-word",
+        overflowX: "hidden",
+        overflowY: "auto",
+      }}
+      codeTagProps={{
+        style: {
+          whiteSpace: "pre-wrap",
+        },
+      }}
     >
       {formattedCode}
     </SyntaxHighlighter>

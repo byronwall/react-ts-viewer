@@ -13,6 +13,7 @@ import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
+import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -52,6 +53,9 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const [isLegendVisible, setIsLegendVisible] = useState<boolean>(false); // State for legend popover
   const [legendButtonRef, setLegendButtonRef] =
     useState<HTMLButtonElement | null>(null);
+  const [selectedNodeForDrawer, setSelectedNodeForDrawer] =
+    useState<ScopeNode | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
   const handleExportToJson = useCallback(async () => {
     const jsonString = JSON.stringify(initialData, null, 2);
@@ -123,6 +127,15 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     event: React.MouseEvent
   ) => {
     const clickedNivoNodeData = node.data; // This is the ScopeNode object from the data fed to Nivo
+    const fullNodeFromInitialTree = findNodeInTree(
+      initialData,
+      clickedNivoNodeData.id
+    );
+
+    if (!fullNodeFromInitialTree) {
+      // This scenario should ideally not occur if IDs are consistent and initialData is complete.
+      return;
+    }
 
     if (event.metaKey || event.ctrlKey) {
       // CMD/CTRL + Click: Open file
@@ -141,31 +154,33 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           loc: clickedNivoNodeData.loc,
         });
       }
-    } else {
-      // Single Click: Expand/Collapse (Zoom)
-      // Find the canonical version of the node from the original full tree (`initialData`)
-      // This ensures we have the complete children information for accurate zooming.
-      const fullNodeFromInitialTree = findNodeInTree(
-        initialData,
-        clickedNivoNodeData.id
-      );
-
-      if (fullNodeFromInitialTree) {
-        if (
-          fullNodeFromInitialTree.children &&
-          fullNodeFromInitialTree.children.length > 0
-        ) {
-          // If the node (from the full tree) has children, zoom into it
-          setIsolatedNode(fullNodeFromInitialTree);
-          setIsolationPath((prevPath) => [
-            ...prevPath,
-            fullNodeFromInitialTree,
-          ]);
-        } else {
-          // It's a leaf node in the full tree, do nothing on single click
-        }
+    } else if (event.altKey) {
+      // ALT + Click: Isolate node (Zoom)
+      event.preventDefault();
+      if (
+        fullNodeFromInitialTree.children &&
+        fullNodeFromInitialTree.children.length > 0
+      ) {
+        setIsolatedNode(fullNodeFromInitialTree);
+        setIsolationPath((prevPath) => [...prevPath, fullNodeFromInitialTree]);
+        setIsDrawerOpen(false); // Close drawer when isolating
+        setSelectedNodeForDrawer(null);
       } else {
-        // This scenario should ideally not occur if IDs are consistent and initialData is complete.
+        // It's a leaf node, do nothing on alt-click if it has no children to zoom into
+      }
+    } else {
+      // Single Click (no modifiers): Open/Close NodeDetailDrawer
+      event.preventDefault();
+      if (
+        selectedNodeForDrawer?.id === fullNodeFromInitialTree.id &&
+        isDrawerOpen
+      ) {
+        setIsDrawerOpen(false);
+        // Optionally, keep selectedNodeForDrawer so if it's re-opened fast it's there,
+        // or set to null: setSelectedNodeForDrawer(null);
+      } else {
+        setSelectedNodeForDrawer(fullNodeFromInitialTree);
+        setIsDrawerOpen(true);
       }
     }
   };
@@ -173,32 +188,40 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const resetIsolation = useCallback(() => {
     setIsolatedNode(null);
     setIsolationPath([]);
+    setIsDrawerOpen(false); // Close drawer when resetting isolation
+    setSelectedNodeForDrawer(null);
   }, []);
 
   const goUpOneLevel = useCallback(() => {
     setIsolationPath((prevPath) => {
       if (prevPath.length === 0) {
-        return []; // Return current path to avoid re-render if already empty or new empty path
+        return [];
       }
       const newPath = prevPath.slice(0, -1);
+
       if (newPath.length === 0) {
         setIsolatedNode(null);
+        setIsDrawerOpen(false); // Close drawer when going to root
+        setSelectedNodeForDrawer(null);
       } else {
-        // If newPath is not empty, its last element is a valid ScopeNode.
-        // isolationPath is typed as ScopeNode[], so newPath is also ScopeNode[].
-        // Accessing the last element of a non-empty ScopeNode[] will yield a ScopeNode.
         const potentialParentNode = newPath[newPath.length - 1];
-        if (potentialParentNode !== undefined) {
+        if (potentialParentNode) {
+          // Check if potentialParentNode is defined
           setIsolatedNode(potentialParentNode);
+          // Close drawer if the new isolated node is different from the node in the drawer.
+          if (potentialParentNode.id !== selectedNodeForDrawer?.id) {
+            setIsDrawerOpen(false);
+            setSelectedNodeForDrawer(null);
+          }
         } else {
-          // This case should ideally not be reached if newPath is non-empty
-          // and contains only ScopeNodes. Setting to null for type safety.
-          setIsolatedNode(null);
+          setIsolatedNode(null); // Should not happen if newPath is not empty
+          setIsDrawerOpen(false);
+          setSelectedNodeForDrawer(null);
         }
       }
       return newPath;
     });
-  }, []);
+  }, [isolatedNode, selectedNodeForDrawer?.id]); // Adjusted dependencies
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -421,309 +444,243 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
         width: "100%",
         height: "100%",
       }}
     >
       <div
         style={{
-          padding: "8px 10px",
-          backgroundColor: "#252526", // VS Code dark theme background
-          color: "#cccccc", // Light text
-          borderBottom: "1px solid #333333",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexShrink: 0,
-          position: "relative", // For positioning the popover relative to the header
-        }}
-        className="treemap-internal-header" // Added class for clarity
-      >
-        <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
-          {/* Title removed from here, will be handled by App.tsx's main header */}
-          Treemap:{" "}
-          <span style={{ color: "#ddd", fontStyle: "italic" }}>{fileName}</span>
-        </h3>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {(isolatedNode || isolationPath.length > 0) && (
-            <>
-              {isolatedNode && (
-                <button
-                  onClick={resetIsolation}
-                  className="treemap-action-button"
-                  title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
-                >
-                  Reset Zoom
-                </button>
-              )}
-              {isolationPath.length > 0 && (
-                <button
-                  onClick={goUpOneLevel}
-                  className="treemap-action-button"
-                  title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
-                >
-                  Up One Level
-                </button>
-              )}
-            </>
-          )}
-          <button
-            onClick={handleExportToJson}
-            className="treemap-action-button"
-            title="Export tree data as JSON"
-          >
-            Export JSON
-          </button>
-          <button
-            onClick={handleExportToPng}
-            className="treemap-action-button"
-            title="Export treemap as PNG"
-          >
-            Export PNG
-          </button>
-          <button
-            ref={setLegendButtonRef}
-            onClick={() => setIsLegendVisible(!isLegendVisible)}
-            className="treemap-action-button"
-            title="Toggle Legend"
-          >
-            {isLegendVisible ? "Hide Legend" : "Show Legend"}
-          </button>
-          <button
-            onClick={onToggleSettingsPanel}
-            title={isSettingsPanelOpen ? "Hide Settings" : "Show Settings"}
-            style={{
-              padding: "6px",
-              backgroundColor: isSettingsPanelOpen ? "#0056b3" : "#007bff",
-              color: "white",
-              border: isSettingsPanelOpen
-                ? "2px solid #ffc107"
-                : "2px solid transparent",
-              borderRadius: "50%",
-              cursor: "pointer",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
-              width: "32px",
-              height: "32px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "background-color 0.2s, border-color 0.2s",
-            }}
-            className="settings-cog-button-treemap"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.68,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
+          flexDirection: "column",
           flexGrow: 1,
+          height: "100%",
           overflow: "hidden",
         }}
-        className="nivo-treemap-container"
       >
-        {finalDisplayData ? (
-          <ResponsiveTreeMap
-            data={finalDisplayData}
-            orientLabel={false}
-            identity="id"
-            value="value"
-            valueFormat=".02s"
-            margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-            labelTextColor={(
-              node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-            ) => getContrastingTextColor(node.color)}
-            parentLabelTextColor={(
-              node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-            ) => getContrastingTextColor(node.color)}
-            parentLabel={(
-              node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-            ) => {
-              const displayLabel = getDynamicNodeDisplayLabel(
-                {
-                  data: node.data as ScopeNode,
-                  width: node.width,
-                  height: node.height,
-                },
-                settings
-              );
-              return displayLabel;
-            }}
-            label={(
-              node: Omit<
-                ComputedNodeWithoutStyles<ScopeNode>,
-                "label" | "parentLabel"
+        <div
+          style={{
+            padding: "8px 10px",
+            backgroundColor: "#252526", // VS Code dark theme background
+            color: "#cccccc", // Light text
+            borderBottom: "1px solid #333333",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexShrink: 0,
+            position: "relative", // For positioning the popover relative to the header
+          }}
+          className="treemap-internal-header" // Added class for clarity
+        >
+          <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
+            {/* Title removed from here, will be handled by App.tsx's main header */}
+            Treemap:{" "}
+            <span style={{ color: "#ddd", fontStyle: "italic" }}>
+              {fileName}
+            </span>
+          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {(isolatedNode || isolationPath.length > 0) && (
+              <>
+                {isolatedNode && (
+                  <button
+                    onClick={resetIsolation}
+                    className="treemap-action-button"
+                    title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
+                  >
+                    Reset Zoom
+                  </button>
+                )}
+                {isolationPath.length > 0 && (
+                  <button
+                    onClick={goUpOneLevel}
+                    className="treemap-action-button"
+                    title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
+                  >
+                    Up One Level
+                  </button>
+                )}
+              </>
+            )}
+            <button
+              onClick={handleExportToJson}
+              className="treemap-action-button"
+              title="Export tree data as JSON"
+            >
+              Export JSON
+            </button>
+            <button
+              onClick={handleExportToPng}
+              className="treemap-action-button"
+              title="Export treemap as PNG"
+            >
+              Export PNG
+            </button>
+            <button
+              ref={setLegendButtonRef}
+              onClick={() => setIsLegendVisible(!isLegendVisible)}
+              className="treemap-action-button"
+              title="Toggle Legend"
+            >
+              {isLegendVisible ? "Hide Legend" : "Show Legend"}
+            </button>
+            <button
+              onClick={onToggleSettingsPanel}
+              title={isSettingsPanelOpen ? "Hide Settings" : "Show Settings"}
+              style={{
+                padding: "6px",
+                backgroundColor: isSettingsPanelOpen ? "#0056b3" : "#007bff",
+                color: "white",
+                border: isSettingsPanelOpen
+                  ? "2px solid #ffc107"
+                  : "2px solid transparent",
+                borderRadius: "50%",
+                cursor: "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background-color 0.2s, border-color 0.2s",
+              }}
+              className="settings-cog-button-treemap"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-            ) => {
-              const displayLabel = getDynamicNodeDisplayLabel(
-                {
-                  data: node.data as ScopeNode,
-                  width: node.width,
-                  height: node.height,
-                },
-                settings
-              );
-              return displayLabel;
-            }}
-            colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
-              const category = nodeWithData.data.category;
-              return pastelSet[category] || pastelSet[NodeCategory.Other];
-            }}
-            borderColor={{
-              from: "color",
-              modifiers: [["darker", 0.8]],
-            }}
-            onClick={(node, event) =>
-              handleNodeClick(node, event as React.MouseEvent)
-            }
-            tooltip={
-              settings.enableTooltip
-                ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
-                    const scopeNode = node.data;
-                    const snippetLength = Math.max(
-                      0,
-                      settings.tooltipSourceSnippetLength
-                    );
-                    const codeBlockLang =
-                      fileName.endsWith(".md") || fileName.endsWith(".mdx")
-                        ? "markdown"
-                        : "tsx";
-                    return (
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          background: "white",
-                          color: "#333",
-                          border: "1px solid #ccc",
-                          borderRadius: "3px",
-                          fontSize: "12px",
-                          maxWidth: "400px",
-                          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-                        }}
-                      >
-                        {settings.showTooltipId && (
-                          <>
-                            <strong>{scopeNode.id.split(":").pop()}</strong>
-                            {settings.showTooltipCategory &&
-                              ` (${scopeNode.category})`}
-                            <br />
-                          </>
-                        )}
-                        {!settings.showTooltipId &&
-                          settings.showTooltipCategory && (
-                            <>
-                              <strong>{scopeNode.category}</strong>
-                              <br />
-                            </>
-                          )}
-                        {settings.showTooltipValue && (
-                          <>
-                            Value: {node.formattedValue} ({scopeNode.value}{" "}
-                            chars)
-                            <br />
-                          </>
-                        )}
-                        {settings.showTooltipLines && (
-                          <>
-                            Lines: {scopeNode.loc.start.line} -{" "}
-                            {scopeNode.loc.end.line}
-                            <br />
-                          </>
-                        )}
-                        {(scopeNode.meta?.collapsed ||
-                          scopeNode.meta?.syntheticGroup) && (
-                          <div
-                            style={{
-                              marginTop: "5px",
-                              paddingTop: "5px",
-                              borderTop: "1px solid #eee",
-                              color: "#555",
-                            }}
-                          >
-                            {scopeNode.meta?.collapsed && (
-                              <div style={{ fontStyle: "italic" }}>
-                                Collapsed{" "}
-                                {scopeNode.meta.originalCategory ||
-                                  scopeNode.category}
-                                {scopeNode.meta.collapsed === "arrowFunction" &&
-                                  scopeNode.meta.call && (
-                                    <> (calls: {scopeNode.meta.call})</>
-                                  )}
-                              </div>
-                            )}
-                            {scopeNode.meta?.syntheticGroup && (
-                              <div style={{ fontWeight: "bold" }}>
-                                Group containing {scopeNode.meta.contains} nodes
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {settings.showTooltipSourceSnippet &&
-                          scopeNode.source && (
-                            <>
-                              <div
-                                style={{
-                                  marginTop: "5px",
-                                  paddingTop: "5px",
-                                  borderTop: "1px solid #eee",
-                                }}
-                              >
-                                Source snippet (first {snippetLength} chars):
-                              </div>
-                              <div
-                                style={{
-                                  maxHeight: "200px",
-                                  overflowY: "auto",
-                                  background: "#f0f0f0",
-                                  padding: "5px",
-                                  marginTop: "3px",
-                                }}
-                              >
-                                <CodeBlock
-                                  raw={scopeNode.source.trim()}
-                                  lang={codeBlockLang}
-                                />
-                              </div>
-                            </>
-                          )}
-                      </div>
-                    );
-                  }
-                : () => null
-            }
-            isInteractive={true}
-            animate={false}
-            tile={settings.tile}
-            leavesOnly={settings.leavesOnly}
-            innerPadding={settings.innerPadding}
-            outerPadding={settings.outerPadding}
-            enableLabel={settings.enableLabel}
-            labelSkipSize={settings.labelSkipSize}
-            nodeOpacity={settings.nodeOpacity}
-            borderWidth={settings.borderWidth}
-          />
-        ) : (
-          <div style={{ textAlign: "center", padding: "20px", color: "#ccc" }}>
-            No data to display (possibly all filtered by depth limit or data is
-            null).
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.68,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
           </div>
-        )}
+        </div>
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            flexGrow: 1,
+            overflow: "hidden",
+          }}
+          className="nivo-treemap-container"
+        >
+          {finalDisplayData ? (
+            <ResponsiveTreeMap
+              data={finalDisplayData}
+              orientLabel={false}
+              identity="id"
+              value="value"
+              valueFormat=".02s"
+              margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+              labelTextColor={(
+                node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+              ) => getContrastingTextColor(node.color)}
+              parentLabelTextColor={(
+                node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
+              ) => getContrastingTextColor(node.color)}
+              parentLabel={(
+                node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
+              ) => {
+                const displayLabel = getDynamicNodeDisplayLabel(
+                  {
+                    data: node.data as ScopeNode,
+                    width: node.width,
+                    height: node.height,
+                  },
+                  settings
+                );
+                return displayLabel;
+              }}
+              label={(
+                node: Omit<
+                  ComputedNodeWithoutStyles<ScopeNode>,
+                  "label" | "parentLabel"
+                >
+              ) => {
+                const displayLabel = getDynamicNodeDisplayLabel(
+                  {
+                    data: node.data as ScopeNode,
+                    width: node.width,
+                    height: node.height,
+                  },
+                  settings
+                );
+                return displayLabel;
+              }}
+              colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
+                const category = nodeWithData.data.category;
+                return pastelSet[category] || pastelSet[NodeCategory.Other];
+              }}
+              borderColor={{
+                from: "color",
+                modifiers: [["darker", 0.8]],
+              }}
+              onClick={(node, event) =>
+                handleNodeClick(node, event as React.MouseEvent)
+              }
+              tooltip={
+                settings.enableTooltip
+                  ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
+                      const scopeNode = node.data;
+                      const displayLabel = getDynamicNodeDisplayLabel(
+                        {
+                          data: scopeNode as ScopeNode,
+                          width: node.width,
+                          height: node.height,
+                        },
+                        settings
+                      );
+
+                      return (
+                        <div
+                          style={{
+                            padding: "5px 8px",
+                            background: "#333",
+                            color: "#f0f0f0",
+                            border: "1px solid #555",
+                            borderRadius: "2px",
+                            fontSize: "11px",
+                            maxWidth: "300px",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {displayLabel ||
+                            scopeNode.id.split(":").pop() ||
+                            "Node"}
+                        </div>
+                      );
+                    }
+                  : () => null
+              }
+              isInteractive={true}
+              animate={false}
+              tile={settings.tile}
+              leavesOnly={settings.leavesOnly}
+              innerPadding={settings.innerPadding}
+              outerPadding={settings.outerPadding}
+              enableLabel={settings.enableLabel}
+              labelSkipSize={settings.labelSkipSize}
+              nodeOpacity={settings.nodeOpacity}
+              borderWidth={settings.borderWidth}
+            />
+          ) : (
+            <div
+              style={{ textAlign: "center", padding: "20px", color: "#ccc" }}
+            >
+              No data to display (possibly all filtered by depth limit or data
+              is null).
+            </div>
+          )}
+        </div>
       </div>
       <TreemapLegendPopover
         activePalette={pastelSet}
@@ -731,6 +688,15 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         onClose={() => setIsLegendVisible(false)}
         anchorElement={legendButtonRef}
       />
+      {isDrawerOpen && (
+        <NodeDetailDrawer
+          node={selectedNodeForDrawer}
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          fileName={fileName}
+          settings={settings}
+        />
+      )}
     </div>
   );
 };
