@@ -87,11 +87,6 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         if (!(blob instanceof Blob)) {
           throw new Error("Fetched data is not a Blob.");
         }
-        if (blob.type !== "image/png") {
-          // Optionally, you could try to re-create the blob with the correct type if you are sure of the format
-          // const newBlob = new Blob([blob], {type: 'image/png'});
-          // await navigator.clipboard.write([new ClipboardItem({ 'image/png': newBlob })]);
-        }
 
         await navigator.clipboard.write([
           new ClipboardItem({ [blob.type]: blob }),
