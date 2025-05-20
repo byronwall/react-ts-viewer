@@ -27,7 +27,7 @@ import "@reactflow/controls/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
-import TreemapDisplay from "./TreemapDisplay";
+import { TreemapDisplay } from "./Treemap/TreemapDisplay";
 import { vscodeApi } from "./vscodeApi";
 
 // Import new settings components and types

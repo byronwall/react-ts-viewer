@@ -5,158 +5,14 @@ import {
 } from "@nivo/treemap";
 import React, { useCallback, useEffect, useState } from "react";
 import { svgAsPngUri } from "save-svg-as-png";
-import { NodeCategory, ScopeNode } from "../types"; // Assuming src/types.ts
-import { CodeBlock } from "./CodeBlock";
-import { vscodeApi } from "./vscodeApi"; // Import the shared vscodeApi singleton
-import { TreemapSettings } from "./settingsConfig"; // Corrected import path
-
-const pastelSet: Record<NodeCategory, string> = {
-  [NodeCategory.Program]: "#8dd3c7",
-  [NodeCategory.Module]: "#ffffb3",
-  [NodeCategory.Class]: "#bebada",
-  [NodeCategory.Function]: "#fb8072", // Coral pink
-  [NodeCategory.ArrowFunction]: "#80b1d3",
-  [NodeCategory.Block]: "#fdb462",
-  [NodeCategory.ControlFlow]: "#b3de69",
-  [NodeCategory.Variable]: "#fccde5",
-  [NodeCategory.Call]: "#d9d9d9", // Dull gray, good for console
-  [NodeCategory.ReactComponent]: "#bc80bd",
-  [NodeCategory.ReactHook]: "#ccebc5",
-  [NodeCategory.JSX]: "#ffed6f",
-  [NodeCategory.JSXElementDOM]: "#d4e157",
-  [NodeCategory.JSXElementCustom]: "#bde4e8", // Was #ffc0cb (pink), changed to light blue/teal
-  [NodeCategory.Import]: "#c1e7ff",
-  [NodeCategory.TypeAlias]: "#ffe8b3",
-  [NodeCategory.Interface]: "#f0e68c",
-  [NodeCategory.Literal]: "#dcdcdc",
-  [NodeCategory.SyntheticGroup]: "#e6e6fa",
-  [NodeCategory.ConditionalBlock]: "#b3e2cd", // Mint green (base for conditionals)
-  [NodeCategory.IfClause]: "#c6f0e0", // Lighter mint
-  [NodeCategory.ElseIfClause]: "#a0d8c0", // Medium mint
-  [NodeCategory.ElseClause]: "#8ccbad", // Darker mint
-  [NodeCategory.Other]: "#a6cee3",
-  [NodeCategory.ReturnStatement]: "#66c2a5",
-  [NodeCategory.Assignment]: "#ffd92f",
-
-  // Markdown specific colors
-  [NodeCategory.MarkdownHeading]: "#f4a261", // Sandy Brown
-  [NodeCategory.MarkdownParagraph]: "#e9c46a", // Saffron
-  [NodeCategory.MarkdownBlockquote]: "#2a9d8f", // Persian Green
-  [NodeCategory.MarkdownCodeBlock]: "#264653", // Charcoal
-  [NodeCategory.MarkdownList]: "#e76f51", // Burnt Sienna
-  [NodeCategory.MarkdownListItem]: "#f4a261", // (Same as Heading, or choose another)
-  [NodeCategory.MarkdownTable]: "#a2d2ff", // Light Blue
-  [NodeCategory.MarkdownImage]: "#bde0fe", // Lighter Blue
-  [NodeCategory.MarkdownThematicBreak]: "#ced4da", // Light Gray
-};
-
-// Simplified for direct use of pastelSet
-export const availablePalettes: Record<string, Record<NodeCategory, string>> = {
-  "Pastel Set": pastelSet,
-};
-// --- END: Color Palette Definitions ---
-
-// Helper to get enum keys - Object.keys filters out reverse mappings for numeric enums
-const getNodeCategoryKeys = () => {
-  return Object.values(NodeCategory).filter(
-    (value) => typeof value === "string"
-  ) as string[];
-};
-
-// --- START: TreemapLegend Component ---
-// This will be adapted into the Popover content
-interface TreemapLegendContentProps {
-  activePalette: Record<NodeCategory, string>;
-}
-
-const TreemapLegendContent: React.FC<TreemapLegendContentProps> = ({
-  activePalette,
-}) => {
-  const legendCategories = getNodeCategoryKeys().filter(
-    (key) => activePalette[key as NodeCategory]
-  );
-
-  if (legendCategories.length === 0) {
-    return (
-      <div style={{ padding: "10px", textAlign: "center" }}>
-        No categories to display in legend.
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {legendCategories.map((categoryKey) => {
-        const categoryName = categoryKey as NodeCategory;
-        const color = activePalette[categoryName];
-        return (
-          <div
-            key={categoryName}
-            style={{ display: "flex", alignItems: "center" }}
-          >
-            <span
-              style={{
-                width: "12px",
-                height: "12px",
-                backgroundColor: color,
-                marginRight: "5px",
-                border: "1px solid #555",
-                display: "inline-block",
-              }}
-            ></span>
-            {categoryName}
-          </div>
-        );
-      })}
-    </>
-  );
-};
-
-// --- START: TreemapLegendPopover Component ---
-interface TreemapLegendPopoverProps {
-  activePalette: Record<NodeCategory, string>;
-  isOpen: boolean;
-  onClose: () => void; // Or a toggle function
-  anchorElement: HTMLElement | null; // To position relative to the button
-}
-
-const TreemapLegendPopover: React.FC<TreemapLegendPopoverProps> = ({
-  activePalette,
-  isOpen,
-  onClose, // We might not use onClose directly if the button toggles
-  anchorElement,
-}) => {
-  if (!isOpen) return null;
-
-  // Basic positioning logic - can be refined
-  const popoverStyle: React.CSSProperties = {
-    position: "absolute",
-    top: anchorElement
-      ? anchorElement.offsetTop + anchorElement.offsetHeight + 5
-      : "60px", // Below the anchor + 5px margin
-    right: "10px", // Align to the right of the header area
-    backgroundColor: "#2c2c2c",
-    color: "#cccccc",
-    border: "1px solid #444444",
-    borderRadius: "4px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-    padding: "10px 15px",
-    zIndex: 1000,
-    minWidth: "200px",
-    maxHeight: "250px",
-    overflowY: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  };
-
-  return (
-    <div style={popoverStyle} className="treemap-legend-popover">
-      <TreemapLegendContent activePalette={activePalette} />
-    </div>
-  );
-};
-// --- END: TreemapLegendPopover Component ---
+import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
+import { CodeBlock } from "../CodeBlock";
+import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
+import { TreemapSettings } from "../settingsConfig"; // Corrected import path
+import { TreemapLegendPopover } from "./TreemapLegendPopover";
+import { getContrastingTextColor } from "./getContrastingTextColor";
+import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
+import { pastelSet } from "./pastelSet";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -183,238 +39,7 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   return null;
 }
 
-// Helper function to generate display labels based on node category and PRD notes
-const getNodeDisplayLabel = (nodeData: ScopeNode): string => {
-  const { category, label, loc, source, kind, children, meta } = nodeData; // children is part of nodeData, meta added
-  const lineRange =
-    loc && children && children.length > 0
-      ? ` [${loc.start.line}-${loc.end.line}]`
-      : "";
-
-  let baseLabel = "";
-
-  switch (category) {
-    case NodeCategory.JSX:
-      baseLabel = `<${label || "JSXElement"}>${lineRange}`;
-      break;
-    case NodeCategory.Function:
-      baseLabel = `${label || "fn"}()${lineRange}`;
-      break;
-    case NodeCategory.ArrowFunction:
-      baseLabel =
-        (label && label !== "ArrowFunction" ? `${label}() => {}` : `() => {}`) +
-        lineRange;
-      break;
-    case NodeCategory.Variable:
-      baseLabel = `[${label || "var"}]${lineRange}`;
-      break;
-    case NodeCategory.Class:
-      baseLabel = `[${label || "class"}]${lineRange}`;
-      break;
-    case NodeCategory.Import:
-      baseLabel = `[${label || "import"}]${lineRange}`;
-      break;
-    case NodeCategory.Program:
-      baseLabel = `${label}${lineRange}`; // Usually the filename
-      break;
-    case NodeCategory.Module:
-      baseLabel = `Module: ${label}${lineRange}`;
-      break;
-    case NodeCategory.Block:
-      baseLabel =
-        loc && loc.start.line === loc.end.line
-          ? `Block (inline)${lineRange}`
-          : `Block${lineRange}`;
-      break;
-    case NodeCategory.ControlFlow:
-      baseLabel = `${label}${lineRange}`;
-      break;
-    case NodeCategory.Call:
-      baseLabel = `${label || "call"}()${lineRange}`;
-      break;
-    case NodeCategory.ReactComponent:
-      baseLabel = `<${label || "Component"} />${lineRange}`;
-      break;
-    case NodeCategory.ReactHook:
-      baseLabel = `${label || "useHook"}()${lineRange}`;
-      break;
-    case NodeCategory.TypeAlias:
-      baseLabel = `type ${label}${lineRange}`;
-      break;
-    case NodeCategory.Interface:
-      baseLabel = `interface ${label}${lineRange}`;
-      break;
-    case NodeCategory.Literal:
-      baseLabel = `Literal: ${label !== "Literal" && label ? label : source ? source.substring(0, 20) : ""}${lineRange}`;
-      break;
-    case NodeCategory.SyntheticGroup:
-      baseLabel = `Group: ${label}${lineRange}`;
-      break;
-    case NodeCategory.JSXElementDOM:
-      baseLabel = `${label}${lineRange}`;
-      break;
-    case NodeCategory.JSXElementCustom:
-      baseLabel = `${label}${lineRange}`;
-      break;
-    case NodeCategory.ConditionalBlock: {
-      baseLabel = `${label}${lineRange}`;
-      break;
-    }
-    case NodeCategory.IfClause:
-    case NodeCategory.ElseClause:
-    case NodeCategory.ElseIfClause:
-      baseLabel = `${label}${lineRange}`;
-      break;
-    case NodeCategory.ReturnStatement:
-      baseLabel = `${label}${lineRange}`;
-      break;
-    case NodeCategory.Assignment:
-      baseLabel = `${label}${lineRange}`;
-      break;
-
-    // Markdown specific labels
-    case NodeCategory.MarkdownHeading:
-      baseLabel = `H: ${label}${lineRange}`;
-      break;
-    case NodeCategory.MarkdownParagraph:
-      // For paragraphs, the label might be the first few words of the content
-      baseLabel = `P: ${label.substring(0, 20)}${label.length > 20 ? "..." : ""}${lineRange}`;
-      break;
-    case NodeCategory.MarkdownBlockquote:
-      baseLabel = `Quote: ${label.substring(0, 15)}${label.length > 15 ? "..." : ""}${lineRange}`;
-      break;
-    case NodeCategory.MarkdownCodeBlock:
-      // Label might include language if available in meta, e.g., meta.lang
-      baseLabel = `Code (${nodeData.meta?.lang || ""})${lineRange}`;
-      break;
-    case NodeCategory.MarkdownList: {
-      // Show a preview of the first list item's text, if available
-      let preview = "";
-      let listChildren = children;
-      if (!listChildren && nodeData.children) {
-        listChildren = nodeData.children;
-      }
-      if (listChildren && listChildren.length > 0) {
-        const firstListItem = listChildren.find(
-          (child) => child.category === NodeCategory.MarkdownListItem
-        );
-        if (firstListItem && typeof firstListItem.label === "string") {
-          preview =
-            firstListItem.label.substring(0, 20) +
-            (firstListItem.label.length > 20 ? "..." : "");
-        }
-      } else if (nodeData.source && typeof nodeData.source === "string") {
-        // Fallback: extract first list item from the source string
-        const lines = nodeData.source.split(/\r?\n/);
-        const firstItemLine = lines.find((line) =>
-          /^\s*([-*]|\d+\.)\s+/.test(line)
-        );
-        if (firstItemLine) {
-          // Remove the list marker and trim
-          preview = firstItemLine
-            .replace(/^\s*([-*]|\d+\.)\s+/, "")
-            .substring(0, 20);
-          if (firstItemLine.length > 20) preview += "...";
-        }
-      }
-      baseLabel = preview ? `List: ${preview}${lineRange}` : `List${lineRange}`;
-      break;
-    }
-    case NodeCategory.MarkdownListItem:
-      baseLabel = `Item: ${label.substring(0, 15)}${label.length > 15 ? "..." : ""}${lineRange}`;
-      break;
-    case NodeCategory.MarkdownTable:
-      baseLabel = `Table${lineRange}`;
-      break;
-    case NodeCategory.MarkdownImage:
-      // Label could be alt text if available
-      baseLabel = `Image: ${label || "(no alt text)"}${lineRange}`;
-      break;
-    case NodeCategory.MarkdownThematicBreak:
-      baseLabel = `---${lineRange}`;
-      break;
-
-    default:
-      baseLabel = `${category}: ${label}${lineRange}`;
-      break;
-  }
-
-  // Prepend glyph if constrained by depth
-  if (meta?.isConstrainedByDepth) {
-    return `▼ ${baseLabel}`;
-  }
-  return baseLabel;
-};
-
-// Define a type for the parts of a Nivo node needed for labeling
-interface NodePartsForLabeling {
-  data: ScopeNode;
-  width: number;
-  height: number;
-  // depth: number; // Removed for nesting depth
-}
-
-// Helper function to dynamically determine node label display based on size and settings
-const getDynamicNodeDisplayLabel = (
-  parts: NodePartsForLabeling,
-  settings: TreemapSettings
-): string => {
-  // Check height threshold
-  if (parts.height < settings.minLabelHeight) {
-    return "";
-  }
-
-  // Get the base label from existing logic
-  let displayLabel = getNodeDisplayLabel(parts.data); // parts.data is ScopeNode
-
-  // Apply truncation if enabled
-  if (settings.truncateLabel) {
-    let maxCharsAllowed = settings.labelMaxChars;
-
-    // Calculate max characters based on node width, if avgCharPixelWidth is valid
-    if (settings.avgCharPixelWidth > 0) {
-      const maxCharsByWidth = Math.floor(
-        parts.width / settings.avgCharPixelWidth
-      );
-      // Use the more restrictive limit between width-based and absolute max chars
-      maxCharsAllowed = Math.min(maxCharsAllowed, maxCharsByWidth);
-    }
-
-    if (displayLabel.length > maxCharsAllowed) {
-      if (maxCharsAllowed < 3) {
-        // Not enough space for "..."
-        return "";
-      }
-      displayLabel = displayLabel.substring(0, maxCharsAllowed - 3) + "...";
-    }
-  }
-
-  return displayLabel;
-};
-
-// Helper function to determine contrasting text color (black or white)
-const getContrastingTextColor = (hexBackgroundColor: string): string => {
-  if (!hexBackgroundColor) return "#000000"; // Default to black if no color provided
-
-  // Remove # if present
-  const hex = hexBackgroundColor.replace("#", "");
-
-  // Convert hex to RGB
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  // Calculate luminance (per WCAG 2.0)
-  // Formula: 0.2126 * R + 0.7152 * G + 0.0722 * B
-  // Note: RGB values should be in sRGB linear space (0-1 range)
-  // For simplicity, we'll use the 0-255 range directly, which is common for this heuristic.
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-
-  // Use a threshold (0.5 is common) to decide text color
-  return luminance > 0.5 ? "#000000" : "#ffffff"; // Dark text on light bg, White text on dark bg
-};
-
-const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
+export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   data: initialData,
   settings,
   onSettingsChange,
@@ -674,8 +299,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [onSettingsChange, vscodeApi]);
 
-  const displayData = isolatedNode || initialData;
-
   // Helper function to recursively transform/filter nodes based on depth limit
   const transformNodeForDepthLimit = (
     originalNode: ScopeNode | null,
@@ -798,11 +421,6 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const finalDisplayData = settings.enableDepthLimit
     ? transformNodeForDepthLimit(baseDisplayData, 0, settings.maxDepth, true)
     : transformNodeForDepthLimit(baseDisplayData, 0, 0, false); // Apply visibility filters even if depth limit is off
-
-  // Basic color scale based on category - extend as needed
-  // const activePalette =
-  //   availablePalettes[settings.colorPalette] || defaultPalette;
-  const activePalette = pastelSet; // Directly use pastelSet
 
   return (
     <div
@@ -970,9 +588,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             }}
             colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
               const category = nodeWithData.data.category;
-              return (
-                activePalette[category] || activePalette[NodeCategory.Other]
-              );
+              return pastelSet[category] || pastelSet[NodeCategory.Other];
             }}
             borderColor={{
               from: "color",
@@ -1094,7 +710,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                       </div>
                     );
                   }
-                : (node) => null
+                : () => null
             }
             isInteractive={true}
             animate={false}
@@ -1115,7 +731,7 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         )}
       </div>
       <TreemapLegendPopover
-        activePalette={activePalette}
+        activePalette={pastelSet}
         isOpen={isLegendVisible}
         onClose={() => setIsLegendVisible(false)}
         anchorElement={legendButtonRef}
@@ -1123,21 +739,3 @@ const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     </div>
   );
 };
-
-export default TreemapDisplay;
-
-// Basic styles for placeholder buttons can be injected by App.tsx or defined globally
-// This ensures consistency if TreemapDisplay is used elsewhere.
-// For example, in a global CSS:
-// .treemap-action-button {
-//   background-color: #4a4a4a;
-//   color: #ddd;
-//   border: 1px solid #555;
-//   padding: 5px 10px; /* Adjusted for toolbar */
-//   border-radius: 4px;
-//   font-size: 0.85em;
-//   cursor: pointer;
-// }
-// .treemap-action-button:hover {
-//   background-color: #5a5a5a;
-// }
