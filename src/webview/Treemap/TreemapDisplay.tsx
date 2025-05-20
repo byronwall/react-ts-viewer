@@ -122,6 +122,87 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     }
   }, [vscodeApi]); // Removed fileName as it's not used
 
+  // New handler for Jump to Source
+  const handleJumpToSource = useCallback(
+    (nodeToJump: ScopeNode) => {
+      if (nodeToJump.loc && nodeToJump.id) {
+        const idParts = nodeToJump.id.split(":");
+        const filePath = idParts[0]; // Assumes filePath is the first part
+
+        if (!filePath) {
+          console.warn(
+            "Cannot jump to source: filePath is missing in node id",
+            nodeToJump
+          );
+          vscodeApi.postMessage({
+            command: "showErrorMessage",
+            text: "Cannot jump to source: File path information is missing for this node.",
+          });
+          return;
+        }
+
+        vscodeApi.postMessage({
+          command: "revealCode",
+          filePath: filePath,
+          loc: nodeToJump.loc,
+        });
+      } else {
+        console.warn("Cannot jump to source: loc or id missing", nodeToJump);
+        vscodeApi.postMessage({
+          command: "showInformationMessage",
+          text: "Source location not available for this node.",
+        });
+      }
+    },
+    [vscodeApi]
+  );
+
+  // New handler for Drill In
+  const handleDrillIntoNode = useCallback(
+    (nodeToDrill: ScopeNode) => {
+      // We need the full node from the initial tree to get children information
+      const fullNodeFromInitialTree = findNodeInTree(
+        initialData,
+        nodeToDrill.id
+      );
+
+      if (!fullNodeFromInitialTree) {
+        console.warn(
+          "Cannot drill in: Node not found in initial tree",
+          nodeToDrill
+        );
+        vscodeApi.postMessage({
+          command: "showErrorMessage",
+          text: "Cannot drill into node: Node data inconsistency.",
+        });
+        return;
+      }
+
+      if (
+        fullNodeFromInitialTree.children &&
+        fullNodeFromInitialTree.children.length > 0
+      ) {
+        setIsolatedNode(fullNodeFromInitialTree);
+        setIsolationPath((prevPath) => [...prevPath, fullNodeFromInitialTree]);
+        setIsDrawerOpen(false); // Close drawer when isolating/drilling
+        setSelectedNodeForDrawer(null);
+      } else {
+        // It's a leaf node or has no drillable children
+        vscodeApi.postMessage({
+          command: "showInformationMessage",
+          text: "This node has no further children to drill into.",
+        });
+      }
+    },
+    [
+      initialData,
+      setIsolatedNode,
+      setIsolationPath,
+      setIsDrawerOpen,
+      setSelectedNodeForDrawer,
+    ]
+  );
+
   const handleNodeClick = (
     node: ComputedNode<ScopeNode>, // This is Nivo's computed node, node.data is our ScopeNode
     event: React.MouseEvent
@@ -140,34 +221,11 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     if (event.metaKey || event.ctrlKey) {
       // CMD/CTRL + Click: Open file
       event.preventDefault();
-      if (clickedNivoNodeData.loc && clickedNivoNodeData.id) {
-        const idParts = clickedNivoNodeData.id.split(":");
-        const filePath = idParts[0]; // Assumes filePath is the first part, before any colons.
-
-        if (!filePath) {
-          return; // Cannot proceed if filePath is missing
-        }
-
-        vscodeApi.postMessage({
-          command: "revealCode",
-          filePath: filePath,
-          loc: clickedNivoNodeData.loc,
-        });
-      }
+      handleJumpToSource(fullNodeFromInitialTree); // Use the new handler
     } else if (event.altKey) {
       // ALT + Click: Isolate node (Zoom)
       event.preventDefault();
-      if (
-        fullNodeFromInitialTree.children &&
-        fullNodeFromInitialTree.children.length > 0
-      ) {
-        setIsolatedNode(fullNodeFromInitialTree);
-        setIsolationPath((prevPath) => [...prevPath, fullNodeFromInitialTree]);
-        setIsDrawerOpen(false); // Close drawer when isolating
-        setSelectedNodeForDrawer(null);
-      } else {
-        // It's a leaf node, do nothing on alt-click if it has no children to zoom into
-      }
+      handleDrillIntoNode(fullNodeFromInitialTree); // Use the new handler
     } else {
       // Single Click (no modifiers): Open/Close NodeDetailDrawer
       event.preventDefault();
@@ -688,15 +746,18 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         onClose={() => setIsLegendVisible(false)}
         anchorElement={legendButtonRef}
       />
-      {isDrawerOpen && (
-        <NodeDetailDrawer
-          node={selectedNodeForDrawer}
-          isOpen={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          fileName={fileName}
-          settings={settings}
-        />
-      )}
+      {isDrawerOpen &&
+        selectedNodeForDrawer && ( // Ensure selectedNodeForDrawer is not null
+          <NodeDetailDrawer
+            node={selectedNodeForDrawer}
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            fileName={fileName}
+            settings={settings}
+            onJumpToSource={handleJumpToSource} // Pass the handler
+            onDrillIntoNode={handleDrillIntoNode} // Pass the handler
+          />
+        )}
     </div>
   );
 };

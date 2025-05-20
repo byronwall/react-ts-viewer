@@ -9,6 +9,8 @@ interface NodeDetailDrawerProps {
   onClose: () => void;
   fileName: string;
   settings: TreemapSettings;
+  onJumpToSource: (node: ScopeNode) => void;
+  onDrillIntoNode: (node: ScopeNode) => void;
 }
 
 export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
@@ -17,6 +19,8 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   onClose,
   fileName,
   settings,
+  onJumpToSource,
+  onDrillIntoNode,
 }) => {
   if (!isOpen || !node) {
     return null;
@@ -55,19 +59,53 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         <h4 style={{ margin: 0, fontSize: "0.9em" }}>
           Node Details: {node.id.split(":").pop()}
         </h4>
-        <button
-          onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            color: "#cccccc",
-            cursor: "pointer",
-            fontSize: "1.2em",
-          }}
-          title="Close Details"
-        >
-          &times;
-        </button>
+        <div>
+          <button
+            onClick={() => onJumpToSource(node)}
+            style={{
+              background: "none",
+              border: "1px solid #555",
+              borderRadius: "3px",
+              color: "#cccccc",
+              cursor: "pointer",
+              fontSize: "0.8em",
+              marginRight: "5px",
+              padding: "3px 6px",
+            }}
+            title="Jump to Source (Cmd+Click)"
+          >
+            Jump to Source
+          </button>
+          <button
+            onClick={() => onDrillIntoNode(node)}
+            style={{
+              background: "none",
+              border: "1px solid #555",
+              borderRadius: "3px",
+              color: "#cccccc",
+              cursor: "pointer",
+              fontSize: "0.8em",
+              marginRight: "10px",
+              padding: "3px 6px",
+            }}
+            title="Drill In (Alt+Click)"
+          >
+            Drill In
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#cccccc",
+              cursor: "pointer",
+              fontSize: "1.2em",
+            }}
+            title="Close Details"
+          >
+            &times;
+          </button>
+        </div>
       </div>
 
       {/* Content div to handle overflow for the rest of the items */}
