@@ -11,6 +11,7 @@ interface NodeDetailDrawerProps {
   settings: TreemapSettings;
   onJumpToSource: (node: ScopeNode) => void;
   onDrillIntoNode: (node: ScopeNode) => void;
+  width: number;
 }
 
 export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
@@ -21,6 +22,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   settings,
   onJumpToSource,
   onDrillIntoNode,
+  width,
 }) => {
   if (!isOpen || !node) {
     return null;
@@ -35,7 +37,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
     <div
       style={{
         // height: "300px", // Height will be controlled by parent or set to 100% for side view
-        width: "300px", // Set a fixed width for the side drawer
+        width: `${width}px`,
         backgroundColor: "#252526",
         color: "#cccccc",
         borderLeft: "1px solid #333333", // Change border to left for side view

@@ -3,7 +3,7 @@ import {
   ComputedNodeWithoutStyles,
   ResponsiveTreeMap,
 } from "@nivo/treemap";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
 import { CodeBlock } from "../CodeBlock";
@@ -56,6 +56,11 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const [selectedNodeForDrawer, setSelectedNodeForDrawer] =
     useState<ScopeNode | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [drawerWidth, setDrawerWidth] = useState<number>(300); // Initial drawer width
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+  const minDrawerWidth = 150; // Minimum width for the drawer
+  const maxDrawerWidth = 800; // Maximum width for the drawer
+  const resizeHandleRef = useRef<HTMLDivElement>(null);
 
   const handleExportToJson = useCallback(async () => {
     const jsonString = JSON.stringify(initialData, null, 2);
@@ -498,6 +503,41 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     ? transformNodeForDepthLimit(baseDisplayData, 0, settings.maxDepth, true)
     : transformNodeForDepthLimit(baseDisplayData, 0, 0, false); // Apply visibility filters even if depth limit is off
 
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  const resize = useCallback(
+    (e: MouseEvent) => {
+      if (isResizing) {
+        const newWidth = window.innerWidth - e.clientX;
+        if (newWidth > minDrawerWidth && newWidth < maxDrawerWidth) {
+          setDrawerWidth(newWidth);
+        } else if (newWidth <= minDrawerWidth) {
+          setDrawerWidth(minDrawerWidth);
+        } else {
+          setDrawerWidth(maxDrawerWidth);
+        }
+      }
+    },
+    [isResizing, minDrawerWidth, maxDrawerWidth]
+  );
+
+  useEffect(() => {
+    window.addEventListener("mousemove", resize);
+    window.addEventListener("mouseup", stopResizing);
+
+    return () => {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+    };
+  }, [resize, stopResizing]);
+
   return (
     <div
       style={{
@@ -746,8 +786,26 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         onClose={() => setIsLegendVisible(false)}
         anchorElement={legendButtonRef}
       />
-      {isDrawerOpen &&
-        selectedNodeForDrawer && ( // Ensure selectedNodeForDrawer is not null
+      {isDrawerOpen && selectedNodeForDrawer && (
+        <>
+          <div
+            ref={resizeHandleRef}
+            onMouseDown={startResizing}
+            style={{
+              width: "5px",
+              cursor: "ew-resize",
+              backgroundColor: "#333333", // Darker handle for visibility
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10, // Ensure handle is on top
+            }}
+            title="Resize drawer"
+          >
+            {/* Optional: Add an icon or visual indicator for the handle */}
+            {/* <div style={{ width: '2px', height: '20px', backgroundColor: '#666' }} /> */}
+          </div>
           <NodeDetailDrawer
             node={selectedNodeForDrawer}
             isOpen={isDrawerOpen}
@@ -756,8 +814,10 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             settings={settings}
             onJumpToSource={handleJumpToSource} // Pass the handler
             onDrillIntoNode={handleDrillIntoNode} // Pass the handler
+            width={drawerWidth} // Pass the width to the drawer
           />
-        )}
+        </>
+      )}
     </div>
   );
 };
