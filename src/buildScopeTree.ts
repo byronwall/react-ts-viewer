@@ -177,72 +177,253 @@ function mapKindToCategory(
   return NodeCategory.Other;
 }
 
-function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
-  // --- Control Flow concise labeling ---
-  if (ts.isTryStatement(node)) {
-    return "try";
+// New function to format the display label, incorporating logic previously in getNodeDisplayLabel.tsx
+function formatScopeNodeLabel(node: ScopeNode): string {
+  let displayLabel = node.label; // Initialize with baseLabel, which is node.label
+
+  // Logic adapted from getNodeDisplayLabel.tsx
+  // Only include cases that modify the base label.
+  switch (node.category) {
+    case NodeCategory.Module:
+      displayLabel = `module ${displayLabel}`;
+      break;
+    case NodeCategory.Class:
+      displayLabel = `class ${displayLabel}`;
+      break;
+    case NodeCategory.ReactComponent:
+      displayLabel = `<${displayLabel}>`;
+      break;
+    case NodeCategory.ArrowFunction:
+      if (node.meta?.collapsed === "arrowFunction") {
+        if (node.meta?.call) {
+          displayLabel = `() => ${node.meta.call}`;
+        } else {
+          displayLabel = `() => { ... }`; // Simple collapsed view
+        }
+      } else if (!displayLabel) {
+        // Fallback if baseLabel (displayLabel here) was empty
+        displayLabel = "Arrow Function";
+      }
+      // If displayLabel had a value (e.g. from variable assignment), it's used directly.
+      break;
+    case NodeCategory.Function:
+      displayLabel = `${displayLabel}()`; // e.g., "myFunction()"
+      break;
+    case NodeCategory.Block:
+      // For blocks that are not special (like 'finally', 'catch body')
+      // and not collapsed. 'finally' label is already set by determineNodeLabel.
+      // General blocks might not need a prefix, or could be "{ Block }"
+      if (displayLabel === "Block") {
+        // Only change if it's the generic "Block"
+        displayLabel = "{ Block }";
+      }
+      // If displayLabel was specific (e.g., "finally"), it remains.
+      break;
+    case NodeCategory.Import:
+      displayLabel = `import ${displayLabel}`; // baseLabel is usually the module name
+      break;
+    case NodeCategory.TypeAlias:
+      displayLabel = `type ${displayLabel}`;
+      break;
+    case NodeCategory.Interface:
+      displayLabel = `interface ${displayLabel}`;
+      break;
+    case NodeCategory.Literal:
+      // determineNodeLabel now returns the literal's text.
+      // Format it for display, e.g., strings in quotes.
+      if (node.kind === ts.SyntaxKind.StringLiteral) {
+        // If node.source is the full source text of the literal including quotes
+        // and determineNodeLabel returns text without quotes, we might need to re-add them
+        // For now, assume displayLabel (baseLabel) is the raw string content.
+        // Let's refine to check if it *looks* like it needs quoting.
+        // If determineNodeLabel for StringLiteral returns node.text, it won't have quotes.
+        if (
+          !(displayLabel.startsWith("'") && displayLabel.endsWith("'")) &&
+          !(displayLabel.startsWith('"') && displayLabel.endsWith('"'))
+        ) {
+          displayLabel = `'${displayLabel}'`; // Add single quotes if not already quoted
+        }
+      }
+      // For numbers, booleans, displayLabel (baseLabel) is already correct.
+      break;
+    case NodeCategory.SyntheticGroup:
+      // Labels like "Imports", "Type defs" are set directly by determineNodeLabel for the group.
+      displayLabel = `${displayLabel} (${node.children?.length || 0})`;
+      break;
+    default:
+      // Handles NodeCategory.Program, Variable, ControlFlow, IfClause, etc., and Other.
+      // If displayLabel (baseLabel) was "UnknownNode" or empty, set it to the category name.
+      if (displayLabel === "UnknownNode" || !displayLabel) {
+        displayLabel = node.category;
+      }
+      // Otherwise, displayLabel (baseLabel) is used as is.
+      break;
   }
-  if (ts.isCatchClause(node)) return "catch";
-  if (ts.isForStatement(node)) {
-    const init = node.initializer
-      ? node.initializer.getText(sourceFile).trim()
+
+  // Add line numbers if not a synthetic group and not the program root
+  if (
+    node.category !== NodeCategory.SyntheticGroup &&
+    node.category !== NodeCategory.Program
+  ) {
+    if (node.loc && node.loc.start && node.loc.end) {
+      if (node.loc.start.line === node.loc.end.line) {
+        displayLabel += ` [${node.loc.start.line}]`;
+      } else {
+        displayLabel += ` [${node.loc.start.line}-${node.loc.end.line}]`;
+      }
+    }
+  }
+  return displayLabel;
+}
+
+function determineNodeLabel(
+  item: ts.Node | ScopeNode, // Can be a TS AST node or a ScopeNode (for synthetic/post-processed nodes)
+  sourceFile?: ts.SourceFile, // Required if item is ts.Node
+  childrenForSyntheticNode?: ScopeNode[] // Optional: for nodes whose labels depend on children (e.g., ConditionalBlock)
+): string {
+  // Handle ScopeNode items (typically synthetic or already processed)
+  if ("category" in item && "id" in item) {
+    // Heuristic to check if it's a ScopeNode
+    const scopeNode = item as ScopeNode;
+    switch (scopeNode.category) {
+      case NodeCategory.Program: // Root node
+        return path.basename(scopeNode.id); // id is filePath for root
+      case NodeCategory.ConditionalBlock:
+        if (childrenForSyntheticNode && childrenForSyntheticNode.length > 0) {
+          const clauseTypes: string[] = [];
+          if (
+            childrenForSyntheticNode.some(
+              (c) => c.category === NodeCategory.IfClause
+            )
+          ) {
+            clauseTypes.push("if");
+          }
+          if (
+            childrenForSyntheticNode.some(
+              (c) => c.category === NodeCategory.ElseIfClause
+            )
+          ) {
+            if (!clauseTypes.includes("else if")) {
+              clauseTypes.push("else if");
+            }
+          }
+          if (
+            childrenForSyntheticNode.some(
+              (c) => c.category === NodeCategory.ElseClause
+            )
+          ) {
+            clauseTypes.push("else");
+          }
+          if (clauseTypes.length > 0) {
+            return clauseTypes.join("/");
+          }
+          return "Conditional"; // Fallback
+        }
+        return "Conditional Block"; // Default if no children info
+      case NodeCategory.IfClause: // Should be derived from ts.Node, but as a fallback
+      case NodeCategory.ElseIfClause:
+      case NodeCategory.ElseClause: // Fallback if somehow called with ScopeNode
+        return scopeNode.label || scopeNode.category; // Use pre-set label or category name
+      case NodeCategory.Block: // E.g. a 'finally' block might be passed as a ScopeNode
+        if (scopeNode.label === "finally") return "finally"; // If it was pre-labeled
+        // General blocks usually don't have distinct labels unless they are special (like 'finally')
+        return "Block"; // Or derive from its original kind if available in meta
+      case NodeCategory.SyntheticGroup:
+        return scopeNode.label; // Synthetic groups have their labels (e.g., "Imports") set directly
+      default:
+        // For other ScopeNodes, if they have a label, use it. Otherwise, fallback.
+        return scopeNode.label || ts.SyntaxKind[scopeNode.kind] || "ScopeNode";
+    }
+  }
+
+  // Handle ts.Node items
+  const tsNode = item as ts.Node;
+  if (!sourceFile) {
+    // sourceFile is crucial for getText()
+    // This case should ideally not be hit if called correctly from walk for ts.Node
+    return ts.SyntaxKind[tsNode.kind] || "UnknownTSNode";
+  }
+
+  // --- Control Flow concise labeling ---
+  if (ts.isTryStatement(tsNode)) return "try";
+  if (ts.isCatchClause(tsNode)) return "catch"; // The block associated with catch
+  if (ts.isForStatement(tsNode)) {
+    const init = tsNode.initializer
+      ? tsNode.initializer.getText(sourceFile).trim()
       : "";
-    const cond = node.condition
-      ? node.condition.getText(sourceFile).trim()
+    const cond = tsNode.condition
+      ? tsNode.condition.getText(sourceFile).trim()
       : "";
-    const incr = node.incrementor
-      ? node.incrementor.getText(sourceFile).trim()
+    const incr = tsNode.incrementor
+      ? tsNode.incrementor.getText(sourceFile).trim()
       : "";
     return `for (${init}; ${cond}; ${incr})`;
   }
-  if (ts.isForOfStatement(node)) {
-    const init = node.initializer.getText(sourceFile).trim();
-    const expr = node.expression.getText(sourceFile).trim();
+  if (ts.isForOfStatement(tsNode)) {
+    const init = tsNode.initializer.getText(sourceFile).trim();
+    const expr = tsNode.expression.getText(sourceFile).trim();
     return `for (${init} of ${expr})`;
   }
-  if (ts.isForInStatement(node)) {
-    const init = node.initializer.getText(sourceFile).trim();
-    const expr = node.expression.getText(sourceFile).trim();
+  if (ts.isForInStatement(tsNode)) {
+    const init = tsNode.initializer.getText(sourceFile).trim();
+    const expr = tsNode.expression.getText(sourceFile).trim();
     return `for (${init} in ${expr})`;
   }
-  if (ts.isWhileStatement(node)) return "while";
-  if (ts.isDoStatement(node)) return "do";
-  if (ts.isSwitchStatement(node)) return "switch";
-  // CaseClause and DefaultClause are now mapped to ControlFlow
-  if (ts.isCaseClause(node)) {
-    // CaseClause: label as 'case <value>'
-    const expr = node.expression?.getText(sourceFile);
-    return expr ? `case ${expr}` : "case"; // Simplified check
+  if (ts.isWhileStatement(tsNode)) {
+    // Label for the 'while' loop itself. Condition text could be added if desired.
+    // Example: `while (${tsNode.expression.getText(sourceFile)})`
+    return "while";
   }
-  if (ts.isDefaultClause(node)) return "default";
+  if (ts.isDoStatement(tsNode)) return "do";
+  if (ts.isSwitchStatement(tsNode)) return "switch";
+  if (ts.isCaseClause(tsNode)) {
+    const expr = tsNode.expression?.getText(sourceFile);
+    return expr ? `case ${expr}` : "case";
+  }
+  if (ts.isDefaultClause(tsNode)) return "default";
 
-  // --- End control flow concise labeling ---
+  // Labels for IfStatement clauses (called when creating IfClause, ElseIfClause nodes)
+  if (ts.isIfStatement(tsNode)) {
+    // This specific part is tricky because an IfStatement can be an IfClause or ElseIfClause
+    // The caller (walk) determines its role.
+    // For direct calls, this could be a generic "If Statement" or based on its expression.
+    // Let's assume specific clauses are handled by their distinct node creation in walk.
+    // If this function is called for the *whole* if statement that is NOT part of a chain handled by ConditionalBlock:
+    return `if (${tsNode.expression.getText(sourceFile)})`;
+  }
 
-  if (ts.isFunctionLike(node) && node.name && ts.isIdentifier(node.name))
-    return node.name.text;
-  if (ts.isClassLike(node) && node.name && ts.isIdentifier(node.name))
-    return node.name.text;
-  if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name))
-    return node.name.text;
-  if (ts.isCallExpression(node)) {
+  // --- Declarations and Identifiers ---
+  if (ts.isFunctionLike(tsNode) && tsNode.name && ts.isIdentifier(tsNode.name))
+    return tsNode.name.text;
+  if (ts.isArrowFunction(tsNode)) return "() => {}"; // Revised: Always return () => {} as base label
+  if (ts.isClassLike(tsNode) && tsNode.name && ts.isIdentifier(tsNode.name))
+    return tsNode.name.text;
+  if (ts.isVariableDeclaration(tsNode))
+    // Revised: Use getText() for full LHS
+    return tsNode.name.getText(sourceFile);
+  if (ts.isModuleDeclaration(tsNode))
+    return tsNode.name.getText(sourceFile) || tsNode.name.text;
+  if (ts.isPropertyAccessExpression(tsNode))
+    return (
+      tsNode.name.getText(sourceFile) || tsNode.name.escapedText.toString()
+    );
+  if (ts.isIdentifier(tsNode)) return tsNode.text; // General identifier
+
+  // --- Expressions ---
+  if (ts.isCallExpression(tsNode)) {
     const expressionText =
-      node.expression.getText(sourceFile)?.split("\n")[0] || "";
+      tsNode.expression.getText(sourceFile)?.split("\n")[0] || "";
     return expressionText.length > 50
       ? expressionText.substring(0, 47) + "..."
       : expressionText ||
-          ts.SyntaxKind[node.expression.kind] ||
+          ts.SyntaxKind[tsNode.expression.kind] ||
           "CallExpression";
   }
-  if (ts.isPropertyAccessExpression(node))
-    return node.name.getText(sourceFile) || node.name.escapedText.toString();
-  if (ts.isIdentifier(node)) return node.text;
-  if (ts.isModuleDeclaration(node))
-    return node.name.getText(sourceFile) || node.name.text;
 
-  if (ts.isImportDeclaration(node)) {
-    const moduleSpecifier = node.moduleSpecifier;
+  // --- Imports ---
+  if (ts.isImportDeclaration(tsNode)) {
+    const moduleSpecifier = tsNode.moduleSpecifier;
     let rawImportPath: string | undefined = undefined;
-
     if (ts.isStringLiteral(moduleSpecifier)) {
       rawImportPath = moduleSpecifier.text;
     } else {
@@ -258,67 +439,63 @@ function deriveLabel(node: ts.Node, sourceFile?: ts.SourceFile): string {
         }
       }
     }
-
     if (rawImportPath) {
-      return path.basename(rawImportPath); // Use path.basename to get the file or library name
+      return path.basename(rawImportPath);
     }
-    return "Import"; // Fallback if text is empty or not available
+    return "Import"; // Fallback
   }
 
-  // Updated JSX handling:
-  if (ts.isJsxElement(node)) {
-    // Handles <Foo>...</Foo>
-    const tagNameNode = node.openingElement.tagName;
+  // --- JSX ---
+  if (ts.isJsxElement(tsNode)) {
+    const tagNameNode = tsNode.openingElement.tagName;
     let tagNameString = tagNameNode.getText(sourceFile);
-    if (tagNameString === "" && ts.isIdentifier(tagNameNode)) {
-      tagNameString = tagNameNode.text; // Fallback to .text for Identifiers if getText() is empty
-    }
+    if (tagNameString === "" && ts.isIdentifier(tagNameNode))
+      tagNameString = tagNameNode.text;
     return tagNameString ? `<${tagNameString}>` : "<JSXElement>";
   }
-  if (ts.isJsxSelfClosingElement(node)) {
-    // Handles <Foo/>
-    const tagNameNode = node.tagName;
+  if (ts.isJsxSelfClosingElement(tsNode)) {
+    const tagNameNode = tsNode.tagName;
     let tagNameString = tagNameNode.getText(sourceFile);
-    if (tagNameString === "" && ts.isIdentifier(tagNameNode)) {
-      tagNameString = tagNameNode.text; // Fallback to .text for Identifiers if getText() is empty
-    }
+    if (tagNameString === "" && ts.isIdentifier(tagNameNode))
+      tagNameString = tagNameNode.text;
     return tagNameString ? `<${tagNameString}>` : "<JSXElement>";
   }
-  if (ts.isJsxFragment(node)) {
-    // Handles <>...</>
-    return " "; // will yield `< >`
-  }
-  // The original check for JsxOpeningElement is removed as it's covered by the more specific JsxElement,
-  // and JsxOpeningElement isn't typically the primary AST node for which a ScopeNode is created.
+  if (ts.isJsxFragment(tsNode)) return " "; // Results in < >
 
-  // New: Label for ReturnStatement
-  if (ts.isReturnStatement(node)) {
-    const exprText = node.expression?.getText(sourceFile) || "";
+  // --- Return Statements ---
+  if (ts.isReturnStatement(tsNode)) {
+    const exprText = tsNode.expression?.getText(sourceFile) || "";
     const truncatedExpr = exprText.substring(0, 30);
     return exprText
       ? `return ${truncatedExpr}${exprText.length > 30 ? "..." : ""}`
       : "return";
   }
 
-  // New: Label for AssignmentExpression
+  // --- Assignment Expressions ---
   if (
-    ts.isBinaryExpression(node) &&
-    isAssignmentOperatorKind(node.operatorToken.kind)
+    ts.isBinaryExpression(tsNode) &&
+    isAssignmentOperatorKind(tsNode.operatorToken.kind)
   ) {
-    const leftText = node.left.getText(sourceFile);
-    const operatorText = node.operatorToken.getText(sourceFile);
-    const rightText = node.right.getText(sourceFile);
-    const truncatedRightText = rightText.substring(0, 20);
-    return `${leftText} ${operatorText} ${truncatedRightText}${rightText.length > 20 ? "..." : ""}`;
+    const leftText = tsNode.left.getText(sourceFile);
+    const operatorText = tsNode.operatorToken.getText(sourceFile);
+    const rightText = tsNode.right.getText(sourceFile);
+
+    return `${leftText} ${operatorText} ${rightText}`;
   }
 
-  // Fallback: If this is a ControlFlow node, return an empty string (prevents TryStatement/CatchClause fallback)
-  if (mapKindToCategory(node, sourceFile) === NodeCategory.ControlFlow) {
-    return "";
-  }
+  // --- Type Nodes ---
+  if (ts.isInterfaceDeclaration(tsNode) && tsNode.name) return tsNode.name.text;
+  if (ts.isTypeAliasDeclaration(tsNode) && tsNode.name) return tsNode.name.text;
 
-  const kindName = ts.SyntaxKind[node.kind];
-  return kindName || "UnknownNode"; // Ensure a string is always returned
+  // Fallback: If this is a ControlFlow node not handled by specific cases above, return its kind.
+  // Or an empty string if that's preferred to avoid overly generic labels like "IfStatement" for already handled structures.
+  // The mapKindToCategory check might be redundant if all control flow is handled above.
+  // if (mapKindToCategory(tsNode, sourceFile) === NodeCategory.ControlFlow) {
+  //   return ts.SyntaxKind[tsNode.kind] || "ControlFlow"; // Or ""
+  // }
+
+  // General Fallback
+  return ts.SyntaxKind[tsNode.kind] || "UnknownNode";
 }
 
 function collectMeta(
@@ -393,7 +570,7 @@ export function buildScopeTreeTs(
     id: filePath, // Use full path for root ID for uniqueness
     kind: sourceFile.kind,
     category: NodeCategory.Program,
-    label: path.basename(filePath),
+    label: "", // Initialize and let determineNodeLabel set it
     loc: {
       start: { line: 1, column: 0 },
       end: rootLocEnd,
@@ -402,39 +579,33 @@ export function buildScopeTreeTs(
     value: 1, // Changed from fileText.length
     children: [],
   };
+  root.label = determineNodeLabel(root, sourceFile); // Set root label
+  root.label = formatScopeNodeLabel(root); // Format the label
 
   function walk(node: ts.Node, parentNodeInTree: ScopeNode, sf: ts.SourceFile) {
     // --- START: Special handling for IfStatement chains ---
     if (ts.isIfStatement(node)) {
       const conditionalBlockStartPos = node.getStart(sf);
 
-      // Determine the end of the entire if-else if-else chain for accurate source and loc
-      let lastKnownStatementInChain: ts.Node = node.thenStatement; // Start with the first 'then'
+      let lastKnownStatementInChain: ts.Node = node.thenStatement;
       let currentChainLink: ts.IfStatement | undefined = node;
       while (currentChainLink) {
         const thenStatementForCurrentLink = currentChainLink.thenStatement;
-        // Update lastKnownStatementInChain with the 'then' of the current link if it exists
         if (thenStatementForCurrentLink) {
           lastKnownStatementInChain = thenStatementForCurrentLink;
         }
 
         if (currentChainLink.elseStatement) {
-          lastKnownStatementInChain = currentChainLink.elseStatement; // Update with the else statement
+          lastKnownStatementInChain = currentChainLink.elseStatement;
           if (ts.isIfStatement(currentChainLink.elseStatement)) {
-            currentChainLink = currentChainLink.elseStatement; // It's an 'else if', continue
-            // The 'then' of this 'else if' could be the new last known statement
+            currentChainLink = currentChainLink.elseStatement;
             if (currentChainLink.thenStatement) {
-              // Check if this new currentChainLink has a thenStatement
               lastKnownStatementInChain = currentChainLink.thenStatement;
             }
           } else {
-            // It's a final 'else' block. lastKnownStatementInChain is already set to it.
             currentChainLink = undefined;
           }
         } else {
-          // No more 'else' parts.
-          // lastKnownStatementInChain should be the 'then' of the final if/else if.
-          // This is handled by updating it with thenStatementForCurrentLink at the start of the loop.
           currentChainLink = undefined;
         }
       }
@@ -443,9 +614,9 @@ export function buildScopeTreeTs(
       const conditionalBlockId = `${filePath}:${conditionalBlockStartPos}-${conditionalBlockEndPos}`;
       const conditionalBlockNode: ScopeNode = {
         id: conditionalBlockId,
-        kind: ts.SyntaxKind.Unknown, // Custom kind for ConditionalBlock
+        kind: ts.SyntaxKind.Unknown,
         category: NodeCategory.ConditionalBlock,
-        label: "Conditional Block", // Placeholder, will be updated after children are processed
+        label: "", // Placeholder, will be updated after children by determineNodeLabel
         loc: {
           start: lineColOfPos(sf, conditionalBlockStartPos),
           end: lineColOfPos(sf, conditionalBlockEndPos),
@@ -454,55 +625,56 @@ export function buildScopeTreeTs(
           conditionalBlockStartPos,
           conditionalBlockEndPos
         ),
-        value: 1, // Changed
+        value: 1,
         children: [],
         meta: {},
       };
 
       let currentIfStmtNode: ts.IfStatement | undefined = node;
-      let clauseCategory = NodeCategory.IfClause;
+      let clauseCategory = NodeCategory.IfClause; // Initial category for the first clause
 
       while (currentIfStmtNode) {
         const conditionText = currentIfStmtNode.expression.getText(sf);
         const thenStatement = currentIfStmtNode.thenStatement;
 
-        // Clause spans from 'if(...)' or 'else if(...)' to the end of its 'then' block
         const clauseStartPos = currentIfStmtNode.getStart(sf);
         const clauseEndPos = thenStatement.getEnd();
         const clauseNodeId = `${filePath}:${clauseStartPos}-${clauseEndPos}`;
-        const clauseLabel =
-          clauseCategory === NodeCategory.IfClause
-            ? `if (${conditionText})`
-            : `else if (${conditionText})`;
+
+        // Determine label for IfClause and ElseIfClause here based on their condition
+        let clauseLabelText = "";
+        if (clauseCategory === NodeCategory.IfClause) {
+          clauseLabelText = `if (${conditionText})`;
+        } else if (clauseCategory === NodeCategory.ElseIfClause) {
+          clauseLabelText = `else if (${conditionText})`;
+        }
+        // ElseClause label is handled separately below or by determineNodeLabel for the 'else' keyword
 
         const clauseNode: ScopeNode = {
           id: clauseNodeId,
-          kind: currentIfStmtNode.kind, // ts.SyntaxKind.IfStatement
+          kind: currentIfStmtNode.kind,
           category: clauseCategory,
-          label: clauseLabel,
+          label: clauseLabelText, // Set specific label for if/else if clause
           loc: {
             start: lineColOfPos(sf, clauseStartPos),
             end: lineColOfPos(sf, clauseEndPos),
           },
-          source: fileText.substring(clauseStartPos, clauseEndPos), // Source for 'if(cond) then_block'
-          value: 1, // Changed
-          children: [], // Children will be from the 'then' block
+          source: fileText.substring(clauseStartPos, clauseEndPos),
+          value: 1,
+          children: [],
           meta: { condition: conditionText },
         };
         conditionalBlockNode.children.push(clauseNode);
 
-        // Recursively walk the 'then' statement; its children will be added to clauseNode
         walk(thenStatement, clauseNode, sf);
 
         const elseStatement: ts.Statement | undefined =
           currentIfStmtNode.elseStatement;
         if (elseStatement) {
           if (ts.isIfStatement(elseStatement)) {
-            // This is an 'else if'
             currentIfStmtNode = elseStatement;
-            clauseCategory = NodeCategory.ElseIfClause;
+            clauseCategory = NodeCategory.ElseIfClause; // Update category for the next iteration
           } else {
-            // This is a final 'else' block
             const elseNodeStartPos = elseStatement.getStart(sf);
             const elseNodeEndPos = elseStatement.getEnd();
             const elseNodeId = `${filePath}:${elseNodeStartPos}-${elseNodeEndPos}`;
@@ -510,80 +682,44 @@ export function buildScopeTreeTs(
               id: elseNodeId,
               kind: elseStatement.kind,
               category: NodeCategory.ElseClause,
-              label: "else",
+              label: "else", // Directly set "else" label
               loc: {
                 start: lineColOfPos(sf, elseNodeStartPos),
                 end: lineColOfPos(sf, elseNodeEndPos),
               },
               source: fileText.substring(elseNodeStartPos, elseNodeEndPos),
-              value: 1, // Changed
+              value: 1,
               children: [],
               meta: {},
             };
             conditionalBlockNode.children.push(elseClauseNode);
-            walk(elseStatement, elseClauseNode, sf); // process children of the elseStatement under the elseClauseNode
-            currentIfStmtNode = undefined; // End of the chain
+            walk(elseStatement, elseClauseNode, sf);
+            currentIfStmtNode = undefined;
           }
         } else {
-          currentIfStmtNode = undefined; // End of the chain, no else
+          currentIfStmtNode = undefined;
         }
       }
 
-      // ---- START: Update ConditionalBlock label based on its children ----
-      if (conditionalBlockNode.children.length > 0) {
-        const clauseTypes: string[] = [];
-        if (
-          conditionalBlockNode.children.some(
-            (c) => c.category === NodeCategory.IfClause
-          )
-        ) {
-          clauseTypes.push("if");
-        }
-        if (
-          conditionalBlockNode.children.some(
-            (c) => c.category === NodeCategory.ElseIfClause
-          )
-        ) {
-          if (!clauseTypes.includes("else if")) {
-            // Add "else if" only once
-            clauseTypes.push("else if");
-          }
-        }
-        if (
-          conditionalBlockNode.children.some(
-            (c) => c.category === NodeCategory.ElseClause
-          )
-        ) {
-          clauseTypes.push("else");
-        }
+      // Update ConditionalBlock label based on its children using determineNodeLabel
+      conditionalBlockNode.label = determineNodeLabel(
+        conditionalBlockNode,
+        sf,
+        conditionalBlockNode.children
+      );
+      conditionalBlockNode.label = formatScopeNodeLabel(conditionalBlockNode);
 
-        if (clauseTypes.length > 0) {
-          conditionalBlockNode.label = clauseTypes.join("/");
-        } else {
-          // Fallback if somehow no known clauses were found, though this shouldn't happen with valid if statements
-          conditionalBlockNode.label = "Conditional";
-        }
-      } else {
-        // Should not happen for a valid if statement that creates a conditional block
-        conditionalBlockNode.label = "Empty Conditional";
-      }
-      // ---- END: Update ConditionalBlock label based on its children ----
-
-      // Conditionally add the ConditionalBlock or its single IfClause child
       if (
         conditionalBlockNode.children.length === 1 &&
         conditionalBlockNode.children[0] &&
         conditionalBlockNode.children[0].category === NodeCategory.IfClause
       ) {
-        // Single 'if' statement with no 'else' or 'else if'. Promote the IfClause.
         parentNodeInTree.children.push(conditionalBlockNode.children[0]);
       } else {
-        // Contains 'else', 'else if', or is empty (should not happen for a valid 'if').
-        // Keep the ConditionalBlock wrapper.
         parentNodeInTree.children.push(conditionalBlockNode);
       }
 
-      return; // IMPORTANT: Prevent default child traversal for the IfStatement itself and its components by the outer loop
+      return;
     }
     // --- END: Special handling for IfStatement chains ---
 
@@ -591,13 +727,13 @@ export function buildScopeTreeTs(
     if (ts.isTryStatement(node)) {
       const startPos = node.getStart(sf, false);
       const endPos = node.getEnd();
-      const category = NodeCategory.ControlFlow; // Or mapKindToCategory for consistency
+      const category = NodeCategory.ControlFlow;
 
       const tryNode: ScopeNode = {
         id: `${filePath}:${startPos}-${endPos}`,
         kind: node.kind,
         category: category,
-        label: deriveLabel(node, sf), // Should be "try"
+        label: determineNodeLabel(node, sf), // Use central labeler
         loc: {
           start: lineColOfPos(sf, startPos),
           end: lineColOfPos(sf, endPos),
@@ -609,31 +745,27 @@ export function buildScopeTreeTs(
       };
       parentNodeInTree.children.push(tryNode);
 
-      // Hoist children of the tryBlock
       if (node.tryBlock) {
-        // tryBlock is ts.Block
         node.tryBlock.statements.forEach((statement) =>
           walk(statement, tryNode, sf)
         );
       }
 
-      // Process catchClause as a child of tryNode
       if (node.catchClause) {
-        walk(node.catchClause, tryNode, sf); // catchClause handler will manage its own block's children
+        walk(node.catchClause, tryNode, sf);
       }
 
-      // Process finallyBlock as a child of tryNode
       if (node.finallyBlock) {
-        const finallyBlock = node.finallyBlock; // Type is ts.Block
+        const finallyBlock = node.finallyBlock;
         const finallyStartPos = finallyBlock.getStart(sf);
         const finallyEndPos = finallyBlock.getEnd();
         const finallyNodeId = `${filePath}:${finallyStartPos}-${finallyEndPos}`;
 
         const finallyScopeNode: ScopeNode = {
           id: finallyNodeId,
-          kind: finallyBlock.kind, // ts.SyntaxKind.Block
-          category: NodeCategory.Block, // Or a new FinallyCategory, but Block seems consistent
-          label: "finally", // Explicit label
+          kind: finallyBlock.kind,
+          category: NodeCategory.Block, // Could be a more specific FinallyBlockCategory
+          label: "finally", // Specific label for finally block
           loc: {
             start: lineColOfPos(sf, finallyStartPos),
             end: lineColOfPos(sf, finallyEndPos),
@@ -642,12 +774,21 @@ export function buildScopeTreeTs(
           value: 1,
           children: [],
         };
+        // ensure label for finallyScopeNode is set via determineNodeLabel if it has its own entry
+        // or confirm "finally" is the desired final string. For now, it's hardcoded.
+        // If using determineNodeLabel:
+        // finallyScopeNode.label = determineNodeLabel(finallyScopeNode, sf);
+        // This would require determineNodeLabel to recognize a 'finally' ScopeNode.
+        // Simpler to keep "finally" hardcoded here or ensure determineNodeLabel handles it if passed the ts.Block of finally.
+        // The current determineNodeLabel for ScopeNode with category Block and label "finally" will return "finally".
+        finallyScopeNode.label = formatScopeNodeLabel(finallyScopeNode); // Format label
+
         tryNode.children.push(finallyScopeNode);
-        // Hoist children of the finallyBlock
         finallyBlock.statements.forEach((statement) =>
           walk(statement, finallyScopeNode, sf)
         );
       }
+      tryNode.label = formatScopeNodeLabel(tryNode); // Format label
       return;
     }
     // --- END: Special handling for TryStatement ---
@@ -660,13 +801,13 @@ export function buildScopeTreeTs(
     ) {
       const startPos = node.getStart(sf, false);
       const endPos = node.getEnd();
-      const category = NodeCategory.ControlFlow; // mapKindToCategory(node, sf);
+      const category = NodeCategory.ControlFlow;
 
       const loopNode: ScopeNode = {
         id: `${filePath}:${startPos}-${endPos}`,
         kind: node.kind,
         category: category,
-        label: deriveLabel(node, sf), // Uses updated deriveLabel for detailed loop header
+        label: determineNodeLabel(node, sf), // Use central labeler
         loc: {
           start: lineColOfPos(sf, startPos),
           end: lineColOfPos(sf, endPos),
@@ -678,8 +819,7 @@ export function buildScopeTreeTs(
       };
       parentNodeInTree.children.push(loopNode);
 
-      // Process only the statement (body) of the loop as children of loopNode
-      const statement = node.statement; // ts.ForStatement.statement, ts.ForOfStatement.statement, etc.
+      const statement = node.statement;
       if (ts.isBlock(statement)) {
         statement.statements.forEach((childStmt) =>
           walk(childStmt, loopNode, sf)
@@ -687,15 +827,14 @@ export function buildScopeTreeTs(
       } else {
         walk(statement, loopNode, sf);
       }
-      return; // Prevent default ts.forEachChild on the ForStatement/ForOfStatement/ForInStatement itself
+      loopNode.label = formatScopeNodeLabel(loopNode); // Format label
+      return;
     }
     // --- END: Special handling for ForStatement, ForOfStatement, ForInStatement ---
 
     let currentContainer = parentNodeInTree;
     const category = mapKindToCategory(node, sf);
 
-    // Create a new scope node if it's a scope boundary OR a significant non-boundary element
-    // Ensure IfStatement itself isn't re-processed here to create a plain ControlFlow node if already handled.
     if (
       isScopeBoundary(node) ||
       category === NodeCategory.Variable ||
@@ -710,17 +849,15 @@ export function buildScopeTreeTs(
       category === NodeCategory.ReturnStatement ||
       category === NodeCategory.Assignment ||
       (category === NodeCategory.ControlFlow &&
-        !ts.isIfStatement(node) && // Already handled
-        !ts.isTryStatement(node) && // Already handled
-        !ts.isForStatement(node) && // Already handled
-        !ts.isForOfStatement(node) && // Already handled
-        !ts.isForInStatement(node) && // Already handled
-        !ts.isCatchClause(node)) // CatchClause has its own specific handling below
+        !ts.isIfStatement(node) &&
+        !ts.isTryStatement(node) &&
+        !ts.isForStatement(node) &&
+        !ts.isForOfStatement(node) &&
+        !ts.isForInStatement(node) &&
+        !ts.isCatchClause(node))
     ) {
-      // Special handling: For CatchClause, skip creating a node for the catch parameter (error variable)
-      // AND hoist children of its block.
       if (ts.isCatchClause(node)) {
-        const startPos = node.getStart(sf, /*includeJsDoc*/ false);
+        const startPos = node.getStart(sf, false);
         const endPos = node.getEnd();
         if (endPos === startPos) {
           ts.forEachChild(node, (child) => walk(child, currentContainer, sf));
@@ -733,25 +870,24 @@ export function buildScopeTreeTs(
         const newNode: ScopeNode = {
           id: nodeId,
           kind: node.kind,
-          category: category,
-          label: deriveLabel(node, sf),
+          category: category, // This is NodeCategory.ControlFlow for CatchClause
+          label: determineNodeLabel(node, sf), // Use central labeler (will return "catch")
           loc: { start: startLoc, end: endLoc },
           source: nodeSourceText,
           value: 1,
           meta: collectMeta(node, category, sf),
           children: [],
         };
-        // Only walk the block (body) of the catch, not the catch variable
         if (node.block) {
-          node.block.statements.forEach((stmt) => walk(stmt, newNode, sf)); // New: hoists block's children
+          node.block.statements.forEach((stmt) => walk(stmt, newNode, sf));
         }
+        newNode.label = formatScopeNodeLabel(newNode);
         parentNodeInTree.children.push(newNode);
         return;
       }
-      const startPos = node.getStart(sf, /*includeJsDoc*/ false);
+      const startPos = node.getStart(sf, false);
       const endPos = node.getEnd();
 
-      // Skip zero-width nodes or nodes outside parent's range (can happen with some synthetic nodes)
       if (endPos === startPos) {
         ts.forEachChild(node, (child) => walk(child, currentContainer, sf));
         return;
@@ -761,49 +897,45 @@ export function buildScopeTreeTs(
       const endLoc = lineColOfPos(sf, endPos);
 
       const nodeSourceText = fileText.substring(startPos, endPos);
-      const nodeId = `${filePath}:${startPos}-${endPos}`; // Unique ID
-
-      // Get label *before* creating node
-      const derivedLabel = deriveLabel(node, sf);
+      const nodeId = `${filePath}:${startPos}-${endPos}`;
 
       const newNode: ScopeNode = {
         id: nodeId,
         kind: node.kind,
         category: category,
-        label: derivedLabel,
+        label: determineNodeLabel(node, sf), // Use central labeler
         loc: { start: startLoc, end: endLoc },
         source: nodeSourceText,
-        value: 1, // Changed
+        value: 1,
         meta: collectMeta(node, category, sf),
         children: [],
       };
 
-      // Attach to the correct parent in the tree
-      // This logic ensures nodes are nested under the *current* semantic container.
+      newNode.label = formatScopeNodeLabel(newNode);
       parentNodeInTree.children.push(newNode);
-      currentContainer = newNode; // This new node is now the container for its children
+      currentContainer = newNode;
     }
 
     ts.forEachChild(node, (child) => walk(child, currentContainer, sf));
   }
 
-  // Start walking from the SourceFile node itself.
-  // The root ScopeNode represents the file, its children will be top-level statements/declarations.
   ts.forEachChild(sourceFile, (child) => walk(child, root, sourceFile));
 
   let processedTree = root;
 
-  // Filter nodes based on options first
   processedTree = filterNodesByOptions(processedTree, mergedOptions);
 
   if (mergedOptions.flattenTree) {
     processedTree = flattenTree(processedTree, mergedOptions);
   }
   if (mergedOptions.createSyntheticGroups) {
-    processedTree = createSyntheticGroups(processedTree, true); // Pass true for the initial call
+    // Pass the sourceFile to createSyntheticGroups if determineNodeLabel might need it for labels of synthetic groups,
+    // though currently synthetic group labels are hardcoded ("Imports", "Type defs").
+    // If determineNodeLabel is enhanced for synthetic groups needing sourceFile context, this would be relevant.
+    processedTree = createSyntheticGroups(processedTree, true, sourceFile);
   }
 
-  return processedTree; // Return the processed tree
+  return processedTree;
 }
 
 // Example Usage (for testing - remove or comment out in production extension code):
@@ -973,31 +1105,28 @@ function collapseArrowFunction(
 // Helper function to create a synthetic group
 function createActualSyntheticGroup(
   groupNodes: ScopeNode[],
-  groupName: string,
+  groupName: string, // This is the label
   parentId: string
 ): ScopeNode | null {
-  if (groupNodes.length <= 1) return null; // Only group if more than one item
+  if (groupNodes.length <= 1) return null;
 
   const firstNode = groupNodes[0];
-  // Guard against empty groupNodes though length check should prevent this
   if (!firstNode) return null;
 
-  const groupValue = 1; // Changed: All nodes, including synthetic, have value 1
-  // Ensure a unique enough ID for the synthetic group
+  const groupValue = 1;
   const groupId = `synthetic:${parentId}:${groupName}:${firstNode.id}`;
-  const firstNodeLoc = firstNode.loc; // Use loc of the first node for simplicity
-  // Concatenate source code from all nodes in the group
-  const combinedSource = groupNodes.map((node) => node.source).join("\n\n"); // Join with double newline for readability in tooltips
+  const firstNodeLoc = firstNode.loc;
+  const combinedSource = groupNodes.map((node) => node.source).join("\n\n");
 
   return {
     id: groupId,
     category: NodeCategory.SyntheticGroup,
-    label: groupName,
-    kind: ts.SyntaxKind.Unknown, // Synthetic nodes don't have a direct TS kind
+    label: groupName, // Uses the passed groupName directly as the label
+    kind: ts.SyntaxKind.Unknown,
     value: groupValue,
     loc: firstNodeLoc,
     source: combinedSource,
-    children: groupNodes, // Embed original nodes as children
+    children: groupNodes,
     meta: {
       syntheticGroup: true,
       contains: groupNodes.length,
@@ -1008,30 +1137,27 @@ function createActualSyntheticGroup(
 
 function createSyntheticGroups(
   rootNode: ScopeNode,
-  isTopLevelCall: boolean = false
+  isTopLevelCall: boolean = false,
+  sourceFile?: ts.SourceFile // Optional sourceFile if needed by labeler for synthetic nodes
 ): ScopeNode {
-  // Ensure children are initialized and cloned properly at the start
   const initialChildrenToProcess = rootNode.children
     ? rootNode.children.map((c) => ({ ...c }))
     : [];
 
   const result = {
     ...rootNode,
-    children: initialChildrenToProcess, // Assign the definitely-an-array to result.children
+    children: initialChildrenToProcess,
   };
 
-  // Now, result.children is guaranteed to be an array (possibly empty)
   if (result.children.length > 0) {
-    // Recursively call on children. Each child from result.children is a clone.
-    // For recursive calls, isTopLevelCall is false.
-    const childrenAfterRecursiveCall = result.children.map((child) =>
-      createSyntheticGroups(child, false)
+    const childrenAfterRecursiveCall = result.children.map(
+      (child) => createSyntheticGroups(child, false, sourceFile) // Pass sf down
     );
-    // Then, group the (already processed) children nodes. Pass the flag.
     result.children = groupRelatedNodes(
       childrenAfterRecursiveCall,
       result.id,
       isTopLevelCall
+      // No need to pass sourceFile to groupRelatedNodes if its synthetic groups get labels directly
     );
   }
   return result;
@@ -1090,7 +1216,7 @@ function groupRelatedNodes(
       }
 
       if (isHookLike) {
-        // Instead of adding to a "Hooks" group, add directly to remainingNodes
+        // Instead of adding to a "Hooks" group, add directly to remainingNodes later
         // collectedGroups["Hooks"].push(node);
         // assignedToGroup = true;
         // No longer assigning to a group, so these lines are effectively replaced by pushing to remainingNodes later
@@ -1121,6 +1247,8 @@ function groupRelatedNodes(
       if (syntheticGroup) {
         finalResultNodes.push(syntheticGroup);
       } else {
+        // If group creation failed (e.g. <=1 node), add original nodes back.
+        // These nodes would have already had their labels formatted.
         remainingNodes.push(...groupNodes); // groupNodes is ScopeNode[], spreadable
       }
     }
