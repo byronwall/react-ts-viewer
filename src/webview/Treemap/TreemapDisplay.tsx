@@ -6,14 +6,14 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
-import { CodeBlock } from "../CodeBlock";
-import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
 import { TreemapSettings } from "../settingsConfig"; // Corrected import path
+import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
+import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
 import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
-import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
+import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -739,13 +739,8 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                 settings.enableTooltip
                   ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
                       const scopeNode = node.data;
-                      const displayLabel = getDynamicNodeDisplayLabel(
-                        {
-                          data: scopeNode as ScopeNode,
-                          width: node.width,
-                          height: node.height,
-                        },
-                        settings
+                      const displayLabel = getNodeDisplayLabel(
+                        scopeNode as ScopeNode
                       );
 
                       return (
