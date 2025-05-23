@@ -143,7 +143,7 @@
     "watch-webview": "esbuild ./src/webview/main.tsx --bundle --outfile=./out/webview/bundle.js --format=iife --loader:.css=css --external:vscode --sourcemap --watch",
     "pretest": "npm run compile-ext && npm run lint",
     "lint": "eslint src --ext ts,tsx",
-    "test": "vitest",
+    "test": "vitest"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
