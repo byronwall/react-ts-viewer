@@ -1,0 +1,253 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Markdown File Tests > should match snapshot for another.md > anotherMd 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "MarkdownHeading",
+      "children": [
+        {
+          "category": "MarkdownParagraph",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md:3:1:1",
+          "kind": 0,
+          "label": "This file contains a code bloc...",
+          "loc": {
+            "end": {
+              "column": 32,
+              "line": 3,
+            },
+            "start": {
+              "column": 0,
+              "line": 3,
+            },
+          },
+          "meta": {},
+          "source": "This file contains a code block:",
+          "value": 32,
+        },
+        {
+          "category": "MarkdownCodeBlock",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md:5:1:2",
+          "kind": 0,
+          "label": "Code Block",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 8,
+            },
+            "start": {
+              "column": 0,
+              "line": 5,
+            },
+          },
+          "meta": {},
+          "source": "\`\`\`
+const greeting = "Hello, world!";
+console.log(greeting);
+\`\`\`",
+          "value": 64,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md:1:1:0",
+      "kind": 0,
+      "label": "H2: Another Markdown File",
+      "loc": {
+        "end": {
+          "column": 24,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "meta": {
+        "depth": 2,
+      },
+      "source": "## Another Markdown File
+This file contains a code block:
+\`\`\`
+const greeting = "Hello, world!";
+console.log(greeting);
+\`\`\`",
+      "value": 122,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md",
+  "kind": 0,
+  "label": "another.md",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 9,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "meta": {
+    "depth": 0,
+  },
+  "source": "## Another Markdown File
+
+This file contains a code block:
+
+\`\`\`
+const greeting = "Hello, world!";
+console.log(greeting);
+\`\`\`
+",
+  "value": 125,
+}
+`;
+
+exports[`Markdown File Tests > should match snapshot for empty.md > emptyMd 1`] = `
+{
+  "category": "Program",
+  "children": [],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/empty.md",
+  "kind": 0,
+  "label": "empty.md",
+  "loc": {
+    "end": {
+      "column": 1,
+      "line": 1,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "meta": {
+    "depth": 0,
+  },
+  "source": " ",
+  "value": 1,
+}
+`;
+
+exports[`Markdown File Tests > should match snapshot for sample.md > sampleMd 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "MarkdownHeading",
+      "children": [
+        {
+          "category": "MarkdownParagraph",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.md:3:1:1",
+          "kind": 0,
+          "label": "This is a sample markdown file...",
+          "loc": {
+            "end": {
+              "column": 31,
+              "line": 3,
+            },
+            "start": {
+              "column": 0,
+              "line": 3,
+            },
+          },
+          "meta": {},
+          "source": "This is a sample markdown file.",
+          "value": 31,
+        },
+        {
+          "category": "MarkdownList",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.md:5:1:2",
+          "kind": 0,
+          "label": "Unordered List",
+          "loc": {
+            "end": {
+              "column": 8,
+              "line": 6,
+            },
+            "start": {
+              "column": 0,
+              "line": 5,
+            },
+          },
+          "meta": {},
+          "source": "- Item 1
+- Item 2",
+          "value": 17,
+        },
+        {
+          "category": "MarkdownParagraph",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.md:8:1:3",
+          "kind": 0,
+          "label": "Paragraph",
+          "loc": {
+            "end": {
+              "column": 27,
+              "line": 8,
+            },
+            "start": {
+              "column": 0,
+              "line": 8,
+            },
+          },
+          "meta": {},
+          "source": "[Link](https://example.com)",
+          "value": 27,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.md:1:1:0",
+      "kind": 0,
+      "label": "H1: Sample Markdown",
+      "loc": {
+        "end": {
+          "column": 17,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "meta": {
+        "depth": 1,
+      },
+      "source": "# Sample Markdown
+This is a sample markdown file.
+- Item 1
+- Item 2
+[Link](https://example.com)",
+      "value": 95,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.md",
+  "kind": 0,
+  "label": "sample.md",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 9,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "meta": {
+    "depth": 0,
+  },
+  "source": "# Sample Markdown
+
+This is a sample markdown file.
+
+- Item 1
+- Item 2
+
+[Link](https://example.com)
+",
+  "value": 99,
+}
+`;

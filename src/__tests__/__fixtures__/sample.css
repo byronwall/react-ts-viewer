@@ -1,0 +1,11 @@
+/* Sample CSS */
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+}
+
+.container {
+  padding: 1em;
+  background-color: #f0f0f0;
+}

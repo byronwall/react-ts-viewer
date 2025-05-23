@@ -1,0 +1,201 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CSS and SCSS File Tests > should match snapshot for sample.css > sampleCss 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "Block",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:23-66",
+      "kind": 241,
+      "label": "{ Block } [3-6]",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 6,
+        },
+        "start": {
+          "column": 5,
+          "line": 3,
+        },
+      },
+      "meta": {
+        "collapsed": "block",
+        "originalCategory": "Block",
+      },
+      "source": "{
+  font-family: sans-serif;
+  margin: 0;
+}",
+      "value": 1,
+    },
+    {
+      "category": "Block",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:79-127",
+      "kind": 241,
+      "label": "{ Block } [8-11]",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 11,
+        },
+        "start": {
+          "column": 11,
+          "line": 8,
+        },
+      },
+      "meta": {
+        "collapsed": "block",
+        "originalCategory": "Block",
+      },
+      "source": "{
+  padding: 1em;
+  background-color: #f0f0f0;
+}",
+      "value": 1,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css",
+  "kind": 307,
+  "label": "sample.css",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 12,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "/* Sample CSS */
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+}
+
+.container {
+  padding: 1em;
+  background-color: #f0f0f0;
+}
+",
+  "value": 1,
+}
+`;
+
+exports[`CSS and SCSS File Tests > should match snapshot for sample.scss > sampleScss 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "Block",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:68-122",
+      "kind": 241,
+      "label": "{ Block } [6-9]",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 9,
+        },
+        "start": {
+          "column": 5,
+          "line": 6,
+        },
+      },
+      "meta": {
+        "collapsed": "block",
+        "originalCategory": "Block",
+      },
+      "source": "{
+  color: $primary-color;
+  background-color: #fff;
+}",
+      "value": 1,
+    },
+    {
+      "category": "Block",
+      "children": [
+        {
+          "category": "Call",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:291-318",
+          "kind": 213,
+          "label": "darken [17]",
+          "loc": {
+            "end": {
+              "column": 49,
+              "line": 17,
+            },
+            "start": {
+              "column": 22,
+              "line": 17,
+            },
+          },
+          "source": "darken($primary-color, 10%)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:132-325",
+      "kind": 241,
+      "label": "{ Block } [11-19]",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 19,
+        },
+        "start": {
+          "column": 8,
+          "line": 11,
+        },
+      },
+      "source": "{
+  padding: 10px 15px;
+  background-color: $primary-color;
+  color: $secondary-color;
+  border: 1px solid $secondary-color;
+  &:hover {
+    background-color: darken($primary-color, 10%);
+  }
+}",
+      "value": 1,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss",
+  "kind": 307,
+  "label": "sample.scss",
+  "loc": {
+    "end": {
+      "column": 2,
+      "line": 19,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "// Sample SCSS
+
+$primary-color: #333;
+$secondary-color: #777;
+
+body {
+  color: $primary-color;
+  background-color: #fff;
+}
+
+.button {
+  padding: 10px 15px;
+  background-color: $primary-color;
+  color: $secondary-color;
+  border: 1px solid $secondary-color;
+  &:hover {
+    background-color: darken($primary-color, 10%);
+  }
+} ",
+  "value": 1,
+}
+`;

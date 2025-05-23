@@ -25,6 +25,34 @@ Example treemap of itself:
 - Run `npm run watch` to start the TypeScript compiler in watch mode.
 - Open the project in VS Code and press `F5` to launch the Extension Development Host.
 
+## Testing
+
+This project uses Vitest for testing.
+
+- To run tests in watch mode (reruns on file changes):
+
+  ```bash
+  npm test
+  ```
+
+- To run tests once and exit:
+
+  ```bash
+  npm run test:once
+  ```
+
+- To update snapshots for existing tests:
+
+  ```bash
+  npm run test:once -- -u
+  ```
+
+  Or, if running a specific test file:
+
+  ```bash
+  npx vitest path/to/your/testfile.test.ts -u
+  ```
+
 ## Contributing
 
 (Add contribution guidelines later)

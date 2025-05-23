@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Use command `npm run test:once` to run tests that exit immediately. The raw `test` command will stay in watch mode.
