@@ -462,6 +462,12 @@ function parseStylesheet(context: ParseContext, parent: ScopeNode): void {
 
     if (!token) break;
 
+    // Skip stray closing braces
+    if (token.type === "rbrace") {
+      context.position++;
+      continue;
+    }
+
     // Skip comments at top level
     if (token.type === "comment") {
       const commentNode = createCommentNode(context, token);
@@ -699,7 +705,7 @@ function parseMixin(
     },
     source: context.fileText.substring(startToken.start, sourceEnd),
     value: 1,
-    children: bodyNode ? [bodyNode] : [],
+    children: bodyNode ? bodyNode.children : [],
     meta: {
       mixinName,
       parameters,
@@ -758,7 +764,7 @@ function parseFunction(
     },
     source: context.fileText.substring(startToken.start, sourceEnd),
     value: 1,
-    children: bodyNode ? [bodyNode] : [],
+    children: bodyNode ? bodyNode.children : [],
     meta: {
       functionName,
       parameters,
@@ -875,7 +881,7 @@ function parseMediaQuery(
     },
     source: context.fileText.substring(startToken.start, sourceEnd),
     value: 1,
-    children: bodyNode ? [bodyNode] : [],
+    children: bodyNode ? bodyNode.children : [],
     meta: {
       condition: condition.trim(),
     },
@@ -919,7 +925,7 @@ function parseKeyframes(
     },
     source: context.fileText.substring(startToken.start, sourceEnd),
     value: 1,
-    children: bodyNode ? [bodyNode] : [],
+    children: bodyNode ? bodyNode.children : [],
     meta: {
       animationName: animationName.trim(),
     },
@@ -998,7 +1004,7 @@ function parseControlDirective(
     },
     source: context.fileText.substring(startToken.start, sourceEnd),
     value: 1,
-    children: bodyNode ? [bodyNode] : [],
+    children: bodyNode ? bodyNode.children : [],
     meta: {
       directive: startToken.value,
       expression: expression.trim(),
@@ -1057,7 +1063,7 @@ function parseGenericAtRule(
     },
     source: context.fileText.substring(startToken.start, sourceEnd),
     value: 1,
-    children: bodyNode ? [bodyNode] : [],
+    children: bodyNode ? bodyNode.children : [],
   };
 }
 
@@ -1076,6 +1082,11 @@ function parseRule(context: ParseContext): ScopeNode | null {
       break;
     }
     if (token.type === "comment") {
+      context.position++;
+      continue;
+    }
+    // Skip stray closing braces in selector
+    if (token.type === "rbrace") {
       context.position++;
       continue;
     }
@@ -1101,6 +1112,7 @@ function parseRule(context: ParseContext): ScopeNode | null {
       ? selectorStartPos + totalLength
       : bodyNode.source.length || selectorStartPos;
 
+  // Flatten block children directly into this rule instead of having a Block node
   return {
     id: `${context.filePath}:${selectorStartPos}-${sourceEnd}`,
     kind: 0,
@@ -1112,7 +1124,7 @@ function parseRule(context: ParseContext): ScopeNode | null {
     },
     source: context.fileText.substring(selectorStartPos, sourceEnd),
     value: 1,
-    children: [bodyNode],
+    children: bodyNode.children, // Use block's children directly instead of the block itself
     meta: {
       selector: selector.trim(),
     },

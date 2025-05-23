@@ -1,6 +1,25 @@
 import { NodeCategory } from "../../types";
 
-export const pastelSet: Record<NodeCategory, string> = {
+// CSS categories for additional color mapping
+export enum CssNodeCategory {
+  Variable = "CssVariable",
+  Mixin = "CssMixin",
+  Function = "CssFunction",
+  Selector = "CssSelector",
+  Rule = "CssRule",
+  AtRule = "CssAtRule",
+  MediaQuery = "CssMediaQuery",
+  KeyframeRule = "CssKeyframeRule",
+  Comment = "CssComment",
+  Import = "CssImport",
+  Extend = "CssExtend",
+  Include = "CssInclude",
+  ControlDirective = "CssControlDirective",
+  Block = "CssBlock",
+  Property = "CssProperty",
+}
+
+export const pastelSet: Record<NodeCategory | CssNodeCategory, string> = {
   [NodeCategory.Program]: "#8dd3c7",
   [NodeCategory.Module]: "#ffffb3",
   [NodeCategory.Class]: "#bebada",
@@ -38,4 +57,21 @@ export const pastelSet: Record<NodeCategory, string> = {
   [NodeCategory.MarkdownTable]: "#a2d2ff", // Light Blue
   [NodeCategory.MarkdownImage]: "#bde0fe", // Lighter Blue
   [NodeCategory.MarkdownThematicBreak]: "#ced4da", // Light Gray
+
+  // CSS specific colors with a cohesive blue/purple theme
+  [CssNodeCategory.Variable]: "#b8a9ff", // Light purple for variables
+  [CssNodeCategory.Mixin]: "#9c88ff", // Medium purple for mixins
+  [CssNodeCategory.Function]: "#7c65ff", // Darker purple for functions
+  [CssNodeCategory.Selector]: "#a3d5ff", // Light blue for selectors
+  [CssNodeCategory.Rule]: "#7bbfff", // Medium blue for rules
+  [CssNodeCategory.AtRule]: "#4f96ff", // Darker blue for at-rules
+  [CssNodeCategory.MediaQuery]: "#2979ff", // Blue for media queries
+  [CssNodeCategory.KeyframeRule]: "#1e6fff", // Dark blue for keyframes
+  [CssNodeCategory.Comment]: "#c0c0c0", // Light gray for comments
+  [CssNodeCategory.Import]: "#90e0ef", // Light cyan for imports
+  [CssNodeCategory.Extend]: "#52b788", // Green for extends
+  [CssNodeCategory.Include]: "#40916c", // Darker green for includes
+  [CssNodeCategory.ControlDirective]: "#2d6a4f", // Dark green for control directives
+  [CssNodeCategory.Block]: "#e6f3ff", // Very light blue for blocks (should be flattened anyway)
+  [CssNodeCategory.Property]: "#cfe2f3", // Light blue-gray for properties
 };
