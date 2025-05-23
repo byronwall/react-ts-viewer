@@ -1,6 +1,6 @@
 import * as fs from "fs"; // Import fs for reading file content
 import * as vscode from "vscode";
-import { buildScopeTree } from "./buildScopeTree"; // Import the new tree builder
+import { buildScopeTree } from "./parsers/buildScopeTree"; // Import the new tree builder
 import {
   indexerService,
   initializeExtension,

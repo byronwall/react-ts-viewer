@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { expect } from "vitest";
-import { buildScopeTree } from "../../buildScopeTree";
+import { buildScopeTree } from "../../parsers/buildScopeTree";
 
 export const getFixturePath = (fileName: string) =>
   path.join(__dirname, "..", "__fixtures__", fileName);

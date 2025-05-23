@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { buildScopeTree } from "./buildScopeTree";
+import { buildScopeTree } from "./parsers/buildScopeTree";
 import { outputChannel } from "./initializeExtension";
 
 /**
