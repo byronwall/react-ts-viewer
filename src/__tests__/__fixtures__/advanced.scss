@@ -1,0 +1,105 @@
+// Advanced SCSS Features
+
+// Variables
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$font-stack: Helvetica, sans-serif;
+
+// Nesting
+nav {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li { display: inline-block; }
+
+  a {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: $primary-color;
+
+    &:hover {
+      color: darken($primary-color, 10%);
+    }
+  }
+}
+
+// Partials and Modules (conceptual - SCSS files would typically be separate)
+// @import 'reset'; // Example of importing a reset stylesheet
+// @use 'base';    // Example of using another module
+
+// Mixins
+@mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+     -moz-border-radius: $radius;
+      -ms-border-radius: $radius;
+          border-radius: $radius;
+}
+
+.box {
+  @include border-radius(10px);
+  border: 1px solid $secondary-color;
+  padding: 15px;
+}
+
+// Extend/Inheritance
+.message {
+  border: 1px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
+
+.success {
+  @extend .message;
+  border-color: green;
+}
+
+.error {
+  @extend .message;
+  border-color: red;
+}
+
+.warning {
+  @extend .message;
+  border-color: orange;
+}
+
+// Operators
+.container {
+  width: 100%;
+  article[role="main"] {
+    float: left;
+    width: 600px / 960px * 100%;
+  }
+  aside[role="complementary"] {
+    float: right;
+    width: 300px / 960px * 100%;
+  }
+}
+
+// Control Directives
+@for $i from 1 through 3 {
+  .item-#{$i} { width: 2em * $i; }
+}
+
+@each $color, $value in (primary: $primary-color, secondary: $secondary-color) {
+  .text-#{$color} {
+    color: $value;
+  }
+}
+
+// Functions
+@function pow($base, $exponent) {
+  $result: 1;
+  @for $_ from 1 through $exponent {
+    $result: $result * $base;
+  }
+  @return $result;
+}
+
+.sidebar {
+  width: pow(2, 5) * 1px; // 32px
+}

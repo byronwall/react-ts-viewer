@@ -25,4 +25,12 @@ describe("Markdown File Tests", () => {
       isFixture: true,
     });
   });
+
+  it("should match snapshot for advanced.md", () => {
+    runScopeTreeSnapshotTest({
+      snapshotIdentifier: "advancedMd",
+      filePath: "advanced.md",
+      isFixture: true,
+    });
+  });
 });

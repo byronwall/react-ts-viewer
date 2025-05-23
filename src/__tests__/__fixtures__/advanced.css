@@ -1,0 +1,112 @@
+/* Advanced CSS Features */
+
+/* Variables */
+:root {
+  --main-bg-color: brown;
+  --main-text-color: #fff;
+}
+
+/* Basic Selectors */
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--main-bg-color);
+  color: var(--main-text-color);
+}
+
+h1,
+h2,
+h3 {
+  color: #333;
+}
+
+/* Class and ID Selectors */
+.container {
+  width: 80%;
+  margin: 0 auto;
+}
+
+#header {
+  background-color: #f0f0f0;
+  padding: 10px;
+}
+
+/* Attribute Selectors */
+a[target="_blank"] {
+  text-decoration: none;
+  color: aqua;
+}
+
+input[type="text"] {
+  border: 1px solid #ccc;
+}
+
+/* Pseudo-classes */
+a:hover {
+  color: lightblue;
+}
+
+li:nth-child(odd) {
+  background-color: #eee;
+}
+
+/* Pseudo-elements */
+p::first-line {
+  font-weight: bold;
+}
+
+p::before {
+  content: "Note: ";
+  color: red;
+}
+
+/* Media Queries */
+@media (max-width: 600px) {
+  .container {
+    width: 100%;
+  }
+}
+
+/* Flexbox */
+.flex-container {
+  display: flex;
+  justify-content: space-around;
+}
+
+.flex-item {
+  flex: 1;
+  margin: 5px;
+  padding: 10px;
+  background-color: lightgray;
+}
+
+/* Grid */
+.grid-container {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 10px;
+}
+
+.grid-item {
+  background-color: lightblue;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Animations */
+@keyframes slidein {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.animated-element {
+  width: 100px;
+  height: 100px;
+  background-color: yellow;
+  animation-name: slidein;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+}
