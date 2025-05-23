@@ -1215,20 +1215,36 @@ function parseDeclarationOrNestedRule(context: ParseContext): ScopeNode | null {
   let lookahead = context.position;
   let foundColon = false;
   let foundBrace = false;
+  let isAtStart = true; // Track if we're at the start of the token sequence
 
   while (lookahead < context.tokens.length) {
     const token = context.tokens[lookahead];
     if (!token) break;
 
-    if (token.type === "colon" && !foundBrace) {
-      foundColon = true;
-      break;
+    if (token.type === "colon") {
+      // If colon is at the start (or after only whitespace), it's likely a pseudo-selector
+      if (isAtStart) {
+        // Continue looking for a brace to confirm it's a rule
+        foundColon = false; // Reset this since it's a pseudo-selector, not a property
+      } else {
+        // Colon found after other tokens, likely a property declaration
+        if (!foundBrace) {
+          foundColon = true;
+          break;
+        }
+      }
     } else if (token.type === "lbrace") {
       foundBrace = true;
       break;
     } else if (token.type === "semicolon" || token.type === "rbrace") {
       break;
     }
+
+    // Update isAtStart - only whitespace tokens should keep us at "start"
+    if (token.type !== "unknown" || !/\s/.test(token.value)) {
+      isAtStart = false;
+    }
+
     lookahead++;
   }
 
