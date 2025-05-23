@@ -11,155 +11,135 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
           "category": "ArrowFunction",
           "children": [
             {
-              "category": "Block",
+              "category": "Variable",
               "children": [
                 {
-                  "category": "Variable",
-                  "children": [
-                    {
-                      "category": "ReactHook",
-                      "children": [],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:157-179",
-                      "kind": 213,
-                      "label": "useState",
-                      "loc": {
-                        "end": {
-                          "column": 50,
-                          "line": 6,
-                        },
-                        "start": {
-                          "column": 28,
-                          "line": 6,
-                        },
-                      },
-                      "meta": {
-                        "hookName": "useState",
-                      },
-                      "source": "useState(initialCount)",
-                      "value": 22,
-                    },
-                  ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:137-179",
-                  "kind": 260,
-                  "label": "VariableDeclaration",
+                  "category": "ReactHook",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:157-179",
+                  "kind": 213,
+                  "label": "useState [6]",
                   "loc": {
                     "end": {
                       "column": 50,
                       "line": 6,
                     },
                     "start": {
-                      "column": 8,
+                      "column": 28,
                       "line": 6,
                     },
                   },
                   "meta": {
-                    "initializer": "useState(initialCount)",
+                    "hookName": "useState",
                   },
-                  "source": "[count, setCount] = useState(initialCount)",
-                  "value": 42,
+                  "source": "useState(initialCount)",
+                  "value": 1,
                 },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:137-179",
+              "kind": 260,
+              "label": "[count, setCount] [6]",
+              "loc": {
+                "end": {
+                  "column": 50,
+                  "line": 6,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 6,
+                },
+              },
+              "meta": {
+                "initializer": "useState(initialCount)",
+              },
+              "source": "[count, setCount] = useState(initialCount)",
+              "value": 1,
+            },
+            {
+              "category": "Variable",
+              "children": [
                 {
-                  "category": "Variable",
+                  "category": "ArrowFunction",
                   "children": [
                     {
-                      "category": "ArrowFunction",
-                      "children": [
-                        {
-                          "category": "Block",
-                          "children": [
-                            {
-                              "category": "Call",
-                              "children": [],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:214-233",
-                              "kind": 213,
-                              "label": "setCount",
-                              "loc": {
-                                "end": {
-                                  "column": 23,
-                                  "line": 9,
-                                },
-                                "start": {
-                                  "column": 4,
-                                  "line": 9,
-                                },
-                              },
-                              "meta": undefined,
-                              "source": "setCount(count + 1)",
-                              "value": 19,
-                            },
-                          ],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:208-238",
-                          "kind": 241,
-                          "label": "Block",
-                          "loc": {
-                            "end": {
-                              "column": 3,
-                              "line": 10,
-                            },
-                            "start": {
-                              "column": 26,
-                              "line": 8,
-                            },
-                          },
-                          "meta": undefined,
-                          "source": "{
-    setCount(count + 1);
-  }",
-                          "value": 30,
-                        },
-                      ],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:202-238",
-                      "kind": 219,
-                      "label": "ArrowFunction",
+                      "category": "Call",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:214-233",
+                      "kind": 213,
+                      "label": "setCount [9]",
                       "loc": {
                         "end": {
-                          "column": 3,
-                          "line": 10,
+                          "column": 23,
+                          "line": 9,
                         },
                         "start": {
-                          "column": 20,
-                          "line": 8,
+                          "column": 4,
+                          "line": 9,
                         },
                       },
-                      "meta": undefined,
-                      "source": "() => {
-    setCount(count + 1);
-  }",
-                      "value": 36,
+                      "source": "setCount(count + 1)",
+                      "value": 1,
                     },
                   ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:190-238",
-                  "kind": 260,
-                  "label": "increment",
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:202-238",
+                  "kind": 219,
+                  "label": "() => {} [8-10]",
                   "loc": {
                     "end": {
                       "column": 3,
                       "line": 10,
                     },
                     "start": {
-                      "column": 8,
+                      "column": 20,
                       "line": 8,
                     },
                   },
                   "meta": {
-                    "initializer": "() => {
-    setCount(count + 1);
-  }",
+                    "call": "setCount [9]",
+                    "collapsed": "arrowFunction",
+                    "originalCategory": "ArrowFunction",
                   },
-                  "source": "increment = () => {
+                  "source": "() => {
     setCount(count + 1);
   }",
-                  "value": 48,
+                  "value": 1,
                 },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:190-238",
+              "kind": 260,
+              "label": "increment [8-10]",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 10,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 8,
+                },
+              },
+              "meta": {
+                "initializer": "() => {
+    setCount(count + 1);
+  }",
+              },
+              "source": "increment = () => {
+    setCount(count + 1);
+  }",
+              "value": 1,
+            },
+            {
+              "category": "ReturnStatement",
+              "children": [
                 {
-                  "category": "JSX",
+                  "category": "JSXElementDOM",
                   "children": [
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:268-289",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<p> [14]",
                       "loc": {
                         "end": {
                           "column": 27,
@@ -170,16 +150,15 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
                           "line": 14,
                         },
                       },
-                      "meta": undefined,
                       "source": "<p>Count: {count}</p>",
-                      "value": 21,
+                      "value": 1,
                     },
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:296-342",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<button> [15]",
                       "loc": {
                         "end": {
                           "column": 52,
@@ -190,14 +169,13 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
                           "line": 15,
                         },
                       },
-                      "meta": undefined,
                       "source": "<button onClick={increment}>Increment</button>",
-                      "value": 46,
+                      "value": 1,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:256-353",
                   "kind": 284,
-                  "label": "JsxElement",
+                  "label": "<div> [13-16]",
                   "loc": {
                     "end": {
                       "column": 10,
@@ -208,48 +186,40 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
                       "line": 13,
                     },
                   },
-                  "meta": undefined,
                   "source": "<div>
       <p>Count: {count}</p>
       <button onClick={increment}>Increment</button>
     </div>",
-                  "value": 97,
+                  "value": 1,
                 },
               ],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:127-360",
-              "kind": 241,
-              "label": "Block",
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:243-358",
+              "kind": 253,
+              "label": "return (
+    <div>
+      <p>Count: {c... [12-17]",
               "loc": {
                 "end": {
-                  "column": 1,
-                  "line": 18,
+                  "column": 4,
+                  "line": 17,
                 },
                 "start": {
-                  "column": 6,
-                  "line": 5,
+                  "column": 2,
+                  "line": 12,
                 },
               },
-              "meta": undefined,
-              "source": "{
-  const [count, setCount] = useState(initialCount);
-
-  const increment = () => {
-    setCount(count + 1);
-  };
-
-  return (
+              "source": "return (
     <div>
       <p>Count: {count}</p>
       <button onClick={increment}>Increment</button>
     </div>
-  );
-}",
-              "value": 233,
+  );",
+              "value": 1,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:102-360",
           "kind": 219,
-          "label": "ArrowFunction",
+          "label": "() => {} [3-18]",
           "loc": {
             "end": {
               "column": 1,
@@ -260,7 +230,6 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
               "line": 3,
             },
           },
-          "meta": undefined,
           "source": "({
   initialCount,
 }) => {
@@ -277,12 +246,12 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
     </div>
   );
 }",
-          "value": 258,
+          "value": 1,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:48-360",
       "kind": 260,
-      "label": "SimpleComponent",
+      "label": "SimpleComponent [3-18]",
       "loc": {
         "end": {
           "column": 1,
@@ -327,7 +296,26 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
     </div>
   );
 }",
-      "value": 312,
+      "value": 1,
+    },
+    {
+      "category": "Import",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:0-40",
+      "kind": 272,
+      "label": "import react [1]",
+      "loc": {
+        "end": {
+          "column": 40,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "source": "import React, { useState } from "react";",
+      "value": 1,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx",
@@ -364,6 +352,6 @@ const SimpleComponent: React.FC<{ initialCount: number }> = ({
 
 export default SimpleComponent;
 ",
-  "value": 395,
+  "value": 1,
 }
 `;

@@ -5,173 +5,260 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
   "category": "Program",
   "children": [
     {
+      "category": "SyntheticGroup",
+      "children": [
+        {
+          "category": "TypeAlias",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:280-325",
+          "kind": 265,
+          "label": "type State [11]",
+          "loc": {
+            "end": {
+              "column": 45,
+              "line": 11,
+            },
+            "start": {
+              "column": 0,
+              "line": 11,
+            },
+          },
+          "source": "type State = { count: number; text: string };",
+          "value": 1,
+        },
+        {
+          "category": "TypeAlias",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:326-402",
+          "kind": 265,
+          "label": "type Action [12]",
+          "loc": {
+            "end": {
+              "column": 76,
+              "line": 12,
+            },
+            "start": {
+              "column": 0,
+              "line": 12,
+            },
+          },
+          "source": "type Action = { type: "INCREMENT" } | { type: "SET_TEXT"; payload: string };",
+          "value": 1,
+        },
+        {
+          "category": "Interface",
+          "children": [
+            {
+              "category": "Other",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:783-806",
+              "kind": 184,
+              "label": "FunctionType [29]",
+              "loc": {
+                "end": {
+                  "column": 36,
+                  "line": 29,
+                },
+                "start": {
+                  "column": 13,
+                  "line": 29,
+                },
+              },
+              "source": "(count: number) => void",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:721-809",
+          "kind": 264,
+          "label": "interface AdvancedComponentProps [27-30]",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 30,
+            },
+            "start": {
+              "column": 0,
+              "line": 27,
+            },
+          },
+          "source": "interface AdvancedComponentProps {
+  id: string;
+  onUpdate?: (count: number) => void;
+}",
+          "value": 1,
+        },
+      ],
+      "id": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:280-325",
+      "kind": 0,
+      "label": "Type defs",
+      "loc": {
+        "end": {
+          "column": 45,
+          "line": 11,
+        },
+        "start": {
+          "column": 0,
+          "line": 11,
+        },
+      },
+      "meta": {
+        "contains": 3,
+        "originalNodesCategories": [
+          "TypeAlias",
+          "TypeAlias",
+          "Interface",
+        ],
+        "syntheticGroup": true,
+      },
+      "source": "type State = { count: number; text: string };
+
+type Action = { type: "INCREMENT" } | { type: "SET_TEXT"; payload: string };
+
+interface AdvancedComponentProps {
+  id: string;
+  onUpdate?: (count: number) => void;
+}",
+      "value": 1,
+    },
+    {
       "category": "Function",
       "children": [
         {
-          "category": "Block",
+          "category": "ReactHook",
           "children": [
             {
-              "category": "ReactHook",
+              "category": "ArrowFunction",
               "children": [
                 {
-                  "category": "ArrowFunction",
+                  "category": "Call",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:153-192",
+                  "kind": 213,
+                  "label": "console.log [6]",
+                  "loc": {
+                    "end": {
+                      "column": 43,
+                      "line": 6,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 6,
+                    },
+                  },
+                  "source": "console.log(\`\${componentName} mounted\`)",
+                  "value": 1,
+                },
+                {
+                  "category": "ReturnStatement",
                   "children": [
                     {
-                      "category": "Block",
+                      "category": "ArrowFunction",
                       "children": [
                         {
                           "category": "Call",
                           "children": [],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:153-192",
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:211-252",
                           "kind": 213,
-                          "label": "console.log",
-                          "loc": {
-                            "end": {
-                              "column": 43,
-                              "line": 6,
-                            },
-                            "start": {
-                              "column": 4,
-                              "line": 6,
-                            },
-                          },
-                          "meta": undefined,
-                          "source": "console.log(\`\${componentName} mounted\`)",
-                          "value": 39,
-                        },
-                        {
-                          "category": "ArrowFunction",
-                          "children": [
-                            {
-                              "category": "Call",
-                              "children": [],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:211-252",
-                              "kind": 213,
-                              "label": "console.log",
-                              "loc": {
-                                "end": {
-                                  "column": 58,
-                                  "line": 7,
-                                },
-                                "start": {
-                                  "column": 17,
-                                  "line": 7,
-                                },
-                              },
-                              "meta": undefined,
-                              "source": "console.log(\`\${componentName} unmounted\`)",
-                              "value": 41,
-                            },
-                          ],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:205-252",
-                          "kind": 219,
-                          "label": "ArrowFunction",
+                          "label": "console.log [7]",
                           "loc": {
                             "end": {
                               "column": 58,
                               "line": 7,
                             },
                             "start": {
-                              "column": 11,
+                              "column": 17,
                               "line": 7,
                             },
                           },
-                          "meta": undefined,
-                          "source": "() => console.log(\`\${componentName} unmounted\`)",
-                          "value": 47,
+                          "source": "console.log(\`\${componentName} unmounted\`)",
+                          "value": 1,
                         },
                       ],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:147-257",
-                      "kind": 241,
-                      "label": "Block",
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:205-252",
+                      "kind": 219,
+                      "label": "() => {} [7]",
                       "loc": {
                         "end": {
-                          "column": 3,
-                          "line": 8,
+                          "column": 58,
+                          "line": 7,
                         },
                         "start": {
-                          "column": 18,
-                          "line": 5,
+                          "column": 11,
+                          "line": 7,
                         },
                       },
-                      "meta": undefined,
-                      "source": "{
-    console.log(\`\${componentName} mounted\`);
-    return () => console.log(\`\${componentName} unmounted\`);
-  }",
-                      "value": 110,
+                      "meta": {
+                        "call": "console.log [7]",
+                        "collapsed": "arrowFunction",
+                        "originalCategory": "ArrowFunction",
+                      },
+                      "source": "() => console.log(\`\${componentName} unmounted\`)",
+                      "value": 1,
                     },
                   ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:141-257",
-                  "kind": 219,
-                  "label": "ArrowFunction",
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:198-253",
+                  "kind": 253,
+                  "label": "return () => console.log(\`\${component... [7]",
                   "loc": {
                     "end": {
-                      "column": 3,
-                      "line": 8,
+                      "column": 59,
+                      "line": 7,
                     },
                     "start": {
-                      "column": 12,
-                      "line": 5,
+                      "column": 4,
+                      "line": 7,
                     },
                   },
-                  "meta": undefined,
-                  "source": "() => {
-    console.log(\`\${componentName} mounted\`);
-    return () => console.log(\`\${componentName} unmounted\`);
-  }",
-                  "value": 116,
+                  "source": "return () => console.log(\`\${componentName} unmounted\`);",
+                  "value": 1,
                 },
               ],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:131-275",
-              "kind": 213,
-              "label": "useEffect",
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:141-257",
+              "kind": 219,
+              "label": "() => {} [5-8]",
               "loc": {
                 "end": {
-                  "column": 21,
+                  "column": 3,
                   "line": 8,
                 },
                 "start": {
-                  "column": 2,
+                  "column": 12,
                   "line": 5,
                 },
               },
-              "meta": {
-                "hookName": "useEffect",
-              },
-              "source": "useEffect(() => {
+              "source": "() => {
+    console.log(\`\${componentName} mounted\`);
+    return () => console.log(\`\${componentName} unmounted\`);
+  }",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:131-275",
+          "kind": 213,
+          "label": "useEffect [5-8]",
+          "loc": {
+            "end": {
+              "column": 21,
+              "line": 8,
+            },
+            "start": {
+              "column": 2,
+              "line": 5,
+            },
+          },
+          "meta": {
+            "hookName": "useEffect",
+          },
+          "source": "useEffect(() => {
     console.log(\`\${componentName} mounted\`);
     return () => console.log(\`\${componentName} unmounted\`);
   }, [componentName])",
-              "value": 144,
-            },
-          ],
-          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:127-278",
-          "kind": 241,
-          "label": "Block",
-          "loc": {
-            "end": {
-              "column": 1,
-              "line": 9,
-            },
-            "start": {
-              "column": 42,
-              "line": 4,
-            },
-          },
-          "meta": undefined,
-          "source": "{
-  useEffect(() => {
-    console.log(\`\${componentName} mounted\`);
-    return () => console.log(\`\${componentName} unmounted\`);
-  }, [componentName]);
-}",
-          "value": 151,
+          "value": 1,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:85-278",
       "kind": 262,
-      "label": "useLogger",
+      "label": "useLogger() [4-9]",
       "loc": {
         "end": {
           "column": 1,
@@ -182,21 +269,20 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
           "line": 4,
         },
       },
-      "meta": undefined,
       "source": "function useLogger(componentName: string) {
   useEffect(() => {
     console.log(\`\${componentName} mounted\`);
     return () => console.log(\`\${componentName} unmounted\`);
   }, [componentName]);
 }",
-      "value": 193,
+      "value": 1,
     },
     {
       "category": "Variable",
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:410-454",
       "kind": 260,
-      "label": "initialState",
+      "label": "initialState [14]",
       "loc": {
         "end": {
           "column": 50,
@@ -211,32 +297,149 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
         "initializer": "{ count: 0, text: "" }",
       },
       "source": "initialState: State = { count: 0, text: "" }",
-      "value": 44,
+      "value": 1,
     },
     {
       "category": "Function",
       "children": [
         {
-          "category": "Block",
+          "category": "ControlFlow",
           "children": [
             {
-              "category": "Other",
-              "children": [],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:536-717",
-              "kind": 269,
-              "label": "CaseBlock",
+              "category": "ControlFlow",
+              "children": [
+                {
+                  "category": "ReturnStatement",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:566-610",
+                  "kind": 253,
+                  "label": "return { ...state, count: state.count... [19]",
+                  "loc": {
+                    "end": {
+                      "column": 50,
+                      "line": 19,
+                    },
+                    "start": {
+                      "column": 6,
+                      "line": 19,
+                    },
+                  },
+                  "source": "return { ...state, count: state.count + 1 };",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:542-610",
+              "kind": 296,
+              "label": "case "INCREMENT" [18-19]",
               "loc": {
                 "end": {
-                  "column": 3,
-                  "line": 24,
+                  "column": 50,
+                  "line": 19,
                 },
                 "start": {
-                  "column": 23,
-                  "line": 17,
+                  "column": 4,
+                  "line": 18,
                 },
               },
-              "meta": undefined,
-              "source": "{
+              "source": "case "INCREMENT":
+      return { ...state, count: state.count + 1 };",
+              "value": 1,
+            },
+            {
+              "category": "ControlFlow",
+              "children": [
+                {
+                  "category": "ReturnStatement",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:638-680",
+                  "kind": 253,
+                  "label": "return { ...state, text: action.paylo... [21]",
+                  "loc": {
+                    "end": {
+                      "column": 48,
+                      "line": 21,
+                    },
+                    "start": {
+                      "column": 6,
+                      "line": 21,
+                    },
+                  },
+                  "source": "return { ...state, text: action.payload };",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:615-680",
+              "kind": 296,
+              "label": "case "SET_TEXT" [20-21]",
+              "loc": {
+                "end": {
+                  "column": 48,
+                  "line": 21,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 20,
+                },
+              },
+              "source": "case "SET_TEXT":
+      return { ...state, text: action.payload };",
+              "value": 1,
+            },
+            {
+              "category": "ControlFlow",
+              "children": [
+                {
+                  "category": "ReturnStatement",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:700-713",
+                  "kind": 253,
+                  "label": "return state [23]",
+                  "loc": {
+                    "end": {
+                      "column": 19,
+                      "line": 23,
+                    },
+                    "start": {
+                      "column": 6,
+                      "line": 23,
+                    },
+                  },
+                  "source": "return state;",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:685-713",
+              "kind": 297,
+              "label": "default [22-23]",
+              "loc": {
+                "end": {
+                  "column": 19,
+                  "line": 23,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 22,
+                },
+              },
+              "source": "default:
+      return state;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:515-717",
+          "kind": 255,
+          "label": "switch [17-24]",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 24,
+            },
+            "start": {
+              "column": 2,
+              "line": 17,
+            },
+          },
+          "source": "switch (action.type) {
     case "INCREMENT":
       return { ...state, count: state.count + 1 };
     case "SET_TEXT":
@@ -244,39 +447,12 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
     default:
       return state;
   }",
-              "value": 181,
-            },
-          ],
-          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:511-719",
-          "kind": 241,
-          "label": "Block",
-          "loc": {
-            "end": {
-              "column": 1,
-              "line": 25,
-            },
-            "start": {
-              "column": 54,
-              "line": 16,
-            },
-          },
-          "meta": undefined,
-          "source": "{
-  switch (action.type) {
-    case "INCREMENT":
-      return { ...state, count: state.count + 1 };
-    case "SET_TEXT":
-      return { ...state, text: action.payload };
-    default:
-      return state;
-  }
-}",
-          "value": 208,
+          "value": 1,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:457-719",
       "kind": 262,
-      "label": "reducer",
+      "label": "reducer() [16-25]",
       "loc": {
         "end": {
           "column": 1,
@@ -287,7 +463,6 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
           "line": 16,
         },
       },
-      "meta": undefined,
       "source": "function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "INCREMENT":
@@ -298,27 +473,7 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
       return state;
   }
 }",
-      "value": 262,
-    },
-    {
-      "category": "Other",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:783-806",
-      "kind": 184,
-      "label": "FunctionType",
-      "loc": {
-        "end": {
-          "column": 36,
-          "line": 29,
-        },
-        "start": {
-          "column": 13,
-          "line": 29,
-        },
-      },
-      "meta": undefined,
-      "source": "(count: number) => void",
-      "value": 23,
+      "value": 1,
     },
     {
       "category": "Variable",
@@ -327,418 +482,75 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
           "category": "ArrowFunction",
           "children": [
             {
-              "category": "Block",
+              "category": "ReactHook",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:902-938",
+              "kind": 213,
+              "label": "useLogger [36]",
+              "loc": {
+                "end": {
+                  "column": 38,
+                  "line": 36,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 36,
+                },
+              },
+              "meta": {
+                "hookName": "useLogger",
+              },
+              "source": "useLogger(\`AdvancedComponent-\${id}\`)",
+              "value": 1,
+            },
+            {
+              "category": "Variable",
               "children": [
                 {
                   "category": "ReactHook",
                   "children": [],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:902-938",
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:968-1001",
                   "kind": 213,
-                  "label": "useLogger",
-                  "loc": {
-                    "end": {
-                      "column": 38,
-                      "line": 36,
-                    },
-                    "start": {
-                      "column": 2,
-                      "line": 36,
-                    },
-                  },
-                  "meta": {
-                    "hookName": "useLogger",
-                  },
-                  "source": "useLogger(\`AdvancedComponent-\${id}\`)",
-                  "value": 36,
-                },
-                {
-                  "category": "Variable",
-                  "children": [
-                    {
-                      "category": "ReactHook",
-                      "children": [],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:968-1001",
-                      "kind": 213,
-                      "label": "useReducer",
-                      "loc": {
-                        "end": {
-                          "column": 61,
-                          "line": 37,
-                        },
-                        "start": {
-                          "column": 28,
-                          "line": 37,
-                        },
-                      },
-                      "meta": {
-                        "hookName": "useReducer",
-                      },
-                      "source": "useReducer(reducer, initialState)",
-                      "value": 33,
-                    },
-                  ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:948-1001",
-                  "kind": 260,
-                  "label": "VariableDeclaration",
+                  "label": "useReducer [37]",
                   "loc": {
                     "end": {
                       "column": 61,
                       "line": 37,
                     },
                     "start": {
-                      "column": 8,
+                      "column": 28,
                       "line": 37,
                     },
                   },
                   "meta": {
-                    "initializer": "useReducer(reducer, initialState)",
+                    "hookName": "useReducer",
                   },
-                  "source": "[state, dispatch] = useReducer(reducer, initialState)",
-                  "value": 53,
+                  "source": "useReducer(reducer, initialState)",
+                  "value": 1,
                 },
-                {
-                  "category": "Variable",
-                  "children": [
-                    {
-                      "category": "ReactHook",
-                      "children": [
-                        {
-                          "category": "ArrowFunction",
-                          "children": [
-                            {
-                              "category": "Block",
-                              "children": [
-                                {
-                                  "category": "Call",
-                                  "children": [],
-                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1054-1085",
-                                  "kind": 213,
-                                  "label": "dispatch",
-                                  "loc": {
-                                    "end": {
-                                      "column": 35,
-                                      "line": 40,
-                                    },
-                                    "start": {
-                                      "column": 4,
-                                      "line": 40,
-                                    },
-                                  },
-                                  "meta": undefined,
-                                  "source": "dispatch({ type: "INCREMENT" })",
-                                  "value": 31,
-                                },
-                                {
-                                  "category": "Block",
-                                  "children": [
-                                    {
-                                      "category": "Call",
-                                      "children": [],
-                                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1113-1138",
-                                      "kind": 213,
-                                      "label": "onUpdate",
-                                      "loc": {
-                                        "end": {
-                                          "column": 31,
-                                          "line": 42,
-                                        },
-                                        "start": {
-                                          "column": 6,
-                                          "line": 42,
-                                        },
-                                      },
-                                      "meta": undefined,
-                                      "source": "onUpdate(state.count + 1)",
-                                      "value": 25,
-                                    },
-                                  ],
-                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1105-1145",
-                                  "kind": 241,
-                                  "label": "Block",
-                                  "loc": {
-                                    "end": {
-                                      "column": 5,
-                                      "line": 43,
-                                    },
-                                    "start": {
-                                      "column": 18,
-                                      "line": 41,
-                                    },
-                                  },
-                                  "meta": undefined,
-                                  "source": "{
-      onUpdate(state.count + 1);
-    }",
-                                  "value": 40,
-                                },
-                              ],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1048-1149",
-                              "kind": 241,
-                              "label": "Block",
-                              "loc": {
-                                "end": {
-                                  "column": 3,
-                                  "line": 44,
-                                },
-                                "start": {
-                                  "column": 44,
-                                  "line": 39,
-                                },
-                              },
-                              "meta": undefined,
-                              "source": "{
-    dispatch({ type: "INCREMENT" });
-    if (onUpdate) {
-      onUpdate(state.count + 1);
-    }
-  }",
-                              "value": 101,
-                            },
-                          ],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1042-1149",
-                          "kind": 219,
-                          "label": "ArrowFunction",
-                          "loc": {
-                            "end": {
-                              "column": 3,
-                              "line": 44,
-                            },
-                            "start": {
-                              "column": 38,
-                              "line": 39,
-                            },
-                          },
-                          "meta": undefined,
-                          "source": "() => {
-    dispatch({ type: "INCREMENT" });
-    if (onUpdate) {
-      onUpdate(state.count + 1);
-    }
-  }",
-                          "value": 107,
-                        },
-                      ],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1030-1175",
-                      "kind": 213,
-                      "label": "useCallback",
-                      "loc": {
-                        "end": {
-                          "column": 29,
-                          "line": 44,
-                        },
-                        "start": {
-                          "column": 26,
-                          "line": 39,
-                        },
-                      },
-                      "meta": {
-                        "hookName": "useCallback",
-                      },
-                      "source": "useCallback(() => {
-    dispatch({ type: "INCREMENT" });
-    if (onUpdate) {
-      onUpdate(state.count + 1);
-    }
-  }, [state.count, onUpdate])",
-                      "value": 145,
-                    },
-                  ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1012-1175",
-                  "kind": 260,
-                  "label": "handleIncrement",
-                  "loc": {
-                    "end": {
-                      "column": 29,
-                      "line": 44,
-                    },
-                    "start": {
-                      "column": 8,
-                      "line": 39,
-                    },
-                  },
-                  "meta": {
-                    "initializer": "useCallback(() => {
-    dispatch({ type: "INCREMENT" });
-    if (onUpdate) {
-      onUpdate(state.count + 1);
-    }
-  }, [state.count, onUpdate])",
-                  },
-                  "source": "handleIncrement = useCallback(() => {
-    dispatch({ type: "INCREMENT" });
-    if (onUpdate) {
-      onUpdate(state.count + 1);
-    }
-  }, [state.count, onUpdate])",
-                  "value": 163,
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:948-1001",
+              "kind": 260,
+              "label": "[state, dispatch] [37]",
+              "loc": {
+                "end": {
+                  "column": 61,
+                  "line": 37,
                 },
-                {
-                  "category": "Variable",
-                  "children": [
-                    {
-                      "category": "ArrowFunction",
-                      "children": [
-                        {
-                          "category": "Block",
-                          "children": [
-                            {
-                              "category": "Call",
-                              "children": [],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1259-1318",
-                              "kind": 213,
-                              "label": "dispatch",
-                              "loc": {
-                                "end": {
-                                  "column": 63,
-                                  "line": 47,
-                                },
-                                "start": {
-                                  "column": 4,
-                                  "line": 47,
-                                },
-                              },
-                              "meta": undefined,
-                              "source": "dispatch({ type: "SET_TEXT", payload: event.target.value })",
-                              "value": 59,
-                            },
-                          ],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1253-1323",
-                          "kind": 241,
-                          "label": "Block",
-                          "loc": {
-                            "end": {
-                              "column": 3,
-                              "line": 48,
-                            },
-                            "start": {
-                              "column": 75,
-                              "line": 46,
-                            },
-                          },
-                          "meta": undefined,
-                          "source": "{
-    dispatch({ type: "SET_TEXT", payload: event.target.value });
-  }",
-                          "value": 70,
-                        },
-                      ],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1205-1323",
-                      "kind": 219,
-                      "label": "ArrowFunction",
-                      "loc": {
-                        "end": {
-                          "column": 3,
-                          "line": 48,
-                        },
-                        "start": {
-                          "column": 27,
-                          "line": 46,
-                        },
-                      },
-                      "meta": undefined,
-                      "source": "(event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: "SET_TEXT", payload: event.target.value });
-  }",
-                      "value": 118,
-                    },
-                  ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1186-1323",
-                  "kind": 260,
-                  "label": "handleTextChange",
-                  "loc": {
-                    "end": {
-                      "column": 3,
-                      "line": 48,
-                    },
-                    "start": {
-                      "column": 8,
-                      "line": 46,
-                    },
-                  },
-                  "meta": {
-                    "initializer": "(event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: "SET_TEXT", payload: event.target.value });
-  }",
-                  },
-                  "source": "handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: "SET_TEXT", payload: event.target.value });
-  }",
-                  "value": 137,
+                "start": {
+                  "column": 8,
+                  "line": 37,
                 },
-                {
-                  "category": "Function",
-                  "children": [
-                    {
-                      "category": "Block",
-                      "children": [
-                        {
-                          "category": "Block",
-                          "children": [],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1471-1502",
-                          "kind": 241,
-                          "label": "Block",
-                          "loc": {
-                            "end": {
-                              "column": 5,
-                              "line": 54,
-                            },
-                            "start": {
-                              "column": 25,
-                              "line": 52,
-                            },
-                          },
-                          "meta": undefined,
-                          "source": "{
-      return value * 2;
-    }",
-                          "value": 31,
-                        },
-                      ],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1444-1528",
-                      "kind": 241,
-                      "label": "Block",
-                      "loc": {
-                        "end": {
-                          "column": 3,
-                          "line": 56,
-                        },
-                        "start": {
-                          "column": 42,
-                          "line": 51,
-                        },
-                      },
-                      "meta": undefined,
-                      "source": "{
-    if (value % 2 === 0) {
-      return value * 2;
-    }
-    return value * 3;
-  }",
-                      "value": 84,
-                    },
-                  ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1404-1528",
-                  "kind": 262,
-                  "label": "utilityFunction",
-                  "loc": {
-                    "end": {
-                      "column": 3,
-                      "line": 56,
-                    },
-                    "start": {
-                      "column": 2,
-                      "line": 51,
-                    },
-                  },
-                  "meta": undefined,
-                  "source": "function utilityFunction(value: number) {
-    if (value % 2 === 0) {
-      return value * 2;
-    }
-    return value * 3;
-  }",
-                  "value": 124,
-                },
+              },
+              "meta": {
+                "initializer": "useReducer(reducer, initialState)",
+              },
+              "source": "[state, dispatch] = useReducer(reducer, initialState)",
+              "value": 1,
+            },
+            {
+              "category": "Variable",
+              "children": [
                 {
                   "category": "ReactHook",
                   "children": [
@@ -746,145 +558,428 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                       "category": "ArrowFunction",
                       "children": [
                         {
-                          "category": "Block",
-                          "children": [
-                            {
-                              "category": "Variable",
-                              "children": [
-                                {
-                                  "category": "Call",
-                                  "children": [],
-                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1569-1597",
-                                  "kind": 213,
-                                  "label": "utilityFunction",
-                                  "loc": {
-                                    "end": {
-                                      "column": 47,
-                                      "line": 59,
-                                    },
-                                    "start": {
-                                      "column": 19,
-                                      "line": 59,
-                                    },
-                                  },
-                                  "meta": undefined,
-                                  "source": "utilityFunction(state.count)",
-                                  "value": 28,
-                                },
-                              ],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1560-1597",
-                              "kind": 260,
-                              "label": "result",
-                              "loc": {
-                                "end": {
-                                  "column": 47,
-                                  "line": 59,
-                                },
-                                "start": {
-                                  "column": 10,
-                                  "line": 59,
-                                },
-                              },
-                              "meta": {
-                                "initializer": "utilityFunction(state.count)",
-                              },
-                              "source": "result = utilityFunction(state.count)",
-                              "value": 37,
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1054-1085",
+                          "kind": 213,
+                          "label": "dispatch [40]",
+                          "loc": {
+                            "end": {
+                              "column": 35,
+                              "line": 40,
                             },
+                            "start": {
+                              "column": 4,
+                              "line": 40,
+                            },
+                          },
+                          "source": "dispatch({ type: "INCREMENT" })",
+                          "value": 1,
+                        },
+                        {
+                          "category": "IfClause",
+                          "children": [
                             {
                               "category": "Call",
                               "children": [],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1603-1650",
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1113-1138",
                               "kind": 213,
-                              "label": "console.log",
+                              "label": "onUpdate [42]",
                               "loc": {
                                 "end": {
-                                  "column": 51,
-                                  "line": 60,
+                                  "column": 31,
+                                  "line": 42,
                                 },
                                 "start": {
-                                  "column": 4,
-                                  "line": 60,
+                                  "column": 6,
+                                  "line": 42,
                                 },
                               },
-                              "meta": undefined,
-                              "source": "console.log("Utility function result:", result)",
-                              "value": 47,
+                              "source": "onUpdate(state.count + 1)",
+                              "value": 1,
                             },
                           ],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1548-1655",
-                          "kind": 241,
-                          "label": "Block",
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1091-1145",
+                          "kind": 245,
+                          "label": "if (onUpdate)",
                           "loc": {
                             "end": {
-                              "column": 3,
-                              "line": 61,
+                              "column": 5,
+                              "line": 43,
                             },
                             "start": {
-                              "column": 18,
-                              "line": 58,
+                              "column": 4,
+                              "line": 41,
                             },
                           },
-                          "meta": undefined,
-                          "source": "{
-    const result = utilityFunction(state.count);
-    console.log("Utility function result:", result);
-  }",
-                          "value": 107,
+                          "meta": {
+                            "condition": "onUpdate",
+                          },
+                          "source": "if (onUpdate) {
+      onUpdate(state.count + 1);
+    }",
+                          "value": 1,
                         },
                       ],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1542-1655",
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1042-1149",
                       "kind": 219,
-                      "label": "ArrowFunction",
+                      "label": "() => {} [39-44]",
                       "loc": {
                         "end": {
                           "column": 3,
-                          "line": 61,
+                          "line": 44,
                         },
                         "start": {
-                          "column": 12,
-                          "line": 58,
+                          "column": 38,
+                          "line": 39,
                         },
                       },
-                      "meta": undefined,
                       "source": "() => {
-    const result = utilityFunction(state.count);
-    console.log("Utility function result:", result);
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
   }",
-                      "value": 113,
+                      "value": 1,
                     },
                   ],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1532-1671",
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1030-1175",
                   "kind": 213,
-                  "label": "useEffect",
+                  "label": "useCallback [39-44]",
                   "loc": {
                     "end": {
-                      "column": 19,
-                      "line": 61,
+                      "column": 29,
+                      "line": 44,
                     },
                     "start": {
-                      "column": 2,
-                      "line": 58,
+                      "column": 26,
+                      "line": 39,
                     },
                   },
                   "meta": {
-                    "hookName": "useEffect",
+                    "hookName": "useCallback",
                   },
-                  "source": "useEffect(() => {
+                  "source": "useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate])",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1012-1175",
+              "kind": 260,
+              "label": "handleIncrement [39-44]",
+              "loc": {
+                "end": {
+                  "column": 29,
+                  "line": 44,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 39,
+                },
+              },
+              "meta": {
+                "initializer": "useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate])",
+              },
+              "source": "handleIncrement = useCallback(() => {
+    dispatch({ type: "INCREMENT" });
+    if (onUpdate) {
+      onUpdate(state.count + 1);
+    }
+  }, [state.count, onUpdate])",
+              "value": 1,
+            },
+            {
+              "category": "Variable",
+              "children": [
+                {
+                  "category": "ArrowFunction",
+                  "children": [
+                    {
+                      "category": "Call",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1259-1318",
+                      "kind": 213,
+                      "label": "dispatch [47]",
+                      "loc": {
+                        "end": {
+                          "column": 63,
+                          "line": 47,
+                        },
+                        "start": {
+                          "column": 4,
+                          "line": 47,
+                        },
+                      },
+                      "source": "dispatch({ type: "SET_TEXT", payload: event.target.value })",
+                      "value": 1,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1205-1323",
+                  "kind": 219,
+                  "label": "() => {} [46-48]",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 48,
+                    },
+                    "start": {
+                      "column": 27,
+                      "line": 46,
+                    },
+                  },
+                  "meta": {
+                    "call": "dispatch [47]",
+                    "collapsed": "arrowFunction",
+                    "originalCategory": "ArrowFunction",
+                  },
+                  "source": "(event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1186-1323",
+              "kind": 260,
+              "label": "handleTextChange [46-48]",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 48,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 46,
+                },
+              },
+              "meta": {
+                "initializer": "(event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+              },
+              "source": "handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: "SET_TEXT", payload: event.target.value });
+  }",
+              "value": 1,
+            },
+            {
+              "category": "Function",
+              "children": [
+                {
+                  "category": "IfClause",
+                  "children": [
+                    {
+                      "category": "ReturnStatement",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1479-1496",
+                      "kind": 253,
+                      "label": "return value * 2 [53]",
+                      "loc": {
+                        "end": {
+                          "column": 23,
+                          "line": 53,
+                        },
+                        "start": {
+                          "column": 6,
+                          "line": 53,
+                        },
+                      },
+                      "source": "return value * 2;",
+                      "value": 1,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1450-1502",
+                  "kind": 245,
+                  "label": "if (value % 2 === 0)",
+                  "loc": {
+                    "end": {
+                      "column": 5,
+                      "line": 54,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 52,
+                    },
+                  },
+                  "meta": {
+                    "condition": "value % 2 === 0",
+                  },
+                  "source": "if (value % 2 === 0) {
+      return value * 2;
+    }",
+                  "value": 1,
+                },
+                {
+                  "category": "ReturnStatement",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1507-1524",
+                  "kind": 253,
+                  "label": "return value * 3 [55]",
+                  "loc": {
+                    "end": {
+                      "column": 21,
+                      "line": 55,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 55,
+                    },
+                  },
+                  "source": "return value * 3;",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1404-1528",
+              "kind": 262,
+              "label": "utilityFunction() [51-56]",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 56,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 51,
+                },
+              },
+              "source": "function utilityFunction(value: number) {
+    if (value % 2 === 0) {
+      return value * 2;
+    }
+    return value * 3;
+  }",
+              "value": 1,
+            },
+            {
+              "category": "ReactHook",
+              "children": [
+                {
+                  "category": "ArrowFunction",
+                  "children": [
+                    {
+                      "category": "Variable",
+                      "children": [
+                        {
+                          "category": "Call",
+                          "children": [],
+                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1569-1597",
+                          "kind": 213,
+                          "label": "utilityFunction [59]",
+                          "loc": {
+                            "end": {
+                              "column": 47,
+                              "line": 59,
+                            },
+                            "start": {
+                              "column": 19,
+                              "line": 59,
+                            },
+                          },
+                          "source": "utilityFunction(state.count)",
+                          "value": 1,
+                        },
+                      ],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1560-1597",
+                      "kind": 260,
+                      "label": "result [59]",
+                      "loc": {
+                        "end": {
+                          "column": 47,
+                          "line": 59,
+                        },
+                        "start": {
+                          "column": 10,
+                          "line": 59,
+                        },
+                      },
+                      "meta": {
+                        "initializer": "utilityFunction(state.count)",
+                      },
+                      "source": "result = utilityFunction(state.count)",
+                      "value": 1,
+                    },
+                    {
+                      "category": "Call",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1603-1650",
+                      "kind": 213,
+                      "label": "console.log [60]",
+                      "loc": {
+                        "end": {
+                          "column": 51,
+                          "line": 60,
+                        },
+                        "start": {
+                          "column": 4,
+                          "line": 60,
+                        },
+                      },
+                      "source": "console.log("Utility function result:", result)",
+                      "value": 1,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1542-1655",
+                  "kind": 219,
+                  "label": "() => {} [58-61]",
+                  "loc": {
+                    "end": {
+                      "column": 3,
+                      "line": 61,
+                    },
+                    "start": {
+                      "column": 12,
+                      "line": 58,
+                    },
+                  },
+                  "source": "() => {
+    const result = utilityFunction(state.count);
+    console.log("Utility function result:", result);
+  }",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1532-1671",
+              "kind": 213,
+              "label": "useEffect [58-61]",
+              "loc": {
+                "end": {
+                  "column": 19,
+                  "line": 61,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 58,
+                },
+              },
+              "meta": {
+                "hookName": "useEffect",
+              },
+              "source": "useEffect(() => {
     const result = utilityFunction(state.count);
     console.log("Utility function result:", result);
   }, [state.count])",
-                  "value": 139,
-                },
+              "value": 1,
+            },
+            {
+              "category": "ReturnStatement",
+              "children": [
                 {
-                  "category": "JSX",
+                  "category": "JSXElementDOM",
                   "children": [
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1760-1794",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<h2> [65]",
                       "loc": {
                         "end": {
                           "column": 40,
@@ -895,16 +990,15 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 65,
                         },
                       },
-                      "meta": undefined,
                       "source": "<h2>Advanced Component ({id})</h2>",
-                      "value": 34,
+                      "value": 1,
                     },
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1801-1836",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<p> [66]",
                       "loc": {
                         "end": {
                           "column": 41,
@@ -915,16 +1009,15 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 66,
                         },
                       },
-                      "meta": undefined,
                       "source": "<p>Current Count: {state.count}</p>",
-                      "value": 35,
+                      "value": 1,
                     },
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1843-1974",
                       "kind": 285,
-                      "label": "input",
+                      "label": "<input> [67-72]",
                       "loc": {
                         "end": {
                           "column": 8,
@@ -935,21 +1028,20 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 67,
                         },
                       },
-                      "meta": undefined,
                       "source": "<input
         type="text"
         value={state.text}
         onChange={handleTextChange}
         placeholder="Enter text"
       />",
-                      "value": 131,
+                      "value": 1,
                     },
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1981-2014",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<p> [73]",
                       "loc": {
                         "end": {
                           "column": 39,
@@ -960,16 +1052,15 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 73,
                         },
                       },
-                      "meta": undefined,
                       "source": "<p>Current Text: {state.text}</p>",
-                      "value": 33,
+                      "value": 1,
                     },
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2021-2073",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<button> [74]",
                       "loc": {
                         "end": {
                           "column": 58,
@@ -980,16 +1071,15 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 74,
                         },
                       },
-                      "meta": undefined,
                       "source": "<button onClick={handleIncrement}>Increment</button>",
-                      "value": 52,
+                      "value": 1,
                     },
                     {
-                      "category": "JSX",
+                      "category": "JSXElementDOM",
                       "children": [],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2110-2168",
                       "kind": 284,
-                      "label": "JsxElement",
+                      "label": "<p> [76]",
                       "loc": {
                         "end": {
                           "column": 66,
@@ -1000,9 +1090,8 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 76,
                         },
                       },
-                      "meta": undefined,
                       "source": "<p style={{ color: "green" }}>Count is greater than 5!</p>",
-                      "value": 58,
+                      "value": 1,
                     },
                     {
                       "category": "Call",
@@ -1011,20 +1100,20 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "category": "ArrowFunction",
                           "children": [
                             {
-                              "category": "Block",
+                              "category": "IfClause",
                               "children": [
                                 {
-                                  "category": "Block",
+                                  "category": "ReturnStatement",
                                   "children": [
                                     {
-                                      "category": "JSX",
+                                      "category": "JSXElementDOM",
                                       "children": [
                                         {
                                           "category": "Call",
                                           "children": [],
                                           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2313-2337",
                                           "kind": 213,
-                                          "label": "state.text.toUpperCase",
+                                          "label": "state.text.toUpperCase [81]",
                                           "loc": {
                                             "end": {
                                               "column": 58,
@@ -1035,14 +1124,13 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                                               "line": 81,
                                             },
                                           },
-                                          "meta": undefined,
                                           "source": "state.text.toUpperCase()",
-                                          "value": 24,
+                                          "value": 1,
                                         },
                                       ],
                                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2296-2342",
                                       "kind": 284,
-                                      "label": "JsxElement",
+                                      "label": "<p> [81]",
                                       "loc": {
                                         "end": {
                                           "column": 63,
@@ -1053,58 +1141,71 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                                           "line": 81,
                                         },
                                       },
-                                      "meta": undefined,
                                       "source": "<p>You entered: {state.text.toUpperCase()}</p>",
-                                      "value": 46,
+                                      "value": 1,
                                     },
                                   ],
-                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2277-2353",
-                                  "kind": 241,
-                                  "label": "Block",
+                                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2289-2343",
+                                  "kind": 253,
+                                  "label": "return <p>You entered: {state.text.to... [81]",
                                   "loc": {
                                     "end": {
-                                      "column": 9,
-                                      "line": 82,
+                                      "column": 64,
+                                      "line": 81,
                                     },
                                     "start": {
-                                      "column": 35,
-                                      "line": 80,
+                                      "column": 10,
+                                      "line": 81,
                                     },
                                   },
-                                  "meta": undefined,
-                                  "source": "{
-          return <p>You entered: {state.text.toUpperCase()}</p>;
-        }",
-                                  "value": 76,
+                                  "source": "return <p>You entered: {state.text.toUpperCase()}</p>;",
+                                  "value": 1,
                                 },
                               ],
-                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2192-2382",
-                              "kind": 241,
-                              "label": "Block",
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2250-2353",
+                              "kind": 245,
+                              "label": "if (state.text.length > 0)",
                               "loc": {
                                 "end": {
-                                  "column": 7,
-                                  "line": 84,
+                                  "column": 9,
+                                  "line": 82,
                                 },
                                 "start": {
-                                  "column": 14,
-                                  "line": 78,
+                                  "column": 8,
+                                  "line": 80,
                                 },
                               },
-                              "meta": undefined,
-                              "source": "{
-        // IIFE for conditional rendering logic
-        if (state.text.length > 0) {
+                              "meta": {
+                                "condition": "state.text.length > 0",
+                              },
+                              "source": "if (state.text.length > 0) {
           return <p>You entered: {state.text.toUpperCase()}</p>;
-        }
-        return null;
-      }",
-                              "value": 190,
+        }",
+                              "value": 1,
+                            },
+                            {
+                              "category": "ReturnStatement",
+                              "children": [],
+                              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2362-2374",
+                              "kind": 253,
+                              "label": "return null [83]",
+                              "loc": {
+                                "end": {
+                                  "column": 20,
+                                  "line": 83,
+                                },
+                                "start": {
+                                  "column": 8,
+                                  "line": 83,
+                                },
+                              },
+                              "source": "return null;",
+                              "value": 1,
                             },
                           ],
                           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2186-2382",
                           "kind": 219,
-                          "label": "ArrowFunction",
+                          "label": "() => {} [78-84]",
                           "loc": {
                             "end": {
                               "column": 7,
@@ -1115,7 +1216,6 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                               "line": 78,
                             },
                           },
-                          "meta": undefined,
                           "source": "() => {
         // IIFE for conditional rendering logic
         if (state.text.length > 0) {
@@ -1123,12 +1223,12 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
         }
         return null;
       }",
-                          "value": 196,
+                          "value": 1,
                         },
                       ],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2185-2385",
                       "kind": 213,
-                      "label": "(() => {",
+                      "label": "(() => { [78-84]",
                       "loc": {
                         "end": {
                           "column": 10,
@@ -1139,7 +1239,6 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                           "line": 78,
                         },
                       },
-                      "meta": undefined,
                       "source": "(() => {
         // IIFE for conditional rendering logic
         if (state.text.length > 0) {
@@ -1147,12 +1246,12 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
         }
         return null;
       })()",
-                      "value": 200,
+                      "value": 1,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1689-2397",
                   "kind": 284,
-                  "label": "JsxElement",
+                  "label": "<div> [64-85]",
                   "loc": {
                     "end": {
                       "column": 10,
@@ -1163,7 +1262,6 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
                       "line": 64,
                     },
                   },
-                  "meta": undefined,
                   "source": "<div className={\`advanced-component advanced-component--\${id}\`}>
       <h2>Advanced Component ({id})</h2>
       <p>Current Count: {state.count}</p>
@@ -1186,52 +1284,24 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
         return null;
       })()}
     </div>",
-                  "value": 708,
+                  "value": 1,
                 },
               ],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:898-2404",
-              "kind": 241,
-              "label": "Block",
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1676-2402",
+              "kind": 253,
+              "label": "return (
+    <div className={\`advance... [63-86]",
               "loc": {
                 "end": {
-                  "column": 1,
-                  "line": 87,
+                  "column": 4,
+                  "line": 86,
                 },
                 "start": {
-                  "column": 6,
-                  "line": 35,
+                  "column": 2,
+                  "line": 63,
                 },
               },
-              "meta": undefined,
-              "source": "{
-  useLogger(\`AdvancedComponent-\${id}\`);
-  const [state, dispatch] = useReducer(reducer, initialState);
-
-  const handleIncrement = useCallback(() => {
-    dispatch({ type: "INCREMENT" });
-    if (onUpdate) {
-      onUpdate(state.count + 1);
-    }
-  }, [state.count, onUpdate]);
-
-  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: "SET_TEXT", payload: event.target.value });
-  };
-
-  // Example of a nested function not necessarily a React component or hook
-  function utilityFunction(value: number) {
-    if (value % 2 === 0) {
-      return value * 2;
-    }
-    return value * 3;
-  }
-
-  useEffect(() => {
-    const result = utilityFunction(state.count);
-    console.log("Utility function result:", result);
-  }, [state.count]);
-
-  return (
+              "source": "return (
     <div className={\`advanced-component advanced-component--\${id}\`}>
       <h2>Advanced Component ({id})</h2>
       <p>Current Count: {state.count}</p>
@@ -1254,14 +1324,13 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
         return null;
       })()}
     </div>
-  );
-}",
-              "value": 1506,
+  );",
+              "value": 1,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:871-2404",
           "kind": 219,
-          "label": "ArrowFunction",
+          "label": "() => {} [32-87]",
           "loc": {
             "end": {
               "column": 1,
@@ -1272,7 +1341,6 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
               "line": 32,
             },
           },
-          "meta": undefined,
           "source": "({
   id,
   onUpdate,
@@ -1329,12 +1397,12 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
     </div>
   );
 }",
-          "value": 1533,
+          "value": 1,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:817-2404",
       "kind": 260,
-      "label": "AdvancedComponent",
+      "label": "AdvancedComponent [32-87]",
       "loc": {
         "end": {
           "column": 1,
@@ -1459,7 +1527,26 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
     </div>
   );
 }",
-      "value": 1587,
+      "value": 1,
+    },
+    {
+      "category": "Import",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:0-66",
+      "kind": 272,
+      "label": "import react [1]",
+      "loc": {
+        "end": {
+          "column": 66,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "source": "import React, { useEffect, useCallback, useReducer } from "react";",
+      "value": 1,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx",
@@ -1566,6 +1653,6 @@ const AdvancedComponent: React.FC<AdvancedComponentProps> = ({
 export { AdvancedComponent, useLogger };
 export default AdvancedComponent;
 ",
-  "value": 2482,
+  "value": 1,
 }
 `;

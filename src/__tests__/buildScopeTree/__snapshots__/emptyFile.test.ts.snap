@@ -18,6 +18,6 @@ exports[`buildScopeTree - Empty File > should handle an empty file > emptyFile 1
     },
   },
   "source": "",
-  "value": 0,
+  "value": 1,
 }
 `;

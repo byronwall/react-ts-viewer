@@ -19,6 +19,6 @@ exports[`buildScopeTree - Comments Only File > should handle a file with only co
   },
   "source": "// This is a comment
 /* Another comment */",
-  "value": 42,
+  "value": 1,
 }
 `;
