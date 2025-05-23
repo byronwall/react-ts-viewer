@@ -33,4 +33,12 @@ describe("CSS and SCSS File Tests", () => {
       isFixture: true,
     });
   });
+
+  it("should match snapshot for tailwind-theme.css", () => {
+    runScopeTreeSnapshotTest({
+      snapshotIdentifier: "tailwindThemeCss",
+      filePath: "tailwind-theme.css",
+      isFixture: true,
+    });
+  });
 });
