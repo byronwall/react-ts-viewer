@@ -1052,11 +1052,15 @@ function parseGenericAtRule(
   const bodyLength = bodyNode ? bodyNode.source.length : 0;
   const sourceEnd = bodyLength > 0 ? startToken.start + bodyLength : endPos;
 
+  // Use source text directly for the label instead of concatenated tokens
+  // This preserves original formatting and spacing
+  const sourceText = context.fileText.substring(startToken.start, endPos);
+
   return {
     id: `${context.filePath}:${startToken.start}-${sourceEnd}`,
     kind: 0,
     category: CssNodeCategory.AtRule as any,
-    label: content.trim(),
+    label: sourceText.trim(),
     loc: {
       start: { line: startToken.line, column: startToken.column },
       end: finalEndPos,

@@ -3236,7 +3236,7 @@ nav {
               "children": [],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1711-1727",
               "kind": 0,
-              "label": "@return$result;",
+              "label": "@return $result;",
               "loc": {
                 "end": {
                   "column": 18,
@@ -3971,7 +3971,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:0-15",
       "kind": 0,
-      "label": "@tailwindbase;",
+      "label": "@tailwind base;",
       "loc": {
         "end": {
           "column": 15,
@@ -3990,7 +3990,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:16-37",
       "kind": 0,
-      "label": "@tailwindcomponents;",
+      "label": "@tailwind components;",
       "loc": {
         "end": {
           "column": 21,
@@ -4009,7 +4009,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:38-58",
       "kind": 0,
-      "label": "@tailwindutilities;",
+      "label": "@tailwind utilities;",
       "loc": {
         "end": {
           "column": 20,
@@ -6957,7 +6957,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:59-3824",
       "kind": 0,
-      "label": "@layerbase",
+      "label": "@layer base",
       "loc": {
         "end": {
           "column": 1,
@@ -7107,7 +7107,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
               "children": [],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3861-3882",
               "kind": 0,
-              "label": "@applyborder-border;",
+              "label": "@apply border-border;",
               "loc": {
                 "end": {
                   "column": 25,
@@ -7151,7 +7151,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
               "children": [],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3900-3937",
               "kind": 0,
-              "label": "@applybg-backgroundtext-foreground;",
+              "label": "@apply bg-background text-foreground;",
               "loc": {
                 "end": {
                   "column": 41,
@@ -7190,7 +7190,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3837-3931",
       "kind": 0,
-      "label": "@layerbase",
+      "label": "@layer base",
       "loc": {
         "end": {
           "column": 1,
