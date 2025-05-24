@@ -112,7 +112,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for advanced.css > adva
   --main-bg-color: brown;
   --main-text-color: #fff;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssComment",
@@ -227,7 +227,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for advanced.css > adva
   background-color: var(--main-bg-color);
   color: var(--main-text-color);
 ",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "CssRule",
@@ -367,7 +367,7 @@ h3 {
   width: 80%;
   margin: 0 auto;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -439,7 +439,7 @@ h3 {
   background-color: #f0f0f0;
   padding: 10px;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssComment",
@@ -530,7 +530,7 @@ h3 {
   text-decoration: none;
   color: aqua;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -832,7 +832,7 @@ h3 {
   content: "Note: ";
   color: red;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssComment",
@@ -1014,7 +1014,7 @@ h3 {
   display: flex;
   justify-content: space-around;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -1134,7 +1134,7 @@ h3 {
   padding: 10px;
   background-color: lightgray;
 ",
-      "value": 1,
+      "value": 4,
     },
     {
       "category": "CssComment",
@@ -1249,7 +1249,7 @@ h3 {
   grid-template-columns: auto auto auto;
   gap: 10px;
 ",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "CssRule",
@@ -1345,7 +1345,7 @@ h3 {
   padding: 20px;
   text-align: center;
 ",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "CssComment",
@@ -1488,7 +1488,7 @@ h3 {
   }
   to {
     transform: tran",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -1656,7 +1656,7 @@ h3 {
   animation-duration: 3s;
   animation-iteration-count: infinite;
 ",
-      "value": 1,
+      "value": 6,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css",
@@ -1785,7 +1785,7 @@ p::before {
   animation-iteration-count: infinite;
 }
 ",
-  "value": 113,
+  "value": 50,
 }
 `;
 
@@ -1928,7 +1928,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for advanced.scss > adv
     padding: 0;
     list-style: none;
   ",
-          "value": 1,
+          "value": 3,
         },
         {
           "category": "CssRule",
@@ -2121,7 +2121,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for advanced.scss > adv
     &:hover {
       color: darken($primary-color, 10%);
     ",
-          "value": 1,
+          "value": 5,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:40-393",
@@ -2162,7 +2162,7 @@ nav {
 
     &:hover {
       color: darken($primary-co",
-      "value": 1,
+      "value": 9,
     },
     {
       "category": "CssComment",
@@ -2358,7 +2358,7 @@ nav {
      -moz-border-radius: $radius;
       -ms-border-radius: $radius;
      ",
-      "value": 1,
+      "value": 4,
     },
     {
       "category": "CssRule",
@@ -2450,7 +2450,7 @@ nav {
   border: 1px solid $secondary-color;
   padding: 15px;
 ",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "CssComment",
@@ -2565,7 +2565,7 @@ nav {
   padding: 10px;
   color: #333;
 ",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "CssRule",
@@ -2633,7 +2633,7 @@ nav {
   @extend .message;
   border-color: green;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -2701,7 +2701,7 @@ nav {
   @extend .message;
   border-color: red;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -2769,7 +2769,7 @@ nav {
   @extend .message;
   border-color: orange;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssComment",
@@ -2886,7 +2886,7 @@ nav {
     float: left;
     width: 600px / 960px * 100%;
   ",
-          "value": 1,
+          "value": 2,
         },
         {
           "category": "CssRule",
@@ -2958,7 +2958,7 @@ nav {
     float: right;
     width: 300px / 960px * 100%;
   ",
-          "value": 1,
+          "value": 2,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1166-1360",
@@ -2988,7 +2988,7 @@ nav {
     width: 300px / 960px * 100%;
   }
 ",
-      "value": 1,
+      "value": 5,
     },
     {
       "category": "CssComment",
@@ -3107,7 +3107,7 @@ nav {
 
 @each $color, $value in (primary: $primary-color, secondary: $secondary-color) {
   .text-#{$color}",
-          "value": 1,
+          "value": 2,
         },
         {
           "category": "CssRule",
@@ -3272,7 +3272,7 @@ nav {
   $result: 1;
   @for $_ from 1 through $exponent {
     $result: $result *",
-          "value": 1,
+          "value": 3,
         },
         {
           "category": "CssRule",
@@ -3339,7 +3339,7 @@ nav {
           "source": ".sidebar {
   width: pow(2, 5) * 1px; // 32px
 ",
-          "value": 1,
+          "value": 2,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1385-1389",
@@ -3360,7 +3360,7 @@ nav {
         "expression": "@for$ifrom1through3",
       },
       "source": "@for",
-      "value": 1,
+      "value": 8,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss",
@@ -3481,7 +3481,7 @@ nav {
 .sidebar {
   width: pow(2, 5) * 1px; // 32px
 }",
-  "value": 105,
+  "value": 47,
 }
 `;
 
@@ -3578,7 +3578,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for sample.css > sample
   font-family: sans-serif;
   margin: 0;
 ",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -3650,7 +3650,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for sample.css > sample
   padding: 1em;
   background-color: #f0f0f0;
 ",
-      "value": 1,
+      "value": 2,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css",
@@ -3678,7 +3678,7 @@ body {
   background-color: #f0f0f0;
 }
 ",
-  "value": 12,
+  "value": 5,
 }
 `;
 
@@ -3777,7 +3777,7 @@ $secondary-color: #777;
 body {
   color: $primary-color;
   background-color: #",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "CssRule",
@@ -3923,7 +3923,7 @@ body {
   &:hover {
     background-color: darken($primary-color, 10%);
   ",
-      "value": 1,
+      "value": 5,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss",
@@ -3958,7 +3958,7 @@ body {
     background-color: darken($primary-color, 10%);
   }
 } ",
-  "value": 19,
+  "value": 8,
 }
 `;
 
@@ -4840,7 +4840,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   ",
-          "value": 1,
+          "value": 33,
         },
         {
           "category": "CssRule",
@@ -5632,7 +5632,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   ",
-          "value": 1,
+          "value": 32,
         },
         {
           "category": "CssRule",
@@ -6280,7 +6280,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
     --brand: 213.3 93.9% 67.8%;
     --highlight: 48 96% 53%;
   ",
-          "value": 1,
+          "value": 26,
         },
         {
           "category": "CssRule",
@@ -6952,7 +6952,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
     --brand: 217.2 91.2% 59.8%;
     --highlight: 47.9 95.8% 53.1%;
   ",
-          "value": 1,
+          "value": 27,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:59-3824",
@@ -7094,7 +7094,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
     --radius: 0.5rem;
     --brand: 217.2 91.2% 59.8%;
     --highlight: 47.9 95.8% ",
-      "value": 1,
+      "value": 118,
     },
     {
       "category": "CssAtRule",
@@ -7207,7 +7207,7 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
   }
   body {
     @apply bg-background text-foreg",
-      "value": 1,
+      "value": 2,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css",
@@ -7363,6 +7363,6 @@ exports[`CSS and SCSS File Tests > should match snapshot for tailwind-theme.css 
   }
 }
 ",
-  "value": 140,
+  "value": 123,
 }
 `;

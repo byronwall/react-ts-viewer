@@ -70,13 +70,34 @@ export function buildScopeTreeCss(
       end: getPositionFromOffset(fileText, fileText.length),
     },
     source: fileText,
-    value: fileText.split("\n").length, // Line count as value
+    value: 1, // Changed from line count - will be calculated by aggregateValuesPostOrder
     children: [],
   };
 
   parseStylesheet(context, root);
 
+  // Calculate parent node values as sum of children recursively
+  aggregateValuesPostOrder(root);
+
   return root;
+}
+
+// Function to recursively calculate parent node values as sum of their children
+function aggregateValuesPostOrder(node: ScopeNode): number {
+  if (!node.children || node.children.length === 0) {
+    // Leaf node - its value stays as 1
+    return node.value;
+  }
+
+  // Recursively calculate children values first
+  let totalChildrenValue = 0;
+  for (const child of node.children) {
+    totalChildrenValue += aggregateValuesPostOrder(child);
+  }
+
+  // Set parent's value to sum of all children
+  node.value = totalChildrenValue;
+  return node.value;
 }
 
 function tokenize(text: string): CssToken[] {
