@@ -375,6 +375,90 @@ const App: React.FC = () => {
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] =
     useState<boolean>(false);
 
+  // State persistence - restore state from VS Code on load (run only once on mount)
+  useEffect(() => {
+    // Request state from extension instead of using webview state
+    vscodeApi.postMessage({ command: "getWebviewState" });
+  }, []); // Run only once on mount
+
+  // Handle state response from extension
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (message.command === "webviewStateResponse") {
+        if (
+          message.state &&
+          typeof message.state === "object" &&
+          Object.keys(message.state).length > 0
+        ) {
+          const savedState = message.state;
+          // Always restore settings and preferences, regardless of initial values
+          if (savedState.activeView) {
+            setActiveView(savedState.activeView);
+          }
+          if (savedState.treemapSettings) {
+            setTreemapSettings(savedState.treemapSettings);
+          }
+          if (savedState.settings) {
+            setSettings(savedState.settings);
+          }
+          if (savedState.isSettingsPanelOpen !== undefined) {
+            setIsSettingsPanelOpen(savedState.isSettingsPanelOpen);
+          }
+
+          // For filePath and currentAnalysisTarget, prefer saved state over initial data if it exists
+          if (savedState.filePath) {
+            setFilePath(savedState.filePath);
+          }
+          if (savedState.currentAnalysisTarget) {
+            setCurrentAnalysisTarget(savedState.currentAnalysisTarget);
+          }
+        }
+
+        // Mark restoration as complete after processing extension response
+        setHasRestoredState(true);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []); // Run only once on mount
+
+  // State persistence - save state to extension whenever important state changes
+  const [hasRestoredState, setHasRestoredState] = useState(false);
+
+  useEffect(() => {
+    // Only save state after restoration is complete
+    if (!hasRestoredState) {
+      return;
+    }
+
+    const stateToSave = {
+      filePath,
+      activeView,
+      treemapSettings,
+      settings,
+      currentAnalysisTarget,
+      isSettingsPanelOpen,
+    };
+    try {
+      vscodeApi.postMessage({
+        command: "saveWebviewState",
+        state: stateToSave,
+      });
+    } catch (error) {
+      console.error("[App] Error sending state to extension:", error);
+    }
+  }, [
+    hasRestoredState,
+    filePath,
+    activeView,
+    treemapSettings,
+    settings,
+    currentAnalysisTarget,
+    isSettingsPanelOpen,
+  ]);
+
   const requestGraphData = useCallback(
     (fp: string) => {
       if (!fp) return;

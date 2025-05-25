@@ -3,6 +3,19 @@ import * as vscode from "vscode";
 import { buildScopeTree } from "./parsers/buildScopeTree";
 import { outputChannel } from "./initializeExtension";
 
+// State management
+interface WebviewState {
+  filePath?: string;
+  activeView?: string;
+  treemapSettings?: any;
+  settings?: any;
+  currentAnalysisTarget?: string;
+  isSettingsPanelOpen?: boolean;
+}
+
+// Global state storage key
+const WEBVIEW_STATE_KEY = "reactAnalysisWebviewState";
+
 /**
  * Sets up message handler for webview panel communication
  * Handles commands like getScopeTree and revealCode from the webview
@@ -14,6 +27,30 @@ export function setupWebviewPanelMessageHandler(
   panel.webview.onDidReceiveMessage(
     async (message) => {
       switch (message.command) {
+        case "saveWebviewState":
+          try {
+            await context.globalState.update(WEBVIEW_STATE_KEY, message.state);
+          } catch (e: any) {
+            // Error handling without logging
+          }
+          return;
+
+        case "getWebviewState":
+          try {
+            const savedState =
+              context.globalState.get<WebviewState>(WEBVIEW_STATE_KEY);
+            panel.webview.postMessage({
+              command: "webviewStateResponse",
+              state: savedState || null,
+            });
+          } catch (e: any) {
+            panel.webview.postMessage({
+              command: "webviewStateResponse",
+              state: null,
+            });
+          }
+          return;
+
         case "getScopeTree":
           try {
             if (!message.filePath) {

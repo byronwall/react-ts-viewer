@@ -33,11 +33,11 @@ export function registerAnalyzeFileCommand(
           `[Extension] Updating existing panel with file: ${filePath}`
         );
         webviewPanel.webview.postMessage({
-          command: "setFile",
+          command: "fileOpened",
           filePath: filePath,
         });
         outputChannel.appendLine(
-          `[Extension] Sent setFile message to existing panel for: ${filePath}`
+          `[Extension] Sent fileOpened message to existing panel for: ${filePath}`
         );
       } else {
         webviewPanel = vscode.window.createWebviewPanel(
@@ -46,6 +46,7 @@ export function registerAnalyzeFileCommand(
           column,
           {
             enableScripts: true,
+            retainContextWhenHidden: true,
             localResourceRoots: [
               vscode.Uri.joinPath(context.extensionUri, "out", "webview"),
             ],
@@ -213,9 +214,8 @@ export function registerAnalyzeFileCommand(
                     );
 
                     // Open the document first
-                    const document = await vscode.workspace.openTextDocument(
-                      uri
-                    );
+                    const document =
+                      await vscode.workspace.openTextDocument(uri);
                     await vscode.window.showTextDocument(document);
 
                     // Find the first occurrence (simple approach)
