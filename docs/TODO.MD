@@ -70,6 +70,8 @@
 - For an array of nodes, consider showing the first 10 or something
 - Improve results for export or barrel file
 - Web view needs to work without resetting state
+- Reset the depth display to 0 when changing files - do not include in saved state
+- Get the keyboard shortcuts working with a common handler - do not accept when focus is in the search input
 
 ### Barrel file
 

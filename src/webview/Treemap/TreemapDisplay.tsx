@@ -40,6 +40,99 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   return null;
 }
 
+// Exported helper function to check if a node matches the search text
+export function nodeMatchesSearch(
+  node: ScopeNode,
+  searchText: string
+): boolean {
+  if (!searchText) return false;
+
+  const lowerSearchText = searchText.toLowerCase();
+
+  // Check label
+  if (node.label && node.label.toLowerCase().includes(lowerSearchText)) {
+    return true;
+  }
+
+  // Check source (if available)
+  if (node.source && node.source.toLowerCase().includes(lowerSearchText)) {
+    return true;
+  }
+
+  return false;
+}
+
+// Exported helper function to find all matching nodes and their paths from root
+export function findMatchingNodesAndPaths(
+  node: ScopeNode,
+  searchText: string,
+  currentPath: string[] = []
+): {
+  matchingNodes: Set<string>;
+  pathsToMatches: Set<string>;
+} {
+  const result = {
+    matchingNodes: new Set<string>(),
+    pathsToMatches: new Set<string>(),
+  };
+
+  if (!searchText) return result;
+
+  const newPath = [...currentPath, node.id];
+
+  // Check if current node matches
+  if (nodeMatchesSearch(node, searchText)) {
+    result.matchingNodes.add(node.id);
+    // Add all nodes in the path to this match
+    newPath.forEach((id) => result.pathsToMatches.add(id));
+  }
+
+  // Recursively check children
+  if (node.children) {
+    for (const child of node.children) {
+      const childResult = findMatchingNodesAndPaths(child, searchText, newPath);
+
+      // Merge results
+      childResult.matchingNodes.forEach((id) => result.matchingNodes.add(id));
+      childResult.pathsToMatches.forEach((id) => result.pathsToMatches.add(id));
+
+      // If any child has matches, add current node to paths
+      if (childResult.matchingNodes.size > 0) {
+        newPath.forEach((id) => result.pathsToMatches.add(id));
+      }
+    }
+  }
+
+  return result;
+}
+
+// Exported helper function to filter nodes based on search
+export function filterNodesForSearch(
+  node: ScopeNode,
+  visibleNodeIds: Set<string>
+): ScopeNode | null {
+  if (!visibleNodeIds.has(node.id)) {
+    return null;
+  }
+
+  let filteredChildren: ScopeNode[] | undefined = undefined;
+
+  if (node.children) {
+    const childResults = node.children
+      .map((child) => filterNodesForSearch(child, visibleNodeIds))
+      .filter((child): child is ScopeNode => child !== null);
+
+    if (childResults.length > 0) {
+      filteredChildren = childResults;
+    }
+  }
+
+  return {
+    ...node,
+    children: filteredChildren,
+  } as ScopeNode;
+}
+
 export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   data: initialData,
   settings,
@@ -61,6 +154,11 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const minDrawerWidth = 150; // Minimum width for the drawer
   const maxDrawerWidth = 800; // Maximum width for the drawer
   const resizeHandleRef = useRef<HTMLDivElement>(null);
+
+  // Search state
+  const [searchText, setSearchText] = useState<string>("");
+  const [matchingNodes, setMatchingNodes] = useState<Set<string>>(new Set());
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportToJson = useCallback(async () => {
     const jsonString = JSON.stringify(initialData, null, 2);
@@ -380,6 +478,54 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [onSettingsChange, vscodeApi]);
 
+  // Search functionality effects
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if the event target is an input, select, or textarea
+      const target = event.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "SELECT" ||
+          target.tagName === "TEXTAREA")
+      ) {
+        // If the event originates from an input field, don't process the shortcut
+        return;
+      }
+
+      // Focus search with '/' key
+      if (event.key === "/") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+
+      // Cancel search with Escape key
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSearchText("");
+        setMatchingNodes(new Set());
+        searchInputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  // Update matching nodes when search text changes
+  useEffect(() => {
+    if (!searchText.trim()) {
+      setMatchingNodes(new Set());
+      return;
+    }
+
+    const baseData = isolatedNode || initialData;
+    const result = findMatchingNodesAndPaths(baseData, searchText.trim());
+    setMatchingNodes(result.matchingNodes);
+  }, [searchText, isolatedNode, initialData]);
+
   // Helper function to recursively transform/filter nodes based on depth limit
   const transformNodeForDepthLimit = (
     originalNode: ScopeNode | null,
@@ -499,9 +645,27 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const baseDisplayData = isolatedNode || initialData;
 
   // Apply depth filtering if enabled
-  const finalDisplayData = settings.enableDepthLimit
+  const depthFilteredData = settings.enableDepthLimit
     ? transformNodeForDepthLimit(baseDisplayData, 0, settings.maxDepth, true)
     : transformNodeForDepthLimit(baseDisplayData, 0, 0, false); // Apply visibility filters even if depth limit is off
+
+  // Apply search filtering if active
+  let finalDisplayData = depthFilteredData;
+  if (searchText.trim() && depthFilteredData) {
+    const searchResult = findMatchingNodesAndPaths(
+      depthFilteredData,
+      searchText.trim()
+    );
+    if (searchResult.pathsToMatches.size > 0) {
+      finalDisplayData = filterNodesForSearch(
+        depthFilteredData,
+        searchResult.pathsToMatches
+      );
+    } else {
+      // No matches found, show empty state
+      finalDisplayData = null;
+    }
+  }
 
   const startResizing = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -570,13 +734,42 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           }}
           className="treemap-internal-header" // Added class for clarity
         >
-          <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
-            {/* Title removed from here, will be handled by App.tsx's main header */}
-            Treemap:{" "}
-            <span style={{ color: "#ddd", fontStyle: "italic" }}>
-              {fileName}
-            </span>
-          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
+              {/* Title removed from here, will be handled by App.tsx's main header */}
+              Treemap:{" "}
+              <span style={{ color: "#ddd", fontStyle: "italic" }}>
+                {fileName}
+              </span>
+            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search nodes... (press / to focus)"
+                className="treemap-search-input"
+              />
+              {searchText.trim() && (
+                <button
+                  onClick={() => {
+                    setSearchText("");
+                    setMatchingNodes(new Set());
+                  }}
+                  className="treemap-search-cancel"
+                  title="Clear search (Esc)"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {searchText.trim() && (
+              <span className="treemap-search-status">
+                {matchingNodes.size} matches
+              </span>
+            )}
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {(isolatedNode || isolationPath.length > 0) && (
               <>
@@ -720,17 +913,21 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               borderColor={(
                 node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
               ) => {
+                // Priority 1: Selected node (red border)
                 if (
                   selectedNodeForDrawer &&
                   node.data.id === selectedNodeForDrawer.id
                 ) {
                   return "red";
                 }
-                // For non-selected nodes, use a standard border color.
-                // The original behavior used: { from: "color", modifiers: [["darker", 0.8]] }
-                // Since a function must return a string, we'll use a fixed color.
-                // You might want to derive this from node.color if needed, but that adds complexity.
-                return "#555555"; // Default border for other nodes
+
+                // Priority 2: Search match (yellow border)
+                if (matchingNodes.has(node.data.id)) {
+                  return "#FFD700"; // Bright yellow for search matches
+                }
+
+                // Default border for other nodes
+                return "#555555";
               }}
               onClick={(node, event) =>
                 handleNodeClick(node, event as React.MouseEvent)
@@ -780,8 +977,9 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             <div
               style={{ textAlign: "center", padding: "20px", color: "#ccc" }}
             >
-              No data to display (possibly all filtered by depth limit or data
-              is null).
+              {searchText.trim()
+                ? `No nodes found matching "${searchText}". Try a different search term or press Escape to clear the search.`
+                : "No data to display (possibly all filtered by depth limit or data is null)."}
             </div>
           )}
         </div>

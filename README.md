@@ -6,18 +6,75 @@ Example treemap of itself:
 
 ![Treemap](docs/treemap.png)
 
-## Features (Planned)
+## Features
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
   - Node sizes can represent lines of code or character counts, providing an intuitive overview of code distribution.
   - Color-coded categories for different code elements (modules, components, functions, etc.).
   - Interactive features like zoom, tooltips with detailed information (ID, category, value, source snippet), and customizable display settings.
   - Export the treemap as a PNG image or the underlying data as JSON.
+  - **Search Functionality**: Filter and highlight nodes based on their content (see [Search Feature](#search-feature) below).
+
+### Planned Features
+
 - Component hierarchy visualization
 - Hook and state inspection
 - Props and data-flow tracing
 - Module dependency graph
 - Jump-to-definition enhancements
+
+## Search Feature
+
+### Overview
+
+The treemap view includes a powerful search functionality that allows you to filter and highlight nodes based on their content.
+
+### How to Use
+
+#### Using the Search
+
+- The search input is always visible in the treemap header
+- Type your search term to filter the treemap
+- Press the `/` key to quickly focus the search input
+
+#### Search Behavior
+
+- **Case-insensitive matching**: Search terms match regardless of case
+- **Label matching**: Searches node labels (function names, variable names, etc.)
+- **Source matching**: Searches the actual source code content of nodes
+- **Path preservation**: Shows parent nodes that lead to matching nodes
+
+#### Visual Indicators
+
+- **Yellow borders**: Nodes that directly match the search term get bright yellow borders
+- **Red borders**: Selected nodes (for detail drawer) get red borders (takes priority over search highlighting)
+- **Match count**: Shows the number of matching nodes in the header
+
+#### Keyboard Shortcuts
+
+- **`/`**: Focus the search input
+- **`Escape`**: Clear search and unfocus input
+- **Standard input controls**: Use normal text editing keys in the search field
+
+#### Clearing Search
+
+- Press `Escape` key to clear search and unfocus input
+- Click the `✕` button next to the search input (appears when there's text)
+- Manually delete all text from the search input
+
+### Examples
+
+#### Searching for Functions
+
+- Search: `function` - Shows all nodes with "function" in their label or source
+- Search: `useState` - Shows all nodes using the useState hook
+- Search: `component` - Shows all component-related nodes
+
+#### Searching for Specific Code
+
+- Search: `const` - Shows all nodes containing const declarations
+- Search: `return` - Shows all nodes with return statements
+- Search: `props` - Shows all nodes dealing with props
 
 ## Development
 

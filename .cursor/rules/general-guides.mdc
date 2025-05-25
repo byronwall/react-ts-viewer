@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+General guidelines:
+
+* After creating a new feature, add a summary of it to the README.md in the root folder.
