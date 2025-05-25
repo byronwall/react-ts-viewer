@@ -1,0 +1,3406 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Tailwind Theme CSS File Test > should match snapshot for tailwind-theme.css > tailwindThemeCss 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "CssAtRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:0-15",
+      "kind": 0,
+      "label": "@tailwind base;",
+      "loc": {
+        "end": {
+          "column": 15,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "source": "@tailwind base;",
+      "value": 1,
+    },
+    {
+      "category": "CssAtRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:16-37",
+      "kind": 0,
+      "label": "@tailwind components;",
+      "loc": {
+        "end": {
+          "column": 21,
+          "line": 2,
+        },
+        "start": {
+          "column": 0,
+          "line": 2,
+        },
+      },
+      "source": "@tailwind components;",
+      "value": 1,
+    },
+    {
+      "category": "CssAtRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:38-58",
+      "kind": 0,
+      "label": "@tailwind utilities;",
+      "loc": {
+        "end": {
+          "column": 20,
+          "line": 3,
+        },
+        "start": {
+          "column": 0,
+          "line": 3,
+        },
+      },
+      "source": "@tailwind utilities;",
+      "value": 1,
+    },
+    {
+      "category": "CssAtRule",
+      "children": [
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:87-111",
+              "kind": 0,
+              "label": "--background: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 6,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 6,
+                },
+              },
+              "meta": {
+                "property": "--background",
+                "value": "00%100%",
+              },
+              "source": "--background: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:116-140",
+              "kind": 0,
+              "label": "--foreground: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 7,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 7,
+                },
+              },
+              "meta": {
+                "property": "--foreground",
+                "value": "00%3.9%",
+              },
+              "source": "--foreground: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:145-163",
+              "kind": 0,
+              "label": "--card: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 8,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 8,
+                },
+              },
+              "meta": {
+                "property": "--card",
+                "value": "00%100%",
+              },
+              "source": "--card: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:168-197",
+              "kind": 0,
+              "label": "--card-foreground: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 9,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 9,
+                },
+              },
+              "meta": {
+                "property": "--card-foreground",
+                "value": "00%3.9%",
+              },
+              "source": "--card-foreground: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:202-223",
+              "kind": 0,
+              "label": "--popover: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 10,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 10,
+                },
+              },
+              "meta": {
+                "property": "--popover",
+                "value": "00%100%",
+              },
+              "source": "--popover: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:228-260",
+              "kind": 0,
+              "label": "--popover-foreground: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 36,
+                  "line": 11,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 11,
+                },
+              },
+              "meta": {
+                "property": "--popover-foreground",
+                "value": "00%3.9%",
+              },
+              "source": "--popover-foreground: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:265-284",
+              "kind": 0,
+              "label": "--primary: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 23,
+                  "line": 12,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 12,
+                },
+              },
+              "meta": {
+                "property": "--primary",
+                "value": "00%9%",
+              },
+              "source": "--primary: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:289-320",
+              "kind": 0,
+              "label": "--primary-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 13,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 13,
+                },
+              },
+              "meta": {
+                "property": "--primary-foreground",
+                "value": "00%98%",
+              },
+              "source": "--primary-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:325-349",
+              "kind": 0,
+              "label": "--secondary: 00%96.1%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 14,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 14,
+                },
+              },
+              "meta": {
+                "property": "--secondary",
+                "value": "00%96.1%",
+              },
+              "source": "--secondary: 0 0% 96.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:354-386",
+              "kind": 0,
+              "label": "--secondary-foreground: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 36,
+                  "line": 15,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 15,
+                },
+              },
+              "meta": {
+                "property": "--secondary-foreground",
+                "value": "00%9%",
+              },
+              "source": "--secondary-foreground: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:391-411",
+              "kind": 0,
+              "label": "--muted: 00%96.1%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 16,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 16,
+                },
+              },
+              "meta": {
+                "property": "--muted",
+                "value": "00%96.1%",
+              },
+              "source": "--muted: 0 0% 96.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:416-447",
+              "kind": 0,
+              "label": "--muted-foreground: 00%45.1%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 17,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 17,
+                },
+              },
+              "meta": {
+                "property": "--muted-foreground",
+                "value": "00%45.1%",
+              },
+              "source": "--muted-foreground: 0 0% 45.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:452-473",
+              "kind": 0,
+              "label": "--accent: 00%96.1%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 18,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 18,
+                },
+              },
+              "meta": {
+                "property": "--accent",
+                "value": "00%96.1%",
+              },
+              "source": "--accent: 0 0% 96.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:478-507",
+              "kind": 0,
+              "label": "--accent-foreground: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 19,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 19,
+                },
+              },
+              "meta": {
+                "property": "--accent-foreground",
+                "value": "00%9%",
+              },
+              "source": "--accent-foreground: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:512-541",
+              "kind": 0,
+              "label": "--destructive: 084.2%60.2%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 20,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 20,
+                },
+              },
+              "meta": {
+                "property": "--destructive",
+                "value": "084.2%60.2%",
+              },
+              "source": "--destructive: 0 84.2% 60.2%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:546-581",
+              "kind": 0,
+              "label": "--destructive-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 39,
+                  "line": 21,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 21,
+                },
+              },
+              "meta": {
+                "property": "--destructive-foreground",
+                "value": "00%98%",
+              },
+              "source": "--destructive-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:586-607",
+              "kind": 0,
+              "label": "--border: 00%89.8%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 22,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 22,
+                },
+              },
+              "meta": {
+                "property": "--border",
+                "value": "00%89.8%",
+              },
+              "source": "--border: 0 0% 89.8%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:612-632",
+              "kind": 0,
+              "label": "--input: 00%89.8%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 23,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 23,
+                },
+              },
+              "meta": {
+                "property": "--input",
+                "value": "00%89.8%",
+              },
+              "source": "--input: 0 0% 89.8%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:637-655",
+              "kind": 0,
+              "label": "--ring: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 24,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 24,
+                },
+              },
+              "meta": {
+                "property": "--ring",
+                "value": "00%3.9%",
+              },
+              "source": "--ring: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:660-682",
+              "kind": 0,
+              "label": "--chart-1: 1276%61%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 25,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 25,
+                },
+              },
+              "meta": {
+                "property": "--chart-1",
+                "value": "1276%61%",
+              },
+              "source": "--chart-1: 12 76% 61%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:687-710",
+              "kind": 0,
+              "label": "--chart-2: 17358%39%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 26,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 26,
+                },
+              },
+              "meta": {
+                "property": "--chart-2",
+                "value": "17358%39%",
+              },
+              "source": "--chart-2: 173 58% 39%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:715-738",
+              "kind": 0,
+              "label": "--chart-3: 19737%24%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 27,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 27,
+                },
+              },
+              "meta": {
+                "property": "--chart-3",
+                "value": "19737%24%",
+              },
+              "source": "--chart-3: 197 37% 24%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:743-765",
+              "kind": 0,
+              "label": "--chart-4: 4374%66%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 28,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 28,
+                },
+              },
+              "meta": {
+                "property": "--chart-4",
+                "value": "4374%66%",
+              },
+              "source": "--chart-4: 43 74% 66%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:770-792",
+              "kind": 0,
+              "label": "--chart-5: 2787%67%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 29,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 29,
+                },
+              },
+              "meta": {
+                "property": "--chart-5",
+                "value": "2787%67%",
+              },
+              "source": "--chart-5: 27 87% 67%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:797-814",
+              "kind": 0,
+              "label": "--radius: 0.5rem",
+              "loc": {
+                "end": {
+                  "column": 21,
+                  "line": 30,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 30,
+                },
+              },
+              "meta": {
+                "property": "--radius",
+                "value": "0.5rem",
+              },
+              "source": "--radius: 0.5rem;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:819-850",
+              "kind": 0,
+              "label": "--sidebar-background: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 31,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 31,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-background",
+                "value": "00%98%",
+              },
+              "source": "--sidebar-background: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:855-892",
+              "kind": 0,
+              "label": "--sidebar-foreground: 2405.3%26.1%",
+              "loc": {
+                "end": {
+                  "column": 41,
+                  "line": 32,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 32,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-foreground",
+                "value": "2405.3%26.1%",
+              },
+              "source": "--sidebar-foreground: 240 5.3% 26.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:897-929",
+              "kind": 0,
+              "label": "--sidebar-primary: 2405.9%10%",
+              "loc": {
+                "end": {
+                  "column": 36,
+                  "line": 33,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 33,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-primary",
+                "value": "2405.9%10%",
+              },
+              "source": "--sidebar-primary: 240 5.9% 10%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:934-973",
+              "kind": 0,
+              "label": "--sidebar-primary-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 43,
+                  "line": 34,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 34,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-primary-foreground",
+                "value": "00%98%",
+              },
+              "source": "--sidebar-primary-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:978-1011",
+              "kind": 0,
+              "label": "--sidebar-accent: 2404.8%95.9%",
+              "loc": {
+                "end": {
+                  "column": 37,
+                  "line": 35,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 35,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-accent",
+                "value": "2404.8%95.9%",
+              },
+              "source": "--sidebar-accent: 240 4.8% 95.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1016-1058",
+              "kind": 0,
+              "label": "--sidebar-accent-foreground: 2405.9%10%",
+              "loc": {
+                "end": {
+                  "column": 46,
+                  "line": 36,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 36,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-accent-foreground",
+                "value": "2405.9%10%",
+              },
+              "source": "--sidebar-accent-foreground: 240 5.9% 10%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1063-1093",
+              "kind": 0,
+              "label": "--sidebar-border: 22013%91%",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 37,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 37,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-border",
+                "value": "22013%91%",
+              },
+              "source": "--sidebar-border: 220 13% 91%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1098-1132",
+              "kind": 0,
+              "label": "--sidebar-ring: 217.291.2%59.8%",
+              "loc": {
+                "end": {
+                  "column": 38,
+                  "line": 38,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 38,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-ring",
+                "value": "217.291.2%59.8%",
+              },
+              "source": "--sidebar-ring: 217.2 91.2% 59.8%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:75-1135",
+          "kind": 0,
+          "label": ":root",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 39,
+            },
+            "start": {
+              "column": 2,
+              "line": 5,
+            },
+          },
+          "meta": {
+            "selector": ":root",
+          },
+          "source": ":root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  ",
+          "value": 33,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1151-1175",
+              "kind": 0,
+              "label": "--background: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 41,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 41,
+                },
+              },
+              "meta": {
+                "property": "--background",
+                "value": "00%3.9%",
+              },
+              "source": "--background: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1180-1203",
+              "kind": 0,
+              "label": "--foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 42,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 42,
+                },
+              },
+              "meta": {
+                "property": "--foreground",
+                "value": "00%98%",
+              },
+              "source": "--foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1208-1226",
+              "kind": 0,
+              "label": "--card: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 43,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 43,
+                },
+              },
+              "meta": {
+                "property": "--card",
+                "value": "00%3.9%",
+              },
+              "source": "--card: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1231-1259",
+              "kind": 0,
+              "label": "--card-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 32,
+                  "line": 44,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 44,
+                },
+              },
+              "meta": {
+                "property": "--card-foreground",
+                "value": "00%98%",
+              },
+              "source": "--card-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1264-1285",
+              "kind": 0,
+              "label": "--popover: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 45,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 45,
+                },
+              },
+              "meta": {
+                "property": "--popover",
+                "value": "00%3.9%",
+              },
+              "source": "--popover: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1290-1321",
+              "kind": 0,
+              "label": "--popover-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 46,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 46,
+                },
+              },
+              "meta": {
+                "property": "--popover-foreground",
+                "value": "00%98%",
+              },
+              "source": "--popover-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1326-1346",
+              "kind": 0,
+              "label": "--primary: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 47,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 47,
+                },
+              },
+              "meta": {
+                "property": "--primary",
+                "value": "00%98%",
+              },
+              "source": "--primary: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1351-1381",
+              "kind": 0,
+              "label": "--primary-foreground: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 48,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 48,
+                },
+              },
+              "meta": {
+                "property": "--primary-foreground",
+                "value": "00%9%",
+              },
+              "source": "--primary-foreground: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1386-1410",
+              "kind": 0,
+              "label": "--secondary: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 49,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 49,
+                },
+              },
+              "meta": {
+                "property": "--secondary",
+                "value": "00%14.9%",
+              },
+              "source": "--secondary: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1415-1448",
+              "kind": 0,
+              "label": "--secondary-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 37,
+                  "line": 50,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 50,
+                },
+              },
+              "meta": {
+                "property": "--secondary-foreground",
+                "value": "00%98%",
+              },
+              "source": "--secondary-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1453-1473",
+              "kind": 0,
+              "label": "--muted: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 51,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 51,
+                },
+              },
+              "meta": {
+                "property": "--muted",
+                "value": "00%14.9%",
+              },
+              "source": "--muted: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1478-1509",
+              "kind": 0,
+              "label": "--muted-foreground: 00%63.9%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 52,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 52,
+                },
+              },
+              "meta": {
+                "property": "--muted-foreground",
+                "value": "00%63.9%",
+              },
+              "source": "--muted-foreground: 0 0% 63.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1514-1535",
+              "kind": 0,
+              "label": "--accent: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 53,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 53,
+                },
+              },
+              "meta": {
+                "property": "--accent",
+                "value": "00%14.9%",
+              },
+              "source": "--accent: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1540-1570",
+              "kind": 0,
+              "label": "--accent-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 54,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 54,
+                },
+              },
+              "meta": {
+                "property": "--accent-foreground",
+                "value": "00%98%",
+              },
+              "source": "--accent-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1575-1604",
+              "kind": 0,
+              "label": "--destructive: 062.8%30.6%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 55,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 55,
+                },
+              },
+              "meta": {
+                "property": "--destructive",
+                "value": "062.8%30.6%",
+              },
+              "source": "--destructive: 0 62.8% 30.6%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1609-1644",
+              "kind": 0,
+              "label": "--destructive-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 39,
+                  "line": 56,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 56,
+                },
+              },
+              "meta": {
+                "property": "--destructive-foreground",
+                "value": "00%98%",
+              },
+              "source": "--destructive-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1649-1670",
+              "kind": 0,
+              "label": "--border: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 57,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 57,
+                },
+              },
+              "meta": {
+                "property": "--border",
+                "value": "00%14.9%",
+              },
+              "source": "--border: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1675-1695",
+              "kind": 0,
+              "label": "--input: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 58,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 58,
+                },
+              },
+              "meta": {
+                "property": "--input",
+                "value": "00%14.9%",
+              },
+              "source": "--input: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1700-1719",
+              "kind": 0,
+              "label": "--ring: 00%83.1%",
+              "loc": {
+                "end": {
+                  "column": 23,
+                  "line": 59,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 59,
+                },
+              },
+              "meta": {
+                "property": "--ring",
+                "value": "00%83.1%",
+              },
+              "source": "--ring: 0 0% 83.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1724-1747",
+              "kind": 0,
+              "label": "--chart-1: 22070%50%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 60,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 60,
+                },
+              },
+              "meta": {
+                "property": "--chart-1",
+                "value": "22070%50%",
+              },
+              "source": "--chart-1: 220 70% 50%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1752-1775",
+              "kind": 0,
+              "label": "--chart-2: 16060%45%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 61,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 61,
+                },
+              },
+              "meta": {
+                "property": "--chart-2",
+                "value": "16060%45%",
+              },
+              "source": "--chart-2: 160 60% 45%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1780-1802",
+              "kind": 0,
+              "label": "--chart-3: 3080%55%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 62,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 62,
+                },
+              },
+              "meta": {
+                "property": "--chart-3",
+                "value": "3080%55%",
+              },
+              "source": "--chart-3: 30 80% 55%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1807-1830",
+              "kind": 0,
+              "label": "--chart-4: 28065%60%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 63,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 63,
+                },
+              },
+              "meta": {
+                "property": "--chart-4",
+                "value": "28065%60%",
+              },
+              "source": "--chart-4: 280 65% 60%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1835-1858",
+              "kind": 0,
+              "label": "--chart-5: 34075%55%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 64,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 64,
+                },
+              },
+              "meta": {
+                "property": "--chart-5",
+                "value": "34075%55%",
+              },
+              "source": "--chart-5: 340 75% 55%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1863-1898",
+              "kind": 0,
+              "label": "--sidebar-background: 2405.9%10%",
+              "loc": {
+                "end": {
+                  "column": 39,
+                  "line": 65,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 65,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-background",
+                "value": "2405.9%10%",
+              },
+              "source": "--sidebar-background: 240 5.9% 10%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1903-1940",
+              "kind": 0,
+              "label": "--sidebar-foreground: 2404.8%95.9%",
+              "loc": {
+                "end": {
+                  "column": 41,
+                  "line": 66,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 66,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-foreground",
+                "value": "2404.8%95.9%",
+              },
+              "source": "--sidebar-foreground: 240 4.8% 95.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1945-1980",
+              "kind": 0,
+              "label": "--sidebar-primary: 224.376.3%48%",
+              "loc": {
+                "end": {
+                  "column": 39,
+                  "line": 67,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 67,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-primary",
+                "value": "224.376.3%48%",
+              },
+              "source": "--sidebar-primary: 224.3 76.3% 48%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1985-2025",
+              "kind": 0,
+              "label": "--sidebar-primary-foreground: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 44,
+                  "line": 68,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 68,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-primary-foreground",
+                "value": "00%100%",
+              },
+              "source": "--sidebar-primary-foreground: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2030-2063",
+              "kind": 0,
+              "label": "--sidebar-accent: 2403.7%15.9%",
+              "loc": {
+                "end": {
+                  "column": 37,
+                  "line": 69,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 69,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-accent",
+                "value": "2403.7%15.9%",
+              },
+              "source": "--sidebar-accent: 240 3.7% 15.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2068-2112",
+              "kind": 0,
+              "label": "--sidebar-accent-foreground: 2404.8%95.9%",
+              "loc": {
+                "end": {
+                  "column": 48,
+                  "line": 70,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 70,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-accent-foreground",
+                "value": "2404.8%95.9%",
+              },
+              "source": "--sidebar-accent-foreground: 240 4.8% 95.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2117-2150",
+              "kind": 0,
+              "label": "--sidebar-border: 2403.7%15.9%",
+              "loc": {
+                "end": {
+                  "column": 37,
+                  "line": 71,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 71,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-border",
+                "value": "2403.7%15.9%",
+              },
+              "source": "--sidebar-border: 240 3.7% 15.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2155-2189",
+              "kind": 0,
+              "label": "--sidebar-ring: 217.291.2%59.8%",
+              "loc": {
+                "end": {
+                  "column": 38,
+                  "line": 72,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 72,
+                },
+              },
+              "meta": {
+                "property": "--sidebar-ring",
+                "value": "217.291.2%59.8%",
+              },
+              "source": "--sidebar-ring: 217.2 91.2% 59.8%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:1139-2192",
+          "kind": 0,
+          "label": ".dark",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 73,
+            },
+            "start": {
+              "column": 2,
+              "line": 40,
+            },
+          },
+          "meta": {
+            "selector": ".dark",
+          },
+          "source": ".dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  ",
+          "value": 32,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2231-2255",
+              "kind": 0,
+              "label": "--background: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 75,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 75,
+                },
+              },
+              "meta": {
+                "property": "--background",
+                "value": "00%3.9%",
+              },
+              "source": "--background: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2260-2283",
+              "kind": 0,
+              "label": "--foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 76,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 76,
+                },
+              },
+              "meta": {
+                "property": "--foreground",
+                "value": "00%98%",
+              },
+              "source": "--foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2288-2306",
+              "kind": 0,
+              "label": "--card: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 77,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 77,
+                },
+              },
+              "meta": {
+                "property": "--card",
+                "value": "00%3.9%",
+              },
+              "source": "--card: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2311-2339",
+              "kind": 0,
+              "label": "--card-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 32,
+                  "line": 78,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 78,
+                },
+              },
+              "meta": {
+                "property": "--card-foreground",
+                "value": "00%98%",
+              },
+              "source": "--card-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2344-2365",
+              "kind": 0,
+              "label": "--popover: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 79,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 79,
+                },
+              },
+              "meta": {
+                "property": "--popover",
+                "value": "00%3.9%",
+              },
+              "source": "--popover: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2370-2401",
+              "kind": 0,
+              "label": "--popover-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 80,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 80,
+                },
+              },
+              "meta": {
+                "property": "--popover-foreground",
+                "value": "00%98%",
+              },
+              "source": "--popover-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2406-2426",
+              "kind": 0,
+              "label": "--primary: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 81,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 81,
+                },
+              },
+              "meta": {
+                "property": "--primary",
+                "value": "00%98%",
+              },
+              "source": "--primary: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2431-2461",
+              "kind": 0,
+              "label": "--primary-foreground: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 82,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 82,
+                },
+              },
+              "meta": {
+                "property": "--primary-foreground",
+                "value": "00%9%",
+              },
+              "source": "--primary-foreground: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2466-2490",
+              "kind": 0,
+              "label": "--secondary: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 83,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 83,
+                },
+              },
+              "meta": {
+                "property": "--secondary",
+                "value": "00%14.9%",
+              },
+              "source": "--secondary: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2495-2528",
+              "kind": 0,
+              "label": "--secondary-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 37,
+                  "line": 84,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 84,
+                },
+              },
+              "meta": {
+                "property": "--secondary-foreground",
+                "value": "00%98%",
+              },
+              "source": "--secondary-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2533-2553",
+              "kind": 0,
+              "label": "--muted: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 85,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 85,
+                },
+              },
+              "meta": {
+                "property": "--muted",
+                "value": "00%14.9%",
+              },
+              "source": "--muted: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2558-2589",
+              "kind": 0,
+              "label": "--muted-foreground: 00%63.9%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 86,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 86,
+                },
+              },
+              "meta": {
+                "property": "--muted-foreground",
+                "value": "00%63.9%",
+              },
+              "source": "--muted-foreground: 0 0% 63.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2594-2615",
+              "kind": 0,
+              "label": "--accent: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 87,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 87,
+                },
+              },
+              "meta": {
+                "property": "--accent",
+                "value": "00%14.9%",
+              },
+              "source": "--accent: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2620-2650",
+              "kind": 0,
+              "label": "--accent-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 88,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 88,
+                },
+              },
+              "meta": {
+                "property": "--accent-foreground",
+                "value": "00%98%",
+              },
+              "source": "--accent-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2655-2684",
+              "kind": 0,
+              "label": "--destructive: 062.8%30.6%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 89,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 89,
+                },
+              },
+              "meta": {
+                "property": "--destructive",
+                "value": "062.8%30.6%",
+              },
+              "source": "--destructive: 0 62.8% 30.6%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2689-2724",
+              "kind": 0,
+              "label": "--destructive-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 39,
+                  "line": 90,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 90,
+                },
+              },
+              "meta": {
+                "property": "--destructive-foreground",
+                "value": "00%98%",
+              },
+              "source": "--destructive-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2729-2750",
+              "kind": 0,
+              "label": "--border: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 91,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 91,
+                },
+              },
+              "meta": {
+                "property": "--border",
+                "value": "00%14.9%",
+              },
+              "source": "--border: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2755-2775",
+              "kind": 0,
+              "label": "--input: 00%14.9%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 92,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 92,
+                },
+              },
+              "meta": {
+                "property": "--input",
+                "value": "00%14.9%",
+              },
+              "source": "--input: 0 0% 14.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2780-2799",
+              "kind": 0,
+              "label": "--ring: 00%83.1%",
+              "loc": {
+                "end": {
+                  "column": 23,
+                  "line": 93,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 93,
+                },
+              },
+              "meta": {
+                "property": "--ring",
+                "value": "00%83.1%",
+              },
+              "source": "--ring: 0 0% 83.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2804-2827",
+              "kind": 0,
+              "label": "--chart-1: 22070%50%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 94,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 94,
+                },
+              },
+              "meta": {
+                "property": "--chart-1",
+                "value": "22070%50%",
+              },
+              "source": "--chart-1: 220 70% 50%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2832-2855",
+              "kind": 0,
+              "label": "--chart-2: 16060%45%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 95,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 95,
+                },
+              },
+              "meta": {
+                "property": "--chart-2",
+                "value": "16060%45%",
+              },
+              "source": "--chart-2: 160 60% 45%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2860-2882",
+              "kind": 0,
+              "label": "--chart-3: 3080%55%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 96,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 96,
+                },
+              },
+              "meta": {
+                "property": "--chart-3",
+                "value": "3080%55%",
+              },
+              "source": "--chart-3: 30 80% 55%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2887-2910",
+              "kind": 0,
+              "label": "--chart-4: 28065%60%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 97,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 97,
+                },
+              },
+              "meta": {
+                "property": "--chart-4",
+                "value": "28065%60%",
+              },
+              "source": "--chart-4: 280 65% 60%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2915-2938",
+              "kind": 0,
+              "label": "--chart-5: 34075%55%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 98,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 98,
+                },
+              },
+              "meta": {
+                "property": "--chart-5",
+                "value": "34075%55%",
+              },
+              "source": "--chart-5: 340 75% 55%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2943-2970",
+              "kind": 0,
+              "label": "--brand: 213.393.9%67.8%",
+              "loc": {
+                "end": {
+                  "column": 31,
+                  "line": 99,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 99,
+                },
+              },
+              "meta": {
+                "property": "--brand",
+                "value": "213.393.9%67.8%",
+              },
+              "source": "--brand: 213.3 93.9% 67.8%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2975-2999",
+              "kind": 0,
+              "label": "--highlight: 4896%53%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 100,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 100,
+                },
+              },
+              "meta": {
+                "property": "--highlight",
+                "value": "4896%53%",
+              },
+              "source": "--highlight: 48 96% 53%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:2196-3002",
+          "kind": 0,
+          "label": "[data-registry="plate"].dark",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 101,
+            },
+            "start": {
+              "column": 2,
+              "line": 74,
+            },
+          },
+          "meta": {
+            "selector": "[data-registry="plate"].dark",
+          },
+          "source": "[data-registry="plate"].dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --brand: 213.3 93.9% 67.8%;
+    --highlight: 48 96% 53%;
+  ",
+          "value": 26,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3036-3060",
+              "kind": 0,
+              "label": "--background: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 103,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 103,
+                },
+              },
+              "meta": {
+                "property": "--background",
+                "value": "00%100%",
+              },
+              "source": "--background: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3065-3089",
+              "kind": 0,
+              "label": "--foreground: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 104,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 104,
+                },
+              },
+              "meta": {
+                "property": "--foreground",
+                "value": "00%3.9%",
+              },
+              "source": "--foreground: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3094-3112",
+              "kind": 0,
+              "label": "--card: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 105,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 105,
+                },
+              },
+              "meta": {
+                "property": "--card",
+                "value": "00%100%",
+              },
+              "source": "--card: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3117-3146",
+              "kind": 0,
+              "label": "--card-foreground: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 106,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 106,
+                },
+              },
+              "meta": {
+                "property": "--card-foreground",
+                "value": "00%3.9%",
+              },
+              "source": "--card-foreground: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3151-3172",
+              "kind": 0,
+              "label": "--popover: 00%100%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 107,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 107,
+                },
+              },
+              "meta": {
+                "property": "--popover",
+                "value": "00%100%",
+              },
+              "source": "--popover: 0 0% 100%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3177-3209",
+              "kind": 0,
+              "label": "--popover-foreground: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 36,
+                  "line": 108,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 108,
+                },
+              },
+              "meta": {
+                "property": "--popover-foreground",
+                "value": "00%3.9%",
+              },
+              "source": "--popover-foreground: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3214-3233",
+              "kind": 0,
+              "label": "--primary: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 23,
+                  "line": 109,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 109,
+                },
+              },
+              "meta": {
+                "property": "--primary",
+                "value": "00%9%",
+              },
+              "source": "--primary: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3238-3269",
+              "kind": 0,
+              "label": "--primary-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 110,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 110,
+                },
+              },
+              "meta": {
+                "property": "--primary-foreground",
+                "value": "00%98%",
+              },
+              "source": "--primary-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3274-3298",
+              "kind": 0,
+              "label": "--secondary: 00%96.1%",
+              "loc": {
+                "end": {
+                  "column": 28,
+                  "line": 111,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 111,
+                },
+              },
+              "meta": {
+                "property": "--secondary",
+                "value": "00%96.1%",
+              },
+              "source": "--secondary: 0 0% 96.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3303-3335",
+              "kind": 0,
+              "label": "--secondary-foreground: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 36,
+                  "line": 112,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 112,
+                },
+              },
+              "meta": {
+                "property": "--secondary-foreground",
+                "value": "00%9%",
+              },
+              "source": "--secondary-foreground: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3340-3360",
+              "kind": 0,
+              "label": "--muted: 00%96.1%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 113,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 113,
+                },
+              },
+              "meta": {
+                "property": "--muted",
+                "value": "00%96.1%",
+              },
+              "source": "--muted: 0 0% 96.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3365-3396",
+              "kind": 0,
+              "label": "--muted-foreground: 00%45.1%",
+              "loc": {
+                "end": {
+                  "column": 35,
+                  "line": 114,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 114,
+                },
+              },
+              "meta": {
+                "property": "--muted-foreground",
+                "value": "00%45.1%",
+              },
+              "source": "--muted-foreground: 0 0% 45.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3401-3422",
+              "kind": 0,
+              "label": "--accent: 00%96.1%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 115,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 115,
+                },
+              },
+              "meta": {
+                "property": "--accent",
+                "value": "00%96.1%",
+              },
+              "source": "--accent: 0 0% 96.1%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3427-3456",
+              "kind": 0,
+              "label": "--accent-foreground: 00%9%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 116,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 116,
+                },
+              },
+              "meta": {
+                "property": "--accent-foreground",
+                "value": "00%9%",
+              },
+              "source": "--accent-foreground: 0 0% 9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3461-3490",
+              "kind": 0,
+              "label": "--destructive: 084.2%60.2%",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 117,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 117,
+                },
+              },
+              "meta": {
+                "property": "--destructive",
+                "value": "084.2%60.2%",
+              },
+              "source": "--destructive: 0 84.2% 60.2%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3495-3530",
+              "kind": 0,
+              "label": "--destructive-foreground: 00%98%",
+              "loc": {
+                "end": {
+                  "column": 39,
+                  "line": 118,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 118,
+                },
+              },
+              "meta": {
+                "property": "--destructive-foreground",
+                "value": "00%98%",
+              },
+              "source": "--destructive-foreground: 0 0% 98%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3535-3556",
+              "kind": 0,
+              "label": "--border: 00%89.8%",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 119,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 119,
+                },
+              },
+              "meta": {
+                "property": "--border",
+                "value": "00%89.8%",
+              },
+              "source": "--border: 0 0% 89.8%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3561-3581",
+              "kind": 0,
+              "label": "--input: 00%89.8%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 120,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 120,
+                },
+              },
+              "meta": {
+                "property": "--input",
+                "value": "00%89.8%",
+              },
+              "source": "--input: 0 0% 89.8%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3586-3604",
+              "kind": 0,
+              "label": "--ring: 00%3.9%",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 121,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 121,
+                },
+              },
+              "meta": {
+                "property": "--ring",
+                "value": "00%3.9%",
+              },
+              "source": "--ring: 0 0% 3.9%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3609-3631",
+              "kind": 0,
+              "label": "--chart-1: 1276%61%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 122,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 122,
+                },
+              },
+              "meta": {
+                "property": "--chart-1",
+                "value": "1276%61%",
+              },
+              "source": "--chart-1: 12 76% 61%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3636-3659",
+              "kind": 0,
+              "label": "--chart-2: 17358%39%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 123,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 123,
+                },
+              },
+              "meta": {
+                "property": "--chart-2",
+                "value": "17358%39%",
+              },
+              "source": "--chart-2: 173 58% 39%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3664-3687",
+              "kind": 0,
+              "label": "--chart-3: 19737%24%",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 124,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 124,
+                },
+              },
+              "meta": {
+                "property": "--chart-3",
+                "value": "19737%24%",
+              },
+              "source": "--chart-3: 197 37% 24%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3692-3714",
+              "kind": 0,
+              "label": "--chart-4: 4374%66%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 125,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 125,
+                },
+              },
+              "meta": {
+                "property": "--chart-4",
+                "value": "4374%66%",
+              },
+              "source": "--chart-4: 43 74% 66%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3719-3741",
+              "kind": 0,
+              "label": "--chart-5: 2787%67%",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 126,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 126,
+                },
+              },
+              "meta": {
+                "property": "--chart-5",
+                "value": "2787%67%",
+              },
+              "source": "--chart-5: 27 87% 67%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3746-3763",
+              "kind": 0,
+              "label": "--radius: 0.5rem",
+              "loc": {
+                "end": {
+                  "column": 21,
+                  "line": 127,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 127,
+                },
+              },
+              "meta": {
+                "property": "--radius",
+                "value": "0.5rem",
+              },
+              "source": "--radius: 0.5rem;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3768-3795",
+              "kind": 0,
+              "label": "--brand: 217.291.2%59.8%",
+              "loc": {
+                "end": {
+                  "column": 31,
+                  "line": 128,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 128,
+                },
+              },
+              "meta": {
+                "property": "--brand",
+                "value": "217.291.2%59.8%",
+              },
+              "source": "--brand: 217.2 91.2% 59.8%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3800-3830",
+              "kind": 0,
+              "label": "--highlight: 47.995.8%53.1%",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 129,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 129,
+                },
+              },
+              "meta": {
+                "property": "--highlight",
+                "value": "47.995.8%53.1%",
+              },
+              "source": "--highlight: 47.9 95.8% 53.1%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3006-3833",
+          "kind": 0,
+          "label": "[data-registry="plate"]",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 130,
+            },
+            "start": {
+              "column": 2,
+              "line": 102,
+            },
+          },
+          "meta": {
+            "selector": "[data-registry="plate"]",
+          },
+          "source": "[data-registry="plate"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --brand: 217.2 91.2% 59.8%;
+    --highlight: 47.9 95.8% 53.1%;
+  ",
+          "value": 27,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:59-3824",
+      "kind": 0,
+      "label": "@layer base",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 131,
+        },
+        "start": {
+          "column": 0,
+          "line": 4,
+        },
+      },
+      "source": "@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  [data-registry="plate"].dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --brand: 213.3 93.9% 67.8%;
+    --highlight: 48 96% 53%;
+  }
+  [data-registry="plate"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --brand: 217.2 91.2% 59.8%;
+    --highlight: 47.9 95.8% ",
+      "value": 118,
+    },
+    {
+      "category": "CssAtRule",
+      "children": [
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssAtRule",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3861-3882",
+              "kind": 0,
+              "label": "@apply border-border;",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 134,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 134,
+                },
+              },
+              "source": "@apply border-border;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3853-3885",
+          "kind": 0,
+          "label": "*",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 135,
+            },
+            "start": {
+              "column": 2,
+              "line": 133,
+            },
+          },
+          "meta": {
+            "selector": "*",
+          },
+          "source": "* {
+    @apply border-border;
+  ",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssAtRule",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3900-3937",
+              "kind": 0,
+              "label": "@apply bg-background text-foreground;",
+              "loc": {
+                "end": {
+                  "column": 41,
+                  "line": 137,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 137,
+                },
+              },
+              "source": "@apply bg-background text-foreground;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3889-3940",
+          "kind": 0,
+          "label": "body",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 138,
+            },
+            "start": {
+              "column": 2,
+              "line": 136,
+            },
+          },
+          "meta": {
+            "selector": "body",
+          },
+          "source": "body {
+    @apply bg-background text-foreground;
+  ",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css:3837-3931",
+      "kind": 0,
+      "label": "@layer base",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 139,
+        },
+        "start": {
+          "column": 0,
+          "line": 132,
+        },
+      },
+      "source": "@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreg",
+      "value": 2,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/tailwind-theme.css",
+  "kind": 0,
+  "label": "tailwind-theme.css",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 140,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  [data-registry="plate"].dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --brand: 213.3 93.9% 67.8%;
+    --highlight: 48 96% 53%;
+  }
+  [data-registry="plate"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --brand: 217.2 91.2% 59.8%;
+    --highlight: 47.9 95.8% 53.1%;
+  }
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+",
+  "value": 123,
+}
+`;

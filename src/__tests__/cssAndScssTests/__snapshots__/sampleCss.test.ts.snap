@@ -1,0 +1,198 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Sample CSS File Test > should match snapshot for sample.css > sampleCss 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:0-16",
+      "kind": 0,
+      "label": "/* Sample CSS */",
+      "loc": {
+        "end": {
+          "column": 16,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "source": "/* Sample CSS */",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:27-51",
+          "kind": 0,
+          "label": "font-family: sans-serif",
+          "loc": {
+            "end": {
+              "column": 26,
+              "line": 4,
+            },
+            "start": {
+              "column": 2,
+              "line": 4,
+            },
+          },
+          "meta": {
+            "property": "font-family",
+            "value": "sans-serif",
+          },
+          "source": "font-family: sans-serif;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:54-64",
+          "kind": 0,
+          "label": "margin: 0",
+          "loc": {
+            "end": {
+              "column": 12,
+              "line": 5,
+            },
+            "start": {
+              "column": 2,
+              "line": 5,
+            },
+          },
+          "meta": {
+            "property": "margin",
+            "value": "0",
+          },
+          "source": "margin: 0;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:18-65",
+      "kind": 0,
+      "label": "body",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 6,
+        },
+        "start": {
+          "column": 0,
+          "line": 3,
+        },
+      },
+      "meta": {
+        "selector": "body",
+      },
+      "source": "body {
+  font-family: sans-serif;
+  margin: 0;
+",
+      "value": 2,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:83-96",
+          "kind": 0,
+          "label": "padding: 1em",
+          "loc": {
+            "end": {
+              "column": 15,
+              "line": 9,
+            },
+            "start": {
+              "column": 2,
+              "line": 9,
+            },
+          },
+          "meta": {
+            "property": "padding",
+            "value": "1em",
+          },
+          "source": "padding: 1em;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:99-125",
+          "kind": 0,
+          "label": "background-color: #f0f0f0",
+          "loc": {
+            "end": {
+              "column": 28,
+              "line": 10,
+            },
+            "start": {
+              "column": 2,
+              "line": 10,
+            },
+          },
+          "meta": {
+            "property": "background-color",
+            "value": "#f0f0f0",
+          },
+          "source": "background-color: #f0f0f0;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css:68-126",
+      "kind": 0,
+      "label": ".container",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 11,
+        },
+        "start": {
+          "column": 0,
+          "line": 8,
+        },
+      },
+      "meta": {
+        "selector": ".container",
+      },
+      "source": ".container {
+  padding: 1em;
+  background-color: #f0f0f0;
+",
+      "value": 2,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.css",
+  "kind": 0,
+  "label": "sample.css",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 12,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "/* Sample CSS */
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+}
+
+.container {
+  padding: 1em;
+  background-color: #f0f0f0;
+}
+",
+  "value": 5,
+}
+`;

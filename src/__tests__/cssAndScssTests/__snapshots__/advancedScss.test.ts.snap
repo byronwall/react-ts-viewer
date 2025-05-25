@@ -1,0 +1,1697 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Advanced SCSS File Test > should match snapshot for advanced.scss > advancedScss 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:0-25",
+      "kind": 0,
+      "label": "// Advanced SCSS Features",
+      "loc": {
+        "end": {
+          "column": 25,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "source": "// Advanced SCSS Features",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:27-39",
+      "kind": 0,
+      "label": "// Variables",
+      "loc": {
+        "end": {
+          "column": 12,
+          "line": 3,
+        },
+        "start": {
+          "column": 0,
+          "line": 3,
+        },
+      },
+      "source": "// Variables",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:157-167",
+              "kind": 0,
+              "label": "margin: 0",
+              "loc": {
+                "end": {
+                  "column": 14,
+                  "line": 11,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 11,
+                },
+              },
+              "meta": {
+                "property": "margin",
+                "value": "0",
+              },
+              "source": "margin: 0;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:172-183",
+              "kind": 0,
+              "label": "padding: 0",
+              "loc": {
+                "end": {
+                  "column": 15,
+                  "line": 12,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 12,
+                },
+              },
+              "meta": {
+                "property": "padding",
+                "value": "0",
+              },
+              "source": "padding: 0;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:188-205",
+              "kind": 0,
+              "label": "list-style: none",
+              "loc": {
+                "end": {
+                  "column": 21,
+                  "line": 13,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 13,
+                },
+              },
+              "meta": {
+                "property": "list-style",
+                "value": "none",
+              },
+              "source": "list-style: none;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:148-208",
+          "kind": 0,
+          "label": "ul",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 14,
+            },
+            "start": {
+              "column": 2,
+              "line": 10,
+            },
+          },
+          "meta": {
+            "selector": "ul",
+          },
+          "source": "ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  ",
+          "value": 3,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:218-240",
+              "kind": 0,
+              "label": "display: inline-block",
+              "loc": {
+                "end": {
+                  "column": 29,
+                  "line": 16,
+                },
+                "start": {
+                  "column": 7,
+                  "line": 16,
+                },
+              },
+              "meta": {
+                "property": "display",
+                "value": "inline-block",
+              },
+              "source": "display: inline-block;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:213-241",
+          "kind": 0,
+          "label": "li",
+          "loc": {
+            "end": {
+              "column": 31,
+              "line": 16,
+            },
+            "start": {
+              "column": 2,
+              "line": 16,
+            },
+          },
+          "meta": {
+            "selector": "li",
+          },
+          "source": "li { display: inline-block; ",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:254-269",
+              "kind": 0,
+              "label": "display: block",
+              "loc": {
+                "end": {
+                  "column": 19,
+                  "line": 19,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 19,
+                },
+              },
+              "meta": {
+                "property": "display",
+                "value": "block",
+              },
+              "source": "display: block;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:274-292",
+              "kind": 0,
+              "label": "padding: 6px12px",
+              "loc": {
+                "end": {
+                  "column": 22,
+                  "line": 20,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 20,
+                },
+              },
+              "meta": {
+                "property": "padding",
+                "value": "6px12px",
+              },
+              "source": "padding: 6px 12px;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:297-319",
+              "kind": 0,
+              "label": "text-decoration: none",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 21,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 21,
+                },
+              },
+              "meta": {
+                "property": "text-decoration",
+                "value": "none",
+              },
+              "source": "text-decoration: none;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:324-346",
+              "kind": 0,
+              "label": "color: $primary-color",
+              "loc": {
+                "end": {
+                  "column": 26,
+                  "line": 22,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 22,
+                },
+              },
+              "meta": {
+                "property": "color",
+                "value": "$primary-color",
+              },
+              "source": "color: $primary-color;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:352-403",
+              "kind": 0,
+              "label": "&: hover{color:darken($primary-color,10%)",
+              "loc": {
+                "end": {
+                  "column": 41,
+                  "line": 25,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 24,
+                },
+              },
+              "meta": {
+                "property": "&",
+                "value": "hover{color:darken($primary-color,10%)",
+              },
+              "source": "&:hover {
+      color: darken($primary-color, 10%);",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:246-408",
+          "kind": 0,
+          "label": "a",
+          "loc": {
+            "end": {
+              "column": 5,
+              "line": 26,
+            },
+            "start": {
+              "column": 2,
+              "line": 18,
+            },
+          },
+          "meta": {
+            "selector": "a",
+          },
+          "source": "a {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: $primary-color;
+
+    &:hover {
+      color: darken($primary-color, 10%);
+    ",
+          "value": 5,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:40-393",
+      "kind": 0,
+      "label": "$primary-color:#007bff;$secondary-color:#6c757d;$font-stack:Helvetica,sans-serif;nav",
+      "loc": {
+        "end": {
+          "column": 3,
+          "line": 27,
+        },
+        "start": {
+          "column": 0,
+          "line": 4,
+        },
+      },
+      "meta": {
+        "selector": "$primary-color:#007bff;$secondary-color:#6c757d;$font-stack:Helvetica,sans-serif;nav",
+      },
+      "source": "$primary-color: #007bff;
+$secondary-color: #6c757d;
+$font-stack: Helvetica, sans-serif;
+
+// Nesting
+nav {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li { display: inline-block; }
+
+  a {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: $primary-color;
+
+    &:hover {
+      color: darken($primary-co",
+      "value": 9,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:417-494",
+      "kind": 0,
+      "label": "// Partials and Modules (conceptual - SCSS files would typically be separate)",
+      "loc": {
+        "end": {
+          "column": 77,
+          "line": 30,
+        },
+        "start": {
+          "column": 0,
+          "line": 30,
+        },
+      },
+      "source": "// Partials and Modules (conceptual - SCSS files would typically be separate)",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:495-557",
+      "kind": 0,
+      "label": "// @import 'reset'; // Example of importing a reset stylesheet",
+      "loc": {
+        "end": {
+          "column": 62,
+          "line": 31,
+        },
+        "start": {
+          "column": 0,
+          "line": 31,
+        },
+      },
+      "source": "// @import 'reset'; // Example of importing a reset stylesheet",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:558-611",
+      "kind": 0,
+      "label": "// @use 'base';    // Example of using another module",
+      "loc": {
+        "end": {
+          "column": 53,
+          "line": 32,
+        },
+        "start": {
+          "column": 0,
+          "line": 32,
+        },
+      },
+      "source": "// @use 'base';    // Example of using another module",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:613-622",
+      "kind": 0,
+      "label": "// Mixins",
+      "loc": {
+        "end": {
+          "column": 9,
+          "line": 34,
+        },
+        "start": {
+          "column": 0,
+          "line": 34,
+        },
+      },
+      "source": "// Mixins",
+      "value": 1,
+    },
+    {
+      "category": "CssMixin",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:657-688",
+          "kind": 0,
+          "label": "-webkit-border-radius: $radius",
+          "loc": {
+            "end": {
+              "column": 33,
+              "line": 36,
+            },
+            "start": {
+              "column": 2,
+              "line": 36,
+            },
+          },
+          "meta": {
+            "property": "-webkit-border-radius",
+            "value": "$radius",
+          },
+          "source": "-webkit-border-radius: $radius;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:694-722",
+          "kind": 0,
+          "label": "-moz-border-radius: $radius",
+          "loc": {
+            "end": {
+              "column": 33,
+              "line": 37,
+            },
+            "start": {
+              "column": 5,
+              "line": 37,
+            },
+          },
+          "meta": {
+            "property": "-moz-border-radius",
+            "value": "$radius",
+          },
+          "source": "-moz-border-radius: $radius;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:729-756",
+          "kind": 0,
+          "label": "-ms-border-radius: $radius",
+          "loc": {
+            "end": {
+              "column": 33,
+              "line": 38,
+            },
+            "start": {
+              "column": 6,
+              "line": 38,
+            },
+          },
+          "meta": {
+            "property": "-ms-border-radius",
+            "value": "$radius",
+          },
+          "source": "-ms-border-radius: $radius;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:767-790",
+          "kind": 0,
+          "label": "border-radius: $radius",
+          "loc": {
+            "end": {
+              "column": 33,
+              "line": 39,
+            },
+            "start": {
+              "column": 10,
+              "line": 39,
+            },
+          },
+          "meta": {
+            "property": "border-radius",
+            "value": "$radius",
+          },
+          "source": "border-radius: $radius;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:623-762",
+      "kind": 0,
+      "label": "@mixin border-radius($radius)",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 40,
+        },
+        "start": {
+          "column": 0,
+          "line": 35,
+        },
+      },
+      "meta": {
+        "mixinName": "border-radius",
+        "parameters": "($radius)",
+      },
+      "source": "@mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+     -moz-border-radius: $radius;
+      -ms-border-radius: $radius;
+     ",
+      "value": 4,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssInclude",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:803-832",
+          "kind": 0,
+          "label": "@includeborder-radius(10px);",
+          "loc": {
+            "end": {
+              "column": 31,
+              "line": 43,
+            },
+            "start": {
+              "column": 2,
+              "line": 43,
+            },
+          },
+          "source": "@include border-radius(10px);",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:835-870",
+          "kind": 0,
+          "label": "border: 1pxsolid$secondary-color",
+          "loc": {
+            "end": {
+              "column": 37,
+              "line": 44,
+            },
+            "start": {
+              "column": 2,
+              "line": 44,
+            },
+          },
+          "meta": {
+            "property": "border",
+            "value": "1pxsolid$secondary-color",
+          },
+          "source": "border: 1px solid $secondary-color;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:873-887",
+          "kind": 0,
+          "label": "padding: 15px",
+          "loc": {
+            "end": {
+              "column": 16,
+              "line": 45,
+            },
+            "start": {
+              "column": 2,
+              "line": 45,
+            },
+          },
+          "meta": {
+            "property": "padding",
+            "value": "15px",
+          },
+          "source": "padding: 15px;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:794-888",
+      "kind": 0,
+      "label": ".box",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 46,
+        },
+        "start": {
+          "column": 0,
+          "line": 42,
+        },
+      },
+      "meta": {
+        "selector": ".box",
+      },
+      "source": ".box {
+  @include border-radius(10px);
+  border: 1px solid $secondary-color;
+  padding: 15px;
+",
+      "value": 3,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:891-912",
+      "kind": 0,
+      "label": "// Extend/Inheritance",
+      "loc": {
+        "end": {
+          "column": 21,
+          "line": 48,
+        },
+        "start": {
+          "column": 0,
+          "line": 48,
+        },
+      },
+      "source": "// Extend/Inheritance",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:926-949",
+          "kind": 0,
+          "label": "border: 1pxsolid#ccc",
+          "loc": {
+            "end": {
+              "column": 25,
+              "line": 50,
+            },
+            "start": {
+              "column": 2,
+              "line": 50,
+            },
+          },
+          "meta": {
+            "property": "border",
+            "value": "1pxsolid#ccc",
+          },
+          "source": "border: 1px solid #ccc;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:952-966",
+          "kind": 0,
+          "label": "padding: 10px",
+          "loc": {
+            "end": {
+              "column": 16,
+              "line": 51,
+            },
+            "start": {
+              "column": 2,
+              "line": 51,
+            },
+          },
+          "meta": {
+            "property": "padding",
+            "value": "10px",
+          },
+          "source": "padding: 10px;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:969-981",
+          "kind": 0,
+          "label": "color: #333",
+          "loc": {
+            "end": {
+              "column": 14,
+              "line": 52,
+            },
+            "start": {
+              "column": 2,
+              "line": 52,
+            },
+          },
+          "meta": {
+            "property": "color",
+            "value": "#333",
+          },
+          "source": "color: #333;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:913-982",
+      "kind": 0,
+      "label": ".message",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 53,
+        },
+        "start": {
+          "column": 0,
+          "line": 49,
+        },
+      },
+      "meta": {
+        "selector": ".message",
+      },
+      "source": ".message {
+  border: 1px solid #ccc;
+  padding: 10px;
+  color: #333;
+",
+      "value": 3,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssExtend",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:998-1015",
+          "kind": 0,
+          "label": "@extend.message;",
+          "loc": {
+            "end": {
+              "column": 19,
+              "line": 56,
+            },
+            "start": {
+              "column": 2,
+              "line": 56,
+            },
+          },
+          "source": "@extend .message;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1018-1038",
+          "kind": 0,
+          "label": "border-color: green",
+          "loc": {
+            "end": {
+              "column": 22,
+              "line": 57,
+            },
+            "start": {
+              "column": 2,
+              "line": 57,
+            },
+          },
+          "meta": {
+            "property": "border-color",
+            "value": "green",
+          },
+          "source": "border-color: green;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:985-1039",
+      "kind": 0,
+      "label": ".success",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 58,
+        },
+        "start": {
+          "column": 0,
+          "line": 55,
+        },
+      },
+      "meta": {
+        "selector": ".success",
+      },
+      "source": ".success {
+  @extend .message;
+  border-color: green;
+",
+      "value": 2,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssExtend",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1053-1070",
+          "kind": 0,
+          "label": "@extend.message;",
+          "loc": {
+            "end": {
+              "column": 19,
+              "line": 61,
+            },
+            "start": {
+              "column": 2,
+              "line": 61,
+            },
+          },
+          "source": "@extend .message;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1073-1091",
+          "kind": 0,
+          "label": "border-color: red",
+          "loc": {
+            "end": {
+              "column": 20,
+              "line": 62,
+            },
+            "start": {
+              "column": 2,
+              "line": 62,
+            },
+          },
+          "meta": {
+            "property": "border-color",
+            "value": "red",
+          },
+          "source": "border-color: red;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1042-1092",
+      "kind": 0,
+      "label": ".error",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 63,
+        },
+        "start": {
+          "column": 0,
+          "line": 60,
+        },
+      },
+      "meta": {
+        "selector": ".error",
+      },
+      "source": ".error {
+  @extend .message;
+  border-color: red;
+",
+      "value": 2,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssExtend",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1108-1125",
+          "kind": 0,
+          "label": "@extend.message;",
+          "loc": {
+            "end": {
+              "column": 19,
+              "line": 66,
+            },
+            "start": {
+              "column": 2,
+              "line": 66,
+            },
+          },
+          "source": "@extend .message;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1128-1149",
+          "kind": 0,
+          "label": "border-color: orange",
+          "loc": {
+            "end": {
+              "column": 23,
+              "line": 67,
+            },
+            "start": {
+              "column": 2,
+              "line": 67,
+            },
+          },
+          "meta": {
+            "property": "border-color",
+            "value": "orange",
+          },
+          "source": "border-color: orange;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1095-1150",
+      "kind": 0,
+      "label": ".warning",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 68,
+        },
+        "start": {
+          "column": 0,
+          "line": 65,
+        },
+      },
+      "meta": {
+        "selector": ".warning",
+      },
+      "source": ".warning {
+  @extend .message;
+  border-color: orange;
+",
+      "value": 2,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1153-1165",
+      "kind": 0,
+      "label": "// Operators",
+      "loc": {
+        "end": {
+          "column": 12,
+          "line": 70,
+        },
+        "start": {
+          "column": 0,
+          "line": 70,
+        },
+      },
+      "source": "// Operators",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1181-1193",
+          "kind": 0,
+          "label": "width: 100%",
+          "loc": {
+            "end": {
+              "column": 14,
+              "line": 72,
+            },
+            "start": {
+              "column": 2,
+              "line": 72,
+            },
+          },
+          "meta": {
+            "property": "width",
+            "value": "100%",
+          },
+          "source": "width: 100%;",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1223-1235",
+              "kind": 0,
+              "label": "float: left",
+              "loc": {
+                "end": {
+                  "column": 16,
+                  "line": 74,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 74,
+                },
+              },
+              "meta": {
+                "property": "float",
+                "value": "left",
+              },
+              "source": "float: left;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1240-1268",
+              "kind": 0,
+              "label": "width: 600px/960px*100%",
+              "loc": {
+                "end": {
+                  "column": 32,
+                  "line": 75,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 75,
+                },
+              },
+              "meta": {
+                "property": "width",
+                "value": "600px/960px*100%",
+              },
+              "source": "width: 600px / 960px * 100%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1196-1271",
+          "kind": 0,
+          "label": "article[role="main"]",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 76,
+            },
+            "start": {
+              "column": 2,
+              "line": 73,
+            },
+          },
+          "meta": {
+            "selector": "article[role="main"]",
+          },
+          "source": "article[role="main"] {
+    float: left;
+    width: 600px / 960px * 100%;
+  ",
+          "value": 2,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1309-1322",
+              "kind": 0,
+              "label": "float: right",
+              "loc": {
+                "end": {
+                  "column": 17,
+                  "line": 78,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 78,
+                },
+              },
+              "meta": {
+                "property": "float",
+                "value": "right",
+              },
+              "source": "float: right;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1327-1355",
+              "kind": 0,
+              "label": "width: 300px/960px*100%",
+              "loc": {
+                "end": {
+                  "column": 32,
+                  "line": 79,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 79,
+                },
+              },
+              "meta": {
+                "property": "width",
+                "value": "300px/960px*100%",
+              },
+              "source": "width: 300px / 960px * 100%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1275-1358",
+          "kind": 0,
+          "label": "aside[role="complementary"]",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 80,
+            },
+            "start": {
+              "column": 2,
+              "line": 77,
+            },
+          },
+          "meta": {
+            "selector": "aside[role="complementary"]",
+          },
+          "source": "aside[role="complementary"] {
+    float: right;
+    width: 300px / 960px * 100%;
+  ",
+          "value": 2,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1166-1360",
+      "kind": 0,
+      "label": ".container",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 81,
+        },
+        "start": {
+          "column": 0,
+          "line": 71,
+        },
+      },
+      "meta": {
+        "selector": ".container",
+      },
+      "source": ".container {
+  width: 100%;
+  article[role="main"] {
+    float: left;
+    width: 600px / 960px * 100%;
+  }
+  aside[role="complementary"] {
+    float: right;
+    width: 300px / 960px * 100%;
+  }
+",
+      "value": 5,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1363-1384",
+      "kind": 0,
+      "label": "// Control Directives",
+      "loc": {
+        "end": {
+          "column": 21,
+          "line": 83,
+        },
+        "start": {
+          "column": 0,
+          "line": 83,
+        },
+      },
+      "source": "// Control Directives",
+      "value": 1,
+    },
+    {
+      "category": "CssControlDirective",
+      "children": [
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssRule",
+              "children": [
+                {
+                  "category": "CssProperty",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1428-1444",
+                  "kind": 0,
+                  "label": "width: 2em*$i",
+                  "loc": {
+                    "end": {
+                      "column": 32,
+                      "line": 85,
+                    },
+                    "start": {
+                      "column": 16,
+                      "line": 85,
+                    },
+                  },
+                  "meta": {
+                    "property": "width",
+                    "value": "2em*$i",
+                  },
+                  "source": "width: 2em * $i;",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1426-1446",
+              "kind": 0,
+              "label": "Anonymous Rule",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 85,
+                },
+                "start": {
+                  "column": 14,
+                  "line": 85,
+                },
+              },
+              "meta": {
+                "selector": "",
+              },
+              "source": "{ width: 2em * $i; }",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1456-1547",
+              "kind": 0,
+              "label": "$color,$valuein(primary: $primary-color,secondary:$secondary-color){.text-#{$color",
+              "loc": {
+                "end": {
+                  "column": 16,
+                  "line": 89,
+                },
+                "start": {
+                  "column": 6,
+                  "line": 88,
+                },
+              },
+              "meta": {
+                "property": "$color,$valuein(primary",
+                "value": "$primary-color,secondary:$secondary-color){.text-#{$color",
+              },
+              "source": "$color, $value in (primary: $primary-color, secondary: $secondary-color) {
+  .text-#{$color",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1414-1548",
+          "kind": 0,
+          "label": ".item-#",
+          "loc": {
+            "end": {
+              "column": 17,
+              "line": 89,
+            },
+            "start": {
+              "column": 2,
+              "line": 85,
+            },
+          },
+          "meta": {
+            "selector": ".item-#",
+          },
+          "source": ".item-#{$i} { width: 2em * $i; }
+}
+
+@each $color, $value in (primary: $primary-color, secondary: $secondary-color) {
+  .text-#{$color}",
+          "value": 2,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1555-1569",
+              "kind": 0,
+              "label": "color: $value",
+              "loc": {
+                "end": {
+                  "column": 18,
+                  "line": 90,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 90,
+                },
+              },
+              "meta": {
+                "property": "color",
+                "value": "$value",
+              },
+              "source": "color: $value;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1549-1573",
+          "kind": 0,
+          "label": "Anonymous Rule",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 91,
+            },
+            "start": {
+              "column": 18,
+              "line": 89,
+            },
+          },
+          "meta": {
+            "selector": "",
+          },
+          "source": "{
+    color: $value;
+  }",
+          "value": 1,
+        },
+        {
+          "category": "CssFunction",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1626-1637",
+              "kind": 0,
+              "label": "$result: 1",
+              "loc": {
+                "end": {
+                  "column": 13,
+                  "line": 96,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 96,
+                },
+              },
+              "meta": {
+                "property": "$result",
+                "value": "1",
+              },
+              "source": "$result: 1;",
+              "value": 1,
+            },
+            {
+              "category": "CssControlDirective",
+              "children": [
+                {
+                  "category": "CssProperty",
+                  "children": [],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1679-1704",
+                  "kind": 0,
+                  "label": "$result: $result*$base",
+                  "loc": {
+                    "end": {
+                      "column": 29,
+                      "line": 98,
+                    },
+                    "start": {
+                      "column": 4,
+                      "line": 98,
+                    },
+                  },
+                  "meta": {
+                    "property": "$result",
+                    "value": "$result*$base",
+                  },
+                  "source": "$result: $result * $base;",
+                  "value": 1,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1640-1675",
+              "kind": 0,
+              "label": "@for$_from1through$exponent",
+              "loc": {
+                "end": {
+                  "column": 3,
+                  "line": 99,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 97,
+                },
+              },
+              "meta": {
+                "directive": "@for",
+                "expression": "@for$_from1through$exponent",
+              },
+              "source": "@for $_ from 1 through $exponent {
+",
+              "value": 1,
+            },
+            {
+              "category": "CssAtRule",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1711-1727",
+              "kind": 0,
+              "label": "@return $result;",
+              "loc": {
+                "end": {
+                  "column": 18,
+                  "line": 100,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 100,
+                },
+              },
+              "source": "@return $result;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1590-1697",
+          "kind": 0,
+          "label": "@function pow($base,$exponent)",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 101,
+            },
+            "start": {
+              "column": 0,
+              "line": 95,
+            },
+          },
+          "meta": {
+            "functionName": "pow",
+            "parameters": "($base,$exponent)",
+          },
+          "source": "@function pow($base, $exponent) {
+  $result: 1;
+  @for $_ from 1 through $exponent {
+    $result: $result *",
+          "value": 3,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1744-1767",
+              "kind": 0,
+              "label": "width: pow(2,5)*1px",
+              "loc": {
+                "end": {
+                  "column": 25,
+                  "line": 104,
+                },
+                "start": {
+                  "column": 2,
+                  "line": 104,
+                },
+              },
+              "meta": {
+                "property": "width",
+                "value": "pow(2,5)*1px",
+              },
+              "source": "width: pow(2, 5) * 1px;",
+              "value": 1,
+            },
+            {
+              "category": "CssComment",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1768-1775",
+              "kind": 0,
+              "label": "// 32px",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 104,
+                },
+                "start": {
+                  "column": 26,
+                  "line": 104,
+                },
+              },
+              "source": "// 32px",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1731-1776",
+          "kind": 0,
+          "label": ".sidebar",
+          "loc": {
+            "end": {
+              "column": 1,
+              "line": 105,
+            },
+            "start": {
+              "column": 0,
+              "line": 103,
+            },
+          },
+          "meta": {
+            "selector": ".sidebar",
+          },
+          "source": ".sidebar {
+  width: pow(2, 5) * 1px; // 32px
+",
+          "value": 2,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1385-1389",
+      "kind": 0,
+      "label": "@for$ifrom1through3",
+      "loc": {
+        "end": {
+          "column": 25,
+          "line": 84,
+        },
+        "start": {
+          "column": 0,
+          "line": 84,
+        },
+      },
+      "meta": {
+        "directive": "@for",
+        "expression": "@for$ifrom1through3",
+      },
+      "source": "@for",
+      "value": 8,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss",
+  "kind": 0,
+  "label": "advanced.scss",
+  "loc": {
+    "end": {
+      "column": 1,
+      "line": 105,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "// Advanced SCSS Features
+
+// Variables
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$font-stack: Helvetica, sans-serif;
+
+// Nesting
+nav {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li { display: inline-block; }
+
+  a {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: $primary-color;
+
+    &:hover {
+      color: darken($primary-color, 10%);
+    }
+  }
+}
+
+// Partials and Modules (conceptual - SCSS files would typically be separate)
+// @import 'reset'; // Example of importing a reset stylesheet
+// @use 'base';    // Example of using another module
+
+// Mixins
+@mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+     -moz-border-radius: $radius;
+      -ms-border-radius: $radius;
+          border-radius: $radius;
+}
+
+.box {
+  @include border-radius(10px);
+  border: 1px solid $secondary-color;
+  padding: 15px;
+}
+
+// Extend/Inheritance
+.message {
+  border: 1px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
+
+.success {
+  @extend .message;
+  border-color: green;
+}
+
+.error {
+  @extend .message;
+  border-color: red;
+}
+
+.warning {
+  @extend .message;
+  border-color: orange;
+}
+
+// Operators
+.container {
+  width: 100%;
+  article[role="main"] {
+    float: left;
+    width: 600px / 960px * 100%;
+  }
+  aside[role="complementary"] {
+    float: right;
+    width: 300px / 960px * 100%;
+  }
+}
+
+// Control Directives
+@for $i from 1 through 3 {
+  .item-#{$i} { width: 2em * $i; }
+}
+
+@each $color, $value in (primary: $primary-color, secondary: $secondary-color) {
+  .text-#{$color} {
+    color: $value;
+  }
+}
+
+// Functions
+@function pow($base, $exponent) {
+  $result: 1;
+  @for $_ from 1 through $exponent {
+    $result: $result * $base;
+  }
+  @return $result;
+}
+
+.sidebar {
+  width: pow(2, 5) * 1px; // 32px
+}",
+  "value": 47,
+}
+`;

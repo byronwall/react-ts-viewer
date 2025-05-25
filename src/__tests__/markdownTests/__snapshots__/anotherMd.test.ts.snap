@@ -1,0 +1,106 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Another Markdown File Test > should match snapshot for another.md > anotherMd 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "MarkdownHeading",
+      "children": [
+        {
+          "category": "MarkdownParagraph",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md:3:1:1",
+          "kind": 0,
+          "label": "This file contains a code bloc...",
+          "loc": {
+            "end": {
+              "column": 32,
+              "line": 3,
+            },
+            "start": {
+              "column": 0,
+              "line": 3,
+            },
+          },
+          "meta": {},
+          "source": "This file contains a code block:",
+          "value": 32,
+        },
+        {
+          "category": "MarkdownCodeBlock",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md:5:1:2",
+          "kind": 0,
+          "label": "Code Block",
+          "loc": {
+            "end": {
+              "column": 3,
+              "line": 8,
+            },
+            "start": {
+              "column": 0,
+              "line": 5,
+            },
+          },
+          "meta": {},
+          "source": "\`\`\`
+const greeting = "Hello, world!";
+console.log(greeting);
+\`\`\`",
+          "value": 64,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md:1:1:0",
+      "kind": 0,
+      "label": "H2: Another Markdown File",
+      "loc": {
+        "end": {
+          "column": 24,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "meta": {
+        "depth": 2,
+      },
+      "source": "## Another Markdown File
+This file contains a code block:
+\`\`\`
+const greeting = "Hello, world!";
+console.log(greeting);
+\`\`\`",
+      "value": 122,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/another.md",
+  "kind": 0,
+  "label": "another.md",
+  "loc": {
+    "end": {
+      "column": 0,
+      "line": 9,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "meta": {
+    "depth": 0,
+  },
+  "source": "## Another Markdown File
+
+This file contains a code block:
+
+\`\`\`
+const greeting = "Hello, world!";
+console.log(greeting);
+\`\`\`
+",
+  "value": 125,
+}
+`;

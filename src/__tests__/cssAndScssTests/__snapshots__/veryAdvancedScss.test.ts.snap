@@ -1,0 +1,2096 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.scss > veryAdvancedScss 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "CssAtRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:0-21",
+      "kind": 0,
+      "label": "@use "sass:selector";",
+      "loc": {
+        "end": {
+          "column": 21,
+          "line": 1,
+        },
+        "start": {
+          "column": 0,
+          "line": 1,
+        },
+      },
+      "source": "@use "sass:selector";",
+      "value": 1,
+    },
+    {
+      "category": "CssAtRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:22-43",
+      "kind": 0,
+      "label": "@use "my-utils" as *;",
+      "loc": {
+        "end": {
+          "column": 21,
+          "line": 2,
+        },
+        "start": {
+          "column": 0,
+          "line": 2,
+        },
+      },
+      "source": "@use "my-utils" as *;",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:45-102",
+      "kind": 0,
+      "label": "// Very small helper to keep a custom function in the AST",
+      "loc": {
+        "end": {
+          "column": 57,
+          "line": 4,
+        },
+        "start": {
+          "column": 0,
+          "line": 4,
+        },
+      },
+      "source": "// Very small helper to keep a custom function in the AST",
+      "value": 1,
+    },
+    {
+      "category": "CssFunction",
+      "children": [
+        {
+          "category": "CssAtRule",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:141-212",
+          "kind": 0,
+          "label": "@return unquote("color-mix(in srgb, #{$a} calc(#{$t * 100%}), #{$b})");",
+          "loc": {
+            "end": {
+              "column": 73,
+              "line": 6,
+            },
+            "start": {
+              "column": 2,
+              "line": 6,
+            },
+          },
+          "source": "@return unquote("color-mix(in srgb, #{$a} calc(#{$t * 100%}), #{$b})");",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:103-180",
+      "kind": 0,
+      "label": "@function blend-tints($a,$b,$t)",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 7,
+        },
+        "start": {
+          "column": 0,
+          "line": 5,
+        },
+      },
+      "meta": {
+        "functionName": "blend-tints",
+        "parameters": "($a,$b,$t)",
+      },
+      "source": "@function blend-tints($a, $b, $t) {
+  @return unquote("color-mix(in srgb, #{$",
+      "value": 1,
+    },
+    {
+      "category": "CssAtRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:247-266",
+          "kind": 0,
+          "label": "syntax: "<number>"",
+          "loc": {
+            "end": {
+              "column": 21,
+              "line": 10,
+            },
+            "start": {
+              "column": 2,
+              "line": 10,
+            },
+          },
+          "meta": {
+            "property": "syntax",
+            "value": ""<number>"",
+          },
+          "source": "syntax: "<number>";",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:269-284",
+          "kind": 0,
+          "label": "inherits: true",
+          "loc": {
+            "end": {
+              "column": 17,
+              "line": 11,
+            },
+            "start": {
+              "column": 2,
+              "line": 11,
+            },
+          },
+          "meta": {
+            "property": "inherits",
+            "value": "true",
+          },
+          "source": "inherits: true;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:287-304",
+          "kind": 0,
+          "label": "initial-value: 0",
+          "loc": {
+            "end": {
+              "column": 19,
+              "line": 12,
+            },
+            "start": {
+              "column": 2,
+              "line": 12,
+            },
+          },
+          "meta": {
+            "property": "initial-value",
+            "value": "0",
+          },
+          "source": "initial-value: 0;",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:216-279",
+      "kind": 0,
+      "label": "@property --widget-opacity",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 13,
+        },
+        "start": {
+          "column": 0,
+          "line": 9,
+        },
+      },
+      "source": "@property --widget-opacity {
+  syntax: "<number>";
+  inherits: ",
+      "value": 3,
+    },
+    {
+      "category": "CssInclude",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:308-336",
+      "kind": 0,
+      "label": "@includeset-prefix(widget);",
+      "loc": {
+        "end": {
+          "column": 28,
+          "line": 15,
+        },
+        "start": {
+          "column": 0,
+          "line": 15,
+        },
+      },
+      "source": "@include set-prefix(widget);",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:337-367",
+      "kind": 0,
+      "label": "// ← still exercises the mixin",
+      "loc": {
+        "end": {
+          "column": 59,
+          "line": 15,
+        },
+        "start": {
+          "column": 29,
+          "line": 15,
+        },
+      },
+      "source": "// ← still exercises the mixin",
+      "value": 1,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:369-463",
+      "kind": 0,
+      "label": "/* ────────────────────────────────
+   Primitive element
+   ────────────────────────────────*/",
+      "loc": {
+        "end": {
+          "column": 37,
+          "line": 19,
+        },
+        "start": {
+          "column": 0,
+          "line": 17,
+        },
+      },
+      "source": "/* ────────────────────────────────
+   Primitive element
+   ────────────────────────────────*/",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssAtRule",
+          "children": [
+            {
+              "category": "CssComment",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:503-526",
+              "kind": 0,
+              "label": "/* shell == old root */",
+              "loc": {
+                "end": {
+                  "column": 27,
+                  "line": 22,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 22,
+                },
+              },
+              "source": "/* shell == old root */",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:531-774",
+              "kind": 0,
+              "label": "&: part(shell){@includeset((gap-size:4px,radius:6px,dur:.25s,ease:ease-in-out,timing:get(dur)get(ease),border-base:1px,border-active:2px,alpha:1))",
+              "loc": {
+                "end": {
+                  "column": 9,
+                  "line": 33,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 23,
+                },
+              },
+              "meta": {
+                "property": "&",
+                "value": "part(shell){@includeset((gap-size:4px,radius:6px,dur:.25s,ease:ease-in-out,timing:get(dur)get(ease),border-base:1px,border-active:2px,alpha:1))",
+              },
+              "source": "&:part(shell) {
+      @include set((
+        gap-size: 4px,
+        radius: 6px,
+        dur: .25s,
+        ease: ease-in-out,
+        timing: get(dur) get(ease),
+        border-base: 1px,
+        border-active: 2px,
+        alpha: 1
+      ));",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:782-822",
+              "kind": 0,
+              "label": "width: calc(var(--cols)*var(--cell))",
+              "loc": {
+                "end": {
+                  "column": 46,
+                  "line": 35,
+                },
+                "start": {
+                  "column": 6,
+                  "line": 35,
+                },
+              },
+              "meta": {
+                "property": "width",
+                "value": "calc(var(--cols)*var(--cell))",
+              },
+              "source": "width:  calc(var(--cols) * var(--cell));",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:829-869",
+              "kind": 0,
+              "label": "height: calc(var(--rows)*var(--cell))",
+              "loc": {
+                "end": {
+                  "column": 46,
+                  "line": 36,
+                },
+                "start": {
+                  "column": 6,
+                  "line": 36,
+                },
+              },
+              "meta": {
+                "property": "height",
+                "value": "calc(var(--rows)*var(--cell))",
+              },
+              "source": "height: calc(var(--rows) * var(--cell));",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:877-927",
+              "kind": 0,
+              "label": "transition: --widget-opacity#{get(timing)",
+              "loc": {
+                "end": {
+                  "column": 38,
+                  "line": 39,
+                },
+                "start": {
+                  "column": 6,
+                  "line": 38,
+                },
+              },
+              "meta": {
+                "property": "transition",
+                "value": "--widget-opacity#{get(timing)",
+              },
+              "source": "transition:
+        --widget-opacity #{get(timing)",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:483-914",
+          "kind": 0,
+          "label": "@layer layout",
+          "loc": {
+            "end": {
+              "column": 39,
+              "line": 39,
+            },
+            "start": {
+              "column": 2,
+              "line": 21,
+            },
+          },
+          "source": "@layer layout {
+    /* shell == old root */
+    &:part(shell) {
+      @include set((
+        gap-size: 4px,
+        radius: 6px,
+        dur: .25s,
+        ease: ease-in-out,
+        timing: get(dur) get(ease),
+        border-base: 1px,
+        border-active: 2px,
+        alpha: 1
+      ));
+
+      width:  calc(var(--cols) * var(--cell));
+      height: calc(var(--rows) * var(--cell));
+
+      transition:
+        --widget-opacity ",
+          "value": 5,
+        },
+        {
+          "category": "CssRule",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:928-959",
+          "kind": 0,
+          "label": ",background-color#",
+          "loc": {
+            "end": {
+              "column": 39,
+              "line": 40,
+            },
+            "start": {
+              "column": 39,
+              "line": 39,
+            },
+          },
+          "meta": {
+            "selector": ",background-color#",
+          },
+          "source": ",
+        background-color #{ge",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1045-1062",
+              "kind": 0,
+              "label": "flex-basis: 100%",
+              "loc": {
+                "end": {
+                  "column": 50,
+                  "line": 44,
+                },
+                "start": {
+                  "column": 33,
+                  "line": 44,
+                },
+              },
+              "meta": {
+                "property": "flex-basis",
+                "value": "100%",
+              },
+              "source": "flex-basis: 100%;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1019-1063",
+          "kind": 0,
+          "label": "[data-kind="highlight"]",
+          "loc": {
+            "end": {
+              "column": 52,
+              "line": 44,
+            },
+            "start": {
+              "column": 7,
+              "line": 44,
+            },
+          },
+          "meta": {
+            "selector": "[data-kind="highlight"]",
+          },
+          "source": "[data-kind="highlight"] { flex-basis: 100%; ",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1092-1117",
+              "kind": 0,
+              "label": "background: lemonchiffon",
+              "loc": {
+                "end": {
+                  "column": 33,
+                  "line": 47,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 47,
+                },
+              },
+              "meta": {
+                "property": "background",
+                "value": "lemonchiffon",
+              },
+              "source": "background: lemonchiffon;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1126-1142",
+              "kind": 0,
+              "label": "flex-basis: 40%",
+              "loc": {
+                "end": {
+                  "column": 24,
+                  "line": 48,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 48,
+                },
+              },
+              "meta": {
+                "property": "flex-basis",
+                "value": "40%",
+              },
+              "source": "flex-basis: 40%;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1151-1166",
+              "kind": 0,
+              "label": "flex-shrink: 0",
+              "loc": {
+                "end": {
+                  "column": 23,
+                  "line": 49,
+                },
+                "start": {
+                  "column": 8,
+                  "line": 49,
+                },
+              },
+              "meta": {
+                "property": "flex-shrink",
+                "value": "0",
+              },
+              "source": "flex-shrink: 0;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1072-1173",
+          "kind": 0,
+          "label": "&.compact",
+          "loc": {
+            "end": {
+              "column": 7,
+              "line": 50,
+            },
+            "start": {
+              "column": 6,
+              "line": 46,
+            },
+          },
+          "meta": {
+            "selector": "&.compact",
+          },
+          "source": "&.compact {
+        background: lemonchiffon;
+        flex-basis: 40%;
+        flex-shrink: 0;
+      ",
+          "value": 3,
+        },
+        {
+          "category": "CssComment",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1182-1236",
+          "kind": 0,
+          "label": "/* two pseudo-faces kept purely for syntax coverage */",
+          "loc": {
+            "end": {
+              "column": 60,
+              "line": 52,
+            },
+            "start": {
+              "column": 6,
+              "line": 52,
+            },
+          },
+          "source": "/* two pseudo-faces kept purely for syntax coverage */",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1243-1295",
+          "kind": 0,
+          "label": "&: before,&:after{@includepseudo()",
+          "loc": {
+            "end": {
+              "column": 26,
+              "line": 55,
+            },
+            "start": {
+              "column": 6,
+              "line": 53,
+            },
+          },
+          "meta": {
+            "property": "&",
+            "value": "before,&:after{@includepseudo()",
+          },
+          "source": "&:before,
+      &:after {
+        @include pseudo();",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1304-1316",
+          "kind": 0,
+          "label": "z-index: -1",
+          "loc": {
+            "end": {
+              "column": 20,
+              "line": 56,
+            },
+            "start": {
+              "column": 8,
+              "line": 56,
+            },
+          },
+          "meta": {
+            "property": "z-index",
+            "value": "-1",
+          },
+          "source": "z-index: -1;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1325-1347",
+          "kind": 0,
+          "label": "border-width: inherit",
+          "loc": {
+            "end": {
+              "column": 30,
+              "line": 57,
+            },
+            "start": {
+              "column": 8,
+              "line": 57,
+            },
+          },
+          "meta": {
+            "property": "border-width",
+            "value": "inherit",
+          },
+          "source": "border-width: inherit;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1356-1408",
+          "kind": 0,
+          "label": "transition: --widget-opacity#{get(timing)",
+          "loc": {
+            "end": {
+              "column": 40,
+              "line": 59,
+            },
+            "start": {
+              "column": 8,
+              "line": 58,
+            },
+          },
+          "meta": {
+            "property": "transition",
+            "value": "--widget-opacity#{get(timing)",
+          },
+          "source": "transition:
+          --widget-opacity #{get(timing)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:464-1408",
+      "kind": 0,
+      "label": ":scope(widget)",
+      "loc": {
+        "end": {
+          "column": 41,
+          "line": 59,
+        },
+        "start": {
+          "column": 0,
+          "line": 20,
+        },
+      },
+      "meta": {
+        "selector": ":scope(widget)",
+      },
+      "source": ":scope(widget) {
+  @layer layout {
+    /* shell == old root */
+    &:part(shell) {
+      @include set((
+        gap-size: 4px,
+        radius: 6px,
+        dur: .25s,
+        ease: ease-in-out,
+        timing: get(dur) get(ease),
+        border-base: 1px,
+        border-active: 2px,
+        alpha: 1
+      ));
+
+      width:  calc(var(--cols) * var(--cell));
+      height: calc(var(--rows) * var(--cell));
+
+      transition:
+        --widget-opacity #{get(timing)},
+        background-color #{get(timing)},
+        width  .2s,
+        height .2s;
+
+      &[data-kind="highlight"] { flex-basis: 100%; }
+
+      &.compact {
+        background: lemonchiffon;
+        flex-basis: 40%;
+        flex-shrink: 0;
+      }
+
+      /* two pseudo-faces kept purely for syntax coverage */
+      &:before,
+      &:after {
+        @include pseudo();
+        z-index: -1;
+        border-width: inherit;
+        transition:
+          --widget-opacity #{get(timing)",
+      "value": 15,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1409-1429",
+      "kind": 0,
+      "label": ",width#",
+      "loc": {
+        "end": {
+          "column": 31,
+          "line": 60,
+        },
+        "start": {
+          "column": 41,
+          "line": 59,
+        },
+      },
+      "meta": {
+        "selector": ",width#",
+      },
+      "source": ",
+          width  #",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1442-1463",
+      "kind": 0,
+      "label": ",height#",
+      "loc": {
+        "end": {
+          "column": 31,
+          "line": 61,
+        },
+        "start": {
+          "column": 31,
+          "line": 60,
+        },
+      },
+      "meta": {
+        "selector": ",height#",
+      },
+      "source": ",
+          height #{",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1475-1500",
+      "kind": 0,
+      "label": ",background#",
+      "loc": {
+        "end": {
+          "column": 35,
+          "line": 62,
+        },
+        "start": {
+          "column": 31,
+          "line": 61,
+        },
+      },
+      "meta": {
+        "selector": ",background#",
+      },
+      "source": ",
+          background #{",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssComment",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1540-1555",
+          "kind": 0,
+          "label": "/* top "cap" */",
+          "loc": {
+            "end": {
+              "column": 32,
+              "line": 65,
+            },
+            "start": {
+              "column": 17,
+              "line": 65,
+            },
+          },
+          "source": "/* top "cap" */",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1564-1583",
+          "kind": 0,
+          "label": "position: absolute",
+          "loc": {
+            "end": {
+              "column": 27,
+              "line": 66,
+            },
+            "start": {
+              "column": 8,
+              "line": 66,
+            },
+          },
+          "meta": {
+            "property": "position",
+            "value": "absolute",
+          },
+          "source": "position: absolute;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1592-1614",
+          "kind": 0,
+          "label": "left: #{get(gap-size)",
+          "loc": {
+            "end": {
+              "column": 30,
+              "line": 67,
+            },
+            "start": {
+              "column": 8,
+              "line": 67,
+            },
+          },
+          "meta": {
+            "property": "left",
+            "value": "#{get(gap-size)",
+          },
+          "source": "left:  #{get(gap-size)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1512-1598",
+      "kind": 0,
+      "label": ";&:before",
+      "loc": {
+        "end": {
+          "column": 31,
+          "line": 67,
+        },
+        "start": {
+          "column": 35,
+          "line": 62,
+        },
+      },
+      "meta": {
+        "selector": ";&:before",
+      },
+      "source": ";
+      }
+
+      &:before { /* top "cap" */
+        position: absolute;
+        left: ",
+      "value": 3,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1615-1638",
+      "kind": 0,
+      "label": ";right:#",
+      "loc": {
+        "end": {
+          "column": 31,
+          "line": 68,
+        },
+        "start": {
+          "column": 31,
+          "line": 67,
+        },
+      },
+      "meta": {
+        "selector": ";right:#",
+      },
+      "source": ";
+        right: #{get(",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1648-1670",
+      "kind": 0,
+      "label": ";height:#",
+      "loc": {
+        "end": {
+          "column": 30,
+          "line": 69,
+        },
+        "start": {
+          "column": 31,
+          "line": 68,
+        },
+      },
+      "meta": {
+        "selector": ";height:#",
+      },
+      "source": ";
+        height: #{ge",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssComment",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1735-1751",
+          "kind": 0,
+          "label": "/* side "cap" */",
+          "loc": {
+            "end": {
+              "column": 32,
+              "line": 73,
+            },
+            "start": {
+              "column": 16,
+              "line": 73,
+            },
+          },
+          "source": "/* side "cap" */",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1760-1779",
+          "kind": 0,
+          "label": "position: absolute",
+          "loc": {
+            "end": {
+              "column": 27,
+              "line": 74,
+            },
+            "start": {
+              "column": 8,
+              "line": 74,
+            },
+          },
+          "meta": {
+            "property": "position",
+            "value": "absolute",
+          },
+          "source": "position: absolute;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1788-1809",
+          "kind": 0,
+          "label": "top: #{get(gap-size)",
+          "loc": {
+            "end": {
+              "column": 29,
+              "line": 75,
+            },
+            "start": {
+              "column": 8,
+              "line": 75,
+            },
+          },
+          "meta": {
+            "property": "top",
+            "value": "#{get(gap-size)",
+          },
+          "source": "top:  #{get(gap-size)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1680-1783",
+      "kind": 0,
+      "label": ";border-radius:50%;&:after",
+      "loc": {
+        "end": {
+          "column": 30,
+          "line": 75,
+        },
+        "start": {
+          "column": 30,
+          "line": 69,
+        },
+      },
+      "meta": {
+        "selector": ";border-radius:50%;&:after",
+      },
+      "source": ";
+        border-radius: 50%;
+      }
+
+      &:after { /* side "cap" */
+        position: absolute;
+   ",
+      "value": 3,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1810-1834",
+      "kind": 0,
+      "label": ";bottom:#",
+      "loc": {
+        "end": {
+          "column": 32,
+          "line": 76,
+        },
+        "start": {
+          "column": 30,
+          "line": 75,
+        },
+      },
+      "meta": {
+        "selector": ";bottom:#",
+      },
+      "source": ";
+        bottom: #{get(",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1844-1865",
+      "kind": 0,
+      "label": ";width:#",
+      "loc": {
+        "end": {
+          "column": 29,
+          "line": 77,
+        },
+        "start": {
+          "column": 32,
+          "line": 76,
+        },
+      },
+      "meta": {
+        "selector": ";width:#",
+      },
+      "source": ";
+        width: #{ge",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2016-2043",
+          "kind": 0,
+          "label": "transition: width.2sease",
+          "loc": {
+            "end": {
+              "column": 33,
+              "line": 84,
+            },
+            "start": {
+              "column": 6,
+              "line": 84,
+            },
+          },
+          "meta": {
+            "property": "transition",
+            "value": "width.2sease",
+          },
+          "source": "transition: width .2s ease;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2050-2073",
+          "kind": 0,
+          "label": "transition-delay: .05s",
+          "loc": {
+            "end": {
+              "column": 29,
+              "line": 85,
+            },
+            "start": {
+              "column": 6,
+              "line": 85,
+            },
+          },
+          "meta": {
+            "property": "transition-delay",
+            "value": ".05s",
+          },
+          "source": "transition-delay: .05s;",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2080-2105",
+          "kind": 0,
+          "label": "background-color: bisque",
+          "loc": {
+            "end": {
+              "column": 31,
+              "line": 86,
+            },
+            "start": {
+              "column": 6,
+              "line": 86,
+            },
+          },
+          "meta": {
+            "property": "background-color",
+            "value": "bisque",
+          },
+          "source": "background-color: bisque;",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2152-2161",
+              "kind": 0,
+              "label": "width: 0",
+              "loc": {
+                "end": {
+                  "column": 34,
+                  "line": 89,
+                },
+                "start": {
+                  "column": 25,
+                  "line": 89,
+                },
+              },
+              "meta": {
+                "property": "width",
+                "value": "0",
+              },
+              "source": "width: 0;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2162-2177",
+              "kind": 0,
+              "label": "color: crimson",
+              "loc": {
+                "end": {
+                  "column": 50,
+                  "line": 89,
+                },
+                "start": {
+                  "column": 35,
+                  "line": 89,
+                },
+              },
+              "meta": {
+                "property": "color",
+                "value": "crimson",
+              },
+              "source": "color: crimson;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2113-2169",
+          "kind": 0,
+          "label": "&.fade-enter,&.fade-exit-to",
+          "loc": {
+            "end": {
+              "column": 52,
+              "line": 89,
+            },
+            "start": {
+              "column": 6,
+              "line": 88,
+            },
+          },
+          "meta": {
+            "selector": "&.fade-enter,&.fade-exit-to",
+          },
+          "source": "&.fade-enter,
+      &.fade-exit-to   { width: 0; color: ",
+          "value": 2,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2208-2225",
+              "kind": 0,
+              "label": "color: steelblue",
+              "loc": {
+                "end": {
+                  "column": 45,
+                  "line": 90,
+                },
+                "start": {
+                  "column": 28,
+                  "line": 90,
+                },
+              },
+              "meta": {
+                "property": "color",
+                "value": "steelblue",
+              },
+              "source": "color: steelblue;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2186-2226",
+          "kind": 0,
+          "label": "&.fade-enter-active",
+          "loc": {
+            "end": {
+              "column": 47,
+              "line": 90,
+            },
+            "start": {
+              "column": 6,
+              "line": 90,
+            },
+          },
+          "meta": {
+            "selector": "&.fade-enter-active",
+          },
+          "source": "&.fade-enter-active { color: steelblue; ",
+          "value": 1,
+        },
+        {
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2256-2277",
+              "kind": 0,
+              "label": "background: seagreen",
+              "loc": {
+                "end": {
+                  "column": 49,
+                  "line": 91,
+                },
+                "start": {
+                  "column": 28,
+                  "line": 91,
+                },
+              },
+              "meta": {
+                "property": "background",
+                "value": "seagreen",
+              },
+              "source": "background: seagreen;",
+              "value": 1,
+            },
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2278-2294",
+              "kind": 0,
+              "label": "color: seagreen",
+              "loc": {
+                "end": {
+                  "column": 66,
+                  "line": 91,
+                },
+                "start": {
+                  "column": 50,
+                  "line": 91,
+                },
+              },
+              "meta": {
+                "property": "color",
+                "value": "seagreen",
+              },
+              "source": "color: seagreen;",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2234-2294",
+          "kind": 0,
+          "label": "&.fade-exit-active",
+          "loc": {
+            "end": {
+              "column": 68,
+              "line": 91,
+            },
+            "start": {
+              "column": 6,
+              "line": 91,
+            },
+          },
+          "meta": {
+            "selector": "&.fade-exit-active",
+          },
+          "source": "&.fade-exit-active  { background: seagreen; color: seagreen;",
+          "value": 2,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1875-2226",
+      "kind": 0,
+      "label": ";border-radius:50%;&:part(shell)[data-widget-type="flag"]",
+      "loc": {
+        "end": {
+          "column": 5,
+          "line": 92,
+        },
+        "start": {
+          "column": 29,
+          "line": 77,
+        },
+      },
+      "meta": {
+        "selector": ";border-radius:50%;&:part(shell)[data-widget-type="flag"]",
+      },
+      "source": ";
+        border-radius: 50%;
+      }
+    }
+
+    /* small state machine, simpler names */
+    &:part(shell)[data-widget-type="flag"] {
+      transition: width .2s ease;
+      transition-delay: .05s;
+      background-color: bisque;
+
+      &.fade-enter,
+      &.fade-exit-to   { width: 0; color: crimson; }
+      &.fade-enter-active { color: steelblue; ",
+      "value": 8,
+    },
+    {
+      "category": "CssComment",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2310-2402",
+      "kind": 0,
+      "label": "/* ────────────────────────────────
+   Theme overrides
+   ────────────────────────────────*/",
+      "loc": {
+        "end": {
+          "column": 37,
+          "line": 98,
+        },
+        "start": {
+          "column": 0,
+          "line": 96,
+        },
+      },
+      "source": "/* ────────────────────────────────
+   Theme overrides
+   ────────────────────────────────*/",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssInclude",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2422-2815",
+          "kind": 0,
+          "label": "@includetheme(daylight){&:part(shell){@includeset((surface:opacify(color(neutral,9),get(alpha)),edge:opacify(color(neutral,6),.5),mid:opacify(color(neutral,8),get(alpha)),shade:opacify(blend-tints(get(mid),get(edge),.4),get(alpha)),ink:color(neutral,10),ink-sel:color(highlight)));",
+          "loc": {
+            "end": {
+              "column": 9,
+              "line": 109,
+            },
+            "start": {
+              "column": 2,
+              "line": 100,
+            },
+          },
+          "source": "@include theme(daylight) {
+    &:part(shell) {
+      @include set((
+        surface:  opacify(color(neutral, 9), get(alpha)),
+        edge:     opacify(color(neutral, 6), .5),
+        mid:      opacify(color(neutral, 8), get(alpha)),
+        shade:    opacify(blend-tints(get(mid), get(edge), .4), get(alpha)),
+        ink:      color(neutral, 10),
+        ink-sel:  color(highlight)
+      ));",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2823-2869",
+          "kind": 0,
+          "label": "background: opacify(get(surface),get(alpha))",
+          "loc": {
+            "end": {
+              "column": 52,
+              "line": 111,
+            },
+            "start": {
+              "column": 6,
+              "line": 111,
+            },
+          },
+          "meta": {
+            "property": "background",
+            "value": "opacify(get(surface),get(alpha))",
+          },
+          "source": "background: opacify(get(surface), get(alpha));",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2877-2938",
+          "kind": 0,
+          "label": "&,&: before,&:after{border:#{get(border-base)",
+          "loc": {
+            "end": {
+              "column": 42,
+              "line": 115,
+            },
+            "start": {
+              "column": 6,
+              "line": 113,
+            },
+          },
+          "meta": {
+            "property": "&,&",
+            "value": "before,&:after{border:#{get(border-base)",
+          },
+          "source": "&,
+      &:before,
+      &:after { border: #{get(border-base)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2403-2938",
+      "kind": 0,
+      "label": ":scope(widget)",
+      "loc": {
+        "end": {
+          "column": 43,
+          "line": 115,
+        },
+        "start": {
+          "column": 0,
+          "line": 99,
+        },
+      },
+      "meta": {
+        "selector": ":scope(widget)",
+      },
+      "source": ":scope(widget) {
+  @include theme(daylight) {
+    &:part(shell) {
+      @include set((
+        surface:  opacify(color(neutral, 9), get(alpha)),
+        edge:     opacify(color(neutral, 6), .5),
+        mid:      opacify(color(neutral, 8), get(alpha)),
+        shade:    opacify(blend-tints(get(mid), get(edge), .4), get(alpha)),
+        ink:      color(neutral, 10),
+        ink-sel:  color(highlight)
+      ));
+
+      background: opacify(get(surface), get(alpha));
+
+      &,
+      &:before,
+      &:after { border: #{get(border-base)",
+      "value": 3,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2940-2957",
+      "kind": 0,
+      "label": "solid#",
+      "loc": {
+        "end": {
+          "column": 62,
+          "line": 115,
+        },
+        "start": {
+          "column": 44,
+          "line": 115,
+        },
+      },
+      "meta": {
+        "selector": "solid#",
+      },
+      "source": "solid #{get(edge)",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2980-3005",
+          "kind": 0,
+          "label": "background: get(surface)",
+          "loc": {
+            "end": {
+              "column": 42,
+              "line": 117,
+            },
+            "start": {
+              "column": 17,
+              "line": 117,
+            },
+          },
+          "meta": {
+            "property": "background",
+            "value": "get(surface)",
+          },
+          "source": "background: get(surface);",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2958-2996",
+      "kind": 0,
+      "label": ";&:before",
+      "loc": {
+        "end": {
+          "column": 44,
+          "line": 117,
+        },
+        "start": {
+          "column": 62,
+          "line": 115,
+        },
+      },
+      "meta": {
+        "selector": ";&:before",
+      },
+      "source": "; }
+
+      &:before { background: get(",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3025-3048",
+          "kind": 0,
+          "label": "background: get(shade)",
+          "loc": {
+            "end": {
+              "column": 40,
+              "line": 118,
+            },
+            "start": {
+              "column": 17,
+              "line": 118,
+            },
+          },
+          "meta": {
+            "property": "background",
+            "value": "get(shade)",
+          },
+          "source": "background: get(shade);",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3014-3048",
+      "kind": 0,
+      "label": "&:after",
+      "loc": {
+        "end": {
+          "column": 42,
+          "line": 118,
+        },
+        "start": {
+          "column": 6,
+          "line": 118,
+        },
+      },
+      "meta": {
+        "selector": "&:after",
+      },
+      "source": "&:after  { background: get(shade);",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssInclude",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3097-3129",
+          "kind": 0,
+          "label": "@includeset(ink,get(ink-sel));",
+          "loc": {
+            "end": {
+              "column": 40,
+              "line": 121,
+            },
+            "start": {
+              "column": 8,
+              "line": 121,
+            },
+          },
+          "source": "@include set(ink, get(ink-sel));",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3138-3172",
+          "kind": 0,
+          "label": "border-width: #{get(border-active)",
+          "loc": {
+            "end": {
+              "column": 42,
+              "line": 122,
+            },
+            "start": {
+              "column": 8,
+              "line": 122,
+            },
+          },
+          "meta": {
+            "property": "border-width",
+            "value": "#{get(border-active)",
+          },
+          "source": "border-width: #{get(border-active)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3058-3171",
+      "kind": 0,
+      "label": "&:is(:hover,:state(active))",
+      "loc": {
+        "end": {
+          "column": 43,
+          "line": 122,
+        },
+        "start": {
+          "column": 6,
+          "line": 120,
+        },
+      },
+      "meta": {
+        "selector": "&:is(:hover,:state(active))",
+      },
+      "source": "&:is(:hover, :state(active)) {
+        @include set(ink, get(ink-sel));
+        border-width: #{get(border-active",
+      "value": 2,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3228-3380",
+          "kind": 0,
+          "label": "&: part(shell){@includeset((gap-size:6px,radius:10px,ink:color(bg),ink-sel:color(fg)))",
+          "loc": {
+            "end": {
+              "column": 9,
+              "line": 134,
+            },
+            "start": {
+              "column": 4,
+              "line": 128,
+            },
+          },
+          "meta": {
+            "property": "&",
+            "value": "part(shell){@includeset((gap-size:6px,radius:10px,ink:color(bg),ink-sel:color(fg)))",
+          },
+          "source": "&:part(shell) {
+      @include set((
+        gap-size: 6px,
+        radius: 10px,
+        ink:        color(bg),
+        ink-sel:    color(fg)
+      ));",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3388-3452",
+          "kind": 0,
+          "label": "&,&: before,&:after{background:get(ink)",
+          "loc": {
+            "end": {
+              "column": 29,
+              "line": 139,
+            },
+            "start": {
+              "column": 6,
+              "line": 136,
+            },
+          },
+          "meta": {
+            "property": "&,&",
+            "value": "before,&:after{background:get(ink)",
+          },
+          "source": "&,
+      &:before,
+      &:after {
+        background: get(ink);",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3461-3487",
+          "kind": 0,
+          "label": "border: #{get(border-base)",
+          "loc": {
+            "end": {
+              "column": 34,
+              "line": 140,
+            },
+            "start": {
+              "column": 8,
+              "line": 140,
+            },
+          },
+          "meta": {
+            "property": "border",
+            "value": "#{get(border-base)",
+          },
+          "source": "border: #{get(border-base)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3173-3464",
+      "kind": 0,
+      "label": ";@includetheme(handdrawn)",
+      "loc": {
+        "end": {
+          "column": 35,
+          "line": 140,
+        },
+        "start": {
+          "column": 43,
+          "line": 122,
+        },
+      },
+      "meta": {
+        "selector": ";@includetheme(handdrawn)",
+      },
+      "source": ";
+      }
+    }
+  }
+
+  @include theme(handdrawn) {
+    &:part(shell) {
+      @include set((
+        gap-size: 6px,
+        radius: 10px,
+        ink:        color(bg),
+        ink-sel:    color(fg)
+      ));
+
+      &,
+      &:before,
+      &:after {
+        background: get(ink);
+        bor",
+      "value": 3,
+    },
+    {
+      "category": "CssRule",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3489-3524",
+      "kind": 0,
+      "label": "solid#",
+      "loc": {
+        "end": {
+          "column": 72,
+          "line": 140,
+        },
+        "start": {
+          "column": 36,
+          "line": 140,
+        },
+      },
+      "meta": {
+        "selector": "solid#",
+      },
+      "source": "solid #{opacify(color(fg, dim), .3)",
+      "value": 1,
+    },
+    {
+      "category": "CssRule",
+      "children": [
+        {
+          "category": "CssInclude",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3581-3613",
+          "kind": 0,
+          "label": "@includeset(ink,get(ink-sel));",
+          "loc": {
+            "end": {
+              "column": 40,
+              "line": 144,
+            },
+            "start": {
+              "column": 8,
+              "line": 144,
+            },
+          },
+          "source": "@include set(ink, get(ink-sel));",
+          "value": 1,
+        },
+        {
+          "category": "CssProperty",
+          "children": [],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3622-3656",
+          "kind": 0,
+          "label": "border-width: #{get(border-active)",
+          "loc": {
+            "end": {
+              "column": 42,
+              "line": 145,
+            },
+            "start": {
+              "column": 8,
+              "line": 145,
+            },
+          },
+          "meta": {
+            "property": "border-width",
+            "value": "#{get(border-active)",
+          },
+          "source": "border-width: #{get(border-active)",
+          "value": 1,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:3525-3639",
+      "kind": 0,
+      "label": ";&:is(:hover,:state(active))",
+      "loc": {
+        "end": {
+          "column": 43,
+          "line": 145,
+        },
+        "start": {
+          "column": 72,
+          "line": 140,
+        },
+      },
+      "meta": {
+        "selector": ";&:is(:hover,:state(active))",
+      },
+      "source": ";
+      }
+
+      &:is(:hover, :state(active)) {
+        @include set(ink, get(ink-sel));
+        border-width: #{g",
+      "value": 2,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss",
+  "kind": 0,
+  "label": "veryAdvanced.scss",
+  "loc": {
+    "end": {
+      "column": 2,
+      "line": 149,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "@use "sass:selector";
+@use "my-utils" as *;
+
+// Very small helper to keep a custom function in the AST
+@function blend-tints($a, $b, $t) {
+  @return unquote("color-mix(in srgb, #{$a} calc(#{$t * 100%}), #{$b})");
+}
+
+@property --widget-opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@include set-prefix(widget); // ← still exercises the mixin
+
+/* ────────────────────────────────
+   Primitive element
+   ────────────────────────────────*/
+:scope(widget) {
+  @layer layout {
+    /* shell == old root */
+    &:part(shell) {
+      @include set((
+        gap-size: 4px,
+        radius: 6px,
+        dur: .25s,
+        ease: ease-in-out,
+        timing: get(dur) get(ease),
+        border-base: 1px,
+        border-active: 2px,
+        alpha: 1
+      ));
+
+      width:  calc(var(--cols) * var(--cell));
+      height: calc(var(--rows) * var(--cell));
+
+      transition:
+        --widget-opacity #{get(timing)},
+        background-color #{get(timing)},
+        width  .2s,
+        height .2s;
+
+      &[data-kind="highlight"] { flex-basis: 100%; }
+
+      &.compact {
+        background: lemonchiffon;
+        flex-basis: 40%;
+        flex-shrink: 0;
+      }
+
+      /* two pseudo-faces kept purely for syntax coverage */
+      &:before,
+      &:after {
+        @include pseudo();
+        z-index: -1;
+        border-width: inherit;
+        transition:
+          --widget-opacity #{get(timing)},
+          width  #{get(timing)},
+          height #{get(timing)},
+          background #{get(timing)};
+      }
+
+      &:before { /* top "cap" */
+        position: absolute;
+        left:  #{get(gap-size)};
+        right: #{get(gap-size)};
+        height: #{get(radius)};
+        border-radius: 50%;
+      }
+
+      &:after { /* side "cap" */
+        position: absolute;
+        top:  #{get(gap-size)};
+        bottom: #{get(gap-size)};
+        width: #{get(radius)};
+        border-radius: 50%;
+      }
+    }
+
+    /* small state machine, simpler names */
+    &:part(shell)[data-widget-type="flag"] {
+      transition: width .2s ease;
+      transition-delay: .05s;
+      background-color: bisque;
+
+      &.fade-enter,
+      &.fade-exit-to   { width: 0; color: crimson; }
+      &.fade-enter-active { color: steelblue; }
+      &.fade-exit-active  { background: seagreen; color: seagreen; }
+    }
+  }
+}
+
+/* ────────────────────────────────
+   Theme overrides
+   ────────────────────────────────*/
+:scope(widget) {
+  @include theme(daylight) {
+    &:part(shell) {
+      @include set((
+        surface:  opacify(color(neutral, 9), get(alpha)),
+        edge:     opacify(color(neutral, 6), .5),
+        mid:      opacify(color(neutral, 8), get(alpha)),
+        shade:    opacify(blend-tints(get(mid), get(edge), .4), get(alpha)),
+        ink:      color(neutral, 10),
+        ink-sel:  color(highlight)
+      ));
+
+      background: opacify(get(surface), get(alpha));
+
+      &,
+      &:before,
+      &:after { border: #{get(border-base)} solid #{get(edge)}; }
+
+      &:before { background: get(surface); }
+      &:after  { background: get(shade); }
+
+      &:is(:hover, :state(active)) {
+        @include set(ink, get(ink-sel));
+        border-width: #{get(border-active)};
+      }
+    }
+  }
+
+  @include theme(handdrawn) {
+    &:part(shell) {
+      @include set((
+        gap-size: 6px,
+        radius: 10px,
+        ink:        color(bg),
+        ink-sel:    color(fg)
+      ));
+
+      &,
+      &:before,
+      &:after {
+        background: get(ink);
+        border: #{get(border-base)} solid #{opacify(color(fg, dim), .3)};
+      }
+
+      &:is(:hover, :state(active)) {
+        @include set(ink, get(ink-sel));
+        border-width: #{get(border-active)};
+      }
+    }
+  }
+} ",
+  "value": 61,
+}
+`;

@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Empty Markdown File Test > should match snapshot for empty.md > emptyMd 1`] = `
+{
+  "category": "Program",
+  "children": [],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/empty.md",
+  "kind": 0,
+  "label": "empty.md",
+  "loc": {
+    "end": {
+      "column": 1,
+      "line": 1,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "meta": {
+    "depth": 0,
+  },
+  "source": " ",
+  "value": 1,
+}
+`;
