@@ -405,14 +405,6 @@ const App: React.FC = () => {
           if (savedState.isSettingsPanelOpen !== undefined) {
             setIsSettingsPanelOpen(savedState.isSettingsPanelOpen);
           }
-
-          // For filePath and currentAnalysisTarget, prefer saved state over initial data if it exists
-          if (savedState.filePath) {
-            setFilePath(savedState.filePath);
-          }
-          if (savedState.currentAnalysisTarget) {
-            setCurrentAnalysisTarget(savedState.currentAnalysisTarget);
-          }
         }
 
         // Mark restoration as complete after processing extension response
@@ -434,11 +426,9 @@ const App: React.FC = () => {
     }
 
     const stateToSave = {
-      filePath,
       activeView,
       treemapSettings,
       settings,
-      currentAnalysisTarget,
       isSettingsPanelOpen,
     };
     try {
@@ -451,11 +441,9 @@ const App: React.FC = () => {
     }
   }, [
     hasRestoredState,
-    filePath,
     activeView,
     treemapSettings,
     settings,
-    currentAnalysisTarget,
     isSettingsPanelOpen,
   ]);
 
