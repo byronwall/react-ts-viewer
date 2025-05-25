@@ -3,4 +3,93 @@ description:
 globs: 
 alwaysApply: true
 ---
+Testing Guidelines
+
+## Running Tests
+
 Use command `npm run test:once` to run tests that exit immediately. The raw `test` command will stay in watch mode.
+
+## Snapshot Update Guidelines
+
+### Updating Test Snapshots
+
+When test snapshots need to be updated after making code changes, use the correct command format:
+
+#### ✅ Correct Commands
+
+**Update all snapshots:**
+```bash
+npm run test:once -- -u
+```
+
+**Update snapshots for specific test files:**
+```bash
+npm run test:once -- testFileName -u
+npm run test:once -- cssAndScss -u
+```
+
+#### ❌ Incorrect Commands
+
+**These will fail:**
+```bash
+npm run test:once -- --update-snapshots  # Unknown option error
+npm run test:once -- testFileName --update-snapshots
+```
+
+### When to Update Snapshots
+
+- After making intentional changes to code that affects test output
+- When parser logic changes that modify the structure of scope trees
+- After fixing bugs that correct previously incorrect snapshot data
+
+### Verification Process
+
+1. Run tests first to see what's changed: `npm run test:once`
+2. Review the diff to ensure changes are expected
+3. Update snapshots: `npm run test:once -- -u`
+4. Run tests again to confirm all pass: `npm run test:once`
+
+## Test File Organization
+
+### Individual Test Files for Separate Snapshots
+
+When creating snapshot tests, prefer creating separate test files for each test case to ensure snapshots are stored in individual files. This approach provides:
+
+- **Better organization**: Each test case has its own snapshot file
+- **Cleaner diffs**: Changes to one test don't affect other snapshots
+- **Easier maintenance**: Individual snapshots are easier to review and update
+
+#### Example Structure:
+
+Instead of one combined test file:
+```
+cssAndScss.test.ts → cssAndScss.test.ts.snap (large combined file)
+```
+
+Use separate files:
+```
+sampleCss.test.ts → sampleCss.test.ts.snap
+advancedCss.test.ts → advancedCss.test.ts.snap
+sampleScss.test.ts → sampleScss.test.ts.snap
+```
+
+#### Template for Individual Test Files:
+
+```typescript
+import { describe, it } from "vitest";
+import { runScopeTreeSnapshotTest } from "../buildScopeTree/testUtils";
+
+describe("Descriptive Test Suite Name", () => {
+  it("should match snapshot for specific-file.ext", () => {
+    runScopeTreeSnapshotTest({
+      snapshotIdentifier: "uniqueIdentifier",
+      filePath: "specific-file.ext",
+      isFixture: true,
+    });
+  });
+});
+```
+
+## Project Context
+
+This project uses [Vitest](https://vitest.dev) as the test runner. The `-u` flag is the standard Vitest option for updating snapshots, while `--update-snapshots` is not a valid option.
