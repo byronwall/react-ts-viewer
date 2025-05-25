@@ -1100,21 +1100,42 @@ function parseRule(context: ParseContext): ScopeNode | null {
   // Parse selector until opening brace
   let selector = "";
   const selectorStartPos = startToken.start;
+  let parenCount = 0;
+  let bracketCount = 0;
 
   while (context.position < context.tokens.length) {
     const token = context.tokens[context.position];
-    if (!token || token.type === "lbrace") {
+    if (!token) break;
+
+    // Track nested structures in selectors
+    if (token.type === "lparen") {
+      parenCount++;
+    } else if (token.type === "rparen") {
+      parenCount--;
+    } else if (token.type === "lbracket") {
+      bracketCount++;
+    } else if (token.type === "rbracket") {
+      bracketCount--;
+    } else if (
+      token.type === "lbrace" &&
+      parenCount === 0 &&
+      bracketCount === 0
+    ) {
+      // Only break on opening brace if we're not inside parentheses or brackets
       break;
     }
+
     if (token.type === "comment") {
       context.position++;
       continue;
     }
-    // Skip stray closing braces in selector
-    if (token.type === "rbrace") {
+
+    // Skip stray closing braces in selector, but only if we're not tracking any open structures
+    if (token.type === "rbrace" && parenCount === 0 && bracketCount === 0) {
       context.position++;
       continue;
     }
+
     selector += token.value;
     context.position++;
   }
@@ -1131,11 +1152,9 @@ function parseRule(context: ParseContext): ScopeNode | null {
   }
 
   const endPos = bodyNode.loc.end;
-  const totalLength = selector.length + bodyNode.source.length;
-  const sourceEnd =
-    totalLength > 0
-      ? selectorStartPos + totalLength
-      : bodyNode.source.length || selectorStartPos;
+  const sourceEnd = bodyNode.source
+    ? selectorStartPos + selector.length + bodyNode.source.length
+    : selectorStartPos + selector.length;
 
   // Flatten block children directly into this rule instead of having a Block node
   return {
@@ -1212,14 +1231,18 @@ function parseBlock(context: ParseContext): ScopeNode | null {
       if (atRuleNode) {
         blockNode.children.push(atRuleNode);
       }
-    } else {
-      // Try to parse as declaration or nested rule
+    } else if (braceCount === 1) {
+      // Only try to parse declarations/rules at the top level of this block
       const declOrRule = parseDeclarationOrNestedRule(context);
       if (declOrRule) {
         blockNode.children.push(declOrRule);
       } else {
+        // Skip token if we can't parse it
         context.position++;
       }
+    } else {
+      // We're inside a nested block, just advance position
+      context.position++;
     }
   }
 
@@ -1240,34 +1263,119 @@ function parseDeclarationOrNestedRule(context: ParseContext): ScopeNode | null {
   let lookahead = context.position;
   let foundColon = false;
   let foundBrace = false;
-  let isAtStart = true; // Track if we're at the start of the token sequence
+  let braceCount = 0;
+  let parenCount = 0;
+  let interpolationCount = 0; // Track SCSS interpolation #{...}
+  let isAtStart = true;
+  let colonPosition = -1;
 
   while (lookahead < context.tokens.length) {
     const token = context.tokens[lookahead];
     if (!token) break;
 
-    if (token.type === "colon") {
-      // If colon is at the start (or after only whitespace), it's likely a pseudo-selector
-      if (isAtStart) {
-        // Continue looking for a brace to confirm it's a rule
-        foundColon = false; // Reset this since it's a pseudo-selector, not a property
+    // Track parentheses and braces to handle nested structures
+    if (token.type === "lparen") {
+      parenCount++;
+    } else if (token.type === "rparen") {
+      parenCount--;
+    } else if (token.type === "lbrace") {
+      // Check if this is SCSS interpolation
+      if (lookahead > 0) {
+        const prevToken = context.tokens[lookahead - 1];
+        if (prevToken && prevToken.type === "hash") {
+          interpolationCount++;
+        } else {
+          braceCount++;
+          if (
+            braceCount === 1 &&
+            parenCount === 0 &&
+            interpolationCount === 0
+          ) {
+            foundBrace = true;
+            break;
+          }
+        }
       } else {
-        // Colon found after other tokens, likely a property declaration
-        if (!foundBrace) {
-          foundColon = true;
+        braceCount++;
+        if (braceCount === 1 && parenCount === 0 && interpolationCount === 0) {
+          foundBrace = true;
           break;
         }
       }
-    } else if (token.type === "lbrace") {
-      foundBrace = true;
-      break;
-    } else if (token.type === "semicolon" || token.type === "rbrace") {
+    } else if (token.type === "rbrace") {
+      if (interpolationCount > 0) {
+        interpolationCount--;
+      } else {
+        braceCount--;
+        if (braceCount < 0) {
+          // We've hit a closing brace that doesn't belong to us
+          break;
+        }
+      }
+    } else if (
+      token.type === "colon" &&
+      parenCount === 0 &&
+      braceCount === 0 &&
+      interpolationCount === 0
+    ) {
+      // Only consider colons that are not inside parentheses, braces, or interpolation
+      if (isAtStart) {
+        // Colon at start likely indicates pseudo-selector (e.g., :hover, :before)
+        isAtStart = false;
+      } else {
+        // Colon after other tokens, likely a property declaration
+        foundColon = true;
+        colonPosition = lookahead;
+
+        // Continue looking to see if there's a brace after the colon
+        // This helps distinguish "property: value;" from "selector { ... }"
+        let afterColonLookahead = lookahead + 1;
+        while (afterColonLookahead < context.tokens.length) {
+          const afterColonToken = context.tokens[afterColonLookahead];
+          if (!afterColonToken) break;
+
+          if (afterColonToken.type === "lbrace") {
+            // Check if this is not SCSS interpolation
+            if (afterColonLookahead > 0) {
+              const prevAfterColonToken =
+                context.tokens[afterColonLookahead - 1];
+              if (!prevAfterColonToken || prevAfterColonToken.type !== "hash") {
+                // Found brace after colon that's not interpolation, this is likely a nested rule
+                foundBrace = true;
+                foundColon = false;
+                break;
+              }
+            } else {
+              foundBrace = true;
+              foundColon = false;
+              break;
+            }
+          } else if (
+            afterColonToken.type === "semicolon" ||
+            afterColonToken.type === "rbrace"
+          ) {
+            // Found semicolon or closing brace, this confirms it's a declaration
+            break;
+          }
+          afterColonLookahead++;
+        }
+        break;
+      }
+    } else if (
+      token.type === "semicolon" &&
+      parenCount === 0 &&
+      braceCount === 0 &&
+      interpolationCount === 0
+    ) {
+      // Semicolon at top level indicates end of declaration
       break;
     }
 
-    // Update isAtStart - only whitespace tokens should keep us at "start"
+    // Update isAtStart - only whitespace and certain tokens should keep us at "start"
     if (token.type !== "unknown" || !/\s/.test(token.value)) {
-      isAtStart = false;
+      if (token.type !== "ampersand" && token.type !== "colon") {
+        isAtStart = false;
+      }
     }
 
     lookahead++;
@@ -1295,31 +1403,70 @@ function parseDeclaration(context: ParseContext): ScopeNode | null {
   while (context.position < context.tokens.length) {
     const token = context.tokens[context.position];
     if (!token || token.type === "colon") {
-      context.position++;
+      context.position++; // Skip the colon
       break;
     }
     property += token.value;
     context.position++;
   }
 
-  // Parse value
+  // Parse value until semicolon, closing brace, or end of block
   let value = "";
   let endPos = startToken.end;
+  let braceCount = 0;
+  let parenCount = 0;
+  let interpolationCount = 0; // Track SCSS interpolation #{...}
 
   while (context.position < context.tokens.length) {
     const token = context.tokens[context.position];
     if (!token) break;
 
-    if (token.type === "semicolon") {
+    // Track nested structures
+    if (token.type === "lparen") {
+      parenCount++;
+    } else if (token.type === "rparen") {
+      parenCount--;
+    } else if (token.type === "lbrace") {
+      braceCount++;
+    } else if (token.type === "rbrace") {
+      if (braceCount > 0) {
+        braceCount--;
+      } else {
+        // This closing brace belongs to the parent block
+        const prevToken = context.tokens[context.position - 1];
+        endPos = prevToken ? prevToken.end : token.start;
+        break;
+      }
+    } else if (
+      token.type === "semicolon" &&
+      parenCount === 0 &&
+      braceCount === 0 &&
+      interpolationCount === 0
+    ) {
+      // End of declaration
       endPos = token.end;
       context.position++;
       break;
-    } else if (token.type === "rbrace") {
-      // Declaration without semicolon
-      const prevToken = context.tokens[context.position - 1];
-      endPos = prevToken ? prevToken.end : token.start;
-      break;
     }
+
+    // Handle SCSS interpolation #{...}
+    if (token.type === "hash" && context.position + 1 < context.tokens.length) {
+      const nextToken = context.tokens[context.position + 1];
+      if (nextToken && nextToken.type === "lbrace") {
+        interpolationCount++;
+      }
+    }
+
+    // Track closing of SCSS interpolation
+    if (interpolationCount > 0 && token.type === "rbrace") {
+      interpolationCount--;
+      // Don't count this as a regular brace for the braceCount
+      value += token.value;
+      endPos = token.end;
+      context.position++;
+      continue;
+    }
+
     value += token.value;
     endPos = token.end;
     context.position++;

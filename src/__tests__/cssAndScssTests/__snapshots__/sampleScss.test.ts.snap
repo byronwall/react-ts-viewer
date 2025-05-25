@@ -193,15 +193,39 @@ body {
           "value": 1,
         },
         {
-          "category": "CssProperty",
-          "children": [],
-          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:259-319",
+          "category": "CssRule",
+          "children": [
+            {
+              "category": "CssProperty",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:273-319",
+              "kind": 0,
+              "label": "background-color: darken($primary-color,10%)",
+              "loc": {
+                "end": {
+                  "column": 50,
+                  "line": 17,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 17,
+                },
+              },
+              "meta": {
+                "property": "background-color",
+                "value": "darken($primary-color,10%)",
+              },
+              "source": "background-color: darken($primary-color, 10%);",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:259-322",
           "kind": 0,
-          "label": "&: hover{background-color:darken($primary-color,10%)",
+          "label": "&:hover",
           "loc": {
             "end": {
-              "column": 50,
-              "line": 17,
+              "column": 3,
+              "line": 18,
             },
             "start": {
               "column": 2,
@@ -209,21 +233,21 @@ body {
             },
           },
           "meta": {
-            "property": "&",
-            "value": "hover{background-color:darken($primary-color,10%)",
+            "selector": "&:hover",
           },
           "source": "&:hover {
-    background-color: darken($primary-color, 10%);",
+    background-color: darken($primary-color, 10%);
+  ",
           "value": 1,
         },
       ],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:124-322",
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:124-324",
       "kind": 0,
       "label": ".button",
       "loc": {
         "end": {
-          "column": 3,
-          "line": 18,
+          "column": 1,
+          "line": 19,
         },
         "start": {
           "column": 0,
@@ -240,7 +264,8 @@ body {
   border: 1px solid $secondary-color;
   &:hover {
     background-color: darken($primary-color, 10%);
-  ",
+  }
+",
       "value": 5,
     },
   ],
