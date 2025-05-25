@@ -1,0 +1,165 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Message Handler Architecture
+
+## Overview
+This extension uses a webview-based architecture where the VS Code extension host communicates with a React webview through message passing. Proper message handler setup is critical to avoid conflicts and ensure reliable communication.
+
+## Key Files
+- [src/registerAnalyzeFileCommand.ts](mdc:src/registerAnalyzeFileCommand.ts) - Main command registration and primary message handler
+- [src/setupWebviewPanelMessageHandler.ts](mdc:src/setupWebviewPanelMessageHandler.ts) - Deprecated separate handler (should not be used)
+- [src/webview/App.tsx](mdc:src/webview/App.tsx) - Webview React app that sends messages to extension
+
+## Architecture Rules
+
+### Single Message Handler Pattern
+**CRITICAL**: Each webview panel must have exactly ONE message handler to avoid conflicts and duplicate command processing.
+
+- ✅ **Correct**: Use the inline message handler in [src/registerAnalyzeFileCommand.ts](mdc:src/registerAnalyzeFileCommand.ts)
+- ❌ **Incorrect**: Do NOT call `setupWebviewPanelMessageHandler()` in addition to the inline handler
+
+### Required Message Commands
+All webview panels must handle these core commands:
+
+#### State Management
+- `saveWebviewState` - Persist webview state to extension global state
+- `getWebviewState` - Retrieve saved webview state
+- `webviewStateResponse` - Response sent back to webview with state data
+
+#### Scope Tree Operations
+- `getScopeTree` - Request scope tree analysis for a file
+- `showScopeTree` - Response with scope tree data
+- `showScopeTreeError` - Response when scope tree analysis fails
+
+#### Code Navigation
+- `revealCode` - Navigate to specific code location in editor
+- `fileOpened` - Notify webview when active file changes
+
+#### User Feedback
+- `showInformationMessage` - Display info message to user
+- `showErrorMessage` - Display error message to user
+
+### Message Handler Implementation Pattern
+
+```typescript
+webviewPanel.webview.onDidReceiveMessage(
+  async (message) => {
+    switch (message.command) {
+      case "getScopeTree":
+        try {
+          if (!message.filePath) {
+            throw new Error("File path is required to get scope tree.");
+          }
+          
+          const fileContent = await fs.promises.readFile(message.filePath, "utf8");
+          const tree = buildScopeTree(
+            message.filePath,
+            fileContent,
+            message.options // IMPORTANT: Pass options from webview
+          );
+          
+          webviewPanel?.webview.postMessage({
+            command: "showScopeTree",
+            data: tree,
+            filePath: message.filePath,
+          });
+        } catch (e: any) {
+          webviewPanel?.webview.postMessage({
+            command: "showScopeTreeError",
+            error: e.message,
+            filePath: message.filePath,
+          });
+        }
+        return;
+        
+      // ... other cases
+      
+      default:
+        outputChannel.appendLine(
+          `[Extension] Received unknown command from webview: ${message.command}`
+        );
+    }
+  },
+  undefined,
+  context.subscriptions
+);
+```
+
+### Options Passing Requirements
+When handling `getScopeTree` commands:
+
+1. **Always pass `message.options`** to `buildScopeTree()` function
+2. **Log options for debugging**: Include options in log messages
+3. **Handle undefined options**: Provide fallback behavior when options are missing
+
+Example:
+```typescript
+outputChannel.appendLine(
+  `[Extension] Webview requested scope tree for: ${message.filePath} with options: ${JSON.stringify(message.options || {})}`
+);
+
+const tree = buildScopeTree(
+  message.filePath,
+  fileContent,
+  message.options // This enables settings like includeComments, showTypes, etc.
+);
+```
+
+### Active File Monitoring
+Each webview should monitor active editor changes and send file updates:
+
+```typescript
+const sendActiveFile = () => {
+  const editor = vscode.window.activeTextEditor;
+  if (
+    editor &&
+    (editor.document.languageId === "typescript" ||
+     editor.document.languageId === "typescriptreact" ||
+     editor.document.languageId === "css" ||
+     editor.document.languageId === "scss")
+  ) {
+    const filePath = editor.document.uri.fsPath;
+    webviewPanel?.webview.postMessage({
+      command: "fileOpened",
+      filePath: filePath,
+    });
+  }
+};
+
+// Send initial file info when panel is created
+sendActiveFile();
+
+// Update on editor change
+context.subscriptions.push(
+  vscode.window.onDidChangeActiveTextEditor(() => {
+    if (webviewPanel?.visible) {
+      sendActiveFile();
+    }
+  })
+);
+```
+
+## Common Issues and Solutions
+
+### Issue: Settings Changes Don't Trigger Updates
+**Problem**: Webview settings changes don't cause new scope tree requests
+**Solution**: Ensure webview includes all relevant settings in the `useEffect` dependency array in [src/webview/App.tsx](mdc:src/webview/App.tsx)
+
+### Issue: "Unknown command" Warnings
+**Problem**: Extension logs show unknown command warnings
+**Solution**: Verify all commands sent from webview are handled in the message handler switch statement
+
+### Issue: Duplicate Message Handlers
+**Problem**: Multiple handlers processing the same messages
+**Solution**: Remove calls to `setupWebviewPanelMessageHandler()` and use only the inline handler
+
+## Testing Message Handlers
+When adding new message commands:
+
+1. **Test round-trip communication**: Verify webview → extension → webview message flow
+2. **Test error handling**: Ensure error cases send appropriate error responses
+3. **Test state persistence**: Verify state save/restore works correctly
+4. **Check console logs**: Monitor VS Code Developer Tools for unknown command warnings

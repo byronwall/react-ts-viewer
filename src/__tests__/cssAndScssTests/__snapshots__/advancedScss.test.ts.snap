@@ -5,44 +5,6 @@ exports[`Advanced SCSS File Test > should match snapshot for advanced.scss > adv
   "category": "Program",
   "children": [
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:0-25",
-      "kind": 0,
-      "label": "// Advanced SCSS Features",
-      "loc": {
-        "end": {
-          "column": 25,
-          "line": 1,
-        },
-        "start": {
-          "column": 0,
-          "line": 1,
-        },
-      },
-      "source": "// Advanced SCSS Features",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:27-39",
-      "kind": 0,
-      "label": "// Variables",
-      "loc": {
-        "end": {
-          "column": 12,
-          "line": 3,
-        },
-        "start": {
-          "column": 0,
-          "line": 3,
-        },
-      },
-      "source": "// Variables",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -401,82 +363,6 @@ nav {
       "value": 9,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:417-494",
-      "kind": 0,
-      "label": "// Partials and Modules (conceptual - SCSS files would typically be separate)",
-      "loc": {
-        "end": {
-          "column": 77,
-          "line": 30,
-        },
-        "start": {
-          "column": 0,
-          "line": 30,
-        },
-      },
-      "source": "// Partials and Modules (conceptual - SCSS files would typically be separate)",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:495-557",
-      "kind": 0,
-      "label": "// @import 'reset'; // Example of importing a reset stylesheet",
-      "loc": {
-        "end": {
-          "column": 62,
-          "line": 31,
-        },
-        "start": {
-          "column": 0,
-          "line": 31,
-        },
-      },
-      "source": "// @import 'reset'; // Example of importing a reset stylesheet",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:558-611",
-      "kind": 0,
-      "label": "// @use 'base';    // Example of using another module",
-      "loc": {
-        "end": {
-          "column": 53,
-          "line": 32,
-        },
-        "start": {
-          "column": 0,
-          "line": 32,
-        },
-      },
-      "source": "// @use 'base';    // Example of using another module",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:613-622",
-      "kind": 0,
-      "label": "// Mixins",
-      "loc": {
-        "end": {
-          "column": 9,
-          "line": 34,
-        },
-        "start": {
-          "column": 0,
-          "line": 34,
-        },
-      },
-      "source": "// Mixins",
-      "value": 1,
-    },
-    {
       "category": "CssMixin",
       "children": [
         {
@@ -687,25 +573,6 @@ nav {
   padding: 15px;
 ",
       "value": 3,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:891-912",
-      "kind": 0,
-      "label": "// Extend/Inheritance",
-      "loc": {
-        "end": {
-          "column": 21,
-          "line": 48,
-        },
-        "start": {
-          "column": 0,
-          "line": 48,
-        },
-      },
-      "source": "// Extend/Inheritance",
-      "value": 1,
     },
     {
       "category": "CssRule",
@@ -1008,25 +875,6 @@ nav {
       "value": 2,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1153-1165",
-      "kind": 0,
-      "label": "// Operators",
-      "loc": {
-        "end": {
-          "column": 12,
-          "line": 70,
-        },
-        "start": {
-          "column": 0,
-          "line": 70,
-        },
-      },
-      "source": "// Operators",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -1227,25 +1075,6 @@ nav {
       "value": 5,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1363-1384",
-      "kind": 0,
-      "label": "// Control Directives",
-      "loc": {
-        "end": {
-          "column": 21,
-          "line": 83,
-        },
-        "start": {
-          "column": 0,
-          "line": 83,
-        },
-      },
-      "source": "// Control Directives",
-      "value": 1,
-    },
-    {
       "category": "CssControlDirective",
       "children": [
         {
@@ -1257,25 +1086,6 @@ nav {
                 {
                   "category": "CssRule",
                   "children": [
-                    {
-                      "category": "CssComment",
-                      "children": [],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1577-1589",
-                      "kind": 0,
-                      "label": "// Functions",
-                      "loc": {
-                        "end": {
-                          "column": 12,
-                          "line": 94,
-                        },
-                        "start": {
-                          "column": 0,
-                          "line": 94,
-                        },
-                      },
-                      "source": "// Functions",
-                      "value": 1,
-                    },
                     {
                       "category": "CssFunction",
                       "children": [
@@ -1419,25 +1229,6 @@ nav {
                           "source": "width: pow(2, 5) * 1px;",
                           "value": 1,
                         },
-                        {
-                          "category": "CssComment",
-                          "children": [],
-                          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1768-1775",
-                          "kind": 0,
-                          "label": "// 32px",
-                          "loc": {
-                            "end": {
-                              "column": 33,
-                              "line": 104,
-                            },
-                            "start": {
-                              "column": 26,
-                              "line": 104,
-                            },
-                          },
-                          "source": "// 32px",
-                          "value": 1,
-                        },
                       ],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1731-1776",
                       "kind": 0,
@@ -1458,7 +1249,7 @@ nav {
                       "source": ".sidebar {
   width: pow(2, 5) * 1px; // 32px
 ",
-                      "value": 2,
+                      "value": 1,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1533-1540",
@@ -1478,7 +1269,7 @@ nav {
                     "selector": ".text-#",
                   },
                   "source": ".text-#",
-                  "value": 6,
+                  "value": 4,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1450-1455",
@@ -1499,7 +1290,7 @@ nav {
                 "expression": "@each$color,$valuein(primary:$primary-color,secondary:$secondary-color)",
               },
               "source": "@each",
-              "value": 6,
+              "value": 4,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1414-1421",
@@ -1519,7 +1310,7 @@ nav {
             "selector": ".item-#",
           },
           "source": ".item-#",
-          "value": 6,
+          "value": 4,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss:1385-1389",
@@ -1540,7 +1331,7 @@ nav {
         "expression": "@for$ifrom1through3",
       },
       "source": "@for",
-      "value": 6,
+      "value": 4,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.scss",
@@ -1661,6 +1452,6 @@ nav {
 .sidebar {
   width: pow(2, 5) * 1px; // 32px
 }",
-  "value": 45,
+  "value": 34,
 }
 `;

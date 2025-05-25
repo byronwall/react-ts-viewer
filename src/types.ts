@@ -166,6 +166,7 @@ export interface BuildScopeTreeOptions {
   includeImports?: boolean;
   includeTypes?: boolean;
   includeLiterals?: boolean;
+  includeComments?: boolean;
 }
 
 // Add more types as needed for tracing, etc.

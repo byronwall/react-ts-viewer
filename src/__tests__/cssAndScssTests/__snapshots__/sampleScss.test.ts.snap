@@ -5,25 +5,6 @@ exports[`Sample SCSS File Test > should match snapshot for sample.scss > sampleS
   "category": "Program",
   "children": [
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/sample.scss:0-14",
-      "kind": 0,
-      "label": "// Sample SCSS",
-      "loc": {
-        "end": {
-          "column": 14,
-          "line": 1,
-        },
-        "start": {
-          "column": 0,
-          "line": 1,
-        },
-      },
-      "source": "// Sample SCSS",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -301,6 +282,6 @@ body {
     background-color: darken($primary-color, 10%);
   }
 } ",
-  "value": 8,
+  "value": 7,
 }
 `;

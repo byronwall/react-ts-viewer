@@ -10,4 +10,5 @@ export const defaultBuildOptions: Required<BuildScopeTreeOptions> = {
   includeImports: true,
   includeTypes: true,
   includeLiterals: false, // Literals often off by default due to volume
+  includeComments: false, // Comments often off by default due to volume
 };

@@ -1,11 +1,12 @@
+import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { buildDependencyGraph } from "./buildDependencyGraph";
+import { buildScopeTree } from "./parsers/buildScopeTree";
 
 import { outputChannel } from "./initializeExtension";
 import { getWebviewContent } from "./getWebviewContent";
 import { IndexerService } from "./IndexerService";
-import { setupWebviewPanelMessageHandler } from "./setupWebviewPanelMessageHandler";
 
 export let webviewPanel: vscode.WebviewPanel | undefined;
 
@@ -58,9 +59,6 @@ export function registerAnalyzeFileCommand(
           webviewPanel.webview,
           filePath
         );
-
-        // Setup the message handler for webview communication
-        setupWebviewPanelMessageHandler(webviewPanel, context);
 
         // --- Get workspace root (moved outside switch) ---
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -277,15 +275,175 @@ export function registerAnalyzeFileCommand(
                   );
                 }
                 return;
+              case "saveWebviewState":
+                try {
+                  await context.globalState.update(
+                    "reactAnalysisWebviewState",
+                    message.state
+                  );
+                } catch (e: any) {
+                  // Error handling without logging
+                }
+                return;
+
+              case "getWebviewState":
+                try {
+                  const savedState = context.globalState.get(
+                    "reactAnalysisWebviewState"
+                  );
+                  webviewPanel?.webview.postMessage({
+                    command: "webviewStateResponse",
+                    state: savedState || null,
+                  });
+                } catch (e: any) {
+                  webviewPanel?.webview.postMessage({
+                    command: "webviewStateResponse",
+                    state: null,
+                  });
+                }
+                return;
+
+              case "getScopeTree":
+                try {
+                  if (!message.filePath) {
+                    throw new Error("File path is required to get scope tree.");
+                  }
+                  outputChannel.appendLine(
+                    `[Extension] Webview requested scope tree for: ${message.filePath} with options: ${JSON.stringify(message.options || {})}`
+                  );
+                  const fileContent = await fs.promises.readFile(
+                    message.filePath,
+                    "utf8"
+                  );
+                  const tree = buildScopeTree(
+                    message.filePath,
+                    fileContent,
+                    message.options
+                  );
+                  webviewPanel?.webview.postMessage({
+                    command: "showScopeTree",
+                    data: tree,
+                    filePath: message.filePath,
+                  });
+                } catch (e: any) {
+                  outputChannel.appendLine(
+                    `[Extension] Error building scope tree: ${e.message}`
+                  );
+                  vscode.window.showErrorMessage(
+                    `Error building scope tree for ${message.filePath}: ${e.message}`
+                  );
+                  webviewPanel?.webview.postMessage({
+                    command: "showScopeTreeError",
+                    error: e.message,
+                    filePath: message.filePath,
+                  });
+                }
+                return;
+
+              case "revealCode":
+                try {
+                  const { filePath, loc } = message;
+                  if (!filePath || !loc || !loc.start || !loc.end) {
+                    throw new Error(
+                      "File path and location are required to reveal code."
+                    );
+                  }
+                  outputChannel.appendLine(
+                    `[Extension] Webview requested revealCode for: ${filePath} L${loc.start.line}`
+                  );
+
+                  const uri = vscode.Uri.file(filePath);
+                  const document = await vscode.workspace.openTextDocument(uri);
+                  const editor = await vscode.window.showTextDocument(
+                    document,
+                    {
+                      preview: false,
+                    }
+                  );
+
+                  // VS Code Position is 0-based for line and character
+                  // Our Position type is 1-based for line, 0-based for column
+                  const startPosition = new vscode.Position(
+                    loc.start.line - 1,
+                    loc.start.column
+                  );
+                  const endPosition = new vscode.Position(
+                    loc.end.line - 1,
+                    loc.end.column
+                  );
+
+                  const range = new vscode.Range(startPosition, endPosition);
+                  editor.selection = new vscode.Selection(
+                    range.start,
+                    range.end
+                  );
+                  editor.revealRange(
+                    range,
+                    vscode.TextEditorRevealType.InCenterIfOutsideViewport
+                  );
+                } catch (e: any) {
+                  outputChannel.appendLine(
+                    `[Extension] Error revealing code: ${e.message}`
+                  );
+                  vscode.window.showErrorMessage(
+                    `Error revealing code: ${e.message}`
+                  );
+                }
+                return;
+
+              case "showInformationMessage":
+                if (message.text && typeof message.text === "string") {
+                  vscode.window.showInformationMessage(message.text);
+                }
+                return;
+
+              case "showErrorMessage":
+                if (message.text && typeof message.text === "string") {
+                  vscode.window.showErrorMessage(message.text);
+                }
+                return;
+
               default:
-                console.warn(
-                  "[Extension] Received unknown command:",
-                  message.command
+                outputChannel.appendLine(
+                  `[Extension] Received unknown command from webview: ${message.command}`
                 );
             }
           },
           undefined,
           context.subscriptions
+        );
+
+        // Send initial file context if available
+        const sendActiveFile = () => {
+          const editor = vscode.window.activeTextEditor;
+          if (
+            editor &&
+            (editor.document.languageId === "typescript" ||
+              editor.document.languageId === "typescriptreact" ||
+              editor.document.languageId === "css" ||
+              editor.document.languageId === "scss")
+          ) {
+            const filePath = editor.document.uri.fsPath;
+            outputChannel.appendLine(
+              `[Extension] Sending initial/active file to webview: ${filePath}`
+            );
+            webviewPanel?.webview.postMessage({
+              command: "fileOpened",
+              filePath: filePath,
+            });
+          }
+        };
+
+        // Send initial file info when panel is created
+        sendActiveFile();
+
+        // Update on editor change
+        context.subscriptions.push(
+          vscode.window.onDidChangeActiveTextEditor(() => {
+            if (webviewPanel?.visible) {
+              sendActiveFile();
+            }
+          })
         );
 
         webviewPanel.onDidDispose(

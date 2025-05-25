@@ -5,44 +5,6 @@ exports[`Advanced CSS File Test > should match snapshot for advanced.css > advan
   "category": "Program",
   "children": [
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:0-27",
-      "kind": 0,
-      "label": "/* Advanced CSS Features */",
-      "loc": {
-        "end": {
-          "column": 27,
-          "line": 1,
-        },
-        "start": {
-          "column": 0,
-          "line": 1,
-        },
-      },
-      "source": "/* Advanced CSS Features */",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:29-44",
-      "kind": 0,
-      "label": "/* Variables */",
-      "loc": {
-        "end": {
-          "column": 15,
-          "line": 3,
-        },
-        "start": {
-          "column": 0,
-          "line": 3,
-        },
-      },
-      "source": "/* Variables */",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -113,25 +75,6 @@ exports[`Advanced CSS File Test > should match snapshot for advanced.css > advan
   --main-text-color: #fff;
 ",
       "value": 2,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:109-130",
-      "kind": 0,
-      "label": "/* Basic Selectors */",
-      "loc": {
-        "end": {
-          "column": 21,
-          "line": 9,
-        },
-        "start": {
-          "column": 0,
-          "line": 9,
-        },
-      },
-      "source": "/* Basic Selectors */",
-      "value": 1,
     },
     {
       "category": "CssRule",
@@ -279,25 +222,6 @@ h3 {
       "value": 1,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:281-309",
-      "kind": 0,
-      "label": "/* Class and ID Selectors */",
-      "loc": {
-        "end": {
-          "column": 28,
-          "line": 22,
-        },
-        "start": {
-          "column": 0,
-          "line": 22,
-        },
-      },
-      "source": "/* Class and ID Selectors */",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -442,25 +366,6 @@ h3 {
       "value": 2,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:417-442",
-      "kind": 0,
-      "label": "/* Attribute Selectors */",
-      "loc": {
-        "end": {
-          "column": 25,
-          "line": 33,
-        },
-        "start": {
-          "column": 0,
-          "line": 33,
-        },
-      },
-      "source": "/* Attribute Selectors */",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -581,25 +486,6 @@ h3 {
       "value": 1,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:557-577",
-      "kind": 0,
-      "label": "/* Pseudo-classes */",
-      "loc": {
-        "end": {
-          "column": 20,
-          "line": 43,
-        },
-        "start": {
-          "column": 0,
-          "line": 43,
-        },
-      },
-      "source": "/* Pseudo-classes */",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -693,25 +579,6 @@ h3 {
       "source": "li:nth-child(odd) {
   background-color: #eee;
 ",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:660-681",
-      "kind": 0,
-      "label": "/* Pseudo-elements */",
-      "loc": {
-        "end": {
-          "column": 21,
-          "line": 52,
-        },
-        "start": {
-          "column": 0,
-          "line": 52,
-        },
-      },
-      "source": "/* Pseudo-elements */",
       "value": 1,
     },
     {
@@ -835,25 +702,6 @@ h3 {
       "value": 2,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:772-791",
-      "kind": 0,
-      "label": "/* Media Queries */",
-      "loc": {
-        "end": {
-          "column": 19,
-          "line": 62,
-        },
-        "start": {
-          "column": 0,
-          "line": 62,
-        },
-      },
-      "source": "/* Media Queries */",
-      "value": 1,
-    },
-    {
       "category": "CssMediaQuery",
       "children": [
         {
@@ -923,25 +771,6 @@ h3 {
       },
       "source": "@media (max-width: 600px) {
   .containe",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:859-872",
-      "kind": 0,
-      "label": "/* Flexbox */",
-      "loc": {
-        "end": {
-          "column": 13,
-          "line": 69,
-        },
-        "start": {
-          "column": 0,
-          "line": 69,
-        },
-      },
-      "source": "/* Flexbox */",
       "value": 1,
     },
     {
@@ -1137,25 +966,6 @@ h3 {
       "value": 4,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:1034-1044",
-      "kind": 0,
-      "label": "/* Grid */",
-      "loc": {
-        "end": {
-          "column": 10,
-          "line": 82,
-        },
-        "start": {
-          "column": 0,
-          "line": 82,
-        },
-      },
-      "source": "/* Grid */",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
@@ -1346,25 +1156,6 @@ h3 {
   text-align: center;
 ",
       "value": 3,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/advanced.css:1223-1239",
-      "kind": 0,
-      "label": "/* Animations */",
-      "loc": {
-        "end": {
-          "column": 16,
-          "line": 95,
-        },
-        "start": {
-          "column": 0,
-          "line": 95,
-        },
-      },
-      "source": "/* Animations */",
-      "value": 1,
     },
     {
       "category": "CssKeyframeRule",
@@ -1785,6 +1576,6 @@ p::before {
   animation-iteration-count: infinite;
 }
 ",
-  "value": 50,
+  "value": 39,
 }
 `;

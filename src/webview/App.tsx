@@ -474,6 +474,7 @@ const App: React.FC = () => {
           includeImports: treemapSettings.showImports,
           includeTypes: treemapSettings.showTypes,
           includeLiterals: treemapSettings.showLiterals,
+          includeComments: treemapSettings.showComments,
         },
       });
       setIsTreemapLoading(true);
@@ -559,6 +560,7 @@ const App: React.FC = () => {
     treemapSettings.showImports,
     treemapSettings.showTypes,
     treemapSettings.showLiterals,
+    treemapSettings.showComments,
     // requestTreemapData itself depends on treemapSettings, so including it here
     // along with activeView and currentAnalysisTarget ensures correctness.
     activeView,

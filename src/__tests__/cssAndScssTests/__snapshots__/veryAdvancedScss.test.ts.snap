@@ -43,25 +43,6 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
       "value": 1,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:45-102",
-      "kind": 0,
-      "label": "// Very small helper to keep a custom function in the AST",
-      "loc": {
-        "end": {
-          "column": 57,
-          "line": 4,
-        },
-        "start": {
-          "column": 0,
-          "line": 4,
-        },
-      },
-      "source": "// Very small helper to keep a custom function in the AST",
-      "value": 1,
-    },
-    {
       "category": "CssFunction",
       "children": [
         {
@@ -216,72 +197,11 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
       "value": 1,
     },
     {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:337-367",
-      "kind": 0,
-      "label": "// ← still exercises the mixin",
-      "loc": {
-        "end": {
-          "column": 59,
-          "line": 15,
-        },
-        "start": {
-          "column": 29,
-          "line": 15,
-        },
-      },
-      "source": "// ← still exercises the mixin",
-      "value": 1,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:369-463",
-      "kind": 0,
-      "label": "/* ────────────────────────────────
-   Primitive element
-   ────────────────────────────────*/",
-      "loc": {
-        "end": {
-          "column": 37,
-          "line": 19,
-        },
-        "start": {
-          "column": 0,
-          "line": 17,
-        },
-      },
-      "source": "/* ────────────────────────────────
-   Primitive element
-   ────────────────────────────────*/",
-      "value": 1,
-    },
-    {
       "category": "CssRule",
       "children": [
         {
           "category": "CssAtRule",
           "children": [
-            {
-              "category": "CssComment",
-              "children": [],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:503-526",
-              "kind": 0,
-              "label": "/* shell == old root */",
-              "loc": {
-                "end": {
-                  "column": 27,
-                  "line": 22,
-                },
-                "start": {
-                  "column": 4,
-                  "line": 22,
-                },
-              },
-              "source": "/* shell == old root */",
-              "value": 1,
-            },
             {
               "category": "CssRule",
               "children": [
@@ -529,25 +449,6 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
                   "value": 3,
                 },
                 {
-                  "category": "CssComment",
-                  "children": [],
-                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1182-1236",
-                  "kind": 0,
-                  "label": "/* two pseudo-faces kept purely for syntax coverage */",
-                  "loc": {
-                    "end": {
-                      "column": 60,
-                      "line": 52,
-                    },
-                    "start": {
-                      "column": 6,
-                      "line": 52,
-                    },
-                  },
-                  "source": "/* two pseudo-faces kept purely for syntax coverage */",
-                  "value": 1,
-                },
-                {
                   "category": "CssRule",
                   "children": [
                     {
@@ -674,25 +575,6 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
                 {
                   "category": "CssRule",
                   "children": [
-                    {
-                      "category": "CssComment",
-                      "children": [],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1540-1555",
-                      "kind": 0,
-                      "label": "/* top "cap" */",
-                      "loc": {
-                        "end": {
-                          "column": 32,
-                          "line": 65,
-                        },
-                        "start": {
-                          "column": 17,
-                          "line": 65,
-                        },
-                      },
-                      "source": "/* top "cap" */",
-                      "value": 1,
-                    },
                     {
                       "category": "CssProperty",
                       "children": [],
@@ -832,30 +714,11 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
         height: #{get(radius)};
         border-radius: 50%;
       ",
-                  "value": 6,
+                  "value": 5,
                 },
                 {
                   "category": "CssRule",
                   "children": [
-                    {
-                      "category": "CssComment",
-                      "children": [],
-                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1735-1751",
-                      "kind": 0,
-                      "label": "/* side "cap" */",
-                      "loc": {
-                        "end": {
-                          "column": 32,
-                          "line": 73,
-                        },
-                        "start": {
-                          "column": 16,
-                          "line": 73,
-                        },
-                      },
-                      "source": "/* side "cap" */",
-                      "value": 1,
-                    },
                     {
                       "category": "CssProperty",
                       "children": [],
@@ -995,7 +858,7 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
         width: #{get(radius)};
         border-radius: 50%;
       ",
-                  "value": 6,
+                  "value": 5,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:531-1917",
@@ -1072,26 +935,7 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
         border-radius: 50%;
       }
     ",
-              "value": 25,
-            },
-            {
-              "category": "CssComment",
-              "children": [],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:1924-1964",
-              "kind": 0,
-              "label": "/* small state machine, simpler names */",
-              "loc": {
-                "end": {
-                  "column": 44,
-                  "line": 82,
-                },
-                "start": {
-                  "column": 4,
-                  "line": 82,
-                },
-              },
-              "source": "/* small state machine, simpler names */",
-              "value": 1,
+              "value": 22,
             },
             {
               "category": "CssRule",
@@ -1464,7 +1308,7 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
       &.fade-exit-to   { width: 0; color: crimson; }
       &.fade-enter-active { color: steelblue; }
       &.fade-exit-active  { background: seagreen; color: seagree",
-          "value": 35,
+          "value": 30,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:464-2307",
@@ -1558,30 +1402,7 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
     }
   }
 ",
-      "value": 35,
-    },
-    {
-      "category": "CssComment",
-      "children": [],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/veryAdvanced.scss:2310-2402",
-      "kind": 0,
-      "label": "/* ────────────────────────────────
-   Theme overrides
-   ────────────────────────────────*/",
-      "loc": {
-        "end": {
-          "column": 37,
-          "line": 98,
-        },
-        "start": {
-          "column": 0,
-          "line": 96,
-        },
-      },
-      "source": "/* ────────────────────────────────
-   Theme overrides
-   ────────────────────────────────*/",
-      "value": 1,
+      "value": 30,
     },
     {
       "category": "CssRule",
@@ -2220,6 +2041,6 @@ exports[`Very Advanced SCSS File Test > should match snapshot for veryAdvanced.s
     }
   }
 } ",
-  "value": 58,
+  "value": 49,
 }
 `;

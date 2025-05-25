@@ -21,6 +21,7 @@ export interface TreemapSettings {
   showImports: boolean;
   showTypes: boolean;
   showLiterals: boolean;
+  showComments: boolean;
   minLabelHeight: number;
   truncateLabel: boolean;
   labelMaxChars: number;
@@ -226,6 +227,12 @@ export const treemapSettingsConfig: SettingConfig[] = [
     type: "boolean",
     group: "Node Visibility",
   },
+  {
+    id: "showComments",
+    label: "Show Comments",
+    type: "boolean",
+    group: "Node Visibility",
+  },
 
   // Tooltip Settings
   {
@@ -319,6 +326,7 @@ export const defaultTreemapSettings: TreemapSettings = {
   showImports: true,
   showTypes: true,
   showLiterals: false,
+  showComments: false,
   minLabelHeight: 15,
   truncateLabel: true,
   labelMaxChars: 128,

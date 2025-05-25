@@ -41,6 +41,7 @@ interface ParseContext {
   tokens: CssToken[];
   position: number;
   isScss: boolean;
+  options: BuildScopeTreeOptions;
 }
 
 export function buildScopeTreeCss(
@@ -58,6 +59,7 @@ export function buildScopeTreeCss(
     tokens: tokenize(fileText),
     position: 0,
     isScss,
+    options: options || {},
   };
 
   const root: ScopeNode = {
@@ -491,8 +493,10 @@ function parseStylesheet(context: ParseContext, parent: ScopeNode): void {
 
     // Skip comments at top level
     if (token.type === "comment") {
-      const commentNode = createCommentNode(context, token);
-      parent.children.push(commentNode);
+      if (context.options.includeComments === true) {
+        const commentNode = createCommentNode(context, token);
+        parent.children.push(commentNode);
+      }
       context.position++;
       continue;
     }
@@ -1218,8 +1222,10 @@ function parseBlock(context: ParseContext): ScopeNode | null {
 
     // Parse declarations and nested rules within the block
     if (token.type === "comment") {
-      const commentNode = createCommentNode(context, token);
-      blockNode.children.push(commentNode);
+      if (context.options.includeComments === true) {
+        const commentNode = createCommentNode(context, token);
+        blockNode.children.push(commentNode);
+      }
       context.position++;
     } else if (token.type === "variable" && context.isScss) {
       const variableNode = parseVariable(context);
