@@ -1,0 +1,149 @@
+@use "sass:selector";
+@use "my-utils" as *;
+
+// Very small helper to keep a custom function in the AST
+@function blend-tints($a, $b, $t) {
+  @return unquote("color-mix(in srgb, #{$a} calc(#{$t * 100%}), #{$b})");
+}
+
+@property --widget-opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@include set-prefix(widget); // ← still exercises the mixin
+
+/* ────────────────────────────────
+   Primitive element
+   ────────────────────────────────*/
+:scope(widget) {
+  @layer layout {
+    /* shell == old root */
+    &:part(shell) {
+      @include set((
+        gap-size: 4px,
+        radius: 6px,
+        dur: .25s,
+        ease: ease-in-out,
+        timing: get(dur) get(ease),
+        border-base: 1px,
+        border-active: 2px,
+        alpha: 1
+      ));
+
+      width:  calc(var(--cols) * var(--cell));
+      height: calc(var(--rows) * var(--cell));
+
+      transition:
+        --widget-opacity #{get(timing)},
+        background-color #{get(timing)},
+        width  .2s,
+        height .2s;
+
+      &[data-kind="highlight"] { flex-basis: 100%; }
+
+      &.compact {
+        background: lemonchiffon;
+        flex-basis: 40%;
+        flex-shrink: 0;
+      }
+
+      /* two pseudo-faces kept purely for syntax coverage */
+      &:before,
+      &:after {
+        @include pseudo();
+        z-index: -1;
+        border-width: inherit;
+        transition:
+          --widget-opacity #{get(timing)},
+          width  #{get(timing)},
+          height #{get(timing)},
+          background #{get(timing)};
+      }
+
+      &:before { /* top "cap" */
+        position: absolute;
+        left:  #{get(gap-size)};
+        right: #{get(gap-size)};
+        height: #{get(radius)};
+        border-radius: 50%;
+      }
+
+      &:after { /* side "cap" */
+        position: absolute;
+        top:  #{get(gap-size)};
+        bottom: #{get(gap-size)};
+        width: #{get(radius)};
+        border-radius: 50%;
+      }
+    }
+
+    /* small state machine, simpler names */
+    &:part(shell)[data-widget-type="flag"] {
+      transition: width .2s ease;
+      transition-delay: .05s;
+      background-color: bisque;
+
+      &.fade-enter,
+      &.fade-exit-to   { width: 0; color: crimson; }
+      &.fade-enter-active { color: steelblue; }
+      &.fade-exit-active  { background: seagreen; color: seagreen; }
+    }
+  }
+}
+
+/* ────────────────────────────────
+   Theme overrides
+   ────────────────────────────────*/
+:scope(widget) {
+  @include theme(daylight) {
+    &:part(shell) {
+      @include set((
+        surface:  opacify(color(neutral, 9), get(alpha)),
+        edge:     opacify(color(neutral, 6), .5),
+        mid:      opacify(color(neutral, 8), get(alpha)),
+        shade:    opacify(blend-tints(get(mid), get(edge), .4), get(alpha)),
+        ink:      color(neutral, 10),
+        ink-sel:  color(highlight)
+      ));
+
+      background: opacify(get(surface), get(alpha));
+
+      &,
+      &:before,
+      &:after { border: #{get(border-base)} solid #{get(edge)}; }
+
+      &:before { background: get(surface); }
+      &:after  { background: get(shade); }
+
+      &:is(:hover, :state(active)) {
+        @include set(ink, get(ink-sel));
+        border-width: #{get(border-active)};
+      }
+    }
+  }
+
+  @include theme(handdrawn) {
+    &:part(shell) {
+      @include set((
+        gap-size: 6px,
+        radius: 10px,
+        ink:        color(bg),
+        ink-sel:    color(fg)
+      ));
+
+      &,
+      &:before,
+      &:after {
+        background: get(ink);
+        border: #{get(border-base)} solid #{opacify(color(fg, dim), .3)};
+      }
+
+      &:is(:hover, :state(active)) {
+        @include set(ink, get(ink-sel));
+        border-width: #{get(border-active)};
+      }
+    }
+  }
+} 

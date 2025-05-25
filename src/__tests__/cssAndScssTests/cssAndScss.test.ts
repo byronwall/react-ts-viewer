@@ -41,4 +41,12 @@ describe("CSS and SCSS File Tests", () => {
       isFixture: true,
     });
   });
+
+  it("should match snapshot for veryAdvanced.scss", () => {
+    runScopeTreeSnapshotTest({
+      snapshotIdentifier: "veryAdvancedScss",
+      filePath: "veryAdvanced.scss",
+      isFixture: true,
+    });
+  });
 });
