@@ -420,7 +420,7 @@ function aggregateValuesPostOrder(node: ScopeNode): number {
     }
   }
 
-  // Set parent's value to sum of all children
-  node.value = totalChildrenValue;
+  // Set parent's value to 1 (for itself) + sum of all children
+  node.value = 1 + totalChildrenValue;
   return node.value;
 }
