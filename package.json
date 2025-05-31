@@ -170,7 +170,6 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.2",
-    "@nivo/treemap": "^0.94.0",
     "@phosphor-icons/react": "^2.1.7",
     "elkjs": "^0.10.0",
     "mdast-util-from-markdown": "^2.0.2",

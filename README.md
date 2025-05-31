@@ -9,11 +9,20 @@ Example treemap of itself:
 ## Features
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
+  - **Custom Implementation**: Uses a hand-rolled treemap implementation with binary layout algorithm for optimal performance and customization.
+  - **Infinite Depth Rendering**: Supports rendering nested code structures to unlimited depth with intelligent visual scaling.
+  - **Dynamic Visual Hierarchy**: Header and body sections automatically adjust size, opacity, and stroke width based on nesting depth.
+  - **Smart Layout Algorithm**: Enhanced binary layout with aspect ratio optimization and minimum size constraints for deeply nested nodes.
+  - **Header and Body Rendering**: Each node has a customizable header (dynamic height) and body section, allowing for rich visual representation.
+  - **Improved Group Placement**: Fixed rendering issues where child nodes were appearing faint or misplaced within parent groups.
+  - **Enhanced Visibility**: Optimized opacity calculations to ensure nodes remain visible at deeper nesting levels (minimum 60% opacity for leaf nodes, 80% for headers).
+  - **Robust Coordinate System**: Improved coordinate calculations and bounds checking to prevent rendering artifacts and ensure proper node positioning.
   - Node sizes can represent lines of code or character counts, providing an intuitive overview of code distribution.
   - Color-coded categories for different code elements (modules, components, functions, etc.).
   - Interactive features like zoom, tooltips with detailed information (ID, category, value, source snippet), and customizable display settings.
   - Export the treemap as a PNG image or the underlying data as JSON.
   - **Search Functionality**: Filter and highlight nodes based on their content (see [Search Feature](#search-feature) below).
+  - **Responsive Design**: Automatically adjusts to container size changes and window resizing.
 
 ### Planned Features
 

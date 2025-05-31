@@ -1,8 +1,3 @@
-import {
-  ComputedNode,
-  ComputedNodeWithoutStyles,
-  ResponsiveTreeMap,
-} from "@nivo/treemap";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
@@ -14,6 +9,8 @@ import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
 import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
+import { TreemapSVG, RenderNodeProps, RenderHeaderProps } from "./TreemapSVG";
+import { binaryLayout } from "./binaryLayout";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -154,11 +151,43 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const minDrawerWidth = 150; // Minimum width for the drawer
   const maxDrawerWidth = 800; // Maximum width for the drawer
   const resizeHandleRef = useRef<HTMLDivElement>(null);
+  const treemapContainerRef = useRef<HTMLDivElement>(null);
+  const [containerDimensions, setContainerDimensions] = useState({
+    width: 800,
+    height: 600,
+  });
 
   // Search state
   const [searchText, setSearchText] = useState<string>("");
   const [matchingNodes, setMatchingNodes] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Tooltip state
+  const [tooltip, setTooltip] = useState<{
+    node: ScopeNode;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // Update container dimensions when the container size changes
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (treemapContainerRef.current) {
+        const rect = treemapContainerRef.current.getBoundingClientRect();
+        setContainerDimensions({
+          width: Math.max(100, rect.width),
+          height: Math.max(100, rect.height),
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+
+    return () => {
+      window.removeEventListener("resize", updateDimensions);
+    };
+  }, [isDrawerOpen, drawerWidth]);
 
   const handleExportToJson = useCallback(async () => {
     const jsonString = JSON.stringify(initialData, null, 2);
@@ -177,7 +206,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   }, [initialData, vscodeApi]);
 
   const handleExportToPng = useCallback(async () => {
-    const svgElement = document.querySelector(".nivo-treemap-container svg");
+    const svgElement = document.querySelector(".custom-treemap-container svg");
     if (svgElement) {
       try {
         const dataUri = await svgAsPngUri(svgElement as SVGSVGElement, {
@@ -223,7 +252,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         text: "Could not find SVG element to export for PNG.",
       });
     }
-  }, [vscodeApi]); // Removed fileName as it's not used
+  }, [vscodeApi]);
 
   // New handler for Jump to Source
   const handleJumpToSource = useCallback(
@@ -307,13 +336,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   );
 
   const handleNodeClick = (
-    node: ComputedNode<ScopeNode>, // This is Nivo's computed node, node.data is our ScopeNode
+    node: ScopeNode, // Now directly a ScopeNode instead of Nivo's computed node
     event: React.MouseEvent
   ) => {
-    const clickedNivoNodeData = node.data; // This is the ScopeNode object from the data fed to Nivo
+    const clickedNodeData = node; // This is already the ScopeNode object
     const fullNodeFromInitialTree = findNodeInTree(
       initialData,
-      clickedNivoNodeData.id
+      clickedNodeData.id
     );
 
     if (!fullNodeFromInitialTree) {
@@ -702,6 +731,26 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [resize, stopResizing]);
 
+  const handleMouseEnter = useCallback(
+    (node: ScopeNode, event: React.MouseEvent) => {
+      if (settings.enableTooltip) {
+        const rect = treemapContainerRef.current?.getBoundingClientRect();
+        if (rect) {
+          setTooltip({
+            node,
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          });
+        }
+      }
+    },
+    [settings.enableTooltip]
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
   return (
     <div
       style={{
@@ -854,6 +903,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           </div>
         </div>
         <div
+          ref={treemapContainerRef}
           style={{
             position: "relative",
             width: "100%",
@@ -861,117 +911,174 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             flexGrow: 1,
             overflow: "hidden",
           }}
-          className="nivo-treemap-container"
+          className="custom-treemap-container"
         >
           {finalDisplayData ? (
-            <ResponsiveTreeMap
-              data={finalDisplayData}
-              orientLabel={false}
-              identity="id"
-              value="value"
-              valueFormat=".02s"
-              margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-              labelTextColor={(
-                node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-              ) => getContrastingTextColor(node.color)}
-              parentLabelTextColor={(
-                node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-              ) => getContrastingTextColor(node.color)}
-              parentLabel={(
-                node: Omit<ComputedNodeWithoutStyles<ScopeNode>, "parentLabel">
-              ) => {
-                const displayLabel = getDynamicNodeDisplayLabel(
-                  {
-                    data: node.data as ScopeNode,
-                    width: node.width,
-                    height: node.height,
-                  },
-                  settings
-                );
-                return displayLabel;
-              }}
-              label={(
-                node: Omit<
-                  ComputedNodeWithoutStyles<ScopeNode>,
-                  "label" | "parentLabel"
-                >
-              ) => {
-                const displayLabel = getDynamicNodeDisplayLabel(
-                  {
-                    data: node.data as ScopeNode,
-                    width: node.width,
-                    height: node.height,
-                  },
-                  settings
-                );
-                return displayLabel;
-              }}
-              colors={(nodeWithData: ComputedNodeWithoutStyles<ScopeNode>) => {
-                const category = nodeWithData.data.category;
-                return pastelSet[category] || pastelSet[NodeCategory.Other];
-              }}
-              borderColor={(
-                node: ComputedNodeWithoutStyles<ScopeNode> & { color: string }
-              ) => {
-                // Priority 1: Selected node (red border)
-                if (
-                  selectedNodeForDrawer &&
-                  node.data.id === selectedNodeForDrawer.id
-                ) {
-                  return "red";
-                }
-
-                // Priority 2: Search match (yellow border)
-                if (matchingNodes.has(node.data.id)) {
-                  return "#FFD700"; // Bright yellow for search matches
-                }
-
-                // Default border for other nodes
-                return "#555555";
-              }}
-              onClick={(node, event) =>
-                handleNodeClick(node, event as React.MouseEvent)
+            <TreemapSVG
+              root={finalDisplayData}
+              width={containerDimensions.width}
+              height={containerDimensions.height}
+              maxHeaderHeight={16}
+              minHeaderHeight={6}
+              layout={(root, w, h) =>
+                binaryLayout(root, w, h, {
+                  aspectTarget: 0.8,
+                  minNodeSize: 12,
+                  sizeAccessor: (n) => n.value,
+                })
               }
-              tooltip={
-                settings.enableTooltip
-                  ? ({ node }: { node: ComputedNode<ScopeNode> }) => {
-                      const scopeNode = node.data;
-                      const displayLabel = getNodeDisplayLabel(
-                        scopeNode as ScopeNode
-                      );
+              renderHeader={({ node, w, h, depth }) => {
+                const category = node.category;
+                const color =
+                  pastelSet[category] || pastelSet[NodeCategory.Other];
 
-                      return (
-                        <div
-                          style={{
-                            padding: "5px 8px",
-                            background: "#333",
-                            color: "#f0f0f0",
-                            border: "1px solid #555",
-                            borderRadius: "2px",
-                            fontSize: "11px",
-                            maxWidth: "300px",
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-all",
-                          }}
+                // Check if this node is selected or matches search
+                const isSelected = selectedNodeForDrawer?.id === node.id;
+                const isSearchMatch = matchingNodes.has(node.id);
+
+                let borderColor = "#555555";
+                if (isSelected) {
+                  borderColor = "red";
+                } else if (isSearchMatch) {
+                  borderColor = "#FFD700";
+                }
+
+                // Adjust visual properties based on depth
+                const strokeWidth = isSelected
+                  ? Math.max(1, 3 - depth * 0.3)
+                  : Math.max(0.5, 1.5 - depth * 0.1);
+                const opacity = Math.max(0.8, 1 - depth * 0.02);
+                const fontSize = Math.max(6, 10 - depth);
+                const textY = Math.min(h - 2, fontSize + 2);
+
+                const displayLabel = getDynamicNodeDisplayLabel(
+                  {
+                    data: node,
+                    width: w,
+                    height: h,
+                  },
+                  settings
+                );
+
+                // Truncate label based on depth and available space
+                const maxLabelLength = Math.max(
+                  5,
+                  Math.floor((w - 8) / (fontSize * 0.6))
+                );
+                const truncatedLabel = displayLabel
+                  ? displayLabel.length > maxLabelLength
+                    ? displayLabel.slice(0, maxLabelLength - 3) + "..."
+                    : displayLabel
+                  : "";
+
+                return (
+                  <>
+                    <rect
+                      width={w}
+                      height={h}
+                      fill={color}
+                      stroke={borderColor}
+                      strokeWidth={strokeWidth}
+                      opacity={opacity}
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => handleNodeClick(node, e as any)}
+                      onMouseEnter={(e) => handleMouseEnter(node, e as any)}
+                      onMouseLeave={handleMouseLeave}
+                    />
+                    {settings.enableLabel &&
+                      truncatedLabel &&
+                      w >= 20 &&
+                      h >= 8 && (
+                        <text
+                          x={4}
+                          y={textY}
+                          fontSize={fontSize}
+                          fill={getContrastingTextColor(color)}
+                          pointerEvents="none"
+                          style={{ userSelect: "none" }}
                         >
-                          {displayLabel ||
-                            scopeNode.id.split(":").pop() ||
-                            "Node"}
-                        </div>
-                      );
-                    }
-                  : () => null
-              }
-              isInteractive={true}
-              animate={false}
-              tile={settings.tile}
-              leavesOnly={settings.leavesOnly}
-              innerPadding={settings.innerPadding}
-              outerPadding={settings.outerPadding}
-              enableLabel={settings.enableLabel}
-              labelSkipSize={settings.labelSkipSize}
-              nodeOpacity={settings.nodeOpacity}
-              borderWidth={settings.borderWidth} // Reverted to settings, as function is not type-compatible
+                          {truncatedLabel}
+                        </text>
+                      )}
+                  </>
+                );
+              }}
+              renderNode={({ node, w, h, depth }) => {
+                const category = node.category;
+                const color =
+                  pastelSet[category] || pastelSet[NodeCategory.Other];
+
+                // Check if this node is selected or matches search
+                const isSelected = selectedNodeForDrawer?.id === node.id;
+                const isSearchMatch = matchingNodes.has(node.id);
+
+                let borderColor = "#555555";
+                if (isSelected) {
+                  borderColor = "red";
+                } else if (isSearchMatch) {
+                  borderColor = "#FFD700";
+                }
+
+                // Adjust visual properties based on depth
+                const strokeWidth = isSelected
+                  ? Math.max(1, settings.borderWidth + 1 - depth * 0.2)
+                  : Math.max(0.5, settings.borderWidth - depth * 0.1);
+                const opacity = Math.max(
+                  0.6,
+                  settings.nodeOpacity - depth * 0.02
+                );
+
+                const displayLabel = getDynamicNodeDisplayLabel(
+                  {
+                    data: node,
+                    width: w,
+                    height: h,
+                  },
+                  settings
+                );
+
+                // Calculate font size based on depth and available space
+                const baseFontSize = Math.min(12, h / 3);
+                const fontSize = Math.max(6, baseFontSize - depth);
+
+                // Only show labels if there's enough space and it meets minimum requirements
+                const shouldShowLabel =
+                  settings.enableLabel &&
+                  displayLabel &&
+                  h >= Math.max(settings.minLabelHeight, fontSize + 4) &&
+                  w >= fontSize * 2;
+
+                return (
+                  <>
+                    <rect
+                      width={w}
+                      height={h}
+                      fill={color}
+                      stroke={borderColor}
+                      strokeWidth={strokeWidth}
+                      opacity={opacity}
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => handleNodeClick(node, e as any)}
+                      onMouseEnter={(e) => handleMouseEnter(node, e as any)}
+                      onMouseLeave={handleMouseLeave}
+                    />
+                    {shouldShowLabel && (
+                      <text
+                        x={w / 2}
+                        y={h / 2}
+                        fontSize={fontSize}
+                        fill={getContrastingTextColor(color)}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        pointerEvents="none"
+                        style={{ userSelect: "none" }}
+                      >
+                        {displayLabel}
+                      </text>
+                    )}
+                  </>
+                );
+              }}
             />
           ) : (
             <div
@@ -980,6 +1087,30 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               {searchText.trim()
                 ? `No nodes found matching "${searchText}". Try a different search term or press Escape to clear the search.`
                 : "No data to display (possibly all filtered by depth limit or data is null)."}
+            </div>
+          )}
+          {tooltip && (
+            <div
+              style={{
+                position: "absolute",
+                left: tooltip.x + 10,
+                top: tooltip.y - 10,
+                padding: "5px 8px",
+                background: "#333",
+                color: "#f0f0f0",
+                border: "1px solid #555",
+                borderRadius: "2px",
+                fontSize: "11px",
+                maxWidth: "300px",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+                pointerEvents: "none",
+                zIndex: 1000,
+              }}
+            >
+              {getNodeDisplayLabel(tooltip.node) ||
+                tooltip.node.id.split(":").pop() ||
+                "Node"}
             </div>
           )}
         </div>
