@@ -329,8 +329,8 @@ export const defaultTreemapSettings: TreemapSettings = {
   showComments: false,
   minLabelHeight: 15,
   truncateLabel: true,
-  labelMaxChars: 128,
-  avgCharPixelWidth: 6,
+  labelMaxChars: 200,
+  avgCharPixelWidth: 5,
   enableDepthLimit: false,
   maxDepth: 5,
 };

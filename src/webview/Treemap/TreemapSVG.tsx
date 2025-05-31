@@ -7,6 +7,36 @@ import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
 
+/* ---------- utility functions ------------ */
+
+// Function to lighten a hex color by a percentage
+const lightenColor = (hex: string, percent: number): string => {
+  // Remove the hash if present
+  const cleanHex = hex.replace("#", "");
+
+  // Parse the hex color
+  const r = parseInt(cleanHex.substr(0, 2), 16);
+  const g = parseInt(cleanHex.substr(2, 2), 16);
+  const b = parseInt(cleanHex.substr(4, 2), 16);
+
+  // Lighten each component
+  const lightenComponent = (component: number) => {
+    return Math.min(
+      255,
+      Math.round(component + (255 - component) * (percent / 100))
+    );
+  };
+
+  const newR = lightenComponent(r);
+  const newG = lightenComponent(g);
+  const newB = lightenComponent(b);
+
+  // Convert back to hex
+  const toHex = (component: number) => component.toString(16).padStart(2, "0");
+
+  return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+};
+
 /* ---------- render-time props ------------ */
 
 export interface RenderNodeProps {
@@ -61,17 +91,16 @@ const createStyledRenderHeader =
     const isSelected = selectedNodeId === node.id;
     const isSearchMatch = matchingNodes.has(node.id);
 
-    let borderColor = "#555555";
+    // Use subdued borders for headers since group container handles main border
+    let borderColor = "#333333";
     if (isSelected) {
-      borderColor = "red";
+      borderColor = "#cc0000"; // Darker red for header within selected group
     } else if (isSearchMatch) {
-      borderColor = "#FFD700";
+      borderColor = "#ccaa00"; // Darker gold for header within matching group
     }
 
-    // Adjust visual properties based on depth
-    const strokeWidth = isSelected
-      ? Math.max(1, 3 - depth * 0.3)
-      : Math.max(0.5, 1.5 - depth * 0.1);
+    // Subdued stroke width for headers - group border is the primary visual
+    const strokeWidth = 0.5;
     const opacity = Math.max(0.8, 1 - depth * 0.02);
 
     // Calculate font size with proper constraints
@@ -91,22 +120,32 @@ const createStyledRenderHeader =
       `[RENDER HEADER] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
     );
 
+    // Use the calculated fontSize for character width to ensure consistency
+    const actualCharWidth = fontSize * 0.5;
+
+    // Reduce padding to allow more text space
+    const textPaddingLeft = 4;
+    const textPaddingRight = 2;
+    const availableTextWidth = Math.max(
+      0,
+      w - textPaddingLeft - textPaddingRight
+    );
+
     const displayLabel = getDynamicNodeDisplayLabel(
       {
         data: node,
-        width: w,
+        width: availableTextWidth, // Use adjusted width for truncation calculation
         height: h,
       },
-      settings
+      {
+        ...settings,
+        // Override avgCharPixelWidth with the actual calculated character width
+        avgCharPixelWidth: actualCharWidth,
+      }
     );
 
-    // Truncate label based on depth and available space
-    const maxLabelLength = Math.max(5, Math.floor((w - 8) / (fontSize * 0.6)));
-    const truncatedLabel = displayLabel
-      ? displayLabel.length > maxLabelLength
-        ? displayLabel.slice(0, maxLabelLength - 3) + "..."
-        : displayLabel
-      : "";
+    // Remove the duplicate truncation logic - getDynamicNodeDisplayLabel handles all truncation
+    const truncatedLabel = displayLabel || "";
 
     return (
       <>
@@ -157,27 +196,19 @@ const createStyledRenderNode =
     const isSelected = selectedNodeId === node.id;
     const isSearchMatch = matchingNodes.has(node.id);
 
+    // For leaf nodes, keep stronger borders since they don't have group containers
     let borderColor = "#555555";
+    let strokeWidth = Math.max(0.5, settings.borderWidth - depth * 0.1);
+
     if (isSelected) {
       borderColor = "red";
+      strokeWidth = Math.max(1, settings.borderWidth + 1 - depth * 0.2);
     } else if (isSearchMatch) {
       borderColor = "#FFD700";
+      strokeWidth = Math.max(0.8, settings.borderWidth + 0.5 - depth * 0.1);
     }
 
-    // Adjust visual properties based on depth
-    const strokeWidth = isSelected
-      ? Math.max(1, settings.borderWidth + 1 - depth * 0.2)
-      : Math.max(0.5, settings.borderWidth - depth * 0.1);
     const opacity = Math.max(0.6, settings.nodeOpacity - depth * 0.02);
-
-    const displayLabel = getDynamicNodeDisplayLabel(
-      {
-        data: node,
-        width: w,
-        height: h,
-      },
-      settings
-    );
 
     // Calculate font size with proper constraints
     const depthAdjustedMin = Math.max(
@@ -192,6 +223,26 @@ const createStyledRenderNode =
 
     console.log(
       `[RENDER NODE] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
+    );
+
+    // Use the calculated fontSize for character width to ensure consistency
+    const actualCharWidth = fontSize * 0.5;
+
+    // Reduce margins when centering text - allow more text space
+    const textMargin = 4;
+    const availableTextWidth = Math.max(0, w - 2 * textMargin);
+
+    const displayLabel = getDynamicNodeDisplayLabel(
+      {
+        data: node,
+        width: availableTextWidth, // Use adjusted width for truncation calculation
+        height: h,
+      },
+      {
+        ...settings,
+        // Override avgCharPixelWidth with the actual calculated character width
+        avgCharPixelWidth: actualCharWidth,
+      }
     );
 
     // Only show labels if there's enough space and it meets minimum requirements
@@ -310,12 +361,12 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
         minCharWidth: 8,
         maxCharWidth: 18,
         headerHeight: 32,
-        fontSize: 11,
+        fontSize: minFontSize,
         minNodeSize: 20,
         sizeAccessor: (n) => n.value,
         padding: padding,
       }),
-    [root, width, height, layout, padding]
+    [root, width, height, layout, padding, minFontSize]
   );
 
   // Calculate header height based on depth - prioritize headers!
@@ -345,6 +396,10 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     // Determine if this node has children that will be rendered
     const hasRenderableChildren = ln.children && ln.children.length > 0;
 
+    // Check if this group/node is selected or matches search
+    const isSelected = selectedNodeId === ln.node.id;
+    const isSearchMatch = matchingNodes.has(ln.node.id);
+
     // HEADERS ARE PRIORITY! Only skip headers if absolutely impossible to render
     const shouldRenderHeader =
       hasRenderableChildren && ln.h >= 16 && ln.w >= 24; // Very permissive requirements
@@ -354,20 +409,48 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     // For body rendering, be more flexible - it's less important than headers
     const shouldRenderBody = ln.h - headerHeight > 8; // Reduced threshold
 
+    // Determine group border styling
+    let groupBorderColor = "#6c757d";
+    let groupStrokeWidth = Math.max(0.5, 1.5 - depth * 0.2);
+    let groupOpacity = Math.max(0.3, 0.6 - depth * 0.1);
+
+    if (isSelected) {
+      groupBorderColor = "red";
+      groupStrokeWidth = Math.max(2, 3 - depth * 0.3);
+      groupOpacity = 0.8;
+    } else if (isSearchMatch) {
+      groupBorderColor = "#FFD700";
+      groupStrokeWidth = Math.max(1, 2 - depth * 0.2);
+      groupOpacity = 0.7;
+    } else if (depth === 1) {
+      groupBorderColor = "#6c757d";
+    } else {
+      groupBorderColor = "#adb5bd";
+    }
+
+    // Calculate the background fill color for the group
+    const baseColor =
+      pastelSet[ln.node.category] || pastelSet[NodeCategory.Other];
+    const groupFillColor = lightenColor(baseColor, 30); // 30% lighter than the header color
+
     return (
       <g key={ln.node.id}>
-        {/* Render container background for nodes with children - simplified since padding is now in layout */}
-        {hasRenderableChildren && depth > 0 && (
+        {/* Render container background/border for nodes with children */}
+        {hasRenderableChildren && (
           <rect
             x={ln.x}
             y={ln.y}
             width={ln.w}
             height={ln.h}
-            fill="none"
-            stroke={depth === 1 ? "#6c757d" : "#adb5bd"}
-            strokeWidth={Math.max(0.5, 1.5 - depth * 0.2)}
-            opacity={Math.max(0.3, 0.6 - depth * 0.1)}
+            fill={groupFillColor}
+            stroke={groupBorderColor}
+            strokeWidth={groupStrokeWidth}
+            opacity={groupOpacity}
             rx={Math.max(2, 4 - depth * 0.5)}
+            style={{ cursor: "pointer" }}
+            onClick={(e) => onNodeClick(ln.node, e as any)}
+            onMouseEnter={(e) => onMouseEnter(ln.node, e as any)}
+            onMouseLeave={onMouseLeave}
           />
         )}
 

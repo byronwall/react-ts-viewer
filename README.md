@@ -29,6 +29,11 @@ Example treemap of itself:
   - **Improved Group Placement**: Fixed rendering issues where child nodes were appearing faint or misplaced within parent groups.
   - **Enhanced Visibility**: Optimized opacity calculations to ensure nodes remain visible at deeper nesting levels (minimum 60% opacity for leaf nodes, 80% for headers).
   - **Robust Coordinate System**: Improved coordinate calculations and bounds checking to prevent rendering artifacts and ensure proper node positioning.
+  - **Group Border Management**: Enhanced border rendering system that properly handles group selection and highlighting:
+    - **Group-Level Selection**: When parent nodes are selected, borders are drawn around the entire group container, not just the header
+    - **Hierarchical Border Logic**: Group containers get prominent selection borders (red for selected, gold for search matches) while child elements use subdued borders to avoid visual conflicts
+    - **Smart Border Inheritance**: Headers and leaf nodes within selected groups use darker, thinner borders that complement the main group border
+    - **Consistent Visual Hierarchy**: All parent nodes with children get container borders for clear visual grouping, regardless of depth
   - Node sizes can represent lines of code or character counts, providing an intuitive overview of code distribution.
   - Color-coded categories for different code elements (modules, components, functions, etc.).
   - Interactive features like zoom, tooltips with detailed information (ID, category, value, source snippet), and customizable display settings.

@@ -42,7 +42,8 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
 
   // Calculate pixel width needed for character count
   const getPixelWidthForChars = (charCount: number): number => {
-    return charCount * fontSize * 0.6;
+    // Use the same more aggressive character width as in the renderer
+    return charCount * fontSize * 0.5; // Reduced from 0.6 to 0.5
   };
 
   const optimalWidth = getPixelWidthForChars(optimalCharWidth);
