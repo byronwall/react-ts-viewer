@@ -918,8 +918,6 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               root={finalDisplayData}
               width={containerDimensions.width}
               height={containerDimensions.height}
-              maxHeaderHeight={16}
-              minHeaderHeight={6}
               layout={(root, w, h) =>
                 binaryLayout(root, w, h, {
                   optimalCharWidth: 12, // Target 12 characters for good readability
@@ -952,8 +950,25 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                   ? Math.max(1, 3 - depth * 0.3)
                   : Math.max(0.5, 1.5 - depth * 0.1);
                 const opacity = Math.max(0.8, 1 - depth * 0.02);
-                const fontSize = Math.max(6, 10 - depth);
+
+                // FIXED: Calculate font size with proper constraints (same as TreemapSVG)
+                const minFontSize = 12; // Use same minimum as TreemapSVG
+                const maxFontSize = 18; // Use same maximum as TreemapSVG
+                const depthAdjustedMin = Math.max(
+                  minFontSize,
+                  minFontSize + 6 - depth * 1.5
+                );
+                const heightBasedSize = h * 0.7; // Size based on available height
+                const fontSize = Math.min(
+                  maxFontSize,
+                  Math.max(depthAdjustedMin, heightBasedSize)
+                );
+
                 const textY = Math.min(h - 2, fontSize + 2);
+
+                console.log(
+                  `[RENDER HEADER] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
+                );
 
                 const displayLabel = getDynamicNodeDisplayLabel(
                   {
@@ -1041,9 +1056,22 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                   settings
                 );
 
-                // Calculate font size based on depth and available space
-                const baseFontSize = Math.min(12, h / 3);
-                const fontSize = Math.max(6, baseFontSize - depth);
+                // FIXED: Calculate font size with proper constraints
+                const minFontSize = 12; // Use same minimum as TreemapSVG
+                const maxFontSize = 18; // Use same maximum as TreemapSVG
+                const depthAdjustedMin = Math.max(
+                  minFontSize,
+                  minFontSize + 6 - depth * 1.5
+                );
+                const heightBasedSize = h * 0.6; // Size based on available height
+                const fontSize = Math.min(
+                  maxFontSize,
+                  Math.max(depthAdjustedMin, heightBasedSize)
+                );
+
+                console.log(
+                  `[RENDER NODE] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
+                );
 
                 // Only show labels if there's enough space and it meets minimum requirements
                 const shouldShowLabel =

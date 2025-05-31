@@ -22,6 +22,9 @@ export interface TreemapSVGProps {
   layout?: LayoutFn;
   renderNode?: (p: RenderNodeProps) => React.ReactNode;
   renderHeader?: (p: RenderHeaderProps) => React.ReactNode;
+  padding?: number;
+  minFontSize?: number;
+  maxFontSize?: number;
 }
 
 /* ---------- defaults ------------ */
@@ -41,50 +44,58 @@ const defaultRenderNode: Required<TreemapSVGProps>["renderNode"] = ({
   />
 );
 
-const defaultRenderHeader: Required<TreemapSVGProps>["renderHeader"] = ({
-  node,
-  w,
-  h,
-  depth,
-}) => {
-  // With the new text-first layout, we can be more generous with font sizes
-  const minFontSize = Math.max(10, 16 - depth * 2); // Higher minimum, less depth reduction
-  const maxFontSize = Math.min(16, h * 0.6); // Allow larger fonts in tall headers
-  const fontSize = Math.max(minFontSize, maxFontSize);
+const createDefaultRenderHeader =
+  (
+    minFontSize: number,
+    maxFontSize: number
+  ): Required<TreemapSVGProps>["renderHeader"] =>
+  ({ node, w, h, depth }) => {
+    // Improved text sizing with configurable bounds
+    const depthAdjustedMin = Math.max(
+      minFontSize,
+      minFontSize + 6 - depth * 1.5
+    ); // Gentler depth reduction
+    const heightBasedSize = h * 0.7; // Size based on available height
 
-  const textY = Math.min(h - 4, fontSize + 6); // Better vertical positioning with more padding
+    // Properly clamp between min and max
+    const fontSize = Math.min(
+      maxFontSize,
+      Math.max(depthAdjustedMin, heightBasedSize)
+    );
 
-  // Calculate how many characters can fit with better spacing
-  const charWidth = fontSize * 0.52; // Slightly tighter character spacing estimate
-  const availableTextWidth = w - 12; // Account for padding
-  const maxChars = Math.max(5, Math.floor(availableTextWidth / charWidth));
+    const textY = Math.min(h - 4, fontSize + 8); // Better vertical positioning
 
-  return (
-    <>
-      <rect
-        width={w}
-        height={h}
-        fill="#8ad1c2"
-        stroke="#5a9a8a"
-        strokeWidth={Math.max(0.5, 1.5 - depth * 0.1)}
-        opacity={Math.max(0.7, 1 - depth * 0.05)}
-      />
-      <text
-        x={6}
-        y={textY}
-        fontSize={fontSize}
-        fill="#000"
-        pointerEvents="none"
-        style={{
-          userSelect: "none",
-          fontWeight: depth === 0 ? "bold" : "normal",
-        }}
-      >
-        {node.label.slice(0, maxChars)}
-      </text>
-    </>
-  );
-};
+    // Calculate character fit with improved spacing
+    const charWidth = fontSize * 0.55; // Slightly more conservative character spacing
+    const availableTextWidth = w - 16; // More generous padding
+    const maxChars = Math.max(3, Math.floor(availableTextWidth / charWidth));
+
+    return (
+      <>
+        <rect
+          width={w}
+          height={h}
+          fill="#8ad1c2"
+          stroke="#5a9a8a"
+          strokeWidth={Math.max(0.5, 1.5 - depth * 0.1)}
+          opacity={Math.max(0.7, 1 - depth * 0.05)}
+        />
+        <text
+          x={8}
+          y={textY}
+          fontSize={fontSize}
+          fill="#000"
+          pointerEvents="none"
+          style={{
+            userSelect: "none",
+            fontWeight: depth === 0 ? "bold" : depth <= 1 ? "600" : "normal",
+          }}
+        >
+          {node.label.slice(0, maxChars)}
+        </text>
+      </>
+    );
+  };
 
 /* ---------- component ------------ */
 
@@ -94,8 +105,19 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   height,
   layout = binaryLayout,
   renderNode = defaultRenderNode,
-  renderHeader = defaultRenderHeader,
+  renderHeader,
+  padding = 4,
+  minFontSize = 12,
+  maxFontSize = 18,
 }) => {
+  // Create the default render header with the font size constraints
+  const defaultRenderHeaderWithFontSizes = useMemo(
+    () => createDefaultRenderHeader(minFontSize, maxFontSize),
+    [minFontSize, maxFontSize]
+  );
+
+  const finalRenderHeader = renderHeader || defaultRenderHeaderWithFontSizes;
+
   const layoutRoot = useMemo(
     () => layout(root, width, height),
     [root, width, height, layout]
@@ -103,19 +125,46 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
   // Calculate header height based on depth - prioritize headers!
   const getHeaderHeight = (depth: number, availableHeight: number): number => {
-    const maxHeaderHeight = 24;
-    const minHeaderHeight = 12;
+    const maxHeaderHeight = 28; // Increased from 24
+    const minHeaderHeight = Math.max(16, minFontSize + 8); // Base on minFontSize
 
-    // Same logic as in binaryLayout.ts
-    const depthFactor = Math.max(0.8, 1 - depth * 0.05);
+    // Same logic as in binaryLayout.ts but with larger base values
+    const depthFactor = Math.max(0.85, 1 - depth * 0.03); // Less aggressive scaling
     const baseHeight = Math.max(minHeaderHeight, maxHeaderHeight * depthFactor);
 
     const maxAllowedHeight = Math.max(
       baseHeight,
-      Math.min(availableHeight * 0.45, baseHeight * 1.5)
+      Math.min(availableHeight * 0.4, baseHeight * 1.3)
     );
 
     return maxAllowedHeight;
+  };
+
+  // Helper function to calculate the bounding box of all children
+  const getChildrenBounds = (ln: LayoutNode) => {
+    if (!ln.children || ln.children.length === 0) {
+      return { minX: ln.x, minY: ln.y, maxX: ln.x + ln.w, maxY: ln.y + ln.h };
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    const processNode = (node: LayoutNode) => {
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + node.w);
+      maxY = Math.max(maxY, node.y + node.h);
+
+      if (node.children) {
+        node.children.forEach(processNode);
+      }
+    };
+
+    ln.children.forEach(processNode);
+
+    return { minX, minY, maxX, maxY };
   };
 
   /* recursive renderer with infinite depth support */
@@ -146,10 +195,34 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
     return (
       <g key={ln.node.id}>
+        {/* Render container background for nodes with children */}
+        {hasRenderableChildren &&
+          (() => {
+            const bounds = getChildrenBounds(ln);
+            const containerX = bounds.minX - padding;
+            const containerY = bounds.minY - padding;
+            const containerW = bounds.maxX - bounds.minX + 2 * padding;
+            const containerH = bounds.maxY - bounds.minY + 2 * padding;
+
+            return (
+              <rect
+                x={containerX}
+                y={containerY}
+                width={containerW}
+                height={containerH}
+                fill={depth === 0 ? "#f8f9fa" : "#ffffff"}
+                stroke={depth === 0 ? "#6c757d" : "#adb5bd"}
+                strokeWidth={Math.max(1, 2 - depth * 0.2)}
+                opacity={Math.max(0.4, 0.8 - depth * 0.1)}
+                rx={Math.max(2, 4 - depth * 0.5)}
+              />
+            );
+          })()}
+
         {/* Render header only if this node has children */}
         {shouldRenderHeader && (
           <g transform={`translate(${ln.x} ${ln.y})`}>
-            {renderHeader({
+            {finalRenderHeader({
               node: ln.node,
               w: ln.w,
               h: headerHeight,

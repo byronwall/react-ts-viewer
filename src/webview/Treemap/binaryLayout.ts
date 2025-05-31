@@ -22,6 +22,7 @@ export type LayoutFn = (
     maxCharWidth?: number;
     headerHeight?: number;
     fontSize?: number;
+    minFontSize?: number;
   }
 ) => LayoutNode;
 
@@ -34,6 +35,7 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     maxCharWidth = 18,
     headerHeight = 32,
     fontSize = 11,
+    minFontSize = 12,
   } = opts;
 
   // Calculate pixel width needed for character count
@@ -47,16 +49,16 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
 
   // Header height calculation that matches the renderer
   const getHeaderHeight = (depth: number, availableHeight: number): number => {
-    const maxHeaderHeight = 24;
-    const minHeaderHeight = 12;
+    const maxHeaderHeight = 28; // Increased from 24
+    const minHeaderHeight = Math.max(16, (minFontSize || 12) + 8); // Base on minFontSize
 
-    // Same logic as in TreemapSVG
-    const depthFactor = Math.max(0.8, 1 - depth * 0.05);
+    // Same logic as in TreemapSVG but with larger base values
+    const depthFactor = Math.max(0.85, 1 - depth * 0.03); // Less aggressive scaling
     const baseHeight = Math.max(minHeaderHeight, maxHeaderHeight * depthFactor);
 
     const maxAllowedHeight = Math.max(
       baseHeight,
-      Math.min(availableHeight * 0.45, baseHeight * 1.5)
+      Math.min(availableHeight * 0.4, baseHeight * 1.3)
     );
 
     return maxAllowedHeight;
