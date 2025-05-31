@@ -31,9 +31,9 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
   const {
     sizeAccessor = (n) => n.value,
     minNodeSize = 20,
-    optimalCharWidth = 12,
-    minCharWidth = 8,
-    maxCharWidth = 18,
+    optimalCharWidth = 8,
+    minCharWidth = 6,
+    maxCharWidth = 12,
     headerHeight = 32,
     fontSize = 11,
     minFontSize = 12,
@@ -42,8 +42,8 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
 
   // Calculate pixel width needed for character count
   const getPixelWidthForChars = (charCount: number): number => {
-    // Use the same more aggressive character width as in the renderer
-    return charCount * fontSize * 0.5; // Reduced from 0.6 to 0.5
+    // Use more aggressive character width to encourage narrower nodes
+    return charCount * fontSize * 0.4; // Reduced from 0.5 to 0.4
   };
 
   const optimalWidth = getPixelWidthForChars(optimalCharWidth);
@@ -179,26 +179,31 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     // Calculate how many columns we can fit at optimal width
     const optimalColumns = Math.floor(availableWidth / optimalWidth);
 
+    // Be more aggressive about trying multi-column layouts
+    const maxPossibleColumns = Math.floor(availableWidth / minWidth);
+
     // Try different column counts to find the best layout
     const layouts: Array<
       Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }>
     > = [];
 
-    // Try 1 column (vertical stack)
-    const verticalLayout = createVerticalLayout(
-      children,
-      totalValue,
-      availableWidth,
-      availableHeight,
-      sizeAccessor,
-      minNodeSize
-    );
-    if (verticalLayout.length > 0) {
-      layouts.push(verticalLayout);
+    // Always try horizontal layout first for multiple children, not just when very wide
+    if (children.length >= 2 && availableWidth > optimalWidth * 1.5) {
+      const horizontalLayout = createHorizontalLayout(
+        children,
+        totalValue,
+        availableWidth,
+        availableHeight,
+        sizeAccessor,
+        maxWidth
+      );
+      if (horizontalLayout.length > 0) {
+        layouts.push(horizontalLayout);
+      }
     }
 
-    // Try 2 columns if we have space and enough children
-    if (optimalColumns >= 2 && children.length >= 2) {
+    // Try 2 columns if we have space and children
+    if (maxPossibleColumns >= 2 && children.length >= 2) {
       const grid2Layout = createGridLayout(
         children,
         totalValue,
@@ -213,8 +218,8 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       }
     }
 
-    // Try 3 columns if we have space and enough children
-    if (optimalColumns >= 3 && children.length >= 3) {
+    // Try 3 columns if we have space and children
+    if (maxPossibleColumns >= 3 && children.length >= 3) {
       const grid3Layout = createGridLayout(
         children,
         totalValue,
@@ -229,8 +234,8 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       }
     }
 
-    // Try 4 columns if we have lots of space and children
-    if (optimalColumns >= 4 && children.length >= 4) {
+    // Try 4 columns if we have space and children
+    if (maxPossibleColumns >= 4 && children.length >= 4) {
       const grid4Layout = createGridLayout(
         children,
         totalValue,
@@ -245,19 +250,48 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       }
     }
 
-    // If available width is very wide, try horizontal layout for few children
-    if (availableWidth > maxWidth * 2 && children.length <= 4) {
-      const horizontalLayout = createHorizontalLayout(
+    // Try even more columns if we have many children and space
+    if (maxPossibleColumns >= 5 && children.length >= 5) {
+      const grid5Layout = createGridLayout(
         children,
         totalValue,
         availableWidth,
         availableHeight,
         sizeAccessor,
-        maxWidth
+        5,
+        minNodeSize
       );
-      if (horizontalLayout.length > 0) {
-        layouts.push(horizontalLayout);
+      if (grid5Layout.length > 0) {
+        layouts.push(grid5Layout);
       }
+    }
+
+    if (maxPossibleColumns >= 6 && children.length >= 6) {
+      const grid6Layout = createGridLayout(
+        children,
+        totalValue,
+        availableWidth,
+        availableHeight,
+        sizeAccessor,
+        6,
+        minNodeSize
+      );
+      if (grid6Layout.length > 0) {
+        layouts.push(grid6Layout);
+      }
+    }
+
+    // Try 1 column (vertical stack) - now later in priority
+    const verticalLayout = createVerticalLayout(
+      children,
+      totalValue,
+      availableWidth,
+      availableHeight,
+      sizeAccessor,
+      minNodeSize
+    );
+    if (verticalLayout.length > 0) {
+      layouts.push(verticalLayout);
     }
 
     // Score each layout and pick the best one
@@ -329,6 +363,12 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     }> = [];
     let currentX = 0;
 
+    // Calculate maximum width any single child should take
+    const maxChildWidth = Math.min(
+      maxWidth,
+      availableWidth / Math.max(1, children.length * 0.7)
+    );
+
     for (const child of children) {
       if (!child) continue; // Guard against undefined
 
@@ -336,8 +376,11 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       const ratio = childValue / totalValue;
       let childW = availableWidth * ratio;
 
-      // Constrain to reasonable width
-      childW = Math.min(childW, maxWidth);
+      // Constrain to reasonable width - be more aggressive
+      childW = Math.min(childW, maxChildWidth);
+
+      // Ensure minimum width but cap it
+      childW = Math.max(childW, Math.min(80, availableWidth / children.length));
 
       if (currentX + childW > availableWidth) {
         break;
@@ -498,6 +541,7 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
 
     let score = 0;
     let totalArea = 0;
+    let widthPenalty = 0;
 
     for (const item of layout) {
       const area = item.w * item.h;
@@ -511,22 +555,62 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       // Weight by complexity - more complex groups should get more space
       const complexityWeight = Math.max(1, complexity / 5);
 
-      // Prefer widths close to optimal
-      const widthRatio = Math.min(item.w / optimalWidth, optimalWidth / item.w);
-      score += widthRatio * area * complexityWeight;
+      // Strongly prefer widths close to optimal, penalize very wide nodes
+      const widthRatio = item.w / optimalWidth;
+      let widthScore;
+      if (widthRatio <= 1.5) {
+        // Good width range
+        widthScore = 1.0;
+      } else if (widthRatio <= 3) {
+        // Acceptable but not great
+        widthScore = 0.7;
+      } else if (widthRatio <= 5) {
+        // Too wide, penalize
+        widthScore = 0.3;
+      } else {
+        // Very wide, heavily penalize
+        widthScore = 0.1;
+      }
+
+      score += widthScore * area * complexityWeight;
+
+      // Add penalty for very wide nodes relative to available width
+      if (item.w > availableWidth * 0.6) {
+        widthPenalty += area * 0.5; // Heavy penalty for nodes using >60% of width
+      }
 
       // Prefer reasonable aspect ratios (not too wide or too tall)
       const aspectRatio = item.w / item.h;
-      const aspectScore = aspectRatio > 0.3 && aspectRatio < 4 ? 1 : 0.5;
+      let aspectScore;
+      if (aspectRatio >= 0.5 && aspectRatio <= 2) {
+        aspectScore = 1.0; // Ideal aspect ratio
+      } else if (aspectRatio >= 0.3 && aspectRatio <= 4) {
+        aspectScore = 0.7; // Acceptable
+      } else {
+        aspectScore = 0.3; // Poor aspect ratio
+      }
       score += aspectScore * area * complexityWeight;
 
-      // Bonus for fitting more children, weighted by complexity
-      score += area * 0.1 * complexityWeight;
+      // Bonus for layouts with multiple items (encourages splitting)
+      if (layout.length > 1) {
+        score += area * 0.2 * complexityWeight;
+      }
     }
 
-    // Prefer layouts that use more of the available space
+    // Apply width penalty
+    score -= widthPenalty;
+
+    // Prefer layouts that use more of the available space, but not as heavily weighted
     const spaceUtilization = totalArea / (availableWidth * availableHeight);
-    score *= spaceUtilization;
+    score *= Math.sqrt(spaceUtilization); // Less aggressive space utilization bonus
+
+    // Bonus for having multiple items (encourages multi-column layouts)
+    if (layout.length > 1) {
+      score *= 1.2; // 20% bonus for multi-item layouts
+    }
+    if (layout.length > 2) {
+      score *= 1.1; // Additional 10% bonus for 3+ items
+    }
 
     return score;
   }

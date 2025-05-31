@@ -17,6 +17,12 @@ Example treemap of itself:
     - **Multi-Layout Comparison**: Evaluates vertical stacks, horizontal layouts, and grid arrangements to find the best fit
     - **Width Constraints**: Prevents overly wide rectangles by breaking them into columns when beneficial
     - **Header Priority**: Ensures headers always get adequate space for readable text labels
+    - **Improved Multi-Column Layouts**: Enhanced layout algorithm that aggressively prevents overly wide nodes by:
+      - **Reduced Optimal Width**: Uses more conservative character width calculations (8 chars optimal vs previous 12)
+      - **Extended Column Range**: Tests up to 6 columns for layouts with many child nodes
+      - **Width Penalties**: Heavily penalizes nodes that exceed 60% of available width
+      - **Multi-Item Preference**: Provides scoring bonuses for layouts that split content into multiple items
+      - **Constrained Node Widths**: Limits individual node widths to prevent single nodes from spanning entire page width
   - **Container Padding System**: Intelligent padding system that ensures child nodes are rendered properly inside their parent containers:
     - **Layout-Integrated Padding**: Padding is calculated during the layout phase, not just for visual rendering
     - **Hierarchical Spacing**: Parent nodes automatically reserve space for padding, positioning children inside the padded area
