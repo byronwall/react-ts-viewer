@@ -1,6 +1,11 @@
 import React, { useMemo } from "react";
 import type { ScopeNode } from "../../types";
-import { binaryLayout, LayoutNode, LayoutFn } from "./binaryLayout";
+import { NodeCategory } from "../../types";
+import { TreemapSettings } from "../settingsConfig";
+import { binaryLayout, LayoutFn, LayoutNode } from "./binaryLayout";
+import { getContrastingTextColor } from "./getContrastingTextColor";
+import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
+import { pastelSet } from "./pastelSet";
 
 /* ---------- render-time props ------------ */
 
@@ -25,74 +30,205 @@ export interface TreemapSVGProps {
   padding?: number;
   minFontSize?: number;
   maxFontSize?: number;
+  // New props for rendering logic
+  settings: TreemapSettings;
+  matchingNodes?: Set<string>;
+  selectedNodeId?: string;
+  onNodeClick?: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseEnter?: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseLeave?: () => void;
 }
 
 /* ---------- defaults ------------ */
 
-const defaultRenderNode: Required<TreemapSVGProps>["renderNode"] = ({
-  w,
-  h,
-  depth,
-}) => (
-  <rect
-    width={w}
-    height={h}
-    fill="#4c91f0"
-    stroke="#1d2230"
-    strokeWidth={Math.max(0.5, 2 - depth * 0.2)}
-    opacity={Math.max(0.3, 1 - depth * 0.1)}
-  />
-);
-
-const createDefaultRenderHeader =
+// Create rendering functions that use the full styling logic
+const createStyledRenderHeader =
   (
+    settings: TreemapSettings,
+    matchingNodes: Set<string>,
+    selectedNodeId: string | undefined,
+    onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void,
+    onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
+    onMouseLeave: () => void,
     minFontSize: number,
     maxFontSize: number
   ): Required<TreemapSVGProps>["renderHeader"] =>
   ({ node, w, h, depth }) => {
-    // Improved text sizing with configurable bounds
+    const category = node.category;
+    const color = pastelSet[category] || pastelSet[NodeCategory.Other];
+
+    // Check if this node is selected or matches search
+    const isSelected = selectedNodeId === node.id;
+    const isSearchMatch = matchingNodes.has(node.id);
+
+    let borderColor = "#555555";
+    if (isSelected) {
+      borderColor = "red";
+    } else if (isSearchMatch) {
+      borderColor = "#FFD700";
+    }
+
+    // Adjust visual properties based on depth
+    const strokeWidth = isSelected
+      ? Math.max(1, 3 - depth * 0.3)
+      : Math.max(0.5, 1.5 - depth * 0.1);
+    const opacity = Math.max(0.8, 1 - depth * 0.02);
+
+    // Calculate font size with proper constraints
     const depthAdjustedMin = Math.max(
       minFontSize,
       minFontSize + 6 - depth * 1.5
-    ); // Gentler depth reduction
+    );
     const heightBasedSize = h * 0.7; // Size based on available height
-
-    // Properly clamp between min and max
     const fontSize = Math.min(
       maxFontSize,
       Math.max(depthAdjustedMin, heightBasedSize)
     );
 
-    const textY = Math.min(h - 4, fontSize + 8); // Better vertical positioning
+    const textY = Math.min(h - 2, fontSize + 2);
 
-    // Calculate character fit with improved spacing
-    const charWidth = fontSize * 0.55; // Slightly more conservative character spacing
-    const availableTextWidth = w - 16; // More generous padding
-    const maxChars = Math.max(3, Math.floor(availableTextWidth / charWidth));
+    console.log(
+      `[RENDER HEADER] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
+    );
+
+    const displayLabel = getDynamicNodeDisplayLabel(
+      {
+        data: node,
+        width: w,
+        height: h,
+      },
+      settings
+    );
+
+    // Truncate label based on depth and available space
+    const maxLabelLength = Math.max(5, Math.floor((w - 8) / (fontSize * 0.6)));
+    const truncatedLabel = displayLabel
+      ? displayLabel.length > maxLabelLength
+        ? displayLabel.slice(0, maxLabelLength - 3) + "..."
+        : displayLabel
+      : "";
 
     return (
       <>
         <rect
           width={w}
           height={h}
-          fill="#8ad1c2"
-          stroke="#5a9a8a"
-          strokeWidth={Math.max(0.5, 1.5 - depth * 0.1)}
-          opacity={Math.max(0.7, 1 - depth * 0.05)}
+          fill={color}
+          stroke={borderColor}
+          strokeWidth={strokeWidth}
+          opacity={opacity}
+          style={{ cursor: "pointer" }}
+          onClick={(e) => onNodeClick(node, e as any)}
+          onMouseEnter={(e) => onMouseEnter(node, e as any)}
+          onMouseLeave={onMouseLeave}
         />
-        <text
-          x={8}
-          y={textY}
-          fontSize={fontSize}
-          fill="#000"
-          pointerEvents="none"
-          style={{
-            userSelect: "none",
-            fontWeight: depth === 0 ? "bold" : depth <= 1 ? "600" : "normal",
-          }}
-        >
-          {node.label.slice(0, maxChars)}
-        </text>
+        {settings.enableLabel && truncatedLabel && w >= 20 && h >= 8 && (
+          <text
+            x={4}
+            y={textY}
+            fontSize={fontSize}
+            fill={getContrastingTextColor(color)}
+            pointerEvents="none"
+            style={{ userSelect: "none" }}
+          >
+            {truncatedLabel}
+          </text>
+        )}
+      </>
+    );
+  };
+
+const createStyledRenderNode =
+  (
+    settings: TreemapSettings,
+    matchingNodes: Set<string>,
+    selectedNodeId: string | undefined,
+    onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void,
+    onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
+    onMouseLeave: () => void,
+    minFontSize: number,
+    maxFontSize: number
+  ): Required<TreemapSVGProps>["renderNode"] =>
+  ({ node, w, h, depth }) => {
+    const category = node.category;
+    const color = pastelSet[category] || pastelSet[NodeCategory.Other];
+
+    // Check if this node is selected or matches search
+    const isSelected = selectedNodeId === node.id;
+    const isSearchMatch = matchingNodes.has(node.id);
+
+    let borderColor = "#555555";
+    if (isSelected) {
+      borderColor = "red";
+    } else if (isSearchMatch) {
+      borderColor = "#FFD700";
+    }
+
+    // Adjust visual properties based on depth
+    const strokeWidth = isSelected
+      ? Math.max(1, settings.borderWidth + 1 - depth * 0.2)
+      : Math.max(0.5, settings.borderWidth - depth * 0.1);
+    const opacity = Math.max(0.6, settings.nodeOpacity - depth * 0.02);
+
+    const displayLabel = getDynamicNodeDisplayLabel(
+      {
+        data: node,
+        width: w,
+        height: h,
+      },
+      settings
+    );
+
+    // Calculate font size with proper constraints
+    const depthAdjustedMin = Math.max(
+      minFontSize,
+      minFontSize + 6 - depth * 1.5
+    );
+    const heightBasedSize = h * 0.6; // Size based on available height
+    const fontSize = Math.min(
+      maxFontSize,
+      Math.max(depthAdjustedMin, heightBasedSize)
+    );
+
+    console.log(
+      `[RENDER NODE] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
+    );
+
+    // Only show labels if there's enough space and it meets minimum requirements
+    const shouldShowLabel =
+      settings.enableLabel &&
+      displayLabel &&
+      h >= Math.max(settings.minLabelHeight, fontSize + 4) &&
+      w >= fontSize * 2;
+
+    return (
+      <>
+        <rect
+          width={w}
+          height={h}
+          fill={color}
+          stroke={borderColor}
+          strokeWidth={strokeWidth}
+          opacity={opacity}
+          style={{ cursor: "pointer" }}
+          onClick={(e) => onNodeClick(node, e as any)}
+          onMouseEnter={(e) => onMouseEnter(node, e as any)}
+          onMouseLeave={onMouseLeave}
+        />
+        {shouldShowLabel && (
+          <text
+            x={w / 2}
+            y={h / 2}
+            fontSize={fontSize}
+            fill={getContrastingTextColor(color)}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+            style={{ userSelect: "none" }}
+          >
+            {displayLabel}
+          </text>
+        )}
       </>
     );
   };
@@ -104,19 +240,68 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   width,
   height,
   layout = binaryLayout,
-  renderNode = defaultRenderNode,
+  renderNode,
   renderHeader,
   padding = 4,
   minFontSize = 12,
   maxFontSize = 18,
+  settings,
+  matchingNodes = new Set(),
+  selectedNodeId,
+  onNodeClick = () => {},
+  onMouseEnter = () => {},
+  onMouseLeave = () => {},
 }) => {
-  // Create the default render header with the font size constraints
-  const defaultRenderHeaderWithFontSizes = useMemo(
-    () => createDefaultRenderHeader(minFontSize, maxFontSize),
-    [minFontSize, maxFontSize]
-  );
+  // Create the styled render functions if custom ones aren't provided
+  const finalRenderHeader = useMemo(() => {
+    if (renderHeader) return renderHeader;
 
-  const finalRenderHeader = renderHeader || defaultRenderHeaderWithFontSizes;
+    return createStyledRenderHeader(
+      settings,
+      matchingNodes,
+      selectedNodeId,
+      onNodeClick,
+      onMouseEnter,
+      onMouseLeave,
+      minFontSize,
+      maxFontSize
+    );
+  }, [
+    renderHeader,
+    settings,
+    matchingNodes,
+    selectedNodeId,
+    onNodeClick,
+    onMouseEnter,
+    onMouseLeave,
+    minFontSize,
+    maxFontSize,
+  ]);
+
+  const finalRenderNode = useMemo(() => {
+    if (renderNode) return renderNode;
+
+    return createStyledRenderNode(
+      settings,
+      matchingNodes,
+      selectedNodeId,
+      onNodeClick,
+      onMouseEnter,
+      onMouseLeave,
+      minFontSize,
+      maxFontSize
+    );
+  }, [
+    renderNode,
+    settings,
+    matchingNodes,
+    selectedNodeId,
+    onNodeClick,
+    onMouseEnter,
+    onMouseLeave,
+    minFontSize,
+    maxFontSize,
+  ]);
 
   const layoutRoot = useMemo(
     () => layout(root, width, height),
@@ -234,7 +419,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
         {/* For leaf nodes: render the node content in the available space */}
         {shouldRenderBody && !hasRenderableChildren && (
           <g transform={`translate(${ln.x} ${ln.y + headerHeight})`}>
-            {renderNode({
+            {finalRenderNode({
               node: ln.node,
               w: ln.w,
               h: ln.h - headerHeight,
