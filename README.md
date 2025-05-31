@@ -10,6 +10,7 @@ Example treemap of itself:
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
   - **Custom Implementation**: Uses a hand-rolled treemap implementation with binary layout algorithm for optimal performance and customization.
+  - **Hierarchical Value Calculation**: Each leaf node (child without children) has a value of 1, and parent nodes recursively sum their children's values. This provides meaningful size representation where larger containers automatically reflect their complexity through the sum of their components.
   - **Grid-Based Layout Algorithm**: Advanced layout system that intelligently subdivides space to create optimal rectangle sizes for text display:
     - **Text-First Approach**: Layout decisions prioritize displaying 10-15 characters per node for optimal readability
     - **Smart Grid Generation**: Automatically calculates optimal column counts based on available space and content
