@@ -304,8 +304,18 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   ]);
 
   const layoutRoot = useMemo(
-    () => layout(root, width, height),
-    [root, width, height, layout]
+    () =>
+      layout(root, width, height, {
+        optimalCharWidth: 12,
+        minCharWidth: 8,
+        maxCharWidth: 18,
+        headerHeight: 32,
+        fontSize: 11,
+        minNodeSize: 20,
+        sizeAccessor: (n) => n.value,
+        padding: padding,
+      }),
+    [root, width, height, layout, padding]
   );
 
   // Calculate header height based on depth - prioritize headers!
@@ -325,33 +335,6 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     return maxAllowedHeight;
   };
 
-  // Helper function to calculate the bounding box of all children
-  const getChildrenBounds = (ln: LayoutNode) => {
-    if (!ln.children || ln.children.length === 0) {
-      return { minX: ln.x, minY: ln.y, maxX: ln.x + ln.w, maxY: ln.y + ln.h };
-    }
-
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    const processNode = (node: LayoutNode) => {
-      minX = Math.min(minX, node.x);
-      minY = Math.min(minY, node.y);
-      maxX = Math.max(maxX, node.x + node.w);
-      maxY = Math.max(maxY, node.y + node.h);
-
-      if (node.children) {
-        node.children.forEach(processNode);
-      }
-    };
-
-    ln.children.forEach(processNode);
-
-    return { minX, minY, maxX, maxY };
-  };
-
   /* recursive renderer with infinite depth support */
   const renderGroup = (ln: LayoutNode, depth = 0): React.ReactNode => {
     // Skip rendering if the node is too small to be meaningful
@@ -368,41 +351,25 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
     const headerHeight = shouldRenderHeader ? getHeaderHeight(depth, ln.h) : 0;
 
-    console.log(
-      `[RENDER] Node: ${ln.node.label}, depth: ${depth}, ln.h: ${ln.h}, shouldRenderHeader: ${shouldRenderHeader}, headerHeight: ${headerHeight}`
-    );
-    console.log(
-      `[RENDER] Node positioned at ln.y: ${ln.y}, header will be at: ${ln.y}, children should be at: ${ln.y + headerHeight}`
-    );
-
     // For body rendering, be more flexible - it's less important than headers
     const shouldRenderBody = ln.h - headerHeight > 8; // Reduced threshold
 
     return (
       <g key={ln.node.id}>
-        {/* Render container background for nodes with children */}
-        {hasRenderableChildren &&
-          (() => {
-            const bounds = getChildrenBounds(ln);
-            const containerX = bounds.minX - padding;
-            const containerY = bounds.minY - padding;
-            const containerW = bounds.maxX - bounds.minX + 2 * padding;
-            const containerH = bounds.maxY - bounds.minY + 2 * padding;
-
-            return (
-              <rect
-                x={containerX}
-                y={containerY}
-                width={containerW}
-                height={containerH}
-                fill={depth === 0 ? "#f8f9fa" : "#ffffff"}
-                stroke={depth === 0 ? "#6c757d" : "#adb5bd"}
-                strokeWidth={Math.max(1, 2 - depth * 0.2)}
-                opacity={Math.max(0.4, 0.8 - depth * 0.1)}
-                rx={Math.max(2, 4 - depth * 0.5)}
-              />
-            );
-          })()}
+        {/* Render container background for nodes with children - simplified since padding is now in layout */}
+        {hasRenderableChildren && depth > 0 && (
+          <rect
+            x={ln.x}
+            y={ln.y}
+            width={ln.w}
+            height={ln.h}
+            fill="none"
+            stroke={depth === 1 ? "#6c757d" : "#adb5bd"}
+            strokeWidth={Math.max(0.5, 1.5 - depth * 0.2)}
+            opacity={Math.max(0.3, 0.6 - depth * 0.1)}
+            rx={Math.max(2, 4 - depth * 0.5)}
+          />
+        )}
 
         {/* Render header only if this node has children */}
         {shouldRenderHeader && (

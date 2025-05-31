@@ -17,6 +17,11 @@ Example treemap of itself:
     - **Multi-Layout Comparison**: Evaluates vertical stacks, horizontal layouts, and grid arrangements to find the best fit
     - **Width Constraints**: Prevents overly wide rectangles by breaking them into columns when beneficial
     - **Header Priority**: Ensures headers always get adequate space for readable text labels
+  - **Container Padding System**: Intelligent padding system that ensures child nodes are rendered properly inside their parent containers:
+    - **Layout-Integrated Padding**: Padding is calculated during the layout phase, not just for visual rendering
+    - **Hierarchical Spacing**: Parent nodes automatically reserve space for padding, positioning children inside the padded area
+    - **Depth-Aware Padding**: Padding is only applied to non-root nodes to avoid wasting space at the top level
+    - **Visual Container Boundaries**: Parent containers render with subtle borders to clearly delineate hierarchical structure
   - **Infinite Depth Rendering**: Supports rendering nested code structures to unlimited depth with intelligent visual scaling.
   - **Dynamic Visual Hierarchy**: Header and body sections automatically adjust size, opacity, and stroke width based on nesting depth.
   - **Smart Layout Algorithm**: Enhanced binary layout with aspect ratio optimization and minimum size constraints for deeply nested nodes.

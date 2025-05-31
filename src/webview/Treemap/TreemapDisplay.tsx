@@ -925,6 +925,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                   fontSize: 11, // Base font size for calculations
                   minNodeSize: 20, // Minimum node size
                   sizeAccessor: (n) => n.value,
+                  padding: settings.outerPadding,
                 })
               }
               settings={settings}
@@ -933,6 +934,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               onNodeClick={handleNodeClick}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
+              padding={settings.outerPadding}
             />
           ) : (
             <div

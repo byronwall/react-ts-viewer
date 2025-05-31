@@ -23,6 +23,7 @@ export type LayoutFn = (
     headerHeight?: number;
     fontSize?: number;
     minFontSize?: number;
+    padding?: number;
   }
 ) => LayoutNode;
 
@@ -36,6 +37,7 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     headerHeight = 32,
     fontSize = 11,
     minFontSize = 12,
+    padding = 4,
   } = opts;
 
   // Calculate pixel width needed for character count
@@ -95,8 +97,10 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       ? getHeaderHeight(depth, height)
       : 0;
 
-    const availableWidth = width;
-    const availableHeight = height - reservedHeaderHeight;
+    // Apply padding to reduce available space for children
+    const paddingToApply = depth > 0 ? padding : 0; // Don't apply padding to root node
+    const availableWidth = width - 2 * paddingToApply;
+    const availableHeight = height - reservedHeaderHeight - 2 * paddingToApply;
 
     if (availableWidth < minWidth || availableHeight < minNodeSize) {
       return layoutNode;
@@ -121,8 +125,9 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     }
 
     // GRID-BASED LAYOUT LOGIC
-    const startX = x;
-    const startY = y + reservedHeaderHeight;
+    // Offset start position by padding
+    const startX = x + paddingToApply;
+    const startY = y + reservedHeaderHeight + paddingToApply;
 
     // Determine optimal grid layout
     const layoutResult = calculateGridLayout(
