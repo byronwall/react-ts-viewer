@@ -118,7 +118,7 @@ interface AdvancedComponentProps {
   id: string;
   onUpdate?: (count: number) => void;
 }",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "Function",
@@ -230,7 +230,7 @@ interface AdvancedComponentProps {
     console.log(\`\${componentName} mounted\`);
     return () => console.log(\`\${componentName} unmounted\`);
   }",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:131-275",
@@ -253,7 +253,7 @@ interface AdvancedComponentProps {
     console.log(\`\${componentName} mounted\`);
     return () => console.log(\`\${componentName} unmounted\`);
   }, [componentName])",
-          "value": 1,
+          "value": 2,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:85-278",
@@ -275,7 +275,7 @@ interface AdvancedComponentProps {
     return () => console.log(\`\${componentName} unmounted\`);
   }, [componentName]);
 }",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "Variable",
@@ -447,7 +447,7 @@ interface AdvancedComponentProps {
     default:
       return state;
   }",
-          "value": 1,
+          "value": 3,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:457-719",
@@ -473,7 +473,7 @@ interface AdvancedComponentProps {
       return state;
   }
 }",
-      "value": 1,
+      "value": 3,
     },
     {
       "category": "Variable",
@@ -640,7 +640,7 @@ interface AdvancedComponentProps {
       onUpdate(state.count + 1);
     }
   }",
-                      "value": 1,
+                      "value": 2,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1030-1175",
@@ -665,7 +665,7 @@ interface AdvancedComponentProps {
       onUpdate(state.count + 1);
     }
   }, [state.count, onUpdate])",
-                  "value": 1,
+                  "value": 2,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1012-1175",
@@ -695,7 +695,7 @@ interface AdvancedComponentProps {
       onUpdate(state.count + 1);
     }
   }, [state.count, onUpdate])",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "Variable",
@@ -856,7 +856,7 @@ interface AdvancedComponentProps {
     }
     return value * 3;
   }",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "ReactHook",
@@ -943,7 +943,7 @@ interface AdvancedComponentProps {
     const result = utilityFunction(state.count);
     console.log("Utility function result:", result);
   }",
-                  "value": 1,
+                  "value": 2,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1532-1671",
@@ -966,7 +966,7 @@ interface AdvancedComponentProps {
     const result = utilityFunction(state.count);
     console.log("Utility function result:", result);
   }, [state.count])",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "ReturnStatement",
@@ -1223,7 +1223,7 @@ interface AdvancedComponentProps {
         }
         return null;
       }",
-                          "value": 1,
+                          "value": 2,
                         },
                       ],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2185-2385",
@@ -1246,7 +1246,7 @@ interface AdvancedComponentProps {
         }
         return null;
       })()",
-                      "value": 1,
+                      "value": 2,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1689-2397",
@@ -1284,7 +1284,7 @@ interface AdvancedComponentProps {
         return null;
       })()}
     </div>",
-                  "value": 1,
+                  "value": 8,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1676-2402",
@@ -1325,7 +1325,7 @@ interface AdvancedComponentProps {
       })()}
     </div>
   );",
-              "value": 1,
+              "value": 8,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:871-2404",
@@ -1397,7 +1397,7 @@ interface AdvancedComponentProps {
     </div>
   );
 }",
-          "value": 1,
+          "value": 17,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:817-2404",
@@ -1527,7 +1527,7 @@ interface AdvancedComponentProps {
     </div>
   );
 }",
-      "value": 1,
+      "value": 17,
     },
     {
       "category": "Import",
@@ -1653,6 +1653,6 @@ const AdvancedComponent: React.FC<AdvancedComponentProps> = ({
 export { AdvancedComponent, useLogger };
 export default AdvancedComponent;
 ",
-  "value": 1,
+  "value": 27,
 }
 `;

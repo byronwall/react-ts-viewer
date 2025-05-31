@@ -190,7 +190,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
       <p>Count: {count}</p>
       <button onClick={increment}>Increment</button>
     </div>",
-                  "value": 1,
+                  "value": 2,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:243-358",
@@ -214,7 +214,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
       <button onClick={increment}>Increment</button>
     </div>
   );",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:102-360",
@@ -246,7 +246,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
     </div>
   );
 }",
-          "value": 1,
+          "value": 4,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:48-360",
@@ -296,7 +296,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
     </div>
   );
 }",
-      "value": 1,
+      "value": 4,
     },
     {
       "category": "Import",
@@ -352,6 +352,6 @@ const SimpleComponent: React.FC<{ initialCount: number }> = ({
 
 export default SimpleComponent;
 ",
-  "value": 1,
+  "value": 5,
 }
 `;

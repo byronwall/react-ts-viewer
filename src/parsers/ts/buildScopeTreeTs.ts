@@ -398,5 +398,29 @@ export function buildScopeTreeTs(
     processedTree = createSyntheticGroups(processedTree, true, sourceFile);
   }
 
+  // Calculate parent node values as sum of children recursively
+  aggregateValuesPostOrder(processedTree);
+
   return processedTree;
+}
+
+// Function to recursively calculate parent node values as sum of their children
+function aggregateValuesPostOrder(node: ScopeNode): number {
+  if (!node.children || node.children.length === 0) {
+    // Leaf node - its value stays as 1
+    return node.value;
+  }
+
+  // Recursively calculate children values first
+  let totalChildrenValue = 0;
+  for (const child of node.children) {
+    if (child) {
+      // Guard against undefined children
+      totalChildrenValue += aggregateValuesPostOrder(child);
+    }
+  }
+
+  // Set parent's value to sum of all children
+  node.value = totalChildrenValue;
+  return node.value;
 }
