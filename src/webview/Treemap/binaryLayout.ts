@@ -24,6 +24,7 @@ export type LayoutFn = (
     fontSize?: number;
     minFontSize?: number;
     padding?: number;
+    minWidthPx?: number;
   }
 ) => LayoutNode;
 
@@ -38,6 +39,7 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     fontSize = 11,
     minFontSize = 12,
     padding = 4,
+    minWidthPx = 60,
   } = opts;
 
   // Calculate pixel width needed for character count
@@ -47,7 +49,7 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
   };
 
   const optimalWidth = getPixelWidthForChars(optimalCharWidth);
-  const minWidth = getPixelWidthForChars(minCharWidth);
+  const minWidth = Math.max(minWidthPx, getPixelWidthForChars(minCharWidth));
   const maxWidth = getPixelWidthForChars(maxCharWidth);
 
   // Header height calculation that matches the renderer
@@ -75,6 +77,19 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
     height: number,
     depth: number
   ): LayoutNode {
+    // Add console log to verify source order is maintained
+    if (node.children && node.children.length > 0) {
+      console.log(
+        `[LAYOUT ORDER] Node "${node.label}" has ${node.children.length} children:`,
+        node.children.map((child, index) => ({
+          index,
+          label: child.label,
+          id: child.id,
+          startLine: child.loc?.start.line || "unknown",
+        }))
+      );
+    }
+
     const layoutNode: LayoutNode = {
       node,
       x,
@@ -107,7 +122,7 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       return layoutNode;
     }
 
-    // Filter viable children
+    // Filter viable children - PRESERVE ORIGINAL ORDER
     const viableChildren = node.children.filter((child) => {
       const childValue = sizeAccessor(child);
       return childValue > 0;
@@ -187,31 +202,51 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }>
     > = [];
 
-    // Always try horizontal layout first for multiple children, not just when very wide
-    if (children.length >= 2 && availableWidth > optimalWidth * 1.5) {
-      const horizontalLayout = createHorizontalLayout(
+    // Always try proportional horizontal layout first for multiple children
+    if (children.length >= 2) {
+      const proportionalLayout = createProportionalLayout(
         children,
         totalValue,
         availableWidth,
         availableHeight,
         sizeAccessor,
-        maxWidth
+        optimalWidth,
+        maxWidth,
+        minWidth,
+        minNodeSize
       );
-      if (horizontalLayout.length > 0) {
-        layouts.push(horizontalLayout);
+      if (proportionalLayout.length > 0) {
+        layouts.push(proportionalLayout);
       }
+    }
+
+    // Try bin packing layout
+    const binPackingLayout = createBinPackingLayout(
+      children,
+      totalValue,
+      availableWidth,
+      availableHeight,
+      sizeAccessor,
+      optimalWidth,
+      minWidth,
+      minNodeSize
+    );
+    if (binPackingLayout.length > 0) {
+      layouts.push(binPackingLayout);
     }
 
     // Try 2 columns if we have space and children
     if (maxPossibleColumns >= 2 && children.length >= 2) {
-      const grid2Layout = createGridLayout(
+      const grid2Layout = createFlexibleGridLayout(
         children,
         totalValue,
         availableWidth,
         availableHeight,
         sizeAccessor,
         2,
-        minNodeSize
+        minNodeSize,
+        optimalWidth,
+        minWidth
       );
       if (grid2Layout.length > 0) {
         layouts.push(grid2Layout);
@@ -220,64 +255,19 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
 
     // Try 3 columns if we have space and children
     if (maxPossibleColumns >= 3 && children.length >= 3) {
-      const grid3Layout = createGridLayout(
+      const grid3Layout = createFlexibleGridLayout(
         children,
         totalValue,
         availableWidth,
         availableHeight,
         sizeAccessor,
         3,
-        minNodeSize
+        minNodeSize,
+        optimalWidth,
+        minWidth
       );
       if (grid3Layout.length > 0) {
         layouts.push(grid3Layout);
-      }
-    }
-
-    // Try 4 columns if we have space and children
-    if (maxPossibleColumns >= 4 && children.length >= 4) {
-      const grid4Layout = createGridLayout(
-        children,
-        totalValue,
-        availableWidth,
-        availableHeight,
-        sizeAccessor,
-        4,
-        minNodeSize
-      );
-      if (grid4Layout.length > 0) {
-        layouts.push(grid4Layout);
-      }
-    }
-
-    // Try even more columns if we have many children and space
-    if (maxPossibleColumns >= 5 && children.length >= 5) {
-      const grid5Layout = createGridLayout(
-        children,
-        totalValue,
-        availableWidth,
-        availableHeight,
-        sizeAccessor,
-        5,
-        minNodeSize
-      );
-      if (grid5Layout.length > 0) {
-        layouts.push(grid5Layout);
-      }
-    }
-
-    if (maxPossibleColumns >= 6 && children.length >= 6) {
-      const grid6Layout = createGridLayout(
-        children,
-        totalValue,
-        availableWidth,
-        availableHeight,
-        sizeAccessor,
-        6,
-        minNodeSize
-      );
-      if (grid6Layout.length > 0) {
-        layouts.push(grid6Layout);
       }
     }
 
@@ -288,7 +278,8 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       availableWidth,
       availableHeight,
       sizeAccessor,
-      minNodeSize
+      minNodeSize,
+      minWidth
     );
     if (verticalLayout.length > 0) {
       layouts.push(verticalLayout);
@@ -301,15 +292,36 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       availableWidth,
       availableHeight
     );
+
+    if (bestLayout) {
+      console.log(
+        `[BEST LAYOUT] Selected layout with ${bestLayout.length} children. Final order:`,
+        bestLayout.map((item, index) => ({
+          index,
+          label: item.child.label,
+          startLine: item.child.loc?.start.line || "unknown",
+          x: Math.round(item.x),
+          y: Math.round(item.y),
+          w: Math.round(item.w),
+          h: Math.round(item.h),
+          value: sizeAccessor(item.child),
+        }))
+      );
+    }
+
     return bestLayout || []; // Ensure we always return an array
   }
 
-  function createVerticalLayout(
+  // New proportional layout that respects value-based sizing
+  function createProportionalLayout(
     children: ScopeNode[],
     totalValue: number,
     availableWidth: number,
     availableHeight: number,
     sizeAccessor: (n: ScopeNode) => number,
+    optimalWidth: number,
+    maxWidth: number,
+    minWidth: number,
     minNodeSize: number
   ): Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }> {
     const result: Array<{
@@ -319,7 +331,394 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       w: number;
       h: number;
     }> = [];
+
+    console.log(
+      `[PROPORTIONAL LAYOUT] Creating proportional layout for ${children.length} children:`,
+      children.map((child, index) => ({
+        index,
+        label: child.label,
+        value: sizeAccessor(child),
+        ratio: sizeAccessor(child) / totalValue,
+      }))
+    );
+
+    // Calculate ideal areas for each child
+    const totalArea = availableWidth * availableHeight;
+    const childData = children.map((child) => ({
+      child,
+      value: sizeAccessor(child),
+      ratio: sizeAccessor(child) / totalValue,
+      idealArea: (sizeAccessor(child) / totalValue) * totalArea,
+    }));
+
+    // Try to arrange children in a way that respects their proportional sizes
+    // Start with a simple horizontal arrangement but with proportional widths
+    let currentX = 0;
+
+    for (const item of childData) {
+      if (!item.child) continue;
+
+      // Calculate width based on value proportion
+      const proportionalWidth = item.ratio * availableWidth;
+
+      // Apply constraints - ensure minimum width is respected
+      let childW = Math.max(minWidth, Math.min(maxWidth, proportionalWidth));
+
+      // Skip children that can't fit the minimum width
+      const remainingWidth = availableWidth - currentX;
+      if (childW > remainingWidth && remainingWidth < minWidth) {
+        console.log(
+          `[PROPORTIONAL LAYOUT] Skipping child "${item.child.label}" - insufficient width (${remainingWidth} < ${minWidth})`
+        );
+        continue; // Skip this child if it can't fit
+      }
+
+      if (childW > remainingWidth) {
+        childW = remainingWidth;
+      }
+
+      if (currentX + childW > availableWidth) {
+        break; // Stop if we can't fit more
+      }
+
+      result.push({
+        child: item.child,
+        x: currentX,
+        y: 0,
+        w: childW,
+        h: availableHeight,
+      });
+
+      currentX += childW;
+    }
+
+    return result;
+  }
+
+  // New bin packing layout
+  function createBinPackingLayout(
+    children: ScopeNode[],
+    totalValue: number,
+    availableWidth: number,
+    availableHeight: number,
+    sizeAccessor: (n: ScopeNode) => number,
+    optimalWidth: number,
+    minWidth: number,
+    minNodeSize: number
+  ): Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }> {
+    const result: Array<{
+      child: ScopeNode;
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    }> = [];
+
+    console.log(
+      `[BIN PACKING LAYOUT] Creating bin packing layout for ${children.length} children:`,
+      children.map((child, index) => ({
+        index,
+        label: child.label,
+        value: sizeAccessor(child),
+        ratio: sizeAccessor(child) / totalValue,
+      }))
+    );
+
+    // Calculate target dimensions for each child based on their value
+    const totalArea = availableWidth * availableHeight;
+    const childrenWithDimensions = children
+      .map((child) => {
+        const value = sizeAccessor(child);
+        const ratio = value / totalValue;
+        const targetArea = ratio * totalArea;
+
+        // Calculate target width and height maintaining reasonable aspect ratio
+        // Prefer width close to optimal, adjust height accordingly
+        let targetW = Math.min(
+          optimalWidth * Math.sqrt(ratio * 4),
+          availableWidth * 0.6
+        );
+        targetW = Math.max(minWidth, targetW);
+        let targetH = Math.max(minNodeSize, targetArea / targetW);
+
+        // Ensure height fits
+        if (targetH > availableHeight) {
+          targetH = availableHeight;
+          targetW = Math.max(minWidth, targetArea / targetH);
+        }
+
+        return {
+          child,
+          value,
+          ratio,
+          targetArea,
+          w: Math.min(targetW, availableWidth),
+          h: Math.min(targetH, availableHeight),
+        };
+      })
+      .filter((item) => item.w >= minWidth); // Filter out items that would be too narrow
+
+    // Sort by area descending for better packing (largest first)
+    const sortedChildren = [...childrenWithDimensions].sort(
+      (a, b) => b.targetArea - a.targetArea
+    );
+
+    // Simple bin packing: place items left-to-right, top-to-bottom
+    const placedRects: Array<{ x: number; y: number; w: number; h: number }> =
+      [];
+
+    for (const item of sortedChildren) {
+      if (!item.child) continue;
+
+      let placed = false;
+      let bestX = 0;
+      let bestY = 0;
+
+      // Try to find the best position for this item
+      for (
+        let y = 0;
+        y <= availableHeight - item.h && !placed;
+        y += minNodeSize
+      ) {
+        for (
+          let x = 0;
+          x <= availableWidth - item.w && !placed;
+          x += minWidth
+        ) {
+          // Check if this position conflicts with any existing rectangles
+          const conflicts = placedRects.some(
+            (rect) =>
+              !(
+                x >= rect.x + rect.w ||
+                x + item.w <= rect.x ||
+                y >= rect.y + rect.h ||
+                y + item.h <= rect.y
+              )
+          );
+
+          if (!conflicts) {
+            bestX = x;
+            bestY = y;
+            placed = true;
+          }
+        }
+      }
+
+      if (placed) {
+        result.push({
+          child: item.child,
+          x: bestX,
+          y: bestY,
+          w: item.w,
+          h: item.h,
+        });
+
+        placedRects.push({
+          x: bestX,
+          y: bestY,
+          w: item.w,
+          h: item.h,
+        });
+      } else {
+        console.log(
+          `[BIN PACKING LAYOUT] Skipping child "${item.child.label}" - could not find suitable position`
+        );
+      }
+    }
+
+    // Restore original order for children that were placed
+    const originalOrderResult = children
+      .map((child) => result.find((r) => r.child.id === child.id))
+      .filter((item): item is NonNullable<typeof item> => item !== undefined);
+
+    return originalOrderResult;
+  }
+
+  // Improved flexible grid layout with proportional column widths
+  function createFlexibleGridLayout(
+    children: ScopeNode[],
+    totalValue: number,
+    availableWidth: number,
+    availableHeight: number,
+    sizeAccessor: (n: ScopeNode) => number,
+    columns: number,
+    minNodeSize: number,
+    optimalWidth: number,
+    minWidth: number
+  ): Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }> {
+    const result: Array<{
+      child: ScopeNode;
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    }> = [];
+
+    // PRESERVE SOURCE ORDER - don't sort by size!
+    const orderedChildren = children.filter(
+      (child): child is ScopeNode => child !== undefined
+    );
+
+    console.log(
+      `[FLEXIBLE GRID LAYOUT] Creating ${columns}-column flexible grid for ${orderedChildren.length} children in source order:`,
+      orderedChildren.map((child, index) => ({
+        index,
+        label: child.label,
+        startLine: child.loc?.start.line || "unknown",
+        value: sizeAccessor(child),
+      }))
+    );
+
+    const rows = Math.ceil(orderedChildren.length / columns);
+
+    // Calculate column widths based on the total value in each column
+    const columnTotalValues = new Array(columns).fill(0);
+    for (let i = 0; i < orderedChildren.length; i++) {
+      const col = i % columns;
+      const child = orderedChildren[i];
+      if (child) {
+        columnTotalValues[col] += sizeAccessor(child);
+      }
+    }
+
+    const totalColumnValue = columnTotalValues.reduce(
+      (sum, val) => sum + val,
+      0
+    );
+    const columnWidths = columnTotalValues.map((val) =>
+      Math.max(
+        minWidth,
+        totalColumnValue > 0
+          ? (val / totalColumnValue) * availableWidth
+          : availableWidth / columns
+      )
+    );
+
+    // Check if any column width is too narrow and adjust
+    const totalRequiredWidth = columnWidths.reduce((sum, w) => sum + w, 0);
+    if (totalRequiredWidth > availableWidth) {
+      // Scale down proportionally if total width exceeds available space
+      const scale = availableWidth / totalRequiredWidth;
+      for (let i = 0; i < columnWidths.length; i++) {
+        columnWidths[i] = Math.max(minWidth, (columnWidths[i] || 0) * scale);
+      }
+    }
+
+    // Filter out columns that can't meet minimum width requirement
+    const viableColumns = columnWidths.filter((w) => w >= minWidth).length;
+    if (viableColumns === 0) {
+      console.log(
+        `[FLEXIBLE GRID LAYOUT] No columns can meet minimum width requirement (${minWidth}px)`
+      );
+      return [];
+    }
+
+    // Calculate row heights based on the items in each row
+    const rowHeights: number[] = [];
+    for (let row = 0; row < rows; row++) {
+      const rowChildren = orderedChildren.slice(
+        row * columns,
+        (row + 1) * columns
+      );
+      const rowTotalValue = rowChildren.reduce(
+        (sum, child) => sum + sizeAccessor(child),
+        0
+      );
+      const rowRatio = totalValue > 0 ? rowTotalValue / totalValue : 1 / rows;
+      const baseRowHeight = availableHeight * rowRatio;
+
+      rowHeights.push(Math.max(minNodeSize, baseRowHeight));
+    }
+
+    // Normalize row heights to fit available space
+    const totalRowHeight = rowHeights.reduce((sum, h) => sum + h, 0);
+    if (totalRowHeight > availableHeight) {
+      const scale = availableHeight / totalRowHeight;
+      for (let i = 0; i < rowHeights.length; i++) {
+        const currentHeight = rowHeights[i];
+        if (currentHeight !== undefined) {
+          rowHeights[i] = Math.max(minNodeSize, currentHeight * scale);
+        }
+      }
+    }
+
+    // Place children in grid (in source order) with proportional column widths
     let currentY = 0;
+    let columnStartX = 0;
+    for (let col = 0; col < columns; col++) {
+      const columnWidth = columnWidths[col];
+      if (!columnWidth || columnWidth < minWidth) {
+        console.log(
+          `[FLEXIBLE GRID LAYOUT] Skipping column ${col} - width too narrow (${columnWidth} < ${minWidth})`
+        );
+        continue; // Skip columns that are too narrow
+      }
+
+      if (col > 0) {
+        columnStartX += columnWidths[col - 1] || 0;
+      }
+
+      currentY = 0;
+      for (let row = 0; row < rows; row++) {
+        const childIndex = row * columns + col;
+        if (childIndex >= orderedChildren.length) break;
+
+        const child = orderedChildren[childIndex];
+        const rowHeight = rowHeights[row];
+
+        if (!child || rowHeight === undefined) continue;
+
+        result.push({
+          child,
+          x: columnStartX,
+          y: currentY,
+          w: columnWidth,
+          h: rowHeight,
+        });
+
+        currentY += rowHeight;
+      }
+    }
+
+    return result;
+  }
+
+  function createVerticalLayout(
+    children: ScopeNode[],
+    totalValue: number,
+    availableWidth: number,
+    availableHeight: number,
+    sizeAccessor: (n: ScopeNode) => number,
+    minNodeSize: number,
+    minWidth: number
+  ): Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }> {
+    const result: Array<{
+      child: ScopeNode;
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    }> = [];
+
+    // Check if available width meets minimum requirement
+    if (availableWidth < minWidth) {
+      console.log(
+        `[VERTICAL LAYOUT] Available width (${availableWidth}) is less than minimum (${minWidth}), skipping all children`
+      );
+      return result;
+    }
+
+    let currentY = 0;
+
+    console.log(
+      `[VERTICAL LAYOUT] Creating vertical stack for ${children.length} children in source order:`,
+      children.map((child, index) => ({
+        index,
+        label: child.label,
+        startLine: child.loc?.start.line || "unknown",
+        value: sizeAccessor(child),
+      }))
+    );
 
     for (const child of children) {
       if (!child) continue; // Guard against undefined
@@ -341,144 +740,6 @@ export const binaryLayout: LayoutFn = (root, w, h, opts = {}) => {
       });
 
       currentY += childH;
-    }
-
-    return result;
-  }
-
-  function createHorizontalLayout(
-    children: ScopeNode[],
-    totalValue: number,
-    availableWidth: number,
-    availableHeight: number,
-    sizeAccessor: (n: ScopeNode) => number,
-    maxWidth: number
-  ): Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }> {
-    const result: Array<{
-      child: ScopeNode;
-      x: number;
-      y: number;
-      w: number;
-      h: number;
-    }> = [];
-    let currentX = 0;
-
-    // Calculate maximum width any single child should take
-    const maxChildWidth = Math.min(
-      maxWidth,
-      availableWidth / Math.max(1, children.length * 0.7)
-    );
-
-    for (const child of children) {
-      if (!child) continue; // Guard against undefined
-
-      const childValue = sizeAccessor(child);
-      const ratio = childValue / totalValue;
-      let childW = availableWidth * ratio;
-
-      // Constrain to reasonable width - be more aggressive
-      childW = Math.min(childW, maxChildWidth);
-
-      // Ensure minimum width but cap it
-      childW = Math.max(childW, Math.min(80, availableWidth / children.length));
-
-      if (currentX + childW > availableWidth) {
-        break;
-      }
-
-      result.push({
-        child,
-        x: currentX,
-        y: 0,
-        w: childW,
-        h: availableHeight,
-      });
-
-      currentX += childW;
-    }
-
-    return result;
-  }
-
-  function createGridLayout(
-    children: ScopeNode[],
-    totalValue: number,
-    availableWidth: number,
-    availableHeight: number,
-    sizeAccessor: (n: ScopeNode) => number,
-    columns: number,
-    minNodeSize: number
-  ): Array<{ child: ScopeNode; x: number; y: number; w: number; h: number }> {
-    const result: Array<{
-      child: ScopeNode;
-      x: number;
-      y: number;
-      w: number;
-      h: number;
-    }> = [];
-    const columnWidth = availableWidth / columns;
-
-    // Sort children by size for better packing - filter out undefined values
-    const sortedChildren = children
-      .filter((child): child is ScopeNode => child !== undefined)
-      .sort((a, b) => sizeAccessor(b) - sizeAccessor(a));
-
-    // Calculate row heights based on the largest items in each row
-    const rows = Math.ceil(sortedChildren.length / columns);
-    const rowHeights: number[] = [];
-
-    for (let row = 0; row < rows; row++) {
-      const rowChildren = sortedChildren.slice(
-        row * columns,
-        (row + 1) * columns
-      );
-      const rowTotalValue = rowChildren.reduce(
-        (sum, child) => sum + sizeAccessor(child),
-        0
-      );
-      const rowRatio = rowTotalValue / totalValue;
-      const baseRowHeight = availableHeight * rowRatio;
-
-      rowHeights.push(Math.max(minNodeSize, baseRowHeight));
-    }
-
-    // Normalize row heights to fit available space
-    const totalRowHeight = rowHeights.reduce((sum, h) => sum + h, 0);
-    if (totalRowHeight > availableHeight) {
-      const scale = availableHeight / totalRowHeight;
-      for (let i = 0; i < rowHeights.length; i++) {
-        const currentHeight = rowHeights[i];
-        if (currentHeight !== undefined) {
-          rowHeights[i] = Math.max(minNodeSize, currentHeight * scale);
-        }
-      }
-    }
-
-    // Place children in grid
-    let currentY = 0;
-    for (let row = 0; row < rows; row++) {
-      const rowChildren = sortedChildren.slice(
-        row * columns,
-        (row + 1) * columns
-      );
-      const rowHeight = rowHeights[row];
-
-      if (rowHeight === undefined) continue; // Guard against undefined
-
-      for (let col = 0; col < rowChildren.length; col++) {
-        const child = rowChildren[col];
-        if (!child) continue; // Guard against undefined
-
-        result.push({
-          child,
-          x: col * columnWidth,
-          y: currentY,
-          w: columnWidth,
-          h: rowHeight,
-        });
-      }
-
-      currentY += rowHeight;
     }
 
     return result;

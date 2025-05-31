@@ -355,17 +355,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   ]);
 
   const layoutRoot = useMemo(
-    () =>
-      layout(root, width, height, {
-        optimalCharWidth: 12,
-        minCharWidth: 8,
-        maxCharWidth: 18,
-        headerHeight: 32,
-        fontSize: minFontSize,
-        minNodeSize: 20,
-        sizeAccessor: (n) => n.value,
-        padding: padding,
-      }),
+    () => layout(root, width, height),
     [root, width, height, layout, padding, minFontSize]
   );
 

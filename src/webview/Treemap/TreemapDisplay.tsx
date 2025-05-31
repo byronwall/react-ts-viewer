@@ -926,6 +926,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                   minNodeSize: 20, // Minimum node size
                   sizeAccessor: (n) => n.value,
                   padding: settings.outerPadding,
+                  minWidthPx: 80, // Minimum width in pixels
                 })
               }
               settings={settings}

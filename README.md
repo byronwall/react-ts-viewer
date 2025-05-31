@@ -11,6 +11,12 @@ Example treemap of itself:
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
   - **Custom Implementation**: Uses a hand-rolled treemap implementation with binary layout algorithm for optimal performance and customization.
   - **Hierarchical Value Calculation**: Each leaf node (child without children) has a value of 1, and parent nodes recursively sum their children's values. This provides meaningful size representation where larger containers automatically reflect their complexity through the sum of their components.
+  - **Proportional Bin Packing Layout**: Advanced layout system that sizes nodes proportionally to their actual values rather than splitting space equally among siblings:
+    - **Value-Based Sizing**: Node dimensions directly reflect their relative importance based on complexity/size metrics
+    - **Bin Packing Algorithm**: Intelligently packs nodes to minimize wasted space while respecting proportional constraints
+    - **Flexible Grid Layouts**: Grid columns have variable widths based on the total value of nodes in each column
+    - **Proportional Horizontal Layouts**: Horizontal arrangements allocate width proportionally to each child's value
+    - **Multi-Layout Scoring**: Evaluates multiple layout approaches and selects the optimal one based on space utilization and visual quality
   - **Grid-Based Layout Algorithm**: Advanced layout system that intelligently subdivides space to create optimal rectangle sizes for text display:
     - **Text-First Approach**: Layout decisions prioritize displaying 10-15 characters per node for optimal readability
     - **Smart Grid Generation**: Automatically calculates optimal column counts based on available space and content
