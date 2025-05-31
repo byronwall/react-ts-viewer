@@ -922,8 +922,12 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               minHeaderHeight={6}
               layout={(root, w, h) =>
                 binaryLayout(root, w, h, {
-                  aspectTarget: 0.8,
-                  minNodeSize: 12,
+                  optimalCharWidth: 12, // Target 12 characters for good readability
+                  minCharWidth: 8, // Minimum 8 characters
+                  maxCharWidth: 18, // Maximum 18 characters to avoid too wide
+                  headerHeight: 32, // Generous header space
+                  fontSize: 11, // Base font size for calculations
+                  minNodeSize: 20, // Minimum node size
                   sizeAccessor: (n) => n.value,
                 })
               }

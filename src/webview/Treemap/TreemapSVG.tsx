@@ -22,9 +22,6 @@ export interface TreemapSVGProps {
   layout?: LayoutFn;
   renderNode?: (p: RenderNodeProps) => React.ReactNode;
   renderHeader?: (p: RenderHeaderProps) => React.ReactNode;
-  maxHeaderHeight?: number;
-  minHeaderHeight?: number;
-  headerHeightByDepth?: (depth: number) => number;
 }
 
 /* ---------- defaults ------------ */
@@ -50,9 +47,17 @@ const defaultRenderHeader: Required<TreemapSVGProps>["renderHeader"] = ({
   h,
   depth,
 }) => {
-  // Improved font sizing - larger base size, less aggressive depth reduction
-  const fontSize = Math.max(8, Math.min(14, h * 0.6, 16 - depth * 1.2)); // Better scaling based on height
-  const textY = Math.min(h - 2, fontSize + 3); // Better vertical positioning
+  // With the new text-first layout, we can be more generous with font sizes
+  const minFontSize = Math.max(10, 16 - depth * 2); // Higher minimum, less depth reduction
+  const maxFontSize = Math.min(16, h * 0.6); // Allow larger fonts in tall headers
+  const fontSize = Math.max(minFontSize, maxFontSize);
+
+  const textY = Math.min(h - 4, fontSize + 6); // Better vertical positioning with more padding
+
+  // Calculate how many characters can fit with better spacing
+  const charWidth = fontSize * 0.52; // Slightly tighter character spacing estimate
+  const availableTextWidth = w - 12; // Account for padding
+  const maxChars = Math.max(5, Math.floor(availableTextWidth / charWidth));
 
   return (
     <>
@@ -65,18 +70,17 @@ const defaultRenderHeader: Required<TreemapSVGProps>["renderHeader"] = ({
         opacity={Math.max(0.7, 1 - depth * 0.05)}
       />
       <text
-        x={4}
+        x={6}
         y={textY}
         fontSize={fontSize}
         fill="#000"
         pointerEvents="none"
-        style={{ userSelect: "none" }}
+        style={{
+          userSelect: "none",
+          fontWeight: depth === 0 ? "bold" : "normal",
+        }}
       >
-        {node.label.slice(
-          0,
-          Math.max(5, Math.floor((w - 8) / (fontSize * 0.6)))
-        )}{" "}
-        {/* Better text truncation based on actual width */}
+        {node.label.slice(0, maxChars)}
       </text>
     </>
   );
@@ -91,101 +95,85 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   layout = binaryLayout,
   renderNode = defaultRenderNode,
   renderHeader = defaultRenderHeader,
-  maxHeaderHeight = 24,
-  minHeaderHeight = 12,
-  headerHeightByDepth,
 }) => {
   const layoutRoot = useMemo(
     () => layout(root, width, height),
     [root, width, height, layout]
   );
 
-  // Calculate header height based on depth
+  // Calculate header height based on depth - prioritize headers!
   const getHeaderHeight = (depth: number, availableHeight: number): number => {
-    if (headerHeightByDepth) {
-      return headerHeightByDepth(depth);
-    }
+    const maxHeaderHeight = 24;
+    const minHeaderHeight = 12;
 
-    // Improved logic: less aggressive reduction with depth, better minimum sizes
-    const baseHeight = Math.max(minHeaderHeight, maxHeaderHeight - depth * 1.5);
+    // Same logic as in binaryLayout.ts
+    const depthFactor = Math.max(0.8, 1 - depth * 0.05);
+    const baseHeight = Math.max(minHeaderHeight, maxHeaderHeight * depthFactor);
 
-    // Allow header to take up more space, but with better limits
     const maxAllowedHeight = Math.max(
-      minHeaderHeight,
-      Math.min(availableHeight * 0.4, 30)
+      baseHeight,
+      Math.min(availableHeight * 0.45, baseHeight * 1.5)
     );
 
-    return Math.min(baseHeight, maxAllowedHeight);
+    return maxAllowedHeight;
   };
 
   /* recursive renderer with infinite depth support */
-  const renderGroup = (
-    ln: LayoutNode,
-    depth = 0,
-    parentX = 0,
-    parentY = 0
-  ): React.ReactNode => {
+  const renderGroup = (ln: LayoutNode, depth = 0): React.ReactNode => {
     // Skip rendering if the node is too small to be meaningful
     if (ln.w < 2 || ln.h < 2) {
       return null;
     }
 
-    // Calculate relative position from parent
-    const relativeX = ln.x - parentX;
-    const relativeY = ln.y - parentY;
-
     // Determine if this node has children that will be rendered
     const hasRenderableChildren = ln.children && ln.children.length > 0;
 
-    // Only render headers for nodes with children
+    // HEADERS ARE PRIORITY! Only skip headers if absolutely impossible to render
     const shouldRenderHeader =
-      hasRenderableChildren && ln.h >= minHeaderHeight && ln.w >= 20;
+      hasRenderableChildren && ln.h >= 16 && ln.w >= 24; // Very permissive requirements
 
     const headerHeight = shouldRenderHeader ? getHeaderHeight(depth, ln.h) : 0;
-    const bodyY = headerHeight;
-    const bodyH = Math.max(0, ln.h - headerHeight);
 
-    // Only render body if there's meaningful space after header (or full space for leaf nodes)
-    const shouldRenderBody = bodyH > 4;
+    console.log(
+      `[RENDER] Node: ${ln.node.label}, depth: ${depth}, ln.h: ${ln.h}, shouldRenderHeader: ${shouldRenderHeader}, headerHeight: ${headerHeight}`
+    );
+    console.log(
+      `[RENDER] Node positioned at ln.y: ${ln.y}, header will be at: ${ln.y}, children should be at: ${ln.y + headerHeight}`
+    );
+
+    // For body rendering, be more flexible - it's less important than headers
+    const shouldRenderBody = ln.h - headerHeight > 8; // Reduced threshold
 
     return (
-      <g key={ln.node.id} transform={`translate(${relativeX} ${relativeY})`}>
+      <g key={ln.node.id}>
         {/* Render header only if this node has children */}
-        {shouldRenderHeader &&
-          renderHeader({
-            node: ln.node,
-            w: ln.w,
-            h: headerHeight,
-            depth,
-          })}
-
-        {/* For leaf nodes: render the node content in the full space */}
-        {shouldRenderBody && !hasRenderableChildren && (
-          <g transform={`translate(0 ${bodyY})`}>
-            {renderNode({
+        {shouldRenderHeader && (
+          <g transform={`translate(${ln.x} ${ln.y})`}>
+            {renderHeader({
               node: ln.node,
               w: ln.w,
-              h: bodyH,
+              h: headerHeight,
               depth,
             })}
           </g>
         )}
 
-        {/* For parent nodes: render children in the body area */}
-        {shouldRenderBody && hasRenderableChildren && (
-          <g transform={`translate(0 ${bodyY})`}>
-            {ln.children?.map((child) =>
-              renderGroup(child, depth + 1, ln.x, ln.y)
-            )}
+        {/* For leaf nodes: render the node content in the available space */}
+        {shouldRenderBody && !hasRenderableChildren && (
+          <g transform={`translate(${ln.x} ${ln.y + headerHeight})`}>
+            {renderNode({
+              node: ln.node,
+              w: ln.w,
+              h: ln.h - headerHeight,
+              depth,
+            })}
           </g>
         )}
 
-        {/* If body is too small but we have children, render them directly without body translation */}
-        {!shouldRenderBody &&
-          hasRenderableChildren &&
-          ln.children?.map((child) =>
-            renderGroup(child, depth + 1, ln.x, ln.y)
-          )}
+        {/* For parent nodes: render children directly (they already have correct absolute coordinates) */}
+        {hasRenderableChildren && (
+          <>{ln.children?.map((child) => renderGroup(child, depth + 1))}</>
+        )}
       </g>
     );
   };
