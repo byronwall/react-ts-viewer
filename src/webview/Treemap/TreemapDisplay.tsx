@@ -968,6 +968,24 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               {getNodeDisplayLabel(tooltip.node) ||
                 tooltip.node.id.split(":").pop() ||
                 "Node"}
+              {/* Show hidden children information in tooltip */}
+              {tooltip.node.meta?.hasHiddenChildren && (
+                <>
+                  {"\n"}
+                  <span style={{ color: "#ffa500", fontWeight: "bold" }}>
+                    ⚠ {tooltip.node.meta.hiddenChildrenCount} hidden children
+                  </span>
+                  {tooltip.node.meta.hiddenReason && (
+                    <>
+                      {"\n"}
+                      <span style={{ color: "#ccc", fontSize: "10px" }}>
+                        Reason:{" "}
+                        {tooltip.node.meta.hiddenReason.replace(/_/g, " ")}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

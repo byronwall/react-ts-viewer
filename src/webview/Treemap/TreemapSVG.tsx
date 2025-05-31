@@ -91,6 +91,10 @@ const createStyledRenderHeader =
     const isSelected = selectedNodeId === node.id;
     const isSearchMatch = matchingNodes.has(node.id);
 
+    // Check if this node has hidden children
+    const hasHiddenChildren = node.meta?.hasHiddenChildren === true;
+    const hiddenChildrenCount = node.meta?.hiddenChildrenCount || 0;
+
     // Use subdued borders for headers since group container handles main border
     let borderColor = "#333333";
     if (isSelected) {
@@ -123,9 +127,13 @@ const createStyledRenderHeader =
     // Use the calculated fontSize for character width to ensure consistency
     const actualCharWidth = fontSize * 0.5;
 
+    // Calculate space needed for hidden children indicator
+    const indicatorSize = Math.min(12, h * 0.4, fontSize * 0.8);
+    const indicatorPadding = hasHiddenChildren ? indicatorSize + 4 : 0;
+
     // Reduce padding to allow more text space
     const textPaddingLeft = 4;
-    const textPaddingRight = 2;
+    const textPaddingRight = 2 + indicatorPadding;
     const availableTextWidth = Math.max(
       0,
       w - textPaddingLeft - textPaddingRight
@@ -173,6 +181,48 @@ const createStyledRenderHeader =
             {truncatedLabel}
           </text>
         )}
+        {/* Hidden children indicator */}
+        {hasHiddenChildren && w >= 24 && h >= 16 && (
+          <g>
+            {/* Background circle for the indicator */}
+            <circle
+              cx={w - indicatorSize / 2 - 2}
+              cy={h / 2}
+              r={indicatorSize / 2}
+              fill="rgba(255, 165, 0, 0.8)"
+              stroke="rgba(0, 0, 0, 0.6)"
+              strokeWidth={0.5}
+            />
+            {/* Three dots to indicate hidden content */}
+            <text
+              x={w - indicatorSize / 2 - 2}
+              y={h / 2}
+              fontSize={Math.min(indicatorSize * 0.6, 8)}
+              fill="#000"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              pointerEvents="none"
+              style={{ userSelect: "none", fontWeight: "bold" }}
+            >
+              ⋯
+            </text>
+            {/* Tooltip-like text for count when there's space */}
+            {w >= 40 && h >= 20 && (
+              <text
+                x={w - indicatorSize / 2 - 2}
+                y={h / 2 + indicatorSize / 2 + 2}
+                fontSize={Math.min(6, indicatorSize * 0.4)}
+                fill={getContrastingTextColor(color)}
+                textAnchor="middle"
+                dominantBaseline="hanging"
+                pointerEvents="none"
+                style={{ userSelect: "none" }}
+              >
+                +{hiddenChildrenCount}
+              </text>
+            )}
+          </g>
+        )}
       </>
     );
   };
@@ -195,6 +245,10 @@ const createStyledRenderNode =
     // Check if this node is selected or matches search
     const isSelected = selectedNodeId === node.id;
     const isSearchMatch = matchingNodes.has(node.id);
+
+    // Check if this node has hidden children
+    const hasHiddenChildren = node.meta?.hasHiddenChildren === true;
+    const hiddenChildrenCount = node.meta?.hiddenChildrenCount || 0;
 
     // For leaf nodes, keep stronger borders since they don't have group containers
     let borderColor = "#555555";
@@ -228,9 +282,16 @@ const createStyledRenderNode =
     // Use the calculated fontSize for character width to ensure consistency
     const actualCharWidth = fontSize * 0.5;
 
+    // Calculate space needed for hidden children indicator
+    const indicatorSize = Math.min(10, h * 0.3, fontSize * 0.7);
+    const indicatorMargin = hasHiddenChildren ? indicatorSize + 2 : 0;
+
     // Reduce margins when centering text - allow more text space
     const textMargin = 4;
-    const availableTextWidth = Math.max(0, w - 2 * textMargin);
+    const availableTextWidth = Math.max(
+      0,
+      w - 2 * textMargin - indicatorMargin
+    );
 
     const displayLabel = getDynamicNodeDisplayLabel(
       {
@@ -279,6 +340,48 @@ const createStyledRenderNode =
           >
             {displayLabel}
           </text>
+        )}
+        {/* Hidden children indicator for leaf nodes */}
+        {hasHiddenChildren && w >= 20 && h >= 16 && (
+          <g>
+            {/* Position indicator in top-right corner */}
+            <circle
+              cx={w - indicatorSize / 2 - 2}
+              cy={indicatorSize / 2 + 2}
+              r={indicatorSize / 2}
+              fill="rgba(255, 165, 0, 0.9)"
+              stroke="rgba(0, 0, 0, 0.7)"
+              strokeWidth={0.3}
+            />
+            {/* Three dots to indicate hidden content */}
+            <text
+              x={w - indicatorSize / 2 - 2}
+              y={indicatorSize / 2 + 2}
+              fontSize={Math.min(indicatorSize * 0.6, 6)}
+              fill="#000"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              pointerEvents="none"
+              style={{ userSelect: "none", fontWeight: "bold" }}
+            >
+              ⋯
+            </text>
+            {/* Small count indicator if there's space */}
+            {w >= 30 && h >= 24 && (
+              <text
+                x={w - indicatorSize / 2 - 2}
+                y={indicatorSize + 4}
+                fontSize={Math.min(5, indicatorSize * 0.3)}
+                fill={getContrastingTextColor(color)}
+                textAnchor="middle"
+                dominantBaseline="hanging"
+                pointerEvents="none"
+                style={{ userSelect: "none" }}
+              >
+                +{hiddenChildrenCount}
+              </text>
+            )}
+          </g>
         )}
       </>
     );

@@ -52,6 +52,12 @@ Example treemap of itself:
   - Export the treemap as a PNG image or the underlying data as JSON.
   - **Search Functionality**: Filter and highlight nodes based on their content (see [Search Feature](#search-feature) below).
   - **Responsive Design**: Automatically adjusts to container size changes and window resizing.
+  - **Hidden Children Indicators**: Visual indicators show when layout constraints have forced some child nodes to be hidden:
+    - **Orange Circle Indicators**: Small orange circles with three dots (⋯) appear on nodes that have hidden children
+    - **Hidden Count Display**: Shows the number of hidden children when space permits
+    - **Enhanced Tooltips**: Hover tooltips display detailed information about hidden children including count and reason
+    - **Root Level Protection**: The root node is guaranteed to show all its direct children; the layout will compress larger children to make room rather than hide any root-level nodes
+    - **Layout Constraint Tracking**: Different reasons for hiding are tracked (size constraints vs. layout constraints) and displayed in tooltips
 
 ### Planned Features
 
