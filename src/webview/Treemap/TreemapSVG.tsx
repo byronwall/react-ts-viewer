@@ -244,7 +244,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   renderHeader,
   padding = 4,
   minFontSize = 12,
-  maxFontSize = 18,
+  maxFontSize = 16,
   settings,
   matchingNodes = new Set(),
   selectedNodeId,
