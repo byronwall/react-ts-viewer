@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import type { ScopeNode } from "../../types";
 import { NodeCategory } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
-import { binaryLayout, LayoutFn, LayoutNode } from "./binaryLayout";
+import { improvedLayout, ImprovedLayoutFn, LayoutNode } from "./improvedLayout";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
@@ -54,7 +54,7 @@ export interface TreemapSVGProps {
   root: ScopeNode;
   width: number;
   height: number;
-  layout?: LayoutFn;
+  layout?: ImprovedLayoutFn;
   renderNode?: (p: RenderNodeProps) => React.ReactNode;
   renderHeader?: (p: RenderHeaderProps) => React.ReactNode;
   padding?: number;
@@ -393,7 +393,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   root,
   width,
   height,
-  layout = binaryLayout,
+  layout = improvedLayout,
   renderNode,
   renderHeader,
   padding = 4,
@@ -481,8 +481,8 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
   /* recursive renderer with infinite depth support */
   const renderGroup = (ln: LayoutNode, depth = 0): React.ReactNode => {
-    // Skip rendering if the node is too small to be meaningful
-    if (ln.w < 2 || ln.h < 2) {
+    // Skip rendering if the node is too small to be meaningful or marked as 'none'
+    if (ln.w < 2 || ln.h < 2 || ln.renderMode === "none") {
       return null;
     }
 
@@ -492,6 +492,67 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     // Check if this group/node is selected or matches search
     const isSelected = selectedNodeId === ln.node.id;
     const isSearchMatch = matchingNodes.has(ln.node.id);
+
+    // For nodes with render mode 'box', render simplified representation
+    if (ln.renderMode === "box") {
+      const baseColor =
+        pastelSet[ln.node.category] || pastelSet[NodeCategory.Other];
+      let borderColor = "#6c757d";
+      let strokeWidth = 1;
+
+      if (isSelected) {
+        borderColor = "red";
+        strokeWidth = 2;
+      } else if (isSearchMatch) {
+        borderColor = "#FFD700";
+        strokeWidth = 1.5;
+      }
+
+      return (
+        <g key={ln.node.id}>
+          <rect
+            x={ln.x}
+            y={ln.y}
+            width={ln.w}
+            height={ln.h}
+            fill={baseColor}
+            stroke={borderColor}
+            strokeWidth={strokeWidth}
+            opacity={0.7}
+            rx={2}
+            style={{ cursor: "pointer" }}
+            onClick={(e) => onNodeClick(ln.node, e as any)}
+            onMouseEnter={(e) => onMouseEnter(ln.node, e as any)}
+            onMouseLeave={onMouseLeave}
+          />
+          {/* Show depth constraint indicator */}
+          {ln.isConstrainedByDepth && ln.w >= 16 && ln.h >= 16 && (
+            <g>
+              <circle
+                cx={ln.x + ln.w - 8}
+                cy={ln.y + 8}
+                r={4}
+                fill="rgba(255, 140, 0, 0.9)"
+                stroke="rgba(0, 0, 0, 0.7)"
+                strokeWidth={0.5}
+              />
+              <text
+                x={ln.x + ln.w - 8}
+                y={ln.y + 8}
+                fontSize="6"
+                fill="#000"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                pointerEvents="none"
+                style={{ userSelect: "none", fontWeight: "bold" }}
+              >
+                ⊡
+              </text>
+            </g>
+          )}
+        </g>
+      );
+    }
 
     // HEADERS ARE PRIORITY! Only skip headers if absolutely impossible to render
     const shouldRenderHeader =

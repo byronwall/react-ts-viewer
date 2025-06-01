@@ -9,6 +9,15 @@ Example treemap of itself:
 ## Features
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
+  - **Improved Layout Algorithm**: New intelligent layout system that implements depth-first rendering with strict constraints:
+    - **Source Code Order Preservation**: All nodes are rendered in their original source code order, maintaining logical flow and making it easier to understand code structure
+    - **Text-First Design**: Layout decisions prioritize displaying readable text labels, with minimum character width requirements to ensure code readability
+    - **Depth-Constrained Rendering**: Implements strict depth constraints where nodes at deeper levels switch to simplified "box mode" rendering when text would be too small to read
+    - **Common Proportion Templates**: Pre-defined optimal layouts for 2, 3, and 4-child arrangements (horizontal, vertical, grid patterns) that create visually pleasing and space-efficient displays
+    - **Intelligent Text Fitting**: Algorithm determines if all nodes can fit with readable text at each depth level, switching to box mode when necessary to prevent illegible text
+    - **Smart Header Priority**: Container headers always get adequate space for readable labels, as group names are more important than individual element details
+    - **Proportional Value-Based Sizing**: Node dimensions reflect their actual complexity/value while maintaining readability constraints
+    - **Render Mode Management**: Three distinct rendering modes (text, box, none) based on available space and depth constraints
   - **Custom Implementation**: Uses a hand-rolled treemap implementation with binary layout algorithm for optimal performance and customization.
   - **Hierarchical Value Calculation**: Each leaf node (child without children) has a value of 1, and parent nodes recursively sum their children's values. This provides meaningful size representation where larger containers automatically reflect their complexity through the sum of their components.
   - **Proportional Bin Packing Layout**: Advanced layout system that sizes nodes proportionally to their actual values rather than splitting space equally among siblings:

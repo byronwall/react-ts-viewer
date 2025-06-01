@@ -8,7 +8,7 @@ import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { pastelSet } from "./pastelSet";
 import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
 import { TreemapSVG, RenderNodeProps, RenderHeaderProps } from "./TreemapSVG";
-import { binaryLayout } from "./binaryLayout";
+import { improvedLayout } from "./improvedLayout";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -917,16 +917,19 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               width={containerDimensions.width}
               height={containerDimensions.height}
               layout={(root, w, h) =>
-                binaryLayout(root, w, h, {
+                improvedLayout(root, w, h, {
                   optimalCharWidth: 12, // Target 12 characters for good readability
                   minCharWidth: 8, // Minimum 8 characters
                   maxCharWidth: 18, // Maximum 18 characters to avoid too wide
                   headerHeight: 32, // Generous header space
                   fontSize: 11, // Base font size for calculations
                   minNodeSize: 20, // Minimum node size
+                  minSizeForText: 60, // Minimum size for text rendering
                   sizeAccessor: (n) => n.value,
                   padding: settings.outerPadding,
                   minWidthPx: 80, // Minimum width in pixels
+                  strictDepthConstraint: true, // Enable strict depth constraints
+                  maxDepthForText: 5, // Maximum depth for text rendering
                 })
               }
               settings={settings}
