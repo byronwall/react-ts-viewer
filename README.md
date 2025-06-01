@@ -9,6 +9,16 @@ Example treemap of itself:
 ## Features
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
+  - **Binary Layout Algorithm**: New bin-packing layout algorithm following the layout2.md specification:
+    - **Breadth-First Rendering**: Analyzes each tree level to determine optimal rendering strategy before layout decisions
+    - **Bin Packing Approach**: Treats layout as a bin packing problem, placing nodes in source order while optimizing space utilization
+    - **L-Shaped Container Support**: Containers can take on non-rectangular shapes to better fit around existing nodes
+    - **Text vs Box Mode Logic**: Smart decision-making between text rendering (80x40px minimum) and box rendering (20x20px minimum)
+    - **Level-Based Strategy**: Each depth level is analyzed to determine if all children can fit with text, or if some need box mode
+    - **Source Order Preservation**: Maintains original code order while optimizing for space efficiency
+    - **Proportional Value-Based Sizing**: Node sizes reflect their actual complexity while meeting minimum readability requirements
+    - **Value-Aware Layout Selection**: Hybrid approach that always prioritizes good aspect ratios by using grid layouts when horizontal layouts would be too tall, but applies proportional sizing within grid rows when nodes have significant value differences (3x+ ratio)
+    - **Space Splitting**: Available spaces are dynamically split after each node placement to create new packing opportunities
   - **Improved Layout Algorithm**: New intelligent layout system that implements depth-first rendering with strict constraints:
     - **Source Code Order Preservation**: All nodes are rendered in their original source code order, maintaining logical flow and making it easier to understand code structure
     - **Text-First Design**: Layout decisions prioritize displaying readable text labels, with minimum character width requirements to ensure code readability

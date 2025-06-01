@@ -2,7 +2,11 @@ import React, { useMemo } from "react";
 import type { ScopeNode } from "../../types";
 import { NodeCategory } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
-import { improvedLayout, ImprovedLayoutFn, LayoutNode } from "./improvedLayout";
+import {
+  binaryLayout,
+  BinaryLayoutFn,
+  BinaryLayoutNode,
+} from "./layoutSmarter";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
@@ -54,7 +58,7 @@ export interface TreemapSVGProps {
   root: ScopeNode;
   width: number;
   height: number;
-  layout?: ImprovedLayoutFn;
+  layout?: BinaryLayoutFn;
   renderNode?: (p: RenderNodeProps) => React.ReactNode;
   renderHeader?: (p: RenderHeaderProps) => React.ReactNode;
   padding?: number;
@@ -393,7 +397,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   root,
   width,
   height,
-  layout = improvedLayout,
+  layout = binaryLayout,
   renderNode,
   renderHeader,
   padding = 4,
@@ -458,7 +462,15 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   ]);
 
   const layoutRoot = useMemo(
-    () => layout(root, width, height),
+    () =>
+      layout(root, width, height, {
+        minTextWidth: 40,
+        minTextHeight: 20,
+        minBoxSize: 12,
+        padding,
+        headerHeight: 28,
+        fontSize: 11,
+      }),
     [root, width, height, layout, padding, minFontSize]
   );
 
@@ -480,7 +492,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   };
 
   /* recursive renderer with infinite depth support */
-  const renderGroup = (ln: LayoutNode, depth = 0): React.ReactNode => {
+  const renderGroup = (ln: BinaryLayoutNode, depth = 0): React.ReactNode => {
     // Skip rendering if the node is too small to be meaningful or marked as 'none'
     if (ln.w < 2 || ln.h < 2 || ln.renderMode === "none") {
       return null;
