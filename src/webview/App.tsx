@@ -836,7 +836,7 @@ const App: React.FC = () => {
               <div>
                 <h5
                   style={{
-                    marginBottom: "10px",
+                    marginBottom: "40px",
                     color: "#bbb",
                     borderBottom: "1px solid #444",
                     paddingBottom: "8px",

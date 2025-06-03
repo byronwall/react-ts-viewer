@@ -2,14 +2,26 @@ import React, { useMemo } from "react";
 import type { ScopeNode } from "../../types";
 import { NodeCategory } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
+import { getContrastingTextColor } from "./getContrastingTextColor";
+import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
+import {
+  geminiLayout,
+  GeminiLayoutFn,
+  GeminiLayoutNode,
+  GeminiLayoutOptions,
+} from "./layoutGemini";
+import {
+  HierarchicalLayoutFn,
+  HierarchicalLayoutNode,
+  HierarchicalLayoutOptions,
+  layoutHierarchical,
+} from "./layoutHierarchical";
 import {
   binaryLayout,
   BinaryLayoutFn,
   BinaryLayoutNode,
+  BinaryLayoutOptions,
 } from "./layoutSmarter";
-import { geminiLayout, GeminiLayoutFn, GeminiLayoutNode } from "./layoutGemini";
-import { getContrastingTextColor } from "./getContrastingTextColor";
-import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
 
 /* ---------- utility functions ------------ */
@@ -55,9 +67,21 @@ export interface RenderHeaderProps extends RenderNodeProps {
   depth: number;
 }
 
-// Allow either BinaryLayoutNode or GeminiLayoutNode
-export type AnyLayoutNode = BinaryLayoutNode | GeminiLayoutNode;
-export type AnyLayoutFn = BinaryLayoutFn | GeminiLayoutFn;
+// Allow BinaryLayoutNode, GeminiLayoutNode, or HierarchicalLayoutNode
+export type AnyLayoutNode =
+  | BinaryLayoutNode
+  | GeminiLayoutNode
+  | HierarchicalLayoutNode;
+
+export type AnyLayoutOptions =
+  | BinaryLayoutOptions
+  | GeminiLayoutOptions
+  | HierarchicalLayoutOptions;
+
+export type AnyLayoutFn =
+  | BinaryLayoutFn
+  | GeminiLayoutFn
+  | HierarchicalLayoutFn;
 
 export interface TreemapSVGProps {
   root: ScopeNode;
@@ -479,8 +503,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
         padding: settings.geminiPadding,
         headerHeight: settings.geminiHeaderHeight,
       };
-    } else {
-      // Default to options for binaryLayout
+    } else if (layout === (binaryLayout as AnyLayoutFn)) {
       return {
         minTextWidth: 40,
         minTextHeight: 20,
@@ -488,13 +511,36 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
         padding: padding, // Use the component prop padding for binary
         headerHeight: 28,
         fontSize: 11, // binaryLayout uses this
-      };
+      } as BinaryLayoutOptions; // Cast to common or binary options
+    } else if (layout === (layoutHierarchical as AnyLayoutFn)) {
+      return {
+        headerHeight: settings.hierarchicalHeaderHeight,
+        padding: settings.hierarchicalPadding,
+        leafMinWidth: settings.hierarchicalLeafMinWidth,
+        leafMinHeight: settings.hierarchicalLeafMinHeight,
+        leafPrefWidth: settings.hierarchicalLeafPrefWidth,
+        leafPrefHeight: settings.hierarchicalLeafPrefHeight,
+        leafMinAspectRatio: settings.hierarchicalLeafMinAspectRatio,
+        leafMaxAspectRatio: settings.hierarchicalLeafMaxAspectRatio,
+      } as HierarchicalLayoutOptions;
+    } else {
+      // Default to options for binaryLayout
+      console.log(
+        "[TreemapSVG] Constructing BinaryLayoutOptions (default/fallback). settings.innerPadding:",
+        settings.innerPadding
+      );
+      return {
+        minTextWidth: settings.minGeminiTextWidth, // Fallback, consider specific binary settings
+        minTextHeight: settings.minGeminiTextHeight, // Fallback
+        minBoxSize: settings.minGeminiBoxSize, // Fallback
+        padding: settings.innerPadding, // Example, d3-hierarchy based
+        headerHeight: settings.geminiHeaderHeight, // Fallback
+        // sizeAccessor: (n: ScopeNode) => n.value,
+      } as BinaryLayoutOptions; // Cast to common or binary options
     }
   }, [layout, settings, padding]);
 
   const layoutRoot = useMemo(() => {
-    console.log("[TreemapSVG] Using layout function name:", layout.name); // Log the name of the layout function
-    console.log("[TreemapSVG] Using layout options:", layoutOptions); // Log the options being passed
     return layout(root, width, height, layoutOptions as any); // Cast to any to satisfy differing option types
   }, [root, width, height, layout, layoutOptions]);
 

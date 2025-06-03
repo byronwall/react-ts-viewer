@@ -1,26 +1,16 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
+import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
 import { TreemapSettings } from "../settingsConfig"; // Corrected import path
 import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
 import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
 import { TreemapLegendPopover } from "./TreemapLegendPopover";
+import { AnyLayoutFn, TreemapSVG } from "./TreemapSVG"; // Added AnyLayoutFn
+import { geminiLayout } from "./layoutGemini"; // Added geminiLayout and its options
+import { layoutHierarchical } from "./layoutHierarchical";
+import { binaryLayout } from "./layoutSmarter";
 import { pastelSet } from "./pastelSet";
-import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
-import {
-  TreemapSVG,
-  RenderNodeProps,
-  RenderHeaderProps,
-  AnyLayoutFn,
-} from "./TreemapSVG"; // Added AnyLayoutFn
-import { binaryLayout, BinaryLayoutOptions } from "./layoutSmarter";
-import { geminiLayout, GeminiLayoutOptions } from "./layoutGemini"; // Added geminiLayout and its options
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -762,38 +752,12 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   }, []);
 
   // Determine which layout function and options to use based on settings
-  console.log(
-    "[TreemapDisplay] Settings.selectedLayout:",
-    settings.selectedLayout
-  );
   const currentLayoutFn: AnyLayoutFn =
-    settings.selectedLayout === "gemini" ? geminiLayout : binaryLayout;
-  console.log(
-    "[TreemapDisplay] Chosen layout function name:",
-    currentLayoutFn.name
-  );
-  const currentLayoutOptions = useMemo(() => {
-    if (settings.selectedLayout === "gemini") {
-      return {
-        minTextWidth: settings.minGeminiTextWidth,
-        minTextHeight: settings.minGeminiTextHeight,
-        minBoxSize: settings.minGeminiBoxSize,
-        padding: settings.geminiPadding,
-        headerHeight: settings.geminiHeaderHeight,
-        // valueAccessor can be added if needed for gemini
-      } as GeminiLayoutOptions; // Explicit cast for Gemini options
-    } else {
-      return {
-        minTextWidth: 40, // Default for binary
-        minTextHeight: 20, // Default for binary
-        minBoxSize: 12, // Default for binary
-        padding: settings.outerPadding, // binaryLayout uses outerPadding from general settings
-        headerHeight: 28, // Default for binary
-        fontSize: 11, // Specific to binaryLayout
-        // sizeAccessor: (n) => n.value, // binaryLayout uses this
-      } as BinaryLayoutOptions; // Explicit cast for Binary options
-    }
-  }, [settings]);
+    settings.selectedLayout === "gemini"
+      ? geminiLayout
+      : settings.selectedLayout === "hierarchical"
+        ? layoutHierarchical
+        : binaryLayout;
 
   return (
     <div
