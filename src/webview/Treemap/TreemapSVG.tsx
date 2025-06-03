@@ -721,23 +721,25 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
           </g>
         )}
 
-        {/* For leaf nodes (or containers that don't render as distinct groups but show content): 
+        {/* For leaf nodes (or containers that don't render as distinct groups but show content):
             Render the node content in the available space.
             If it's a container, content is rendered below its header.
             If it's a leaf (isActuallyContainer is false), it takes the full ln.h.
+            MODIFIED: Only call finalRenderNode if !isActuallyContainer (i.e., it's a leaf)
         */}
-        {shouldRenderBody && (
-          <g
-            transform={`translate(${ln.x} ${ln.y + (isActuallyContainer ? headerHeightToUse : 0)})`}
-          >
-            {finalRenderNode({
-              node: ln.node,
-              w: ln.w,
-              h: ln.h - (isActuallyContainer ? headerHeightToUse : 0),
-              depth,
-            })}
-          </g>
-        )}
+        {shouldRenderBody &&
+          !isActuallyContainer && ( // Leaf nodes only
+            <g
+              transform={`translate(${ln.x} ${ln.y + (isActuallyContainer ? headerHeightToUse : 0)})`} // This will be ln.y for leaves as headerHeightToUse is 0
+            >
+              {finalRenderNode({
+                node: ln.node,
+                w: ln.w,
+                h: ln.h - (isActuallyContainer ? headerHeightToUse : 0), // This will be ln.h for leaves
+                depth,
+              })}
+            </g>
+          )}
 
         {/* For parent nodes: render children directly (they already have correct absolute coordinates) */}
         {/* Ensure children exist and are of the correct type before mapping */}

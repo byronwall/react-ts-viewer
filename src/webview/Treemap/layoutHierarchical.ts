@@ -59,18 +59,26 @@ class SimpleShelfPacker implements ISimpleShelfPacker {
   private currentY = 0;
   private currentRowHeight = 0;
   private packedItems: PackerPlacement[] = [];
+  private interItemPadding: number; // Renamed for clarity
 
   constructor(
     private maxWidth: number,
-    private padding: number
-  ) {}
+    optionsPadding: number // Still accept original options.padding
+  ) {
+    // Use a smaller, fixed padding for inter-item and inter-shelf spacing
+    // The optionsPadding from settings still defines the contentPackingArea boundary.
+    this.interItemPadding = Math.max(1, Math.floor(optionsPadding / 2)); // Or a fixed small value like 2
+    // Ensure interItemPadding is at least 1 if optionsPadding is small but non-zero.
+    if (optionsPadding > 0 && this.interItemPadding === 0) {
+      this.interItemPadding = 1;
+    }
+    // If optionsPadding is 0, interItemPadding will also be 0.
+  }
 
   add(item: PackerInputItem): PackerPlacement {
     if (item.targetW > this.maxWidth) {
-      // Item is wider than the container, try to place it alone if possible
       if (this.currentX > 0) {
-        // Start a new row
-        this.currentY += this.currentRowHeight + this.padding;
+        this.currentY += this.currentRowHeight + this.interItemPadding; // Use specific interItemPadding
         this.currentX = 0;
         this.currentRowHeight = 0;
       }
@@ -78,34 +86,48 @@ class SimpleShelfPacker implements ISimpleShelfPacker {
         id: item.id,
         x: this.currentX,
         y: this.currentY,
-        w: this.maxWidth, // Take full width
+        w: this.maxWidth,
         h: item.targetH,
         fits: true,
       };
-      this.currentY += item.targetH + this.padding;
-      this.currentRowHeight = 0; // Reset row height as this item takes its own "row"
+      this.currentY += item.targetH + this.interItemPadding; // Use specific interItemPadding
+      this.currentRowHeight = 0;
       this.currentX = 0;
       this.packedItems.push(placement);
       return placement;
     }
 
-    if (this.currentX + item.targetW > this.maxWidth) {
+    // Check if item fits on current row, considering interItemPadding if currentX > 0
+    let fitsOnCurrentRow = false;
+    if (this.currentX === 0) {
+      // First item on a new shelf
+      fitsOnCurrentRow = item.targetW <= this.maxWidth;
+    } else {
+      // Not the first item, need to account for interItemPadding
+      fitsOnCurrentRow =
+        this.currentX + this.interItemPadding + item.targetW <= this.maxWidth;
+    }
+
+    if (!fitsOnCurrentRow) {
       // Not enough space in the current row, move to the next row
-      this.currentY += this.currentRowHeight + this.padding;
+      this.currentY += this.currentRowHeight + this.interItemPadding; // Use specific interItemPadding
       this.currentX = 0;
       this.currentRowHeight = 0;
     }
 
+    const placementX =
+      this.currentX === 0 ? 0 : this.currentX + this.interItemPadding;
+
     const placement: PackerPlacement = {
       id: item.id,
-      x: this.currentX,
+      x: placementX,
       y: this.currentY,
       w: item.targetW,
       h: item.targetH,
-      fits: true, // Assume it fits for this simple packer
+      fits: true,
     };
 
-    this.currentX += item.targetW + this.padding;
+    this.currentX = placementX + item.targetW; // currentX is now end of current item
     this.currentRowHeight = Math.max(this.currentRowHeight, item.targetH);
     this.packedItems.push(placement);
     return placement;
@@ -113,8 +135,9 @@ class SimpleShelfPacker implements ISimpleShelfPacker {
 
   getPackedHeight(): number {
     if (this.packedItems.length === 0) return 0;
-    // Calculate based on the Y position of the last item and its height
-    // Or more simply, currentY + currentRowHeight if anything is in the current row
+    // The total height is the y-position of the last row (this.currentY)
+    // plus the height of the items in that row (this.currentRowHeight).
+    // No need to add trailing interItemPadding here as it's space *between* rows or *after* the content.
     return this.currentY + this.currentRowHeight;
   }
 
@@ -326,8 +349,6 @@ function layoutNodeRecursive(
 
       if (isChildContainer) {
         const childValueRatio = (childNode.value || 1) / totalChildrenValue;
-        // childTargetH = contentPackingArea.h * childValueRatio;
-        // childTargetW = Math.min(options.leafPrefWidth * 2, contentPackingArea.w); // Aim for preferred width, capped by available space. Multiply by 2 for containers for now.
 
         const targetArea =
           contentPackingArea.w * contentPackingArea.h * childValueRatio;
@@ -336,7 +357,7 @@ function layoutNodeRecursive(
           idealDimension = options.leafMinWidth; // Fallback
 
         childTargetW = idealDimension;
-        childTargetH = idealDimension; // This is for the whole container, including header space conceptually
+        childTargetH = idealDimension;
 
         // Cap by available space
         childTargetW = Math.min(childTargetW, contentPackingArea.w);
@@ -376,6 +397,12 @@ function layoutNodeRecursive(
       //   `[layoutNodeRecursive] Child ${childNode.label} of ${node.label}: After min enforcement W/H: `,
       //   { childTargetW, childTargetH }
       // );
+
+      // Ensure target dimensions for packer do not exceed available packing area dimensions
+      // The packer operates with contentPackingArea.w as its maxWidth, so childTargetW will be capped by packer if it tries to exceed.
+      // Explicitly cap targetH here.
+      childTargetW = Math.min(childTargetW, contentPackingArea.w);
+      childTargetH = Math.min(childTargetH, contentPackingArea.h);
 
       // Packer input
       const packerInput: PackerInputItem = {
