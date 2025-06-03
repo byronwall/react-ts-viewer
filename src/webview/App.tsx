@@ -397,10 +397,18 @@ const App: React.FC = () => {
             setActiveView(savedState.activeView);
           }
           if (savedState.treemapSettings) {
-            setTreemapSettings(savedState.treemapSettings);
+            // Merge saved settings with defaults to ensure new settings are applied
+            setTreemapSettings((prevSettings) => ({
+              ...newDefaultTreemapSettings, // Start with all defaults
+              ...savedState.treemapSettings, // Override with saved values
+            }));
           }
           if (savedState.settings) {
-            setSettings(savedState.settings);
+            // For general 'settings', assuming a similar merge might be needed if it evolves
+            setSettings((prevAnalysisSettings) => ({
+              ...defaultSettings, // defaultSettings for AnalysisSettings
+              ...savedState.settings,
+            }));
           }
           if (savedState.isSettingsPanelOpen !== undefined) {
             setIsSettingsPanelOpen(savedState.isSettingsPanelOpen);

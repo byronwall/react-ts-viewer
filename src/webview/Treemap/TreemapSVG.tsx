@@ -7,6 +7,7 @@ import {
   BinaryLayoutFn,
   BinaryLayoutNode,
 } from "./layoutSmarter";
+import { geminiLayout, GeminiLayoutFn, GeminiLayoutNode } from "./layoutGemini";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import { pastelSet } from "./pastelSet";
@@ -54,11 +55,15 @@ export interface RenderHeaderProps extends RenderNodeProps {
   depth: number;
 }
 
+// Allow either BinaryLayoutNode or GeminiLayoutNode
+export type AnyLayoutNode = BinaryLayoutNode | GeminiLayoutNode;
+export type AnyLayoutFn = BinaryLayoutFn | GeminiLayoutFn;
+
 export interface TreemapSVGProps {
   root: ScopeNode;
   width: number;
   height: number;
-  layout?: BinaryLayoutFn;
+  layout?: AnyLayoutFn;
   renderNode?: (p: RenderNodeProps) => React.ReactNode;
   renderHeader?: (p: RenderHeaderProps) => React.ReactNode;
   padding?: number;
@@ -96,8 +101,12 @@ const createStyledRenderHeader =
     const isSearchMatch = matchingNodes.has(node.id);
 
     // Check if this node has hidden children
-    const hasHiddenChildren = node.meta?.hasHiddenChildren === true;
-    const hiddenChildrenCount = node.meta?.hiddenChildrenCount || 0;
+    const meta = (node as any).meta || {};
+    const hasHiddenChildren =
+      meta.hasHiddenChildren === true ||
+      (node as any).hasHiddenChildren === true;
+    const hiddenChildrenCount =
+      meta.hiddenChildrenCount || (node as any).hiddenChildrenCount || 0;
 
     // Use subdued borders for headers since group container handles main border
     let borderColor = "#333333";
@@ -123,10 +132,6 @@ const createStyledRenderHeader =
     );
 
     const textY = Math.min(h - 2, fontSize + 2);
-
-    console.log(
-      `[RENDER HEADER] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
-    );
 
     // Use the calculated fontSize for character width to ensure consistency
     const actualCharWidth = fontSize * 0.5;
@@ -251,8 +256,12 @@ const createStyledRenderNode =
     const isSearchMatch = matchingNodes.has(node.id);
 
     // Check if this node has hidden children
-    const hasHiddenChildren = node.meta?.hasHiddenChildren === true;
-    const hiddenChildrenCount = node.meta?.hiddenChildrenCount || 0;
+    const meta = (node as any).meta || {};
+    const hasHiddenChildren =
+      meta.hasHiddenChildren === true ||
+      (node as any).hasHiddenChildren === true;
+    const hiddenChildrenCount =
+      meta.hiddenChildrenCount || (node as any).hiddenChildrenCount || 0;
 
     // For leaf nodes, keep stronger borders since they don't have group containers
     let borderColor = "#555555";
@@ -277,10 +286,6 @@ const createStyledRenderNode =
     const fontSize = Math.min(
       maxFontSize,
       Math.max(depthAdjustedMin, heightBasedSize)
-    );
-
-    console.log(
-      `[RENDER NODE] ${node.label}, depth: ${depth}, h: ${h}, calculated fontSize: ${fontSize}, minFontSize: ${minFontSize}`
     );
 
     // Use the calculated fontSize for character width to ensure consistency
@@ -461,26 +466,49 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     maxFontSize,
   ]);
 
-  const layoutRoot = useMemo(
-    () =>
-      layout(root, width, height, {
+  // Determine which layout options to use based on the layout function
+  const layoutOptions = useMemo(() => {
+    // Check if the provided layout function is geminiLayout or binaryLayout
+    // This is a bit of a hack; a more robust way might be to pass a layout 'type' string
+    if (layout === (geminiLayout as AnyLayoutFn)) {
+      return {
+        // Options for geminiLayout
+        minTextWidth: settings.minGeminiTextWidth, // Example: use settings for Gemini
+        minTextHeight: settings.minGeminiTextHeight,
+        minBoxSize: settings.minGeminiBoxSize,
+        padding: settings.geminiPadding,
+        headerHeight: settings.geminiHeaderHeight,
+      };
+    } else {
+      // Default to options for binaryLayout
+      return {
         minTextWidth: 40,
         minTextHeight: 20,
         minBoxSize: 12,
-        padding,
+        padding: padding, // Use the component prop padding for binary
         headerHeight: 28,
-        fontSize: 11,
-      }),
-    [root, width, height, layout, padding, minFontSize]
-  );
+        fontSize: 11, // binaryLayout uses this
+      };
+    }
+  }, [layout, settings, padding]);
+
+  const layoutRoot = useMemo(() => {
+    console.log("[TreemapSVG] Using layout function name:", layout.name); // Log the name of the layout function
+    console.log("[TreemapSVG] Using layout options:", layoutOptions); // Log the options being passed
+    return layout(root, width, height, layoutOptions as any); // Cast to any to satisfy differing option types
+  }, [root, width, height, layout, layoutOptions]);
 
   // Calculate header height based on depth - prioritize headers!
   const getHeaderHeight = (depth: number, availableHeight: number): number => {
-    const maxHeaderHeight = 28; // Increased from 24
+    // This function might need to be dynamic based on layout type too
+    // For now, using a generic approach or the one from binaryLayout.
+    const maxHeaderHeight =
+      layout === (geminiLayout as AnyLayoutFn)
+        ? settings.geminiHeaderHeight
+        : 28;
     const minHeaderHeight = Math.max(16, minFontSize + 8); // Base on minFontSize
 
-    // Same logic as in binaryLayout.ts but with larger base values
-    const depthFactor = Math.max(0.85, 1 - depth * 0.03); // Less aggressive scaling
+    const depthFactor = Math.max(0.85, 1 - depth * 0.03);
     const baseHeight = Math.max(minHeaderHeight, maxHeaderHeight * depthFactor);
 
     const maxAllowedHeight = Math.max(
@@ -492,7 +520,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   };
 
   /* recursive renderer with infinite depth support */
-  const renderGroup = (ln: BinaryLayoutNode, depth = 0): React.ReactNode => {
+  const renderGroup = (ln: AnyLayoutNode, depth = 0): React.ReactNode => {
     // Skip rendering if the node is too small to be meaningful or marked as 'none'
     if (ln.w < 2 || ln.h < 2 || ln.renderMode === "none") {
       return null;
@@ -504,6 +532,11 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     // Check if this group/node is selected or matches search
     const isSelected = selectedNodeId === ln.node.id;
     const isSearchMatch = matchingNodes.has(ln.node.id);
+
+    // Common properties for GeminiLayoutNode and BinaryLayoutNode being checked
+    const isConstrainedByDepth =
+      (ln as BinaryLayoutNode).isConstrainedByDepth ||
+      (ln as GeminiLayoutNode).node?.meta?.isConstrainedByDepth;
 
     // For nodes with render mode 'box', render simplified representation
     if (ln.renderMode === "box") {
@@ -530,15 +563,15 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
             fill={baseColor}
             stroke={borderColor}
             strokeWidth={strokeWidth}
-            opacity={0.7}
+            opacity={0.7} // Box opacity
             rx={2}
             style={{ cursor: "pointer" }}
             onClick={(e) => onNodeClick(ln.node, e as any)}
             onMouseEnter={(e) => onMouseEnter(ln.node, e as any)}
             onMouseLeave={onMouseLeave}
           />
-          {/* Show depth constraint indicator */}
-          {ln.isConstrainedByDepth && ln.w >= 16 && ln.h >= 16 && (
+          {/* Show depth constraint indicator - specific to BinaryLayoutNode for now */}
+          {isConstrainedByDepth && ln.w >= 16 && ln.h >= 16 && (
             <g>
               <circle
                 cx={ln.x + ln.w - 8}
@@ -566,14 +599,21 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
       );
     }
 
-    // HEADERS ARE PRIORITY! Only skip headers if absolutely impossible to render
-    const shouldRenderHeader =
-      hasRenderableChildren && ln.h >= 16 && ln.w >= 24; // Very permissive requirements
+    // For 'text' render mode (containers or leaf nodes with text)
+    // HEADERS ARE PRIORITY for containers!
+    // Gemini layout uses `isContainer` property. Binary layout implies container if children exist.
+    const isActuallyContainer =
+      (ln as GeminiLayoutNode).isContainer !== undefined
+        ? (ln as GeminiLayoutNode).isContainer
+        : hasRenderableChildren;
 
-    const headerHeight = shouldRenderHeader ? getHeaderHeight(depth, ln.h) : 0;
+    const shouldRenderHeader = isActuallyContainer && ln.h >= 16 && ln.w >= 24;
 
-    // For body rendering, be more flexible - it's less important than headers
-    const shouldRenderBody = ln.h - headerHeight > 8; // Reduced threshold
+    const headerHeightToUse = shouldRenderHeader
+      ? getHeaderHeight(depth, ln.h)
+      : 0;
+
+    const shouldRenderBody = ln.h - headerHeightToUse > 8;
 
     // Determine group border styling
     let groupBorderColor = "#6c757d";
@@ -589,20 +629,23 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
       groupStrokeWidth = Math.max(1, 2 - depth * 0.2);
       groupOpacity = 0.7;
     } else if (depth === 1) {
+      // Adjusted from depth === 0 for binary, might need tweaking for Gemini
       groupBorderColor = "#6c757d";
     } else {
       groupBorderColor = "#adb5bd";
     }
 
-    // Calculate the background fill color for the group
     const baseColor =
       pastelSet[ln.node.category] || pastelSet[NodeCategory.Other];
-    const groupFillColor = lightenColor(baseColor, 30); // 30% lighter than the header color
+    // Lighten background for containers, use direct color for leafs if Gemini says it's not a container
+    const groupFillColor = isActuallyContainer
+      ? lightenColor(baseColor, 30)
+      : baseColor;
 
     return (
       <g key={ln.node.id}>
-        {/* Render container background/border for nodes with children */}
-        {hasRenderableChildren && (
+        {/* Render container background/border only if it's a container */}
+        {isActuallyContainer && (
           <rect
             x={ln.x}
             y={ln.y}
@@ -620,33 +663,44 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
           />
         )}
 
-        {/* Render header only if this node has children */}
+        {/* Render header only if this node is a container and should render a header */}
         {shouldRenderHeader && (
           <g transform={`translate(${ln.x} ${ln.y})`}>
             {finalRenderHeader({
               node: ln.node,
               w: ln.w,
-              h: headerHeight,
+              h: headerHeightToUse, // Use calculated header height
               depth,
             })}
           </g>
         )}
 
-        {/* For leaf nodes: render the node content in the available space */}
-        {shouldRenderBody && !hasRenderableChildren && (
-          <g transform={`translate(${ln.x} ${ln.y + headerHeight})`}>
+        {/* For leaf nodes (or containers that don't render as distinct groups but show content): 
+            Render the node content in the available space.
+            If it's a container, content is rendered below its header.
+            If it's a leaf (isActuallyContainer is false), it takes the full ln.h.
+        */}
+        {shouldRenderBody && (
+          <g
+            transform={`translate(${ln.x} ${ln.y + (isActuallyContainer ? headerHeightToUse : 0)})`}
+          >
             {finalRenderNode({
               node: ln.node,
               w: ln.w,
-              h: ln.h - headerHeight,
+              h: ln.h - (isActuallyContainer ? headerHeightToUse : 0),
               depth,
             })}
           </g>
         )}
 
         {/* For parent nodes: render children directly (they already have correct absolute coordinates) */}
-        {hasRenderableChildren && (
-          <>{ln.children?.map((child) => renderGroup(child, depth + 1))}</>
+        {/* Ensure children exist and are of the correct type before mapping */}
+        {hasRenderableChildren && ln.children && (
+          <>
+            {ln.children.map((child) =>
+              renderGroup(child as AnyLayoutNode, depth + 1)
+            )}
+          </>
         )}
       </g>
     );
@@ -654,7 +708,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      {renderGroup(layoutRoot)}
+      {renderGroup(layoutRoot as AnyLayoutNode)}
     </svg>
   );
 };

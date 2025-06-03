@@ -77,14 +77,9 @@ Example treemap of itself:
     - **Enhanced Tooltips**: Hover tooltips display detailed information about hidden children including count and reason
     - **Root Level Protection**: The root node is guaranteed to show all its direct children; the layout will compress larger children to make room rather than hide any root-level nodes
     - **Layout Constraint Tracking**: Different reasons for hiding are tracked (size constraints vs. layout constraints) and displayed in tooltips
+  - **Experimental Treemap Layout**: Introduced an alternative treemap layout algorithm (`geminiLayout`) based on bin packing and breadth-first rendering. This is currently an experimental feature and can be enabled by modifying the `selectedLayout` setting (defaults to the original `binaryLayout`). The new layout aims to fulfill specifications outlined in `src/webview/Treemap/layout2.md`.
 
-### Planned Features
-
-- Component hierarchy visualization
-- Hook and state inspection
-- Props and data-flow tracing
-- Module dependency graph
-- Jump-to-definition enhancements
+### Color Scheme
 
 ## Search Feature
 

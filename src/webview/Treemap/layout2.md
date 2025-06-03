@@ -7,6 +7,8 @@
   - Containers: These are nodes that have children
   - Leafs: These are nodes that have no children
 - Containers have a header and are filled with other nodes
+  - Determine the size of containers based on the nodes
+  - This can be approximated by looking at the `value` for the group which is the sum of the values of the children - each leaf node has a value of 1
 - Leafs represent final pieces of code with no children - they render as a rect with text
 - Node render is controlled by several settings:
   - We want a node to render as 80x wide by 40px high as a minimum. If the text is shorter than that, it can be less, but aim for that size.
@@ -17,3 +19,6 @@
   - If possible, then layout the depth, for any containers, we want to render them proportional to their value and then attempt to fill in children
 - Containers do not need to render as a single bounding rectangle. Allow them to take on L shapes so they they can fit around existing nodes.
 - Layout nodes by source order and bin pack to fit things in.
+- For aspect ratios, it is critical to have a good aspect ratio which supports reading text
+  - Tall thin rectangles are not good
+  - Wide rectangles are better

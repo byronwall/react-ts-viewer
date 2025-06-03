@@ -28,6 +28,12 @@ export interface TreemapSettings {
   avgCharPixelWidth: number;
   enableDepthLimit: boolean;
   maxDepth: number;
+  minGeminiTextWidth: number;
+  minGeminiTextHeight: number;
+  minGeminiBoxSize: number;
+  geminiPadding: number;
+  geminiHeaderHeight: number;
+  selectedLayout: "binary" | "gemini";
 }
 
 export interface SettingConfigBase<T> {
@@ -333,4 +339,10 @@ export const defaultTreemapSettings: TreemapSettings = {
   avgCharPixelWidth: 5,
   enableDepthLimit: false,
   maxDepth: 5,
+  minGeminiTextWidth: 80,
+  minGeminiTextHeight: 40,
+  minGeminiBoxSize: 20,
+  geminiPadding: 5,
+  geminiHeaderHeight: 25,
+  selectedLayout: "gemini",
 };

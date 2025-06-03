@@ -13,6 +13,7 @@ export interface BinaryLayoutNode {
   hiddenChildrenCount?: number;
   isLShaped?: boolean; // Indicates if this container has L-shaped layout
   segments?: { x: number; y: number; w: number; h: number }[]; // For L-shaped containers
+  value: number;
 }
 
 export interface BinaryLayoutOptions {
@@ -47,6 +48,12 @@ interface PackedNode {
 }
 
 export const binaryLayout: BinaryLayoutFn = (root, w, h, opts = {}) => {
+  console.log("[BINARY LAYOUT CALLED] binaryLayout called with:", {
+    root,
+    w,
+    h,
+    opts,
+  });
   const {
     sizeAccessor = (n) => n.value,
     minTextWidth = 40,
@@ -455,6 +462,7 @@ export const binaryLayout: BinaryLayoutFn = (root, w, h, opts = {}) => {
       h: height,
       renderMode,
       children: [],
+      value: sizeAccessor(node),
     };
 
     // If no children or too small to render children, return early
