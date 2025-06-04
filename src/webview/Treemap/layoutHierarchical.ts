@@ -227,34 +227,43 @@ class Guillotine2DPacker implements I2DBinPacker {
     const rightWidth = rect.w - width;
     const bottomHeight = rect.h - height;
 
-    // Right rectangle (vertical split)
-    if (rightWidth > 0) {
-      this.freeRectangles.push({
-        x: rect.x + width,
-        y: rect.y,
-        w: rightWidth,
-        h: height, // Only as tall as the placed item
-      });
+    // Improved splitting strategy to avoid creating too many narrow, unusable rectangles
+    const minUsefulWidth = 20; // Minimum width that could be useful
+    const minUsefulHeight = 12; // Minimum height that could be useful
 
-      // Additional right rectangle for the bottom part if there's height remaining
-      if (bottomHeight > 0) {
+    // Right rectangle (vertical split)
+    if (rightWidth >= minUsefulWidth) {
+      // For the right rectangle, use the full remaining height if it's useful
+      const rightHeight = rect.h;
+      if (rightHeight >= minUsefulHeight) {
         this.freeRectangles.push({
           x: rect.x + width,
-          y: rect.y + height,
+          y: rect.y,
           w: rightWidth,
-          h: bottomHeight,
+          h: rightHeight,
         });
       }
     }
 
     // Bottom rectangle (horizontal split)
-    if (bottomHeight > 0) {
-      this.freeRectangles.push({
-        x: rect.x,
-        y: rect.y + height,
-        w: width, // Only as wide as the placed item
-        h: bottomHeight,
-      });
+    if (bottomHeight >= minUsefulHeight) {
+      // For the bottom rectangle, only use the width of the placed item if the right area is too narrow
+      let bottomWidth = width;
+
+      // If we didn't create a right rectangle (because it was too narrow),
+      // extend the bottom rectangle to use the full width
+      if (rightWidth < minUsefulWidth) {
+        bottomWidth = rect.w;
+      }
+
+      if (bottomWidth >= minUsefulWidth) {
+        this.freeRectangles.push({
+          x: rect.x,
+          y: rect.y + height,
+          w: bottomWidth,
+          h: bottomHeight,
+        });
+      }
     }
 
     // Clean up overlapping rectangles
@@ -824,9 +833,38 @@ function layoutNodeRecursive(
         childTargetW = Math.min(childTargetW, contentPackingArea.w);
         childTargetH = Math.min(childTargetH, contentPackingArea.h);
       } else {
-        // Is a Leaf
-        childTargetW = options.leafPrefWidth;
-        childTargetH = options.leafPrefHeight;
+        // Is a Leaf - use grid-based sizing to prevent narrow columns
+        if (childrenToLayout.length > 6) {
+          // For many items, use grid-based approach
+          const itemsPerRow = Math.min(
+            4,
+            Math.ceil(Math.sqrt(childrenToLayout.length))
+          );
+          const itemsPerCol = Math.ceil(childrenToLayout.length / itemsPerRow);
+
+          childTargetW = Math.max(
+            options.leafPrefWidth,
+            (contentPackingArea.w / itemsPerRow) * 0.9 // Use 90% of grid cell width
+          );
+          childTargetH = Math.max(
+            options.leafPrefHeight,
+            (contentPackingArea.h / itemsPerCol) * 0.9 // Use 90% of grid cell height
+          );
+
+          console.log(
+            `[GRID SIZING] ${childNode.label}: targeting ${itemsPerRow}x${itemsPerCol} grid, size: ${childTargetW.toFixed(1)}x${childTargetH.toFixed(1)}`
+          );
+        } else {
+          // For fewer items, use standard preferred size but expand width if space allows
+          childTargetW = Math.min(
+            contentPackingArea.w * 0.6, // Use up to 60% of width for individual items
+            Math.max(
+              options.leafPrefWidth,
+              contentPackingArea.w / Math.min(3, childrenToLayout.length)
+            )
+          );
+          childTargetH = options.leafPrefHeight;
+        }
       }
 
       childTargetW = Math.max(options.leafMinWidth, childTargetW);
@@ -850,8 +888,98 @@ function layoutNodeRecursive(
       });
     }
 
-    // Sort items for optimal 2D bin packing (largest area first)
-    const sortedPackerItems = sortItemsForPacking(packerItems, "height");
+    // Sort items for optimal 2D bin packing (largest area first instead of height first)
+    const sortedPackerItems = sortItemsForPacking(packerItems, "area");
+
+    // Pre-analysis: Check if we have many small items that could benefit from width expansion
+    const totalTargetArea = sortedPackerItems.reduce(
+      (sum, item) => sum + item.targetW * item.targetH,
+      0
+    );
+    const availableArea = contentPackingArea.w * contentPackingArea.h;
+    const utilizationRatio = totalTargetArea / availableArea;
+
+    console.log(
+      `[layoutNodeRecursive] PACKING ANALYSIS: ${node.label} (ID: ${node.id})`,
+      {
+        totalTargetArea,
+        availableArea,
+        utilizationRatio,
+        childCount: sortedPackerItems.length,
+        contentPackingArea,
+      }
+    );
+
+    // If utilization is low and we have many small items, expand their widths
+    if (utilizationRatio < 0.8 && sortedPackerItems.length > 2) {
+      console.log(
+        `[layoutNodeRecursive] LOW UTILIZATION DETECTED - expanding widths for better space usage`
+      );
+
+      // Calculate expansion factor based on available space
+      const expansionFactor = Math.min(3.0, Math.sqrt(1 / utilizationRatio));
+
+      for (const item of sortedPackerItems) {
+        // Expand width more aggressively for small items
+        const currentArea = item.targetW * item.targetH;
+        const averageItemArea = availableArea / sortedPackerItems.length;
+        const isSmallItem = currentArea < averageItemArea * 0.7;
+
+        if (isSmallItem) {
+          const oldWidth = item.targetW;
+          const maxExpandedWidth = Math.min(
+            contentPackingArea.w * 0.95, // Increase to 95% of width
+            item.targetW * expansionFactor * 2.5 // Increase expansion multiplier
+          );
+
+          item.targetW = Math.min(maxExpandedWidth, contentPackingArea.w);
+
+          // Slightly reduce height to maintain similar area if we expanded width significantly
+          if (item.targetW > oldWidth * 1.2) {
+            item.targetH = Math.max(
+              options.leafMinHeight,
+              (currentArea / item.targetW) * 1.1 // Slight area increase
+            );
+          }
+
+          console.log(
+            `[WIDTH EXPANSION] ${item.node.label}: ${oldWidth.toFixed(1)} -> ${item.targetW.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
+          );
+        }
+      }
+    }
+
+    // Also apply width expansion when utilization is very low, regardless of item count
+    if (utilizationRatio < 0.6) {
+      console.log(
+        `[layoutNodeRecursive] VERY LOW UTILIZATION - expanding all item widths`
+      );
+
+      for (const item of sortedPackerItems) {
+        const oldWidth = item.targetW;
+        const currentArea = item.targetW * item.targetH;
+
+        // Expand width to use more of the available space
+        const targetWidth = Math.min(
+          contentPackingArea.w * 0.8, // Increase to 80% of container width
+          item.targetW * 2.5 // Increase multiplier from 2.0 to 2.5
+        );
+
+        if (targetWidth > item.targetW) {
+          item.targetW = targetWidth;
+
+          // Adjust height to maintain reasonable area
+          item.targetH = Math.max(
+            options.leafMinHeight,
+            Math.min(item.targetH, (currentArea / item.targetW) * 1.2)
+          );
+
+          console.log(
+            `[AGGRESSIVE WIDTH EXPANSION] ${item.node.label}: ${oldWidth.toFixed(1)} -> ${item.targetW.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
+          );
+        }
+      }
+    }
 
     // Second pass: pack the sorted items
     console.log(
@@ -1077,44 +1205,93 @@ function layoutNodeRecursive(
         // Get the free rectangles from the packer to find actual available spaces
         let bestFitRect: FreeRectangle | null = null;
         let bestFitArea = 0;
+        let bestFitScore = 0; // New scoring system
+        let bestFitW = 0;
+        let bestFitH = 0;
 
         // Access free rectangles from the underlying Guillotine2DPacker
         const freeRects = (packer as any).packer?.freeRectangles || [];
+
+        console.log(
+          `[ADAPTIVE PLACEMENT] Analyzing ${freeRects.length} free rectangles for ${childNode.label}`,
+          {
+            freeRects: freeRects.map((r: FreeRectangle) => ({
+              x: r.x,
+              y: r.y,
+              w: r.w,
+              h: r.h,
+              area: r.w * r.h,
+            })),
+            targetW: packerInput.targetW,
+            targetH: packerInput.targetH,
+          }
+        );
 
         for (const rect of freeRects) {
           // Calculate what dimensions we could fit in this rectangle
           let fitW = Math.min(packerInput.targetW, rect.w);
           let fitH = Math.min(packerInput.targetH, rect.h);
 
+          // Much more aggressive expansion logic to use available space
+          // Always try to expand width if we have extra horizontal space
+          if (rect.w > fitW) {
+            // Expand width aggressively, but maintain reasonable aspect ratio
+            const maxAspectRatio = 6.0; // Allow wider rectangles
+            const availableExtraWidth = rect.w - fitW;
+
+            // Use most of the available width unless it creates an extremely wide aspect ratio
+            const maxExpandedWidth = Math.min(
+              rect.w * 0.98, // Use up to 98% of available width
+              fitH * maxAspectRatio // Respect maximum aspect ratio
+            );
+
+            fitW = Math.max(fitW, maxExpandedWidth);
+
+            console.log(
+              `[ADAPTIVE EXPANSION] ${childNode.label}: expanding width from ${Math.min(packerInput.targetW, rect.w)} to ${fitW} (rect.w: ${rect.w})`
+            );
+          }
+
+          // Also expand height if beneficial and we have space
+          if (rect.h > fitH && rect.w >= fitW * 0.5) {
+            // Expand height more conservatively
+            const minAspectRatio = 0.15; // Don't make it too tall
+            const maxExpandedHeight = Math.min(
+              rect.h * 0.95, // Use up to 95% of available height
+              fitW / minAspectRatio // Respect minimum aspect ratio
+            );
+            fitH = Math.max(fitH, maxExpandedHeight);
+          }
+
           // Ensure minimum dimensions
           fitW = Math.max(fitW, options.leafMinWidth);
           fitH = Math.max(fitH, options.leafMinHeight);
 
-          // Check if this rectangle can accommodate the minimum dimensions
+          // Check if this rectangle can accommodate the calculated dimensions
           if (rect.w >= fitW && rect.h >= fitH) {
             const area = fitW * fitH;
-            if (area > bestFitArea) {
+            const utilizationRatio = area / (rect.w * rect.h);
+
+            // Score based on area and utilization efficiency, heavily favor larger areas
+            const score = area * (1 + utilizationRatio);
+
+            if (score > bestFitScore) {
+              bestFitScore = score;
               bestFitArea = area;
               bestFitRect = rect;
+              bestFitW = fitW;
+              bestFitH = fitH;
             }
           }
         }
 
         if (bestFitRect) {
-          // Calculate adaptive dimensions for the best fit rectangle
-          let adaptiveW = Math.min(packerInput.targetW, bestFitRect.w);
-          let adaptiveH = Math.min(packerInput.targetH, bestFitRect.h);
-
-          // Ensure minimum dimensions
-          adaptiveW = Math.max(adaptiveW, options.leafMinWidth);
-          adaptiveH = Math.max(adaptiveH, options.leafMinHeight);
-
           const adaptivePlacement: PackerPlacement = {
             id: packerInput.id,
             x: bestFitRect.x,
             y: bestFitRect.y,
-            w: adaptiveW,
-            h: adaptiveH,
+            w: bestFitW,
+            h: bestFitH,
             fits: true,
           };
 
@@ -1140,140 +1317,58 @@ function layoutNodeRecursive(
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
 
-            // Dynamic Container Resizing for Adaptive Placement: If this is a container child that used less space than allocated,
-            // reclaim the unused space for subsequent siblings
-            if (
-              laidOutChild.isContainer &&
-              (laidOutChild.h < adaptivePlacement.h ||
-                laidOutChild.w < adaptivePlacement.w)
-            ) {
-              const heightDifference = adaptivePlacement.h - laidOutChild.h;
-              const widthDifference = adaptivePlacement.w - laidOutChild.w;
-
-              console.log(
-                `[DYNAMIC RESIZE - ADAPTIVE] Container ${childNode.label} used less space than allocated`,
-                {
-                  allocatedW: adaptivePlacement.w,
-                  allocatedH: adaptivePlacement.h,
-                  actualW: laidOutChild.w,
-                  actualH: laidOutChild.h,
-                  reclaimedW: widthDifference,
-                  reclaimedH: heightDifference,
-                  placementX: adaptivePlacement.x,
-                  placementY: adaptivePlacement.y,
-                }
-              );
-
-              // Create free rectangles for the unused space
-              const unusedRects: FreeRectangle[] = [];
-
-              // Right unused rectangle (if width difference)
-              if (widthDifference > 0) {
-                unusedRects.push({
-                  x: adaptivePlacement.x + laidOutChild.w,
-                  y: adaptivePlacement.y,
-                  w: widthDifference,
-                  h: laidOutChild.h, // Only as tall as the actual child
-                });
-              }
-
-              // Bottom unused rectangle (if height difference)
-              if (heightDifference > 0) {
-                unusedRects.push({
-                  x: adaptivePlacement.x,
-                  y: adaptivePlacement.y + laidOutChild.h,
-                  w: laidOutChild.w, // Only as wide as the actual child
-                  h: heightDifference,
-                });
-              }
-
-              // Bottom-right unused rectangle (if both width and height differences)
-              if (widthDifference > 0 && heightDifference > 0) {
-                unusedRects.push({
-                  x: adaptivePlacement.x + laidOutChild.w,
-                  y: adaptivePlacement.y + laidOutChild.h,
-                  w: widthDifference,
-                  h: heightDifference,
-                });
-              }
-
-              // Add meaningful unused rectangles back to the packer
-              for (const unusedRect of unusedRects) {
-                if (
-                  unusedRect.h >= options.leafMinHeight &&
-                  unusedRect.w >= options.leafMinWidth
-                ) {
-                  packer.addFreeRectangle(unusedRect);
-
-                  console.log(
-                    `[DYNAMIC RESIZE - ADAPTIVE] Added unused space back as free rectangle`,
-                    {
-                      newFreeRect: unusedRect,
-                      totalFreeRects:
-                        (packer as any).packer?.freeRectangles?.length || 0,
-                    }
-                  );
-                }
-              }
-            }
-
             console.log(
               `[layoutNodeRecursive] CHILD ADAPTIVELY PLACED: ${childNode.label} (ID: ${childNode.id})`,
               {
                 originalW: packerInput.targetW,
                 originalH: packerInput.targetH,
-                adaptiveW: adaptivePlacement.w,
-                adaptiveH: adaptivePlacement.h,
+                adaptiveW: bestFitW,
+                adaptiveH: bestFitH,
                 finalW: laidOutChild.w,
                 finalH: laidOutChild.h,
-                usedRectW: bestFitRect.w,
-                usedRectH: bestFitRect.h,
-                usedRectX: bestFitRect.x,
-                usedRectY: bestFitRect.y,
-                dynamicResize:
-                  laidOutChild.isContainer &&
-                  (laidOutChild.h < adaptivePlacement.h ||
-                    laidOutChild.w < adaptivePlacement.w)
-                    ? `Reclaimed ${adaptivePlacement.h - laidOutChild.h}px height and ${adaptivePlacement.w - laidOutChild.w}px width`
-                    : "None",
+                placedInRect: {
+                  x: bestFitRect.x,
+                  y: bestFitRect.y,
+                  w: bestFitRect.w,
+                  h: bestFitRect.h,
+                },
               }
             );
 
-            // Manually update the packer's state to account for this placement
-            // Remove or split the used rectangle
-            if (typeof (packer as any).packer?.splitRectangle === "function") {
+            // Manual rectangle splitting since we're bypassing the normal packer flow
+            const packerInstance = (packer as any).packer;
+            if (packerInstance && packerInstance.splitRectangle) {
+              // Split the rectangle to mark this space as used
               (packer as any).packer.splitRectangle(
                 bestFitRect,
-                adaptiveW,
-                laidOutChild.h // Use actual height instead of adaptiveH
+                bestFitW,
+                laidOutChild.h // Use actual height instead of bestFitH
               );
             }
 
-            // Also update the packer's usage tracking
-            const packerInstance = (packer as any).packer;
-            if (packerInstance) {
-              const rightEdge = bestFitRect.x + adaptiveW;
+            // Update packer usage tracking
+            const packerInstance2 = (packer as any).packer;
+            if (packerInstance2) {
+              const rightEdge = bestFitRect.x + bestFitW;
               const bottomEdge = bestFitRect.y + laidOutChild.h; // Use actual height
-              packerInstance.usedWidth = Math.max(
-                packerInstance.usedWidth || 0,
+              packerInstance2.usedWidth = Math.max(
+                packerInstance2.usedWidth,
                 rightEdge
               );
-              packerInstance.usedHeight = Math.max(
-                packerInstance.usedHeight || 0,
+              packerInstance2.usedHeight = Math.max(
+                packerInstance2.usedHeight,
                 bottomEdge
               );
 
-              // Add to packed items with actual dimensions used
-              if (packerInstance.packedItems) {
-                packerInstance.packedItems.push({
-                  id: packerInput.id,
-                  x: bestFitRect.x,
-                  y: bestFitRect.y,
-                  w: adaptiveW,
-                  h: laidOutChild.h, // Use actual height instead of adaptiveH
-                  fits: true,
-                });
-              }
+              // Add this item to the packed items list
+              packerInstance2.packedItems.push({
+                id: packerInput.id,
+                x: bestFitRect.x,
+                y: bestFitRect.y,
+                w: bestFitW,
+                h: laidOutChild.h, // Use actual height instead of bestFitH
+                fits: true,
+              });
             }
 
             console.log(
