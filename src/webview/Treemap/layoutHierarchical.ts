@@ -218,10 +218,6 @@ function layoutNodeRecursive(
 
   const calculatedW = parentAllocatedSpace.w;
   const calculatedH = parentAllocatedSpace.h;
-  // console.log(
-  //   `[layoutNodeRecursive] Node: ${node.label} (${node.id}), Depth: ${depth}`,
-  //   { parentAllocatedSpace, calculatedW, calculatedH, isEffectivelyLeaf }
-  // );
 
   const currentLayoutNode: HierarchicalLayoutNode = {
     node,
@@ -246,15 +242,6 @@ function layoutNodeRecursive(
     // If too wide for aspect ratio: h = w / maxAspect
     // If too tall for aspect ratio: w = h * maxAspect (or w = h / minAspect if defined that way)
     // This needs more sophisticated logic to balance prefSize and aspectRatio within allocated space.
-    // console.log(
-    //   `[layoutNodeRecursive] Leaf: ${node.label} (Value: ${node.value}), Initial targetW/H:`,
-    //   {
-    //     targetW,
-    //     targetH,
-    //     parentAllocatedSpaceW: parentAllocatedSpace.w,
-    //     parentAllocatedSpaceH: parentAllocatedSpace.h,
-    //   }
-    // );
 
     // For now, just try to fit preferred, then scale down if needed.
     if (targetW > parentAllocatedSpace.w) {
@@ -271,21 +258,20 @@ function layoutNodeRecursive(
     currentLayoutNode.w = Math.max(options.leafMinWidth, targetW);
     currentLayoutNode.h = Math.max(options.leafMinHeight, targetH);
 
-    // console.log(
-    //   `[layoutNodeRecursive] Leaf: ${node.label} (Value: ${node.value}), After min enforcement:`,
-    //   { w: currentLayoutNode.w, h: currentLayoutNode.h }
-    // );
-
     // Ensure it still fits after min enforcement (could clip if min is larger than allocated)
     currentLayoutNode.w = Math.min(currentLayoutNode.w, parentAllocatedSpace.w);
     currentLayoutNode.h = Math.min(currentLayoutNode.h, parentAllocatedSpace.h);
-    // console.log(
-    //   `[layoutNodeRecursive] Leaf: ${node.label} (Value: ${node.value}), Final leaf W/H:`,
-    //   {
-    //     w: currentLayoutNode.w,
-    //     h: currentLayoutNode.h,
-    //   }
-    // );
+    console.log(
+      `[layoutNodeRecursive] LEAF FINAL: ${node.label} (ID: ${node.id})`,
+      {
+        finalW: currentLayoutNode.w,
+        finalH: currentLayoutNode.h,
+        parentW: parentAllocatedSpace.w,
+        parentH: parentAllocatedSpace.h,
+        parentX: parentAllocatedSpace.x,
+        parentY: parentAllocatedSpace.y,
+      }
+    );
 
     currentLayoutNode.isContainer = false; // It's a leaf
   } else {
@@ -302,14 +288,6 @@ function layoutNodeRecursive(
       w: parentAllocatedSpace.w - 2 * options.padding, // Account for L/R padding
       h: parentAllocatedSpace.h - headerActualHeight - 2 * options.padding, // Account for T/B padding (header + bottom)
     };
-    // console.log(
-    //   `[layoutNodeRecursive] Container: ${node.label}, ContentPackingArea:`,
-    //   { contentPackingArea, headerActualHeight }
-    // );
-    // console.log(
-    //   `[layoutNodeRecursive] Container: ${node.label}, Children values:`,
-    //   node.children?.map((c) => ({ label: c.label, value: c.value }))
-    // );
 
     if (contentPackingArea.w <= 0 || contentPackingArea.h <= 0) {
       // Not enough space for content, render as box or nothing
@@ -330,16 +308,9 @@ function layoutNodeRecursive(
     const sortedChildren = [...childrenToLayout].sort(
       (a, b) => (b.value || 0) - (a.value || 0)
     );
-    // console.log(
-    //   `[layoutNodeRecursive] Container: ${node.label}, Sorted children for packing:`,
-    //   sortedChildren.map((c) => ({ label: c.label, value: c.value, id: c.id }))
-    // );
 
     const totalChildrenValue =
       childrenToLayout.reduce((sum, child) => sum + (child.value || 1), 0) || 1;
-    // console.log(
-    //   `[layoutNodeRecursive] Container: ${node.label}, Total children value: ${totalChildrenValue}`
-    // );
 
     for (const childNode of sortedChildren) {
       // Estimate child size
@@ -362,29 +333,11 @@ function layoutNodeRecursive(
         // Cap by available space
         childTargetW = Math.min(childTargetW, contentPackingArea.w);
         childTargetH = Math.min(childTargetH, contentPackingArea.h);
-
-        // console.log(
-        //   `[layoutNodeRecursive] Child Container ${childNode.label} (Value: ${childNode.value}, Ratio: ${childValueRatio.toFixed(2)}) of ${node.label}: Estimated AreaShare W: ${childTargetW.toFixed(2)}, H: ${childTargetH.toFixed(2)} (TargetArea: ${targetArea.toFixed(2)})`
-        // );
       } else {
         // Is a Leaf
         childTargetW = options.leafPrefWidth;
         childTargetH = options.leafPrefHeight;
-        // console.log(
-        //   `[layoutNodeRecursive] Child Leaf ${childNode.label} (Value: ${childNode.value}) of ${node.label}: Estimated W/H (preferred): ${childTargetW}/${childTargetH}`
-        // );
       }
-
-      // !!! Add specific log here to check options right before Math.max
-      // console.log(
-      //   `[layoutNodeRecursive] Child ${childNode.label} of ${node.label}: Checking options before Math.max:`,
-      //   {
-      //     options_leafMinWidth: options.leafMinWidth,
-      //     options_leafMinHeight: options.leafMinHeight,
-      //     childTargetW_before_max: childTargetW,
-      //     childTargetH_before_max: childTargetH,
-      //   }
-      // );
 
       childTargetW = Math.max(options.leafMinWidth, childTargetW);
       // For containers, ensure targetH can accommodate at least a minimal content area + header
@@ -393,10 +346,6 @@ function layoutNodeRecursive(
         ? options.leafMinHeight + options.headerHeight
         : options.leafMinHeight;
       childTargetH = Math.max(minHeightForChild, childTargetH);
-      // console.log(
-      //   `[layoutNodeRecursive] Child ${childNode.label} of ${node.label}: After min enforcement W/H: `,
-      //   { childTargetW, childTargetH }
-      // );
 
       // Ensure target dimensions for packer do not exceed available packing area dimensions
       // The packer operates with contentPackingArea.w as its maxWidth, so childTargetW will be capped by packer if it tries to exceed.
@@ -411,10 +360,6 @@ function layoutNodeRecursive(
         targetH: childTargetH,
         node: childNode,
       };
-      // console.log(
-      //   `[layoutNodeRecursive] Child ${childNode.label} (Value: ${childNode.value}) of ${node.label}: Packer input:`,
-      //   { packerInput }
-      // );
 
       const placement = packer.add(packerInput);
 
@@ -451,6 +396,21 @@ function layoutNodeRecursive(
           );
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
+            console.log(
+              `[layoutNodeRecursive] CHILD (in ${node.label} container, ID: ${node.id}) - LAID OUT: ${childNode.label} (ID: ${childNode.id})`,
+              {
+                childAllocatedW: allocatedCellForChild.w,
+                childAllocatedH: allocatedCellForChild.h,
+                childAllocatedX: allocatedCellForChild.x,
+                childAllocatedY: allocatedCellForChild.y,
+                childFinalW: laidOutChild.w,
+                childFinalH: laidOutChild.h,
+                childFinalX: laidOutChild.x,
+                childFinalY: laidOutChild.y,
+                parentContainerW: currentLayoutNode.w, // Parent container's current calculated width
+                parentContainerH: currentLayoutNode.h, // Parent container's current calculated height
+              }
+            );
           }
         }
         // If allocatedCellForChild.w or .h is <= 0, the child is effectively skipped
@@ -470,15 +430,18 @@ function layoutNodeRecursive(
         packedContentHeight +
         (packedContentHeight > 0 ? options.padding * 2 : options.padding) // top padding is part of contentPackingArea.y
     );
-    // console.log(
-    //   `[layoutNodeRecursive] Container: ${node.label}, Final W/H based on packed content:`,
-    //   {
-    //     w: currentLayoutNode.w,
-    //     h: currentLayoutNode.h,
-    //     packedContentHeight,
-    //     headerActualHeight,
-    //   }
-    // );
+    console.log(
+      `[layoutNodeRecursive] CONTAINER FINAL: ${node.label} (ID: ${node.id})`,
+      {
+        finalW: currentLayoutNode.w,
+        finalH: currentLayoutNode.h,
+        parentAllocatedW: parentAllocatedSpace.w,
+        parentAllocatedH: parentAllocatedSpace.h,
+        packedContentHeight,
+        headerActualHeight,
+        optionsPadding: options.padding,
+      }
+    );
 
     if (
       currentLayoutNode.children &&
@@ -489,9 +452,6 @@ function layoutNodeRecursive(
       // currentLayoutNode.isContainer = false; // Re-evaluate if it should render as a simple box/leaf
       // or just show header
       currentLayoutNode.h = headerActualHeight;
-      // console.log(
-      //   `[layoutNodeRecursive] Container: ${node.label}, No visible children, setting height to header height: ${headerActualHeight}`
-      // );
     }
   }
 
@@ -501,9 +461,6 @@ function layoutNodeRecursive(
       currentLayoutNode.w < options.leafMinWidth &&
       currentLayoutNode.h < options.leafMinHeight
     ) {
-      // console.warn(
-      //   `[layoutNodeRecursive] Node ${node.label} is too small (${currentLayoutNode.w}x${currentLayoutNode.h}), smaller than leaf min (${options.leafMinWidth}x${options.leafMinHeight}). Setting renderMode to 'none'.`
-      // );
       // if too small for even a leaf, make it none.
       // This is a tough call, might need different min for container vs leaf.
       // For now, if smaller than a leaf's min, it's probably not useful.
@@ -519,18 +476,11 @@ function layoutNodeRecursive(
     isNaN(currentLayoutNode.x) ||
     isNaN(currentLayoutNode.y)
   ) {
-    // console.error(
-    //   "[layoutNodeRecursive] FINAL NaN detected in currentLayoutNode dimensions for node:",
-    //   { nodeID: node.id, label: node.label, currentLayoutNode }
-    // );
     // Provide default values to prevent SVG errors, though layout will be wrong.
     currentLayoutNode.x = currentLayoutNode.x || 0;
     currentLayoutNode.y = currentLayoutNode.y || 0;
     currentLayoutNode.w = currentLayoutNode.w || options.leafMinWidth;
     currentLayoutNode.h = currentLayoutNode.h || options.leafMinHeight;
-    // console.error("[layoutNodeRecursive] Applied fallback for NaN values:", {
-    //   currentLayoutNode,
-    // });
   }
 
   return currentLayoutNode;

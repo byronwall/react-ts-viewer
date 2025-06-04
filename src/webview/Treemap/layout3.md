@@ -156,4 +156,106 @@ The core of the system will be a recursive layout function that processes each c
 
 This refined plan emphasizes the algorithmic nature of the packing and leaf sizing.
 
-## Detailed Plan
+## As Implemented
+
+### Why Children are Smaller Than Their Parent (Single Child Scenario)
+
+This is a key aspect of how the current layout logic works and is influenced by several factors:
+
+#### 1. Parent's Padding
+
+Container nodes have an `options.padding` value. This padding is applied on the inside, reducing the actual `contentPackingArea` available for children.
+
+**Example:**
+
+```
+CONTAINER FINAL: <div> [20-22]
+- optionsPadding: 1
+- finalW: ~338-349 (depending on the pass)
+- Available width for children: parentAllocatedSpace.w - 2 * options.padding
+```
+
+#### 2. Parent's Header
+
+Container nodes also have a `headerActualHeight`. This header takes up space at the top of the container, further reducing the height of the `contentPackingArea` for children.
+
+**Example:**
+
+```
+CONTAINER FINAL: <div> [20-22]
+- headerActualHeight: 50
+```
+
+#### 3. Child Sizing Rules
+
+**Leaf Children (like `<TaskList>`):**
+
+- Leaf nodes are primarily sized based on `options.leafPrefWidth` and `options.leafPrefHeight`
+- They respect `options.leafMinWidth` and `options.leafMinHeight`
+- They are **not** designed to automatically expand to fill the parent's `contentPackingArea`
+
+**Example:**
+
+```
+<TaskList> (child of <div> [20-22]):
+- Gets finalW: 80 (preferred width)
+- Parent <div> [20-22] has contentPackingArea.w: 338.29 - 2*1 = 336.29
+- The leaf <TaskList> stays at its preferred 80px width
+- Result: Blue box is much narrower than yellow box's content area
+```
+
+**Container Children (like `<div> [20-22]` as child of `return (...)`):**
+
+- When a container has a single child container, that child's target size is estimated based on taking 100% of the parent's `contentPackingArea`'s area
+- Initially aims for a square-like shape (`idealDimension`)
+- `childTargetW` and `childTargetH` are capped by the parent's `contentPackingArea.w` and `contentPackingArea.h`
+- The packer then places this child
+- The child container will typically use its full allocated width
+
+**Example:**
+
+```
+return (...) is parent, <div> [20-22] is child:
+
+return (...) CONTAINER FINAL:
+- parentAllocatedW: 352.5
+- optionsPadding: 3
+- headerActualHeight: 75
+- contentPackingArea.w: 352.5 - 2*3 = 346.5
+- contentPackingArea.h: 352.5 - 75 - 2*3 = 271.5
+
+Child <div> [20-22]:
+- childAllocatedW: 338.29 (from CHILD...LAID OUT log)
+- This is smaller than 346.5 due to aspect ratio/area calculations
+```
+
+#### Summary: Why Children Are Smaller
+
+1. **Parent's usable content space** is reduced by its own padding and header
+2. **Leaf children** stick to their preferred sizes rather than expanding to fill available space
+3. **Container children** are sized based on area/aspect-ratio heuristics within the parent's content space, not necessarily stretching to fill all dimensions if their calculated ideal size is smaller
+
+#### Height Calculation Issue
+
+There's a discrepancy in the logs regarding the `finalH` of `<div> [20-22]`:
+
+**Expected Calculation:**
+
+```javascript
+const containerHeight = Math.min(
+  parentAllocatedSpace.h,
+  headerActualHeight +
+    packedContentHeight +
+    (packedContentHeight > 0 ? options.padding * 2 : options.padding)
+);
+
+// For <div> [20-22]:
+// min(326.5, 50 + 24 + 2*1) = min(326.5, 76) = 76
+```
+
+**Logged vs Expected:**
+
+- Log shows: `finalH: 50`
+- Expected: `finalH: 76` (to accommodate header + content + padding)
+
+The visual rendering suggests the container does have sufficient height, indicating this may be a logging artifact related to when `currentLayoutNode.h` is captured.
