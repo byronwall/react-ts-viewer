@@ -9,6 +9,15 @@ Example treemap of itself:
 ## Features
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
+  - **2D Bin Packing Layout**: Advanced Guillotine-based bin packing algorithm that maximizes space utilization:
+    - **True 2D Packing**: Places nodes in any available 2D space rather than limiting to rows/shelves like traditional algorithms
+    - **Guillotine Rectangle Splitting**: Splits remaining space into optimal rectangular regions after each placement for maximum efficiency
+    - **Multiple Fit Heuristics**: Supports BestAreaFit, BestShortSideFit, and BestLongSideFit strategies for different packing scenarios
+    - **Overlap Prevention**: Maintains precise tracking of free rectangles to prevent any node overlaps or space conflicts
+    - **Optimal Item Sorting**: Pre-sorts items by area, width, height, or perimeter for improved packing density
+    - **Visual Space Debugging**: Includes comprehensive console visualization showing packed items and remaining free rectangles
+    - **Minimal White Space**: Eliminates the large gaps common in shelf-based layouts by utilizing irregular spaces left by different-sized nodes
+    - **Space-Efficient**: Significantly reduces wasted space compared to row-based packing approaches
   - **Binary Layout Algorithm**: New bin-packing layout algorithm following the layout2.md specification:
     - **Breadth-First Rendering**: Analyzes each tree level to determine optimal rendering strategy before layout decisions
     - **Bin Packing Approach**: Treats layout as a bin packing problem, placing nodes in source order while optimizing space utilization

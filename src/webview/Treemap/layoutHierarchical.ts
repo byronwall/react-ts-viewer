@@ -31,7 +31,7 @@ export interface HierarchicalLayoutOptions {
   // valueAccessor: (node: ScopeNode) => number; // To get the 'value' for sizing
 }
 
-// --- 2D Bin Packer (Simple Shelf Packer Implementation) ---
+// --- 2D Bin Packer (Guillotine-based Implementation) ---
 interface PackerInputItem {
   id: string;
   targetW: number;
@@ -48,104 +48,347 @@ interface PackerPlacement {
   fits: boolean;
 }
 
+interface FreeRectangle {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface I2DBinPacker {
+  add(item: PackerInputItem): PackerPlacement;
+  getPackedHeight(): number;
+  getPackedWidth(): number;
+  reset(): void;
+}
+
+enum FitHeuristic {
+  BestAreaFit,
+  BestShortSideFit,
+  BestLongSideFit,
+  WorstAreaFit,
+  WorstShortSideFit,
+  WorstLongSideFit,
+}
+
+class Guillotine2DPacker implements I2DBinPacker {
+  private freeRectangles: FreeRectangle[] = [];
+  private packedItems: PackerPlacement[] = [];
+  private interItemPadding: number;
+  private maxWidth: number;
+  private maxHeight: number;
+  private usedWidth: number = 0;
+  private usedHeight: number = 0;
+
+  constructor(
+    maxWidth: number,
+    maxHeight: number = Number.MAX_SAFE_INTEGER,
+    optionsPadding: number = 0
+  ) {
+    this.maxWidth = maxWidth;
+    this.maxHeight = maxHeight;
+    this.interItemPadding = Math.max(0, Math.floor(optionsPadding / 2));
+
+    // Initialize with one large free rectangle
+    this.freeRectangles.push({
+      x: 0,
+      y: 0,
+      w: maxWidth,
+      h: maxHeight,
+    });
+  }
+
+  add(item: PackerInputItem): PackerPlacement {
+    // Find best rectangle using heuristic
+    const bestRect = this.findBestRectangle(
+      item.targetW,
+      item.targetH,
+      FitHeuristic.BestShortSideFit // Changed from BestAreaFit for better packing
+    );
+
+    if (!bestRect) {
+      // No suitable rectangle found - return failure
+      return {
+        id: item.id,
+        x: 0,
+        y: 0,
+        w: item.targetW,
+        h: item.targetH,
+        fits: false,
+      };
+    }
+
+    return this.placeItem(item, bestRect);
+  }
+
+  private placeItem(
+    item: PackerInputItem,
+    rect: FreeRectangle
+  ): PackerPlacement {
+    // Calculate actual position with padding
+    const actualX =
+      rect.x + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+    const actualY =
+      rect.y + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+
+    // Calculate space needed including padding
+    const spaceW =
+      item.targetW + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+    const spaceH =
+      item.targetH + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+
+    const placement: PackerPlacement = {
+      id: item.id,
+      x: actualX,
+      y: actualY,
+      w: item.targetW,
+      h: item.targetH,
+      fits: true,
+    };
+
+    // Split the rectangle and update free rectangles
+    this.splitRectangle(rect, spaceW, spaceH);
+
+    // Update usage tracking
+    this.usedWidth = Math.max(this.usedWidth, actualX + item.targetW);
+    this.usedHeight = Math.max(this.usedHeight, actualY + item.targetH);
+
+    this.packedItems.push(placement);
+    return placement;
+  }
+
+  private findBestRectangle(
+    width: number,
+    height: number,
+    heuristic: FitHeuristic
+  ): FreeRectangle | null {
+    let bestRect: FreeRectangle | null = null;
+    let bestScore = Number.MAX_SAFE_INTEGER;
+    let bestSecondaryScore = Number.MAX_SAFE_INTEGER;
+
+    // Calculate space needed including padding
+    const needW =
+      width + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+    const needH =
+      height + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+
+    for (const rect of this.freeRectangles) {
+      if (rect.w >= needW && rect.h >= needH) {
+        let score: number;
+        let secondaryScore: number;
+
+        switch (heuristic) {
+          case FitHeuristic.BestAreaFit:
+            score = rect.w * rect.h - needW * needH;
+            secondaryScore = Math.min(rect.w - needW, rect.h - needH);
+            break;
+
+          case FitHeuristic.BestShortSideFit:
+            score = Math.min(rect.w - needW, rect.h - needH);
+            secondaryScore = Math.max(rect.w - needW, rect.h - needH);
+            break;
+
+          case FitHeuristic.BestLongSideFit:
+            score = Math.max(rect.w - needW, rect.h - needH);
+            secondaryScore = Math.min(rect.w - needW, rect.h - needH);
+            break;
+
+          default:
+            score = rect.w * rect.h - needW * needH;
+            secondaryScore = Math.min(rect.w - needW, rect.h - needH);
+        }
+
+        if (
+          score < bestScore ||
+          (score === bestScore && secondaryScore < bestSecondaryScore)
+        ) {
+          bestRect = rect;
+          bestScore = score;
+          bestSecondaryScore = secondaryScore;
+        }
+      }
+    }
+
+    return bestRect;
+  }
+
+  private splitRectangle(
+    rect: FreeRectangle,
+    width: number,
+    height: number
+  ): void {
+    // Remove the used rectangle
+    const index = this.freeRectangles.indexOf(rect);
+    if (index !== -1) {
+      this.freeRectangles.splice(index, 1);
+    }
+
+    // Create new free rectangles from the remaining space
+    const rightWidth = rect.w - width;
+    const bottomHeight = rect.h - height;
+
+    // Right rectangle (vertical split)
+    if (rightWidth > 0) {
+      this.freeRectangles.push({
+        x: rect.x + width,
+        y: rect.y,
+        w: rightWidth,
+        h: height, // Only as tall as the placed item
+      });
+
+      // Additional right rectangle for the bottom part if there's height remaining
+      if (bottomHeight > 0) {
+        this.freeRectangles.push({
+          x: rect.x + width,
+          y: rect.y + height,
+          w: rightWidth,
+          h: bottomHeight,
+        });
+      }
+    }
+
+    // Bottom rectangle (horizontal split)
+    if (bottomHeight > 0) {
+      this.freeRectangles.push({
+        x: rect.x,
+        y: rect.y + height,
+        w: width, // Only as wide as the placed item
+        h: bottomHeight,
+      });
+    }
+
+    // Clean up overlapping rectangles
+    this.removeOverlappingRectangles();
+  }
+
+  private removeOverlappingRectangles(): void {
+    // Remove rectangles that are completely contained within others
+    for (let i = 0; i < this.freeRectangles.length; i++) {
+      const rectI = this.freeRectangles[i];
+      if (!rectI) continue;
+
+      for (let j = i + 1; j < this.freeRectangles.length; j++) {
+        const rectJ = this.freeRectangles[j];
+        if (!rectJ) continue;
+
+        if (this.isRectangleContained(rectI, rectJ)) {
+          this.freeRectangles.splice(i, 1);
+          i--;
+          break;
+        } else if (this.isRectangleContained(rectJ, rectI)) {
+          this.freeRectangles.splice(j, 1);
+          j--;
+        }
+      }
+    }
+  }
+
+  private isRectangleContained(
+    rect: FreeRectangle,
+    container: FreeRectangle
+  ): boolean {
+    return (
+      rect.x >= container.x &&
+      rect.y >= container.y &&
+      rect.x + rect.w <= container.x + container.w &&
+      rect.y + rect.h <= container.y + container.h
+    );
+  }
+
+  getPackedHeight(): number {
+    return this.usedHeight;
+  }
+
+  getPackedWidth(): number {
+    return this.usedWidth;
+  }
+
+  reset(): void {
+    this.freeRectangles = [
+      {
+        x: 0,
+        y: 0,
+        w: this.maxWidth,
+        h: this.maxHeight,
+      },
+    ];
+    this.packedItems = [];
+    this.usedWidth = 0;
+    this.usedHeight = 0;
+  }
+
+  // Debug method to visualize free rectangles
+  logPackingVisualization(containerLabel: string): void {
+    console.log(`\n--- 2D PACKING VISUALIZATION for ${containerLabel} ---`);
+    console.log(
+      `Container: ${this.maxWidth} x ${this.maxHeight}, Used: ${this.usedWidth} x ${this.usedHeight}`
+    );
+
+    console.log("\nPacked items:");
+    this.packedItems.forEach((p, i) => {
+      console.log(`  ${i + 1}. ${p.id} @ (${p.x}, ${p.y}) ${p.w} x ${p.h}`);
+    });
+
+    console.log("\nFree rectangles:");
+    this.freeRectangles.forEach((r, i) => {
+      console.log(`  F${i + 1}. @ (${r.x}, ${r.y}) ${r.w} x ${r.h}`);
+    });
+
+    console.log("--- END 2D PACKING VISUALIZATION ---\n");
+  }
+}
+
+// Helper function to sort items for better packing
+function sortItemsForPacking(
+  items: PackerInputItem[],
+  strategy: "area" | "width" | "height" | "perimeter" = "area"
+): PackerInputItem[] {
+  return [...items].sort((a, b) => {
+    switch (strategy) {
+      case "area":
+        return b.targetW * b.targetH - a.targetW * a.targetH;
+      case "width":
+        return b.targetW - a.targetW;
+      case "height":
+        return b.targetH - a.targetH;
+      case "perimeter":
+        return 2 * (b.targetW + b.targetH) - 2 * (a.targetW + a.targetH);
+      default:
+        return b.targetW * b.targetH - a.targetW * a.targetH;
+    }
+  });
+}
+
+// Legacy interface for compatibility
 interface ISimpleShelfPacker {
   add(item: PackerInputItem): PackerPlacement;
   getPackedHeight(): number;
   reset(): void;
 }
 
+// Wrapper class to maintain interface compatibility
 class SimpleShelfPacker implements ISimpleShelfPacker {
-  private currentX = 0;
-  private currentY = 0;
-  private currentRowHeight = 0;
-  private packedItems: PackerPlacement[] = [];
-  private interItemPadding: number; // Renamed for clarity
+  private packer: Guillotine2DPacker;
 
-  constructor(
-    private maxWidth: number,
-    optionsPadding: number // Still accept original options.padding
-  ) {
-    // Use a smaller, fixed padding for inter-item and inter-shelf spacing
-    // The optionsPadding from settings still defines the contentPackingArea boundary.
-    this.interItemPadding = Math.max(1, Math.floor(optionsPadding / 2)); // Or a fixed small value like 2
-    // Ensure interItemPadding is at least 1 if optionsPadding is small but non-zero.
-    if (optionsPadding > 0 && this.interItemPadding === 0) {
-      this.interItemPadding = 1;
-    }
-    // If optionsPadding is 0, interItemPadding will also be 0.
+  constructor(maxWidth: number, maxHeight: number, optionsPadding: number) {
+    this.packer = new Guillotine2DPacker(maxWidth, maxHeight, optionsPadding);
   }
 
   add(item: PackerInputItem): PackerPlacement {
-    if (item.targetW > this.maxWidth) {
-      if (this.currentX > 0) {
-        this.currentY += this.currentRowHeight + this.interItemPadding; // Use specific interItemPadding
-        this.currentX = 0;
-        this.currentRowHeight = 0;
-      }
-      const placement: PackerPlacement = {
-        id: item.id,
-        x: this.currentX,
-        y: this.currentY,
-        w: this.maxWidth,
-        h: item.targetH,
-        fits: true,
-      };
-      this.currentY += item.targetH + this.interItemPadding; // Use specific interItemPadding
-      this.currentRowHeight = 0;
-      this.currentX = 0;
-      this.packedItems.push(placement);
-      return placement;
-    }
-
-    // Check if item fits on current row, considering interItemPadding if currentX > 0
-    let fitsOnCurrentRow = false;
-    if (this.currentX === 0) {
-      // First item on a new shelf
-      fitsOnCurrentRow = item.targetW <= this.maxWidth;
-    } else {
-      // Not the first item, need to account for interItemPadding
-      fitsOnCurrentRow =
-        this.currentX + this.interItemPadding + item.targetW <= this.maxWidth;
-    }
-
-    if (!fitsOnCurrentRow) {
-      // Not enough space in the current row, move to the next row
-      this.currentY += this.currentRowHeight + this.interItemPadding; // Use specific interItemPadding
-      this.currentX = 0;
-      this.currentRowHeight = 0;
-    }
-
-    const placementX =
-      this.currentX === 0 ? 0 : this.currentX + this.interItemPadding;
-
-    const placement: PackerPlacement = {
-      id: item.id,
-      x: placementX,
-      y: this.currentY,
-      w: item.targetW,
-      h: item.targetH,
-      fits: true,
-    };
-
-    this.currentX = placementX + item.targetW; // currentX is now end of current item
-    this.currentRowHeight = Math.max(this.currentRowHeight, item.targetH);
-    this.packedItems.push(placement);
-    return placement;
+    return this.packer.add(item);
   }
 
   getPackedHeight(): number {
-    if (this.packedItems.length === 0) return 0;
-    // The total height is the y-position of the last row (this.currentY)
-    // plus the height of the items in that row (this.currentRowHeight).
-    // No need to add trailing interItemPadding here as it's space *between* rows or *after* the content.
-    return this.currentY + this.currentRowHeight;
+    return this.packer.getPackedHeight();
   }
 
   reset(): void {
-    this.currentX = 0;
-    this.currentY = 0;
-    this.currentRowHeight = 0;
-    this.packedItems = [];
+    this.packer.reset();
+  }
+
+  // Debug method to access the underlying packer's visualization
+  logPackingVisualization(containerLabel: string): void {
+    this.packer.logPackingVisualization(containerLabel);
   }
 }
 
@@ -163,6 +406,8 @@ export const layoutHierarchical: HierarchicalLayoutFn = (
   viewportHeight,
   options
 ) => {
+  console.warn("***** laying out");
+
   const layoutRoot = layoutNodeRecursive(
     rootNode,
     { x: 0, y: 0, w: viewportWidth, h: viewportHeight },
@@ -202,6 +447,16 @@ function layoutNodeRecursive(
   parentLayoutNode?: HierarchicalLayoutNode
 ): HierarchicalLayoutNode | null {
   if (parentAllocatedSpace.w <= 0 || parentAllocatedSpace.h <= 0) {
+    console.log(
+      `[layoutNodeRecursive] SKIPPED (insufficient space): ${node.label} (ID: ${node.id})`,
+      {
+        neededMinW: options.leafMinWidth,
+        neededMinH: options.leafMinHeight,
+        availableW: parentAllocatedSpace.w,
+        availableH: parentAllocatedSpace.h,
+        reason: "parentAllocatedSpace too small",
+      }
+    );
     return null;
   }
   if (
@@ -211,6 +466,13 @@ function layoutNodeRecursive(
     isNaN(parentAllocatedSpace.y)
   ) {
     // This indicates a severe issue upstream or with initial inputs.
+    console.log(
+      `[layoutNodeRecursive] SKIPPED (NaN values): ${node.label} (ID: ${node.id})`,
+      {
+        parentAllocatedSpace,
+        reason: "NaN in parentAllocatedSpace",
+      }
+    );
     return null;
   }
 
@@ -289,8 +551,26 @@ function layoutNodeRecursive(
       h: parentAllocatedSpace.h - headerActualHeight - 2 * options.padding, // Account for T/B padding (header + bottom)
     };
 
+    console.log("***ContentPackingArea", {
+      contentPackingArea,
+      headerActualHeight,
+      parentAllocatedSpace,
+    });
+
     if (contentPackingArea.w <= 0 || contentPackingArea.h <= 0) {
       // Not enough space for content, render as box or nothing
+      console.log(
+        `[layoutNodeRecursive] CONTAINER has no content space: ${node.label} (ID: ${node.id})`,
+        {
+          neededMinContentW: options.leafMinWidth,
+          neededMinContentH: options.leafMinHeight,
+          availableContentW: contentPackingArea.w,
+          availableContentH: contentPackingArea.h,
+          headerHeight: headerActualHeight,
+          padding: options.padding,
+          reason: "contentPackingArea too small",
+        }
+      );
       currentLayoutNode.h = headerActualHeight; // Only header might be visible
       currentLayoutNode.children = [];
       if (headerActualHeight < options.leafMinHeight) {
@@ -299,20 +579,20 @@ function layoutNodeRecursive(
       return currentLayoutNode;
     }
 
-    const packer = new SimpleShelfPacker(contentPackingArea.w, options.padding);
-
-    const childrenToLayout = node.children || [];
-    // Separate into childContainers and looseLeafs (simplified: treat all children similarly for now)
-    // TODO: Implement sorting and proportional allocation for child containers as per layout3.md
-
-    const sortedChildren = [...childrenToLayout].sort(
-      (a, b) => (b.value || 0) - (a.value || 0)
+    const packer = new SimpleShelfPacker(
+      contentPackingArea.w,
+      contentPackingArea.h,
+      options.padding
     );
 
+    const childrenToLayout = node.children || [];
+    // Create packer items first for optimal 2D bin packing
+    const packerItems: PackerInputItem[] = [];
     const totalChildrenValue =
       childrenToLayout.reduce((sum, child) => sum + (child.value || 1), 0) || 1;
 
-    for (const childNode of sortedChildren) {
+    // First pass: calculate dimensions for all children
+    for (const childNode of childrenToLayout) {
       // Estimate child size
       const isChildContainer =
         childNode.children && childNode.children.length > 0;
@@ -327,8 +607,60 @@ function layoutNodeRecursive(
         if (isNaN(idealDimension) || idealDimension === 0)
           idealDimension = options.leafMinWidth; // Fallback
 
-        childTargetW = idealDimension;
-        childTargetH = idealDimension;
+        // Improved space filling logic for containers
+        if (childrenToLayout.length === 1) {
+          // Single child case: fill all available space
+          childTargetW = contentPackingArea.w;
+          childTargetH = contentPackingArea.h;
+        } else {
+          // Multiple children: start with square, but snap to fill dimension if close
+          childTargetW = idealDimension;
+          childTargetH = idealDimension;
+
+          // If within 20% of filling width or height, snap to fill that dimension
+          const widthFillRatio = idealDimension / contentPackingArea.w;
+          const heightFillRatio = idealDimension / contentPackingArea.h;
+
+          if (widthFillRatio >= 0.8) {
+            // Close to filling width - snap to full width and adjust height
+            console.log("***Going full width based on 20% fill ratio");
+            childTargetW = contentPackingArea.w;
+            childTargetH = Math.min(
+              targetArea / childTargetW,
+              contentPackingArea.h
+            );
+          } else if (heightFillRatio >= 0.8) {
+            // Close to filling height - snap to full height and adjust width
+            childTargetH = contentPackingArea.h;
+            childTargetW = Math.min(
+              targetArea / childTargetH,
+              contentPackingArea.w
+            );
+          }
+          // Additional check: if residual space would be too small, fill the dimension
+          const residualWidth = contentPackingArea.w - childTargetW;
+          const residualHeight = contentPackingArea.h - childTargetH;
+
+          if (residualWidth > 0 && residualWidth < options.leafMinWidth) {
+            // Residual width too small - expand to fill full width
+            childTargetW = contentPackingArea.w;
+            childTargetH = Math.min(
+              targetArea / childTargetW,
+              contentPackingArea.h
+            );
+            console.log("***Filling to avoid small residual width");
+          } else if (
+            residualHeight > 0 &&
+            residualHeight < options.leafMinHeight
+          ) {
+            // Residual height too small - expand to fill full height
+            childTargetH = contentPackingArea.h;
+            childTargetW = Math.min(
+              targetArea / childTargetH,
+              contentPackingArea.w
+            );
+          }
+        }
 
         // Cap by available space
         childTargetW = Math.min(childTargetW, contentPackingArea.w);
@@ -348,18 +680,24 @@ function layoutNodeRecursive(
       childTargetH = Math.max(minHeightForChild, childTargetH);
 
       // Ensure target dimensions for packer do not exceed available packing area dimensions
-      // The packer operates with contentPackingArea.w as its maxWidth, so childTargetW will be capped by packer if it tries to exceed.
-      // Explicitly cap targetH here.
       childTargetW = Math.min(childTargetW, contentPackingArea.w);
       childTargetH = Math.min(childTargetH, contentPackingArea.h);
 
-      // Packer input
-      const packerInput: PackerInputItem = {
+      // Add to packer items
+      packerItems.push({
         id: childNode.id,
         targetW: childTargetW,
         targetH: childTargetH,
         node: childNode,
-      };
+      });
+    }
+
+    // Sort items for optimal 2D bin packing (largest area first)
+    const sortedPackerItems = sortItemsForPacking(packerItems, "height");
+
+    // Second pass: pack the sorted items
+    for (const packerInput of sortedPackerItems) {
+      const childNode = packerInput.node;
 
       const placement = packer.add(packerInput);
 
@@ -411,14 +749,168 @@ function layoutNodeRecursive(
                 parentContainerH: currentLayoutNode.h, // Parent container's current calculated height
               }
             );
+          } else {
+            // Log when recursive layout returned null (child was skipped internally)
+            console.log(
+              `[layoutNodeRecursive] CHILD SKIPPED (recursive layout returned null): ${childNode.label} (ID: ${childNode.id}) in container ${node.label}`,
+              {
+                allocatedW: allocatedCellForChild.w,
+                allocatedH: allocatedCellForChild.h,
+                allocatedX: allocatedCellForChild.x,
+                allocatedY: allocatedCellForChild.y,
+                packerPlacementW: placement.w,
+                packerPlacementH: placement.h,
+                reason: "layoutNodeRecursive returned null",
+              }
+            );
+          }
+        } else {
+          // Log when child allocation is too small
+          console.log(
+            `[layoutNodeRecursive] CHILD SKIPPED (allocation too small): ${childNode.label} (ID: ${childNode.id}) in container ${node.label}`,
+            {
+              neededMinW: options.leafMinWidth,
+              neededMinH: options.leafMinHeight,
+              allocatedW: allocatedCellForChild.w,
+              allocatedH: allocatedCellForChild.h,
+              packerPlacementW: placement.w,
+              packerPlacementH: placement.h,
+              reason: "allocatedCellForChild dimensions <= 0",
+            }
+          );
+        }
+      } else {
+        // Try to fit the item by adapting its dimensions to available space
+        console.log(
+          `[layoutNodeRecursive] ATTEMPTING ADAPTIVE PLACEMENT: ${childNode.label} (ID: ${childNode.id})`,
+          {
+            originalW: packerInput.targetW,
+            originalH: packerInput.targetH,
+            availableW: contentPackingArea.w,
+            availableH: contentPackingArea.h,
+          }
+        );
+
+        // Get the free rectangles from the packer to find actual available spaces
+        let bestFitRect: FreeRectangle | null = null;
+        let bestFitArea = 0;
+
+        // Access free rectangles from the underlying Guillotine2DPacker
+        const freeRects = (packer as any).packer?.freeRectangles || [];
+
+        for (const rect of freeRects) {
+          // Calculate what dimensions we could fit in this rectangle
+          let fitW = Math.min(packerInput.targetW, rect.w);
+          let fitH = Math.min(packerInput.targetH, rect.h);
+
+          // Ensure minimum dimensions
+          fitW = Math.max(fitW, options.leafMinWidth);
+          fitH = Math.max(fitH, options.leafMinHeight);
+
+          // Check if this rectangle can accommodate the minimum dimensions
+          if (rect.w >= fitW && rect.h >= fitH) {
+            const area = fitW * fitH;
+            if (area > bestFitArea) {
+              bestFitArea = area;
+              bestFitRect = rect;
+            }
           }
         }
-        // If allocatedCellForChild.w or .h is <= 0, the child is effectively skipped
-        // as it cannot be rendered in a zero or negative space. The recursive call
-        // would also return null in such cases due to its initial checks.
+
+        if (bestFitRect) {
+          // Calculate adaptive dimensions for the best fit rectangle
+          let adaptiveW = Math.min(packerInput.targetW, bestFitRect.w);
+          let adaptiveH = Math.min(packerInput.targetH, bestFitRect.h);
+
+          // Ensure minimum dimensions
+          adaptiveW = Math.max(adaptiveW, options.leafMinWidth);
+          adaptiveH = Math.max(adaptiveH, options.leafMinHeight);
+
+          const adaptivePlacement: PackerPlacement = {
+            id: packerInput.id,
+            x: bestFitRect.x,
+            y: bestFitRect.y,
+            w: adaptiveW,
+            h: adaptiveH,
+            fits: true,
+          };
+
+          const allocatedCellForChild: Rect = {
+            x: parentAllocatedSpace.x + options.padding + adaptivePlacement.x,
+            y:
+              parentAllocatedSpace.y +
+              headerActualHeight +
+              options.padding +
+              adaptivePlacement.y,
+            w: adaptivePlacement.w,
+            h: adaptivePlacement.h,
+          };
+
+          const laidOutChild = layoutNodeRecursive(
+            childNode,
+            allocatedCellForChild,
+            options,
+            depth + 1,
+            currentLayoutNode
+          );
+
+          if (laidOutChild) {
+            currentLayoutNode.children?.push(laidOutChild);
+            console.log(
+              `[layoutNodeRecursive] CHILD ADAPTIVELY PLACED: ${childNode.label} (ID: ${childNode.id})`,
+              {
+                originalW: packerInput.targetW,
+                originalH: packerInput.targetH,
+                adaptiveW: adaptivePlacement.w,
+                adaptiveH: adaptivePlacement.h,
+                finalW: laidOutChild.w,
+                finalH: laidOutChild.h,
+                usedRectW: bestFitRect.w,
+                usedRectH: bestFitRect.h,
+                usedRectX: bestFitRect.x,
+                usedRectY: bestFitRect.y,
+              }
+            );
+
+            // Manually update the packer's state to account for this placement
+            // Remove or split the used rectangle
+            if (typeof (packer as any).packer?.splitRectangle === "function") {
+              (packer as any).packer.splitRectangle(
+                bestFitRect,
+                adaptiveW,
+                adaptiveH
+              );
+            }
+          } else {
+            console.log(
+              `[layoutNodeRecursive] ADAPTIVE PLACEMENT FAILED (recursive returned null): ${childNode.label} (ID: ${childNode.id})`,
+              {
+                adaptiveW: adaptivePlacement.w,
+                adaptiveH: adaptivePlacement.h,
+                rectW: bestFitRect.w,
+                rectH: bestFitRect.h,
+              }
+            );
+          }
+        } else {
+          console.log(
+            `[layoutNodeRecursive] CHILD SKIPPED (no suitable free rectangle): ${childNode.label} (ID: ${childNode.id})`,
+            {
+              originalW: packerInput.targetW,
+              originalH: packerInput.targetH,
+              minW: options.leafMinWidth,
+              minH: options.leafMinHeight,
+              availableFreeRects: freeRects.length,
+              reason: "no free rectangle can accommodate minimum dimensions",
+            }
+          );
+        }
       }
-      // No explicit 'else' for placement.fits as SimpleShelfPacker always returns fits: true.
-      // If a packer could return fits: false, handling for that would go here.
+    }
+
+    // Debug: Show 2D packing visualization
+    if (typeof packer.logPackingVisualization === "function") {
+      packer.logPackingVisualization(`${node.label || "Container"}-${node.id}`);
     }
 
     // Determine Container's Final Dimensions
