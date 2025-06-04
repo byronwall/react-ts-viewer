@@ -934,6 +934,8 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
               padding={settings.outerPadding}
+              minFontSize={settings.selectedLayout === "hierarchical" ? 7 : 12}
+              maxFontSize={settings.selectedLayout === "hierarchical" ? 11 : 16}
             />
           ) : (
             <div

@@ -463,7 +463,7 @@ export const defaultTreemapSettings: TreemapSettings = {
   showTypes: true,
   showLiterals: false,
   showComments: false,
-  minLabelHeight: 15,
+  minLabelHeight: 12,
   truncateLabel: true,
   labelMaxChars: 200,
   avgCharPixelWidth: 5,
@@ -476,7 +476,7 @@ export const defaultTreemapSettings: TreemapSettings = {
   geminiHeaderHeight: 25,
   selectedLayout: "gemini",
   hierarchicalPadding: 5,
-  hierarchicalHeaderHeight: 28,
+  hierarchicalHeaderHeight: 14,
   hierarchicalLeafMinWidth: 20,
   hierarchicalLeafMinHeight: 20,
   hierarchicalLeafPrefWidth: 80,
@@ -497,7 +497,7 @@ export const initialTreemapSettings: TreemapSettings = {
   // Labels
   enableLabel: true,
   labelSkipSize: 12,
-  minLabelHeight: 15,
+  minLabelHeight: 12,
   truncateLabel: true,
   labelMaxChars: 200,
   avgCharPixelWidth: 5,
@@ -532,7 +532,7 @@ export const initialTreemapSettings: TreemapSettings = {
   geminiHeaderHeight: 24, // Matched to the screenshot
   // Hierarchical Layout Settings
   hierarchicalPadding: 5,
-  hierarchicalHeaderHeight: 28,
+  hierarchicalHeaderHeight: 14,
   hierarchicalLeafMinWidth: 20,
   hierarchicalLeafMinHeight: 20,
   hierarchicalLeafPrefWidth: 80,

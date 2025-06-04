@@ -146,10 +146,10 @@ const createStyledRenderHeader =
 
     // Calculate font size with proper constraints
     const depthAdjustedMin = Math.max(
-      minFontSize,
-      minFontSize + 6 - depth * 1.5
+      8, // Use smaller minimum font size for headers
+      minFontSize - 4 - depth * 1.5
     );
-    const heightBasedSize = h * 0.7; // Size based on available height
+    const heightBasedSize = h * 0.55; // Reduce from 0.7 to 0.55 for tighter fit
     const fontSize = Math.min(
       maxFontSize,
       Math.max(depthAdjustedMin, heightBasedSize)
@@ -548,11 +548,15 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   const getHeaderHeight = (depth: number, availableHeight: number): number => {
     // This function might need to be dynamic based on layout type too
     // For now, using a generic approach or the one from binaryLayout.
-    const maxHeaderHeight =
-      layout === (geminiLayout as AnyLayoutFn)
-        ? settings.geminiHeaderHeight
-        : 28;
-    const minHeaderHeight = Math.max(16, minFontSize + 8); // Base on minFontSize
+    let maxHeaderHeight = 28; // Default for binary layout
+
+    if (layout === (geminiLayout as AnyLayoutFn)) {
+      maxHeaderHeight = settings.geminiHeaderHeight;
+    } else if (layout === (layoutHierarchical as AnyLayoutFn)) {
+      maxHeaderHeight = settings.hierarchicalHeaderHeight;
+    }
+
+    const minHeaderHeight = Math.max(8, minFontSize + 4); // Reduced for smaller headers
 
     const depthFactor = Math.max(0.85, 1 - depth * 0.03);
     const baseHeight = Math.max(minHeaderHeight, maxHeaderHeight * depthFactor);
