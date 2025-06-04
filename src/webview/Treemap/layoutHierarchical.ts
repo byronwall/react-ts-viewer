@@ -336,6 +336,17 @@ class Guillotine2DPacker implements I2DBinPacker {
 
     console.log("--- END 2D PACKING VISUALIZATION ---\n");
   }
+
+  // Public method to add free rectangles for dynamic resizing
+  addFreeRectangle(rect: FreeRectangle): void {
+    this.freeRectangles.push(rect);
+    this.removeOverlappingRectangles();
+  }
+
+  // Public method to clean up overlapping rectangles
+  cleanupOverlappingRectangles(): void {
+    this.removeOverlappingRectangles();
+  }
 }
 
 // Helper function to sort items for better packing
@@ -390,6 +401,16 @@ class SimpleShelfPacker implements ISimpleShelfPacker {
   logPackingVisualization(containerLabel: string): void {
     this.packer.logPackingVisualization(containerLabel);
   }
+
+  // Method to add free rectangles for dynamic resizing
+  addFreeRectangle(rect: FreeRectangle): void {
+    this.packer.addFreeRectangle(rect);
+  }
+
+  // Method to clean up overlapping rectangles
+  cleanupOverlappingRectangles(): void {
+    this.packer.cleanupOverlappingRectangles();
+  }
 }
 
 // --- Main Layout Function ---
@@ -415,6 +436,109 @@ export const layoutHierarchical: HierarchicalLayoutFn = (
     0, // depth
     undefined // parent
   );
+
+  // Count total nodes in input tree vs rendered nodes in output tree
+  const countTotalNodes = (
+    node: ScopeNode
+  ): { total: number; containers: number; leaves: number } => {
+    if (!node) return { total: 0, containers: 0, leaves: 0 };
+
+    const isContainer = !!(node.children && node.children.length > 0);
+    const result = {
+      total: 1,
+      containers: isContainer ? 1 : 0,
+      leaves: isContainer ? 0 : 1,
+    };
+
+    if (node.children) {
+      for (const child of node.children) {
+        const childCounts = countTotalNodes(child);
+        result.total += childCounts.total;
+        result.containers += childCounts.containers;
+        result.leaves += childCounts.leaves;
+      }
+    }
+    return result;
+  };
+
+  const countRenderedNodes = (
+    layoutNode: HierarchicalLayoutNode | null
+  ): { total: number; containers: number; leaves: number } => {
+    if (!layoutNode) return { total: 0, containers: 0, leaves: 0 };
+
+    const isContainer = layoutNode.isContainer;
+    const result = {
+      total: 1,
+      containers: isContainer ? 1 : 0,
+      leaves: isContainer ? 0 : 1,
+    };
+
+    if (layoutNode.children) {
+      for (const child of layoutNode.children) {
+        const childCounts = countRenderedNodes(child);
+        result.total += childCounts.total;
+        result.containers += childCounts.containers;
+        result.leaves += childCounts.leaves;
+      }
+    }
+    return result;
+  };
+
+  const totalInputCounts = countTotalNodes(rootNode);
+  const totalRenderedCounts = countRenderedNodes(layoutRoot);
+  const unrenderedTotal = totalInputCounts.total - totalRenderedCounts.total;
+  const unrenderedContainers =
+    totalInputCounts.containers - totalRenderedCounts.containers;
+  const unrenderedLeaves = totalInputCounts.leaves - totalRenderedCounts.leaves;
+  const renderPercentage = (
+    (totalRenderedCounts.total / totalInputCounts.total) *
+    100
+  ).toFixed(1);
+
+  console.log(`\n🎯 === LAYOUT COMPLETION SUMMARY ===`, {
+    totalNodes: {
+      input: totalInputCounts.total,
+      rendered: totalRenderedCounts.total,
+      unrendered: unrenderedTotal,
+      percentage: `${renderPercentage}%`,
+    },
+    containers: {
+      input: totalInputCounts.containers,
+      rendered: totalRenderedCounts.containers,
+      unrendered: unrenderedContainers,
+      percentage:
+        totalInputCounts.containers > 0
+          ? `${((totalRenderedCounts.containers / totalInputCounts.containers) * 100).toFixed(1)}%`
+          : "N/A",
+    },
+    leaves: {
+      input: totalInputCounts.leaves,
+      rendered: totalRenderedCounts.leaves,
+      unrendered: unrenderedLeaves,
+      percentage:
+        totalInputCounts.leaves > 0
+          ? `${((totalRenderedCounts.leaves / totalInputCounts.leaves) * 100).toFixed(1)}%`
+          : "N/A",
+    },
+    viewportDimensions: `${viewportWidth} x ${viewportHeight}`,
+    layoutOptions: {
+      padding: options.padding,
+      headerHeight: options.headerHeight,
+      leafMinSize: `${options.leafMinWidth} x ${options.leafMinHeight}`,
+      leafPrefSize: `${options.leafPrefWidth} x ${options.leafPrefHeight}`,
+    },
+  });
+
+  if (unrenderedTotal > 0) {
+    console.warn(
+      `⚠️  ${unrenderedTotal} nodes (${(100 - parseFloat(renderPercentage)).toFixed(1)}%) were not rendered due to space constraints`,
+      {
+        breakdown: `${unrenderedContainers} containers, ${unrenderedLeaves} leaves`,
+      }
+    );
+  } else {
+    console.log(`✅ All nodes successfully rendered!`);
+  }
 
   // Fallback if layoutRoot is null (should not happen for the root)
   return (
@@ -477,6 +601,37 @@ function layoutNodeRecursive(
   }
 
   const isEffectivelyLeaf = !node.children || node.children.length === 0;
+
+  // For containers with very small allocated space, render as simple box instead of skipping
+  if (
+    !isEffectivelyLeaf &&
+    (parentAllocatedSpace.w < options.leafMinWidth ||
+      parentAllocatedSpace.h < options.leafMinHeight)
+  ) {
+    console.log(
+      `[layoutNodeRecursive] CONTAINER rendered as SMALL BOX (below minimum): ${node.label} (ID: ${node.id})`,
+      {
+        allocatedW: parentAllocatedSpace.w,
+        allocatedH: parentAllocatedSpace.h,
+        minW: options.leafMinWidth,
+        minH: options.leafMinHeight,
+        reason: "allocated space below minimum - rendering as small box",
+      }
+    );
+
+    return {
+      node,
+      x: parentAllocatedSpace.x,
+      y: parentAllocatedSpace.y,
+      w: parentAllocatedSpace.w,
+      h: parentAllocatedSpace.h,
+      depth,
+      parent: parentLayoutNode,
+      children: [],
+      isContainer: true,
+      renderMode: "box", // Special render mode for small containers
+    };
+  }
 
   const calculatedW = parentAllocatedSpace.w;
   const calculatedH = parentAllocatedSpace.h;
@@ -558,9 +713,9 @@ function layoutNodeRecursive(
     });
 
     if (contentPackingArea.w <= 0 || contentPackingArea.h <= 0) {
-      // Not enough space for content, render as box or nothing
+      // Not enough space for content, render as box without children
       console.log(
-        `[layoutNodeRecursive] CONTAINER has no content space: ${node.label} (ID: ${node.id})`,
+        `[layoutNodeRecursive] CONTAINER rendered as BOX (no content space): ${node.label} (ID: ${node.id})`,
         {
           neededMinContentW: options.leafMinWidth,
           neededMinContentH: options.leafMinHeight,
@@ -568,14 +723,17 @@ function layoutNodeRecursive(
           availableContentH: contentPackingArea.h,
           headerHeight: headerActualHeight,
           padding: options.padding,
-          reason: "contentPackingArea too small",
+          reason: "contentPackingArea too small - rendering as box",
         }
       );
-      currentLayoutNode.h = headerActualHeight; // Only header might be visible
+
+      // Render as a simple box that fits in the allocated space
+      currentLayoutNode.w = parentAllocatedSpace.w;
+      currentLayoutNode.h = parentAllocatedSpace.h;
       currentLayoutNode.children = [];
-      if (headerActualHeight < options.leafMinHeight) {
-        currentLayoutNode.renderMode = "none";
-      }
+      currentLayoutNode.isContainer = true; // Keep as container for styling
+      currentLayoutNode.renderMode = "box"; // Special render mode for small containers
+
       return currentLayoutNode;
     }
 
@@ -696,8 +854,35 @@ function layoutNodeRecursive(
     const sortedPackerItems = sortItemsForPacking(packerItems, "height");
 
     // Second pass: pack the sorted items
+    console.log(
+      `[layoutNodeRecursive] CONTAINER PACKING CHILDREN: ${node.label} (ID: ${node.id})`,
+      {
+        totalChildren: sortedPackerItems.length,
+        childrenToProcess: sortedPackerItems.map((item) => ({
+          id: item.id,
+          targetW: item.targetW,
+          targetH: item.targetH,
+          label: item.node.label,
+          isContainer: !!(item.node.children && item.node.children.length > 0),
+        })),
+        contentPackingArea,
+        availableFreeRectsAtStart:
+          (packer as any).packer?.freeRectangles?.length || 0,
+      }
+    );
+
     for (const packerInput of sortedPackerItems) {
       const childNode = packerInput.node;
+
+      console.log(
+        `[layoutNodeRecursive] ATTEMPTING TO PACK CHILD: ${childNode.label} (ID: ${childNode.id})`,
+        {
+          targetW: packerInput.targetW,
+          targetH: packerInput.targetH,
+          availableFreeRects:
+            (packer as any).packer?.freeRectangles?.length || 0,
+        }
+      );
 
       const placement = packer.add(packerInput);
 
@@ -734,6 +919,99 @@ function layoutNodeRecursive(
           );
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
+
+            // Dynamic Container Resizing: If this is a container child that used less space than allocated,
+            // reclaim the unused space for subsequent siblings
+            if (
+              laidOutChild.isContainer &&
+              (laidOutChild.h < placement.h || laidOutChild.w < placement.w)
+            ) {
+              const heightDifference = placement.h - laidOutChild.h;
+              const widthDifference = placement.w - laidOutChild.w;
+
+              console.log(
+                `[DYNAMIC RESIZE] Container ${childNode.label} used less space than allocated`,
+                {
+                  allocatedW: placement.w,
+                  allocatedH: placement.h,
+                  actualW: laidOutChild.w,
+                  actualH: laidOutChild.h,
+                  reclaimedW: widthDifference,
+                  reclaimedH: heightDifference,
+                  placementX: placement.x,
+                  placementY: placement.y,
+                }
+              );
+
+              // Update the packer's state to reflect the actual space used
+              const packerInstance = (packer as any).packer;
+              if (packerInstance && packerInstance.packedItems) {
+                // Find and update the packed item for this child
+                const packedItemIndex = packerInstance.packedItems.findIndex(
+                  (item: any) => item.id === packerInput.id
+                );
+
+                if (packedItemIndex !== -1) {
+                  // Update the packed item to reflect actual usage
+                  packerInstance.packedItems[packedItemIndex].w =
+                    laidOutChild.w;
+                  packerInstance.packedItems[packedItemIndex].h =
+                    laidOutChild.h;
+
+                  // Create free rectangles for the unused space
+                  const unusedRects: FreeRectangle[] = [];
+
+                  // Right unused rectangle (if width difference)
+                  if (widthDifference > 0) {
+                    unusedRects.push({
+                      x: placement.x + laidOutChild.w,
+                      y: placement.y,
+                      w: widthDifference,
+                      h: laidOutChild.h, // Only as tall as the actual child
+                    });
+                  }
+
+                  // Bottom unused rectangle (if height difference)
+                  if (heightDifference > 0) {
+                    unusedRects.push({
+                      x: placement.x,
+                      y: placement.y + laidOutChild.h,
+                      w: laidOutChild.w, // Only as wide as the actual child
+                      h: heightDifference,
+                    });
+                  }
+
+                  // Bottom-right unused rectangle (if both width and height differences)
+                  if (widthDifference > 0 && heightDifference > 0) {
+                    unusedRects.push({
+                      x: placement.x + laidOutChild.w,
+                      y: placement.y + laidOutChild.h,
+                      w: widthDifference,
+                      h: heightDifference,
+                    });
+                  }
+
+                  // Add meaningful unused rectangles back to the packer
+                  for (const unusedRect of unusedRects) {
+                    if (
+                      unusedRect.h >= options.leafMinHeight &&
+                      unusedRect.w >= options.leafMinWidth
+                    ) {
+                      packer.addFreeRectangle(unusedRect);
+
+                      console.log(
+                        `[DYNAMIC RESIZE] Added unused space back as free rectangle`,
+                        {
+                          newFreeRect: unusedRect,
+                          totalFreeRects: packerInstance.freeRectangles.length,
+                        }
+                      );
+                    }
+                  }
+                }
+              }
+            }
+
             console.log(
               `[layoutNodeRecursive] CHILD (in ${node.label} container, ID: ${node.id}) - LAID OUT: ${childNode.label} (ID: ${childNode.id})`,
               {
@@ -747,6 +1025,11 @@ function layoutNodeRecursive(
                 childFinalY: laidOutChild.y,
                 parentContainerW: currentLayoutNode.w, // Parent container's current calculated width
                 parentContainerH: currentLayoutNode.h, // Parent container's current calculated height
+                dynamicResize:
+                  laidOutChild.isContainer &&
+                  (laidOutChild.h < placement.h || laidOutChild.w < placement.w)
+                    ? `Reclaimed ${placement.h - laidOutChild.h}px height and ${placement.w - laidOutChild.w}px width`
+                    : "None",
               }
             );
           } else {
@@ -856,6 +1139,84 @@ function layoutNodeRecursive(
 
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
+
+            // Dynamic Container Resizing for Adaptive Placement: If this is a container child that used less space than allocated,
+            // reclaim the unused space for subsequent siblings
+            if (
+              laidOutChild.isContainer &&
+              (laidOutChild.h < adaptivePlacement.h ||
+                laidOutChild.w < adaptivePlacement.w)
+            ) {
+              const heightDifference = adaptivePlacement.h - laidOutChild.h;
+              const widthDifference = adaptivePlacement.w - laidOutChild.w;
+
+              console.log(
+                `[DYNAMIC RESIZE - ADAPTIVE] Container ${childNode.label} used less space than allocated`,
+                {
+                  allocatedW: adaptivePlacement.w,
+                  allocatedH: adaptivePlacement.h,
+                  actualW: laidOutChild.w,
+                  actualH: laidOutChild.h,
+                  reclaimedW: widthDifference,
+                  reclaimedH: heightDifference,
+                  placementX: adaptivePlacement.x,
+                  placementY: adaptivePlacement.y,
+                }
+              );
+
+              // Create free rectangles for the unused space
+              const unusedRects: FreeRectangle[] = [];
+
+              // Right unused rectangle (if width difference)
+              if (widthDifference > 0) {
+                unusedRects.push({
+                  x: adaptivePlacement.x + laidOutChild.w,
+                  y: adaptivePlacement.y,
+                  w: widthDifference,
+                  h: laidOutChild.h, // Only as tall as the actual child
+                });
+              }
+
+              // Bottom unused rectangle (if height difference)
+              if (heightDifference > 0) {
+                unusedRects.push({
+                  x: adaptivePlacement.x,
+                  y: adaptivePlacement.y + laidOutChild.h,
+                  w: laidOutChild.w, // Only as wide as the actual child
+                  h: heightDifference,
+                });
+              }
+
+              // Bottom-right unused rectangle (if both width and height differences)
+              if (widthDifference > 0 && heightDifference > 0) {
+                unusedRects.push({
+                  x: adaptivePlacement.x + laidOutChild.w,
+                  y: adaptivePlacement.y + laidOutChild.h,
+                  w: widthDifference,
+                  h: heightDifference,
+                });
+              }
+
+              // Add meaningful unused rectangles back to the packer
+              for (const unusedRect of unusedRects) {
+                if (
+                  unusedRect.h >= options.leafMinHeight &&
+                  unusedRect.w >= options.leafMinWidth
+                ) {
+                  packer.addFreeRectangle(unusedRect);
+
+                  console.log(
+                    `[DYNAMIC RESIZE - ADAPTIVE] Added unused space back as free rectangle`,
+                    {
+                      newFreeRect: unusedRect,
+                      totalFreeRects:
+                        (packer as any).packer?.freeRectangles?.length || 0,
+                    }
+                  );
+                }
+              }
+            }
+
             console.log(
               `[layoutNodeRecursive] CHILD ADAPTIVELY PLACED: ${childNode.label} (ID: ${childNode.id})`,
               {
@@ -869,6 +1230,12 @@ function layoutNodeRecursive(
                 usedRectH: bestFitRect.h,
                 usedRectX: bestFitRect.x,
                 usedRectY: bestFitRect.y,
+                dynamicResize:
+                  laidOutChild.isContainer &&
+                  (laidOutChild.h < adaptivePlacement.h ||
+                    laidOutChild.w < adaptivePlacement.w)
+                    ? `Reclaimed ${adaptivePlacement.h - laidOutChild.h}px height and ${adaptivePlacement.w - laidOutChild.w}px width`
+                    : "None",
               }
             );
 
@@ -878,9 +1245,46 @@ function layoutNodeRecursive(
               (packer as any).packer.splitRectangle(
                 bestFitRect,
                 adaptiveW,
-                adaptiveH
+                laidOutChild.h // Use actual height instead of adaptiveH
               );
             }
+
+            // Also update the packer's usage tracking
+            const packerInstance = (packer as any).packer;
+            if (packerInstance) {
+              const rightEdge = bestFitRect.x + adaptiveW;
+              const bottomEdge = bestFitRect.y + laidOutChild.h; // Use actual height
+              packerInstance.usedWidth = Math.max(
+                packerInstance.usedWidth || 0,
+                rightEdge
+              );
+              packerInstance.usedHeight = Math.max(
+                packerInstance.usedHeight || 0,
+                bottomEdge
+              );
+
+              // Add to packed items with actual dimensions used
+              if (packerInstance.packedItems) {
+                packerInstance.packedItems.push({
+                  id: packerInput.id,
+                  x: bestFitRect.x,
+                  y: bestFitRect.y,
+                  w: adaptiveW,
+                  h: laidOutChild.h, // Use actual height instead of adaptiveH
+                  fits: true,
+                });
+              }
+            }
+
+            console.log(
+              `[layoutNodeRecursive] PACKER STATE UPDATED after adaptive placement`,
+              {
+                newUsedWidth: (packer as any).packer?.usedWidth,
+                newUsedHeight: (packer as any).packer?.usedHeight,
+                remainingFreeRects:
+                  (packer as any).packer?.freeRectangles?.length || 0,
+              }
+            );
           } else {
             console.log(
               `[layoutNodeRecursive] ADAPTIVE PLACEMENT FAILED (recursive returned null): ${childNode.label} (ID: ${childNode.id})`,
@@ -912,6 +1316,19 @@ function layoutNodeRecursive(
     if (typeof packer.logPackingVisualization === "function") {
       packer.logPackingVisualization(`${node.label || "Container"}-${node.id}`);
     }
+
+    console.log(
+      `[layoutNodeRecursive] FINISHED PROCESSING ALL CHILDREN: ${node.label} (ID: ${node.id})`,
+      {
+        totalChildrenAttempted: sortedPackerItems.length,
+        successfullyPlaced: currentLayoutNode.children?.length || 0,
+        finalFreeRects: (packer as any).packer?.freeRectangles?.length || 0,
+        packerUsedSpace: {
+          width: (packer as any).packer?.usedWidth || 0,
+          height: packer.getPackedHeight(),
+        },
+      }
+    );
 
     // Determine Container's Final Dimensions
     const packedContentHeight = packer.getPackedHeight();

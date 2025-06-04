@@ -591,12 +591,21 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
       let borderColor = "#6c757d";
       let strokeWidth = 1;
 
+      // Special styling for container boxes - make them stand out
+      const isContainerBox = (ln as HierarchicalLayoutNode).isContainer;
+
+      if (isContainerBox) {
+        // Double-thick border for container boxes
+        strokeWidth = 3;
+        borderColor = "#2c3e50"; // Darker, more prominent color
+      }
+
       if (isSelected) {
         borderColor = "red";
-        strokeWidth = 2;
+        strokeWidth = isContainerBox ? 4 : 2; // Even thicker when selected
       } else if (isSearchMatch) {
         borderColor = "#FFD700";
-        strokeWidth = 1.5;
+        strokeWidth = isContainerBox ? 3.5 : 1.5;
       }
 
       return (
@@ -609,13 +618,41 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
             fill={baseColor}
             stroke={borderColor}
             strokeWidth={strokeWidth}
-            opacity={0.7} // Box opacity
+            opacity={isContainerBox ? 0.8 : 0.7} // Slightly more opaque for containers
             rx={2}
             style={{ cursor: "pointer" }}
             onClick={(e) => onNodeClick(ln.node, e as any)}
             onMouseEnter={(e) => onMouseEnter(ln.node, e as any)}
             onMouseLeave={onMouseLeave}
           />
+
+          {/* Add a visual indicator for collapsed containers */}
+          {isContainerBox && ln.w >= 16 && ln.h >= 16 && (
+            <g>
+              {/* Small collapsed indicator in the center */}
+              <circle
+                cx={ln.x + ln.w / 2}
+                cy={ln.y + ln.h / 2}
+                r={Math.min(ln.w, ln.h) * 0.15}
+                fill="rgba(44, 62, 80, 0.8)"
+                stroke="white"
+                strokeWidth={1}
+              />
+              <text
+                x={ln.x + ln.w / 2}
+                y={ln.y + ln.h / 2}
+                fontSize={Math.min(ln.w, ln.h) * 0.2}
+                fill="white"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                pointerEvents="none"
+                style={{ userSelect: "none", fontWeight: "bold" }}
+              >
+                ⊞
+              </text>
+            </g>
+          )}
+
           {/* Show depth constraint indicator - specific to BinaryLayoutNode for now */}
           {isConstrainedByDepth && ln.w >= 16 && ln.h >= 16 && (
             <g>
