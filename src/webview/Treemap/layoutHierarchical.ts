@@ -364,6 +364,163 @@ class Guillotine2DPacker implements I2DBinPacker {
         }
       }
     }
+
+    // Merge adjacent rectangles to reduce fragmentation
+    this.mergeAdjacentRectangles();
+  }
+
+  private mergeAdjacentRectangles(): void {
+    let merged = true;
+    let iterations = 0;
+    const maxIterations = 10; // Prevent infinite loops
+    let totalMerges = 0;
+
+    while (merged && iterations < maxIterations) {
+      merged = false;
+      iterations++;
+
+      // Try to merge rectangles horizontally (same Y, height, and adjacent X coordinates)
+      for (let i = 0; i < this.freeRectangles.length; i++) {
+        const rectA = this.freeRectangles[i];
+        if (!rectA) continue;
+
+        for (let j = i + 1; j < this.freeRectangles.length; j++) {
+          const rectB = this.freeRectangles[j];
+          if (!rectB) continue;
+
+          // Check if rectangles can be merged horizontally
+          if (this.canMergeHorizontally(rectA, rectB)) {
+            const mergedRect = this.mergeHorizontally(rectA, rectB);
+
+            console.log(
+              `[RECTANGLE MERGE] Horizontal merge: (${rectA.x},${rectA.y}) ${rectA.w}x${rectA.h} + (${rectB.x},${rectB.y}) ${rectB.w}x${rectB.h} -> (${mergedRect.x},${mergedRect.y}) ${mergedRect.w}x${mergedRect.h}`
+            );
+
+            // Remove the two original rectangles and add the merged one
+            this.freeRectangles.splice(Math.max(i, j), 1);
+            this.freeRectangles.splice(Math.min(i, j), 1);
+            this.freeRectangles.push(mergedRect);
+
+            merged = true;
+            totalMerges++;
+            break;
+          }
+          // Check if rectangles can be merged vertically
+          else if (this.canMergeVertically(rectA, rectB)) {
+            const mergedRect = this.mergeVertically(rectA, rectB);
+
+            console.log(
+              `[RECTANGLE MERGE] Vertical merge: (${rectA.x},${rectA.y}) ${rectA.w}x${rectA.h} + (${rectB.x},${rectB.y}) ${rectB.w}x${rectB.h} -> (${mergedRect.x},${mergedRect.y}) ${mergedRect.w}x${mergedRect.h}`
+            );
+
+            // Remove the two original rectangles and add the merged one
+            this.freeRectangles.splice(Math.max(i, j), 1);
+            this.freeRectangles.splice(Math.min(i, j), 1);
+            this.freeRectangles.push(mergedRect);
+
+            merged = true;
+            totalMerges++;
+            break;
+          }
+        }
+
+        if (merged) break;
+      }
+    }
+
+    if (totalMerges > 0) {
+      console.log(
+        `[RECTANGLE MERGE SUMMARY] Completed ${totalMerges} merge operations in ${iterations} iterations, final count: ${this.freeRectangles.length} rectangles`
+      );
+    }
+  }
+
+  private canMergeHorizontally(
+    rectA: FreeRectangle,
+    rectB: FreeRectangle
+  ): boolean {
+    // Two rectangles can be merged horizontally if:
+    // 1. They have the same Y coordinate and height
+    // 2. One rectangle's right edge touches the other's left edge
+    const tolerance = 2.0; // More generous tolerance to account for inter-item padding accumulation
+
+    const sameY = Math.abs(rectA.y - rectB.y) <= tolerance;
+    const sameHeight = Math.abs(rectA.h - rectB.h) <= tolerance;
+
+    if (!sameY || !sameHeight) return false;
+
+    // Check if A's right edge touches B's left edge (with tolerance for padding gaps)
+    const aRightTouchesBLeft =
+      Math.abs(rectA.x + rectA.w - rectB.x) <= tolerance;
+    // Check if B's right edge touches A's left edge (with tolerance for padding gaps)
+    const bRightTouchesALeft =
+      Math.abs(rectB.x + rectB.w - rectA.x) <= tolerance;
+
+    return aRightTouchesBLeft || bRightTouchesALeft;
+  }
+
+  private canMergeVertically(
+    rectA: FreeRectangle,
+    rectB: FreeRectangle
+  ): boolean {
+    // Two rectangles can be merged vertically if:
+    // 1. They have the same X coordinate and width
+    // 2. One rectangle's bottom edge touches the other's top edge (or they're very close due to padding)
+    const tolerance = 2.0; // More generous tolerance to account for inter-item padding accumulation
+
+    const sameX = Math.abs(rectA.x - rectB.x) <= tolerance;
+    const sameWidth = Math.abs(rectA.w - rectB.w) <= tolerance;
+
+    if (!sameX || !sameWidth) return false;
+
+    // Check if A's bottom edge touches B's top edge (with tolerance for padding gaps)
+    const aBottomTouchesBTop =
+      Math.abs(rectA.y + rectA.h - rectB.y) <= tolerance;
+    // Check if B's bottom edge touches A's top edge (with tolerance for padding gaps)
+    const bBottomTouchesATop =
+      Math.abs(rectB.y + rectB.h - rectA.y) <= tolerance;
+
+    return aBottomTouchesBTop || bBottomTouchesATop;
+  }
+
+  private mergeHorizontally(
+    rectA: FreeRectangle,
+    rectB: FreeRectangle
+  ): FreeRectangle {
+    // Determine which rectangle is on the left
+    const leftRect = rectA.x <= rectB.x ? rectA : rectB;
+    const rightRect = rectA.x <= rectB.x ? rectB : rectA;
+
+    // Calculate the merged width by spanning from leftmost x to rightmost x+w
+    // This handles cases where there might be small gaps due to padding
+    const mergedWidth = rightRect.x + rightRect.w - leftRect.x;
+
+    return {
+      x: leftRect.x,
+      y: leftRect.y, // Should be approximately the same as rightRect.y
+      w: mergedWidth,
+      h: leftRect.h, // Should be approximately the same as rightRect.h
+    };
+  }
+
+  private mergeVertically(
+    rectA: FreeRectangle,
+    rectB: FreeRectangle
+  ): FreeRectangle {
+    // Determine which rectangle is on top
+    const topRect = rectA.y <= rectB.y ? rectA : rectB;
+    const bottomRect = rectA.y <= rectB.y ? rectB : rectA;
+
+    // Calculate the merged height by spanning from topmost y to bottommost y+h
+    // This handles cases where there might be small gaps due to padding
+    const mergedHeight = bottomRect.y + bottomRect.h - topRect.y;
+
+    return {
+      x: topRect.x, // Should be approximately the same as bottomRect.x
+      y: topRect.y,
+      w: topRect.w, // Should be approximately the same as bottomRect.w
+      h: mergedHeight,
+    };
   }
 
   private isRectangleContained(
