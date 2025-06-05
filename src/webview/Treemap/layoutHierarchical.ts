@@ -16,6 +16,13 @@ export interface BaseLayoutNode {
 
 export interface HierarchicalLayoutNode extends BaseLayoutNode {
   // Add any specific properties for hierarchical layout nodes if needed
+  freeRectangles?: Array<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    containerPath: string; // To identify which container these free rects belong to
+  }>;
 }
 
 export interface HierarchicalLayoutOptions {
@@ -99,11 +106,10 @@ class Guillotine2DPacker implements I2DBinPacker {
   }
 
   add(item: PackerInputItem): PackerPlacement {
-    // Find best rectangle using heuristic
-    const bestRect = this.findBestRectangle(
+    // Find best rectangle using heuristic that prioritizes horizontal filling
+    const bestRect = this.findBestRectangleWithHorizontalBias(
       item.targetW,
-      item.targetH,
-      FitHeuristic.BestShortSideFit // Changed from BestAreaFit for better packing
+      item.targetH
     );
 
     if (!bestRect) {
@@ -172,6 +178,11 @@ class Guillotine2DPacker implements I2DBinPacker {
     const needH =
       height + (this.packedItems.length > 0 ? this.interItemPadding : 0);
 
+    console.log(
+      `[PACKER] Finding best rectangle for ${needW}x${needH}, available rectangles:`,
+      this.freeRectangles.map((r) => `(${r.x},${r.y}) ${r.w}x${r.h}`)
+    );
+
     for (const rect of this.freeRectangles) {
       if (rect.w >= needW && rect.h >= needH) {
         let score: number;
@@ -198,17 +209,80 @@ class Guillotine2DPacker implements I2DBinPacker {
             secondaryScore = Math.min(rect.w - needW, rect.h - needH);
         }
 
+        // Add strong position bias for tighter packing: heavily favor top-left positions
+        // This should force horizontal filling before vertical stacking
+        const positionBias = rect.y * 2.0 + rect.x * 0.5; // Much stronger bias, heavily favor smaller y coordinates
+        const adjustedScore = score + positionBias;
+        const adjustedSecondaryScore = secondaryScore + positionBias;
+
+        console.log(
+          `[PACKER] Rectangle @ (${rect.x},${rect.y}) ${rect.w}x${rect.h}: score=${score.toFixed(2)}, positionBias=${positionBias.toFixed(2)}, adjustedScore=${adjustedScore.toFixed(2)}, isBest=${adjustedScore < bestScore}`
+        );
+
         if (
-          score < bestScore ||
-          (score === bestScore && secondaryScore < bestSecondaryScore)
+          adjustedScore < bestScore ||
+          (adjustedScore === bestScore &&
+            adjustedSecondaryScore < bestSecondaryScore)
         ) {
           bestRect = rect;
-          bestScore = score;
-          bestSecondaryScore = secondaryScore;
+          bestScore = adjustedScore;
+          bestSecondaryScore = adjustedSecondaryScore;
         }
       }
     }
 
+    console.log(
+      `[PACKER] Selected rectangle: ${bestRect ? `(${bestRect.x},${bestRect.y}) ${bestRect.w}x${bestRect.h}` : "none"}`
+    );
+    return bestRect;
+  }
+
+  private findBestRectangleWithHorizontalBias(
+    width: number,
+    height: number
+  ): FreeRectangle | null {
+    let bestRect: FreeRectangle | null = null;
+    let bestScore = Number.MAX_SAFE_INTEGER;
+
+    // Calculate space needed including padding
+    const needW =
+      width + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+    const needH =
+      height + (this.packedItems.length > 0 ? this.interItemPadding : 0);
+
+    console.log(
+      `[HORIZONTAL PACKER] Finding best rectangle for ${needW}x${needH}, available rectangles:`,
+      this.freeRectangles.map((r) => `(${r.x},${r.y}) ${r.w}x${r.h}`)
+    );
+
+    for (const rect of this.freeRectangles) {
+      if (rect.w >= needW && rect.h >= needH) {
+        // Custom scoring that strongly favors horizontal filling over vertical stacking
+        // Primary: prefer rectangles with smaller Y coordinates (fill top row first)
+        // Secondary: prefer rectangles with smaller X coordinates (fill left to right)
+        // Tertiary: prefer tighter fits (smaller remaining area)
+
+        const yBias = rect.y * 1000; // Very strong preference for top rows
+        const xBias = rect.x * 10; // Moderate preference for left columns
+        const remainingArea = (rect.w - needW) * (rect.h - needH);
+        const areaBias = remainingArea * 0.1; // Light preference for tighter fits
+
+        const score = yBias + xBias + areaBias;
+
+        console.log(
+          `[HORIZONTAL PACKER] Rectangle @ (${rect.x},${rect.y}) ${rect.w}x${rect.h}: yBias=${yBias}, xBias=${xBias}, areaBias=${areaBias.toFixed(2)}, totalScore=${score.toFixed(2)}, isBest=${score < bestScore}`
+        );
+
+        if (score < bestScore) {
+          bestRect = rect;
+          bestScore = score;
+        }
+      }
+    }
+
+    console.log(
+      `[HORIZONTAL PACKER] Selected rectangle: ${bestRect ? `(${bestRect.x},${bestRect.y}) ${bestRect.w}x${bestRect.h}` : "none"}`
+    );
     return bestRect;
   }
 
@@ -1114,6 +1188,7 @@ function layoutNodeRecursive(
                   // Create free rectangles for the unused space
                   const unusedRects: FreeRectangle[] = [];
 
+                  // IMPROVED HEIGHT RECLAIMING: Create rectangles that span full available width when possible
                   // Right unused rectangle (if width difference)
                   if (widthDifference > 0) {
                     unusedRects.push({
@@ -1124,24 +1199,106 @@ function layoutNodeRecursive(
                     });
                   }
 
-                  // Bottom unused rectangle (if height difference)
+                  // Bottom unused rectangle (if height difference) - ENHANCED to span full width when beneficial
                   if (heightDifference > 0) {
-                    unusedRects.push({
-                      x: placement.x,
+                    // Check if we can create a rectangle that spans the full container width
+                    // This helps avoid fragmentation and creates better placement opportunities
+                    const contentAreaStartX = 0; // Relative to content packing area
+                    const contentAreaEndX = contentPackingArea.w; // Full width of content area
+
+                    // Create bottom rectangle that spans from start of content area to end
+                    // This is much better for vertical packing than narrow rectangles
+                    const fullWidthBottomRect = {
+                      x: contentAreaStartX,
                       y: placement.y + laidOutChild.h,
-                      w: laidOutChild.w, // Only as wide as the actual child
+                      w: contentAreaEndX,
                       h: heightDifference,
-                    });
+                    };
+
+                    // Check if this full-width rectangle would overlap with other already-placed items
+                    let hasOverlap = false;
+                    const existingItems = packerInstance.packedItems || [];
+
+                    for (const existingItem of existingItems) {
+                      if (existingItem.id === packerInput.id) continue; // Skip self
+
+                      // Check for overlap with existing items
+                      const overlapX = !(
+                        existingItem.x >=
+                          fullWidthBottomRect.x + fullWidthBottomRect.w ||
+                        existingItem.x + existingItem.w <= fullWidthBottomRect.x
+                      );
+                      const overlapY = !(
+                        existingItem.y >=
+                          fullWidthBottomRect.y + fullWidthBottomRect.h ||
+                        existingItem.y + existingItem.h <= fullWidthBottomRect.y
+                      );
+
+                      if (overlapX && overlapY) {
+                        hasOverlap = true;
+                        break;
+                      }
+                    }
+
+                    if (!hasOverlap) {
+                      // Use full-width rectangle for better space utilization
+                      unusedRects.push(fullWidthBottomRect);
+                      console.log(
+                        `[ENHANCED HEIGHT RECLAIM] Created full-width bottom rectangle for better vertical packing`,
+                        {
+                          fullWidthRect: fullWidthBottomRect,
+                          originalChildRect: {
+                            x: placement.x,
+                            y: placement.y,
+                            w: laidOutChild.w,
+                            h: laidOutChild.h,
+                          },
+                          benefit:
+                            "Enables better vertical stacking by avoiding fragmentation",
+                        }
+                      );
+                    } else {
+                      // Fall back to child-width rectangle to avoid overlaps
+                      unusedRects.push({
+                        x: placement.x,
+                        y: placement.y + laidOutChild.h,
+                        w: laidOutChild.w, // Only as wide as the actual child
+                        h: heightDifference,
+                      });
+                      console.log(
+                        `[HEIGHT RECLAIM] Using child-width bottom rectangle to avoid overlaps`,
+                        {
+                          childWidthRect: {
+                            x: placement.x,
+                            y: placement.y + laidOutChild.h,
+                            w: laidOutChild.w,
+                            h: heightDifference,
+                          },
+                          reason:
+                            "Full-width would overlap with existing items",
+                        }
+                      );
+                    }
                   }
 
                   // Bottom-right unused rectangle (if both width and height differences)
+                  // Note: This may be redundant if we used full-width bottom rectangle
                   if (widthDifference > 0 && heightDifference > 0) {
-                    unusedRects.push({
-                      x: placement.x + laidOutChild.w,
-                      y: placement.y + laidOutChild.h,
-                      w: widthDifference,
-                      h: heightDifference,
-                    });
+                    // Only add this if we didn't create a full-width bottom rectangle
+                    const createdFullWidthBottom = unusedRects.some(
+                      (rect) =>
+                        rect.w === contentPackingArea.w &&
+                        rect.y === placement.y + laidOutChild.h
+                    );
+
+                    if (!createdFullWidthBottom) {
+                      unusedRects.push({
+                        x: placement.x + laidOutChild.w,
+                        y: placement.y + laidOutChild.h,
+                        w: widthDifference,
+                        h: heightDifference,
+                      });
+                    }
                   }
 
                   // Add meaningful unused rectangles back to the packer - be more generous about what's "meaningful"
@@ -1312,8 +1469,49 @@ function layoutNodeRecursive(
             const area = fitW * fitH;
             const utilizationRatio = area / (rect.w * rect.h);
 
-            // Score based on area and utilization efficiency, heavily favor larger areas
-            const score = area * (1 + utilizationRatio);
+            // Enhanced scoring system that prioritizes tighter packing:
+            // 1. Position preference (prefer top-left for tighter packing) - PRIMARY factor for tight packing
+            // 2. Area (larger is better) - secondary factor
+            // 3. Utilization efficiency (higher utilization is better) - tertiary factor
+            // 4. Aspect ratio consideration - gentle guidance
+
+            // Position preference: HEAVILY favor rectangles with smaller y coordinates (top bias for vertical tightness)
+            // Use the actual container dimensions for proper normalization instead of arbitrary maxCoordinate
+            const containerW = contentPackingArea.w;
+            const containerH = contentPackingArea.h;
+
+            // Primary score component: position - heavily weighted to achieve tight vertical packing
+            // Y position is the most important - multiply by large factor to dominate other considerations
+            const yPositionScore = (containerH - rect.y) * 1000; // Very strong preference for top placement
+            const xPositionScore = (containerW - rect.x) * 10; // Moderate preference for left placement
+            const positionScore = yPositionScore + xPositionScore;
+
+            // Secondary score components - much smaller weights
+            const areaScore = area * 0.1; // Reduced weight for area
+            const utilizationScore = utilizationRatio * 100; // Reduced weight for utilization
+
+            // Aspect ratio consideration: slight penalty for extreme aspect ratios to maintain readability
+            const aspectRatio = fitW / fitH;
+            const aspectPenalty = Math.abs(Math.log(aspectRatio)) * 5; // Reduced penalty weight
+
+            // Combined score: position is PRIMARY, everything else is secondary
+            const score =
+              positionScore + areaScore + utilizationScore - aspectPenalty;
+
+            console.log(
+              `[ADAPTIVE RECTANGLE SCORING] ${childNode.label} in rect @ (${rect.x}, ${rect.y}) ${rect.w}x${rect.h}`,
+              {
+                fitDimensions: `${fitW.toFixed(1)}x${fitH.toFixed(1)}`,
+                yPositionScore: yPositionScore.toFixed(1),
+                xPositionScore: xPositionScore.toFixed(1),
+                positionScore: positionScore.toFixed(1),
+                areaScore: areaScore.toFixed(1),
+                utilizationScore: utilizationScore.toFixed(1),
+                aspectPenalty: aspectPenalty.toFixed(1),
+                totalScore: score.toFixed(1),
+                isBest: score > bestFitScore,
+              }
+            );
 
             if (score > bestFitScore) {
               bestFitScore = score;
@@ -1464,6 +1662,47 @@ function layoutNodeRecursive(
         },
       }
     );
+
+    // COLLECT FREE RECTANGLES FOR DEBUGGING VISUALIZATION
+    const packerInstance = (packer as any).packer;
+    if (packerInstance && packerInstance.freeRectangles) {
+      const freeRects = packerInstance.freeRectangles.map(
+        (rect: FreeRectangle) => ({
+          // Convert packer-relative coordinates to absolute coordinates
+          x: parentAllocatedSpace.x + options.padding + rect.x,
+          y:
+            parentAllocatedSpace.y +
+            headerActualHeight +
+            options.padding +
+            rect.y,
+          w: rect.w,
+          h: rect.h,
+          containerPath: `${node.label || "Container"}(${node.id})`,
+        })
+      );
+
+      // Filter out rectangles that are too small to be useful
+      const meaningfulFreeRects = freeRects.filter(
+        (rect: any) =>
+          rect.w >= options.leafMinWidth * 0.5 &&
+          rect.h >= options.leafMinHeight * 0.5
+      );
+
+      if (meaningfulFreeRects.length > 0) {
+        currentLayoutNode.freeRectangles = meaningfulFreeRects;
+        console.log(
+          `[FREE RECTANGLES COLLECTED] ${node.label}: ${meaningfulFreeRects.length} free rectangles stored for visualization`,
+          {
+            totalFreeRects: freeRects.length,
+            meaningfulFreeRects: meaningfulFreeRects.length,
+            rectangles: meaningfulFreeRects.map(
+              (r: any) =>
+                `(${r.x.toFixed(0)},${r.y.toFixed(0)}) ${r.w.toFixed(0)}x${r.h.toFixed(0)}`
+            ),
+          }
+        );
+      }
+    }
 
     // Determine Container's Final Dimensions - Use actual child heights instead of packer height
     // The packer height doesn't account for children that use less space than allocated

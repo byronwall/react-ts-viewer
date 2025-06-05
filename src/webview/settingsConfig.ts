@@ -42,6 +42,7 @@ export interface TreemapSettings {
   hierarchicalLeafPrefHeight: number;
   hierarchicalLeafMinAspectRatio: number;
   hierarchicalLeafMaxAspectRatio: number;
+  showDebugFreeRectangles: boolean;
 }
 
 export interface SettingConfigBase<T> {
@@ -426,6 +427,12 @@ export const treemapSettingsConfig: SettingConfig[] = [
     step: 0.1,
     disabled: (s) => s.selectedLayout !== "hierarchical",
   },
+  {
+    id: "showDebugFreeRectangles",
+    label: "Show Debug Free Rectangles",
+    type: "boolean",
+    group: "Debug",
+  },
 ];
 
 export const settingGroupOrder: string[] = [
@@ -436,6 +443,7 @@ export const settingGroupOrder: string[] = [
   "Node Structure",
   "Node Visibility",
   "Tooltip",
+  "Debug",
 ];
 
 // Default Treemap settings, aligned with the interface
@@ -483,6 +491,7 @@ export const defaultTreemapSettings: TreemapSettings = {
   hierarchicalLeafPrefHeight: 40,
   hierarchicalLeafMinAspectRatio: 1.0,
   hierarchicalLeafMaxAspectRatio: 4.0,
+  showDebugFreeRectangles: true,
 };
 
 export const initialTreemapSettings: TreemapSettings = {
@@ -539,4 +548,5 @@ export const initialTreemapSettings: TreemapSettings = {
   hierarchicalLeafPrefHeight: 40,
   hierarchicalLeafMinAspectRatio: 1.0,
   hierarchicalLeafMaxAspectRatio: 4.0,
+  showDebugFreeRectangles: true,
 };

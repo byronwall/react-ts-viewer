@@ -569,6 +569,100 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     return maxAllowedHeight;
   };
 
+  /* collect all free rectangles from the layout tree for debugging visualization */
+  const collectAllFreeRectangles = (
+    layoutNode: AnyLayoutNode
+  ): Array<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    containerPath: string;
+  }> => {
+    const allFreeRects: Array<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      containerPath: string;
+    }> = [];
+
+    // Check if this is a terminal container (has children but no child containers)
+    const isTerminalContainer = (() => {
+      if (!layoutNode.children || layoutNode.children.length === 0) {
+        return false; // No children at all, not a container
+      }
+
+      // Check if any children are containers
+      const hasChildContainers = layoutNode.children.some((child) => {
+        const childNode = child as AnyLayoutNode;
+        return (
+          (childNode as HierarchicalLayoutNode).isContainer ||
+          (childNode.children && childNode.children.length > 0)
+        );
+      });
+
+      return !hasChildContainers; // Terminal if it has children but no child containers
+    })();
+
+    // Only add free rectangles from terminal containers
+    if (isTerminalContainer) {
+      const freeRects = (layoutNode as HierarchicalLayoutNode).freeRectangles;
+      if (freeRects && Array.isArray(freeRects)) {
+        allFreeRects.push(...freeRects);
+      }
+    }
+
+    // Always recursively collect from children to find terminal containers deeper in the tree
+    if (layoutNode.children) {
+      for (const child of layoutNode.children) {
+        allFreeRects.push(...collectAllFreeRectangles(child as AnyLayoutNode));
+      }
+    }
+
+    return allFreeRects;
+  };
+
+  /* render free rectangles for debugging */
+  const renderFreeRectangles = (
+    freeRects: Array<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      containerPath: string;
+    }>
+  ): React.ReactNode => {
+    return freeRects.map((rect, index) => (
+      <g key={`free-rect-${index}`}>
+        <rect
+          x={rect.x}
+          y={rect.y}
+          width={rect.w}
+          height={rect.h}
+          fill="rgba(255, 0, 0, 0.1)" // Semi-transparent red
+          stroke="rgba(255, 0, 0, 0.8)" // Red border
+          strokeWidth="1"
+          strokeDasharray="4,2" // Dashed border
+          pointerEvents="none" // Don't interfere with clicks
+        />
+        {/* Add a small label if the rectangle is large enough */}
+        {rect.w > 30 && rect.h > 20 && (
+          <text
+            x={rect.x + 2}
+            y={rect.y + 12}
+            fontSize="8"
+            fill="rgba(255, 0, 0, 0.8)"
+            pointerEvents="none"
+            style={{ userSelect: "none", fontFamily: "monospace" }}
+          >
+            FREE
+          </text>
+        )}
+      </g>
+    ));
+  };
+
   /* recursive renderer with infinite depth support */
   const renderGroup = (ln: AnyLayoutNode, depth = 0): React.ReactNode => {
     // Skip rendering if the node is too small to be meaningful or marked as 'none'
@@ -798,6 +892,10 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       {renderGroup(layoutRoot as AnyLayoutNode)}
+      {settings.showDebugFreeRectangles &&
+        renderFreeRectangles(
+          collectAllFreeRectangles(layoutRoot as AnyLayoutNode)
+        )}
     </svg>
   );
 };
