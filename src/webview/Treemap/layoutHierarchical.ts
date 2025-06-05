@@ -278,37 +278,41 @@ class Guillotine2DPacker implements I2DBinPacker {
     const bottomHeight = rect.h - height;
 
     // Improved splitting strategy to avoid creating too many narrow, unusable rectangles
-    const minUsefulWidth = 20; // Minimum width that could be useful
-    const minUsefulHeight = 12; // Minimum height that could be useful
+    const minUsefulWidth = 15; // Reduced minimum to capture more space
+    const minUsefulHeight = 8; // Reduced minimum to capture more space
 
-    // Right rectangle (vertical split)
+    // Strategy: prioritize creating larger rectangles that span more space
+    // This helps with later merging and reduces fragmentation
+
+    // Right rectangle (vertical split) - make it span the full height when possible
     if (rightWidth >= minUsefulWidth) {
-      // For the right rectangle, use the full remaining height if it's useful
-      const rightHeight = rect.h;
+      const rightHeight = rect.h; // Use full height, not just the placed item height
       if (rightHeight >= minUsefulHeight) {
         this.freeRectangles.push({
           x: rect.x + width,
-          y: rect.y,
+          y: rect.y, // Start from top of original rectangle
           w: rightWidth,
-          h: rightHeight,
+          h: rightHeight, // Full height for better merging potential
         });
       }
     }
 
-    // Bottom rectangle (horizontal split)
+    // Bottom rectangle (horizontal split) - prefer wider rectangles for better packing
     if (bottomHeight >= minUsefulHeight) {
-      // For the bottom rectangle, only use the width of the placed item if the right area is too narrow
-      let bottomWidth = width;
+      let bottomWidth = rect.w; // Use full width by default for better merging potential
+      let bottomX = rect.x; // Start from left edge of original rectangle
 
-      // If we didn't create a right rectangle (because it was too narrow),
-      // extend the bottom rectangle to use the full width
-      if (rightWidth < minUsefulWidth) {
-        bottomWidth = rect.w;
+      // Only reduce width if we created a right rectangle and it would cause overlap
+      if (rightWidth >= minUsefulWidth) {
+        // We created a right rectangle, so the bottom rectangle should only use the placed item's width
+        // to avoid overlap with the right rectangle
+        bottomWidth = width;
+        bottomX = rect.x;
       }
 
       if (bottomWidth >= minUsefulWidth) {
         this.freeRectangles.push({
-          x: rect.x,
+          x: bottomX,
           y: rect.y + height,
           w: bottomWidth,
           h: bottomHeight,
@@ -316,7 +320,7 @@ class Guillotine2DPacker implements I2DBinPacker {
       }
     }
 
-    // Clean up overlapping rectangles
+    // Clean up overlapping rectangles and merge aggressively
     this.removeOverlappingRectangles();
   }
 
@@ -341,8 +345,11 @@ class Guillotine2DPacker implements I2DBinPacker {
       }
     }
 
-    // Merge adjacent rectangles to reduce fragmentation
+    // Merge adjacent rectangles to reduce fragmentation - run multiple times to catch all merges
     this.mergeAdjacentRectangles();
+
+    // Run an additional aggressive merge pass specifically for vertical adjacency
+    this.aggressiveVerticalMerge();
   }
 
   private mergeAdjacentRectangles(): void {
@@ -350,6 +357,9 @@ class Guillotine2DPacker implements I2DBinPacker {
     let iterations = 0;
     const maxIterations = 10; // Prevent infinite loops
     let totalMerges = 0;
+
+    // Reduce logging spam - only log if significant merges happen
+    const initialRectCount = this.freeRectangles.length;
 
     while (merged && iterations < maxIterations) {
       merged = false;
@@ -395,6 +405,14 @@ class Guillotine2DPacker implements I2DBinPacker {
         if (merged) break;
       }
     }
+
+    const finalRectCount = this.freeRectangles.length;
+    // Only log if significant changes occurred
+    if (totalMerges > 0 || initialRectCount > 3) {
+      console.log(
+        `🔗 Standard merge: ${initialRectCount} → ${finalRectCount} rectangles (${totalMerges} merges)`
+      );
+    }
   }
 
   private canMergeHorizontally(
@@ -404,7 +422,7 @@ class Guillotine2DPacker implements I2DBinPacker {
     // Two rectangles can be merged horizontally if:
     // 1. They have the same Y coordinate and height
     // 2. One rectangle's right edge touches the other's left edge
-    const tolerance = 2.0; // More generous tolerance to account for inter-item padding accumulation
+    const tolerance = 3.0; // Increased tolerance to handle more edge cases
 
     const sameY = Math.abs(rectA.y - rectB.y) <= tolerance;
     const sameHeight = Math.abs(rectA.h - rectB.h) <= tolerance;
@@ -428,7 +446,7 @@ class Guillotine2DPacker implements I2DBinPacker {
     // Two rectangles can be merged vertically if:
     // 1. They have the same X coordinate and width
     // 2. One rectangle's bottom edge touches the other's top edge (or they're very close due to padding)
-    const tolerance = 2.0; // More generous tolerance to account for inter-item padding accumulation
+    const tolerance = 3.0; // Increased tolerance to handle more edge cases
 
     const sameX = Math.abs(rectA.x - rectB.x) <= tolerance;
     const sameWidth = Math.abs(rectA.w - rectB.w) <= tolerance;
@@ -533,6 +551,96 @@ class Guillotine2DPacker implements I2DBinPacker {
   // Public method to clean up overlapping rectangles
   cleanupOverlappingRectangles(): void {
     this.removeOverlappingRectangles();
+  }
+
+  // New method to aggressively merge vertically adjacent rectangles
+  private aggressiveVerticalMerge(): void {
+    // Don't log every call - only when we find substantial rectangles to work with
+    const shouldLog = this.freeRectangles.length > 2;
+
+    let mergesMade = 0;
+    let iterations = 0;
+    const maxIterations = 8; // Increased iterations for more thorough merging
+
+    while (iterations < maxIterations) {
+      let foundMerge = false;
+      iterations++;
+
+      // Sort rectangles by X then Y to process in a more systematic way
+      this.freeRectangles.sort((a, b) => {
+        if (Math.abs(a.x - b.x) < 2) {
+          return a.y - b.y; // Same X, sort by Y
+        }
+        return a.x - b.x; // Different X, sort by X
+      });
+
+      for (let i = 0; i < this.freeRectangles.length; i++) {
+        const rectA = this.freeRectangles[i];
+        if (!rectA) continue;
+
+        for (let j = i + 1; j < this.freeRectangles.length; j++) {
+          const rectB = this.freeRectangles[j];
+          if (!rectB) continue;
+
+          // Much more aggressive merge criteria
+          const xAlignment = Math.abs(rectA.x - rectB.x) <= 8.0; // Increased from 5.0
+          const widthSimilarity =
+            Math.abs(rectA.w - rectB.w) <=
+            Math.max(20.0, Math.min(rectA.w, rectB.w) * 0.3); // Allow up to 30% width difference
+
+          if (xAlignment && widthSimilarity) {
+            // Check if they're vertically adjacent (with very generous tolerance)
+            const aBottomToBTop = Math.abs(rectA.y + rectA.h - rectB.y);
+            const bBottomToATop = Math.abs(rectB.y + rectB.h - rectA.y);
+            const verticalGap = Math.min(aBottomToBTop, bBottomToATop);
+
+            if (verticalGap <= 15.0) {
+              // Increased from 8.0 to 15.0 pixels
+              // Merge them using the leftmost X and widest width
+              const mergedX = Math.min(rectA.x, rectB.x);
+              const mergedW =
+                Math.max(rectA.x + rectA.w, rectB.x + rectB.w) - mergedX;
+              const mergedY = Math.min(rectA.y, rectB.y);
+              const mergedH =
+                Math.max(rectA.y + rectA.h, rectB.y + rectB.h) - mergedY;
+
+              const mergedRect: FreeRectangle = {
+                x: mergedX,
+                y: mergedY,
+                w: mergedW,
+                h: mergedH,
+              };
+
+              if (shouldLog) {
+                console.log(
+                  `🔗 Aggressive merge: [${rectA.x.toFixed(1)},${rectA.y.toFixed(1)},${rectA.w.toFixed(1)}x${rectA.h.toFixed(1)}] + [${rectB.x.toFixed(1)},${rectB.y.toFixed(1)},${rectB.w.toFixed(1)}x${rectB.h.toFixed(1)}] → [${mergedRect.x.toFixed(1)},${mergedRect.y.toFixed(1)},${mergedRect.w.toFixed(1)}x${mergedRect.h.toFixed(1)}] (gap: ${verticalGap.toFixed(1)})`
+                );
+              }
+
+              // Remove the original rectangles and add the merged one
+              this.freeRectangles.splice(Math.max(i, j), 1);
+              this.freeRectangles.splice(Math.min(i, j), 1);
+              this.freeRectangles.push(mergedRect);
+
+              foundMerge = true;
+              mergesMade++;
+              break;
+            }
+          }
+        }
+
+        if (foundMerge) break;
+      }
+
+      if (!foundMerge) break;
+    }
+
+    // Only log if we actually made merges or started with many rectangles
+    if (mergesMade > 0 || (shouldLog && this.freeRectangles.length > 2)) {
+      console.log(
+        `⚡ Aggressive merge: ${mergesMade} merges in ${iterations} iterations`
+      );
+    }
   }
 }
 
