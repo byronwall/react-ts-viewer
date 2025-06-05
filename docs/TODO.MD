@@ -78,8 +78,6 @@
 - Continue to work on how free space is distributed
 - Adjust the 1234 folding to adjust the value on the visible nodes
 - Fill the empty spaces when done - don't want to show empty space when it could be filled
-- Space giving back is not working
-- Grid layout is ugly
 - Add some memo or something to remove layouts when nothing changed
 
 ### Barrel file

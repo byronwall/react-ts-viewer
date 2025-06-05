@@ -178,11 +178,6 @@ class Guillotine2DPacker implements I2DBinPacker {
     const needH =
       height + (this.packedItems.length > 0 ? this.interItemPadding : 0);
 
-    console.log(
-      `[PACKER] Finding best rectangle for ${needW}x${needH}, available rectangles:`,
-      this.freeRectangles.map((r) => `(${r.x},${r.y}) ${r.w}x${r.h}`)
-    );
-
     for (const rect of this.freeRectangles) {
       if (rect.w >= needW && rect.h >= needH) {
         let score: number;
@@ -215,10 +210,6 @@ class Guillotine2DPacker implements I2DBinPacker {
         const adjustedScore = score + positionBias;
         const adjustedSecondaryScore = secondaryScore + positionBias;
 
-        console.log(
-          `[PACKER] Rectangle @ (${rect.x},${rect.y}) ${rect.w}x${rect.h}: score=${score.toFixed(2)}, positionBias=${positionBias.toFixed(2)}, adjustedScore=${adjustedScore.toFixed(2)}, isBest=${adjustedScore < bestScore}`
-        );
-
         if (
           adjustedScore < bestScore ||
           (adjustedScore === bestScore &&
@@ -231,9 +222,6 @@ class Guillotine2DPacker implements I2DBinPacker {
       }
     }
 
-    console.log(
-      `[PACKER] Selected rectangle: ${bestRect ? `(${bestRect.x},${bestRect.y}) ${bestRect.w}x${bestRect.h}` : "none"}`
-    );
     return bestRect;
   }
 
@@ -250,11 +238,6 @@ class Guillotine2DPacker implements I2DBinPacker {
     const needH =
       height + (this.packedItems.length > 0 ? this.interItemPadding : 0);
 
-    console.log(
-      `[HORIZONTAL PACKER] Finding best rectangle for ${needW}x${needH}, available rectangles:`,
-      this.freeRectangles.map((r) => `(${r.x},${r.y}) ${r.w}x${r.h}`)
-    );
-
     for (const rect of this.freeRectangles) {
       if (rect.w >= needW && rect.h >= needH) {
         // Custom scoring that strongly favors horizontal filling over vertical stacking
@@ -269,10 +252,6 @@ class Guillotine2DPacker implements I2DBinPacker {
 
         const score = yBias + xBias + areaBias;
 
-        console.log(
-          `[HORIZONTAL PACKER] Rectangle @ (${rect.x},${rect.y}) ${rect.w}x${rect.h}: yBias=${yBias}, xBias=${xBias}, areaBias=${areaBias.toFixed(2)}, totalScore=${score.toFixed(2)}, isBest=${score < bestScore}`
-        );
-
         if (score < bestScore) {
           bestRect = rect;
           bestScore = score;
@@ -280,9 +259,6 @@ class Guillotine2DPacker implements I2DBinPacker {
       }
     }
 
-    console.log(
-      `[HORIZONTAL PACKER] Selected rectangle: ${bestRect ? `(${bestRect.x},${bestRect.y}) ${bestRect.w}x${bestRect.h}` : "none"}`
-    );
     return bestRect;
   }
 
@@ -392,10 +368,6 @@ class Guillotine2DPacker implements I2DBinPacker {
           if (this.canMergeHorizontally(rectA, rectB)) {
             const mergedRect = this.mergeHorizontally(rectA, rectB);
 
-            console.log(
-              `[RECTANGLE MERGE] Horizontal merge: (${rectA.x},${rectA.y}) ${rectA.w}x${rectA.h} + (${rectB.x},${rectB.y}) ${rectB.w}x${rectB.h} -> (${mergedRect.x},${mergedRect.y}) ${mergedRect.w}x${mergedRect.h}`
-            );
-
             // Remove the two original rectangles and add the merged one
             this.freeRectangles.splice(Math.max(i, j), 1);
             this.freeRectangles.splice(Math.min(i, j), 1);
@@ -408,10 +380,6 @@ class Guillotine2DPacker implements I2DBinPacker {
           // Check if rectangles can be merged vertically
           else if (this.canMergeVertically(rectA, rectB)) {
             const mergedRect = this.mergeVertically(rectA, rectB);
-
-            console.log(
-              `[RECTANGLE MERGE] Vertical merge: (${rectA.x},${rectA.y}) ${rectA.w}x${rectA.h} + (${rectB.x},${rectB.y}) ${rectB.w}x${rectB.h} -> (${mergedRect.x},${mergedRect.y}) ${mergedRect.w}x${mergedRect.h}`
-            );
 
             // Remove the two original rectangles and add the merged one
             this.freeRectangles.splice(Math.max(i, j), 1);
@@ -426,12 +394,6 @@ class Guillotine2DPacker implements I2DBinPacker {
 
         if (merged) break;
       }
-    }
-
-    if (totalMerges > 0) {
-      console.log(
-        `[RECTANGLE MERGE SUMMARY] Completed ${totalMerges} merge operations in ${iterations} iterations, final count: ${this.freeRectangles.length} rectangles`
-      );
     }
   }
 
@@ -559,22 +521,7 @@ class Guillotine2DPacker implements I2DBinPacker {
 
   // Debug method to visualize free rectangles
   logPackingVisualization(containerLabel: string): void {
-    console.log(`\n--- 2D PACKING VISUALIZATION for ${containerLabel} ---`);
-    console.log(
-      `Container: ${this.maxWidth} x ${this.maxHeight}, Used: ${this.usedWidth} x ${this.usedHeight}`
-    );
-
-    console.log("\nPacked items:");
-    this.packedItems.forEach((p, i) => {
-      console.log(`  ${i + 1}. ${p.id} @ (${p.x}, ${p.y}) ${p.w} x ${p.h}`);
-    });
-
-    console.log("\nFree rectangles:");
-    this.freeRectangles.forEach((r, i) => {
-      console.log(`  F${i + 1}. @ (${r.x}, ${r.y}) ${r.w} x ${r.h}`);
-    });
-
-    console.log("--- END 2D PACKING VISUALIZATION ---\n");
+    // Visualization removed to reduce console output
   }
 
   // Public method to add free rectangles for dynamic resizing
@@ -667,8 +614,6 @@ export const layoutHierarchical: HierarchicalLayoutFn = (
   viewportHeight,
   options
 ) => {
-  console.warn("***** laying out");
-
   const layoutRoot = layoutNodeRecursive(
     rootNode,
     { x: 0, y: 0, w: viewportWidth, h: viewportHeight },
@@ -811,16 +756,6 @@ function layoutNodeRecursive(
   parentLayoutNode?: HierarchicalLayoutNode
 ): HierarchicalLayoutNode | null {
   if (parentAllocatedSpace.w <= 0 || parentAllocatedSpace.h <= 0) {
-    console.log(
-      `[layoutNodeRecursive] SKIPPED (insufficient space): ${node.label} (ID: ${node.id})`,
-      {
-        neededMinW: options.leafMinWidth,
-        neededMinH: options.leafMinHeight,
-        availableW: parentAllocatedSpace.w,
-        availableH: parentAllocatedSpace.h,
-        reason: "parentAllocatedSpace too small",
-      }
-    );
     return null;
   }
   if (
@@ -829,14 +764,6 @@ function layoutNodeRecursive(
     isNaN(parentAllocatedSpace.x) ||
     isNaN(parentAllocatedSpace.y)
   ) {
-    // This indicates a severe issue upstream or with initial inputs.
-    console.log(
-      `[layoutNodeRecursive] SKIPPED (NaN values): ${node.label} (ID: ${node.id})`,
-      {
-        parentAllocatedSpace,
-        reason: "NaN in parentAllocatedSpace",
-      }
-    );
     return null;
   }
 
@@ -848,17 +775,6 @@ function layoutNodeRecursive(
     (parentAllocatedSpace.w < options.leafMinWidth ||
       parentAllocatedSpace.h < options.leafMinHeight)
   ) {
-    console.log(
-      `[layoutNodeRecursive] CONTAINER rendered as SMALL BOX (below minimum): ${node.label} (ID: ${node.id})`,
-      {
-        allocatedW: parentAllocatedSpace.w,
-        allocatedH: parentAllocatedSpace.h,
-        minW: options.leafMinWidth,
-        minH: options.leafMinHeight,
-        reason: "allocated space below minimum - rendering as small box",
-      }
-    );
-
     return {
       node,
       x: parentAllocatedSpace.x,
@@ -953,22 +869,6 @@ function layoutNodeRecursive(
     // Ensure it still fits after min enforcement (could clip if min is larger than allocated)
     currentLayoutNode.w = Math.min(currentLayoutNode.w, parentAllocatedSpace.w);
     currentLayoutNode.h = Math.min(currentLayoutNode.h, parentAllocatedSpace.h);
-
-    // Add logging to track leaf expansion
-    console.log(
-      `[layoutNodeRecursive] LEAF FINAL: ${node.label} (ID: ${node.id})`,
-      {
-        finalW: currentLayoutNode.w,
-        finalH: currentLayoutNode.h,
-        parentW: parentAllocatedSpace.w,
-        parentH: parentAllocatedSpace.h,
-        parentX: parentAllocatedSpace.x,
-        parentY: parentAllocatedSpace.y,
-        prefW: options.leafPrefWidth,
-        prefH: options.leafPrefHeight,
-        expansionRatio: currentLayoutNode.w / options.leafPrefWidth,
-      }
-    );
 
     currentLayoutNode.isContainer = false; // It's a leaf
   } else {
@@ -1098,10 +998,6 @@ function layoutNodeRecursive(
           );
           childTargetW = Math.max(childTargetW, maxExpandedW);
         }
-
-        console.log(
-          `[FREE-SPACE SIZING] ${childNode.label}: preferred size ${childTargetW.toFixed(1)}x${childTargetH.toFixed(1)}, will be placed in best available free space`
-        );
       }
 
       childTargetW = Math.max(options.leafMinWidth, childTargetW);
@@ -1136,23 +1032,8 @@ function layoutNodeRecursive(
     const availableArea = contentPackingArea.w * contentPackingArea.h;
     const utilizationRatio = totalTargetArea / availableArea;
 
-    console.log(
-      `[layoutNodeRecursive] PACKING ANALYSIS: ${node.label} (ID: ${node.id})`,
-      {
-        totalTargetArea,
-        availableArea,
-        utilizationRatio,
-        childCount: sortedPackerItems.length,
-        contentPackingArea,
-      }
-    );
-
     // Width expansion optimization for low utilization scenarios
     if (utilizationRatio < 0.5 && sortedPackerItems.length > 0) {
-      console.log(
-        `[layoutNodeRecursive] LOW UTILIZATION DETECTED - expanding widths for better space usage`
-      );
-
       // Calculate how much extra width we can distribute
       const totalCurrentWidth = sortedPackerItems.reduce(
         (sum, item) => sum + item.targetW,
@@ -1175,9 +1056,6 @@ function layoutNodeRecursive(
             );
 
             const newWidth = item.targetW + maxExpansion;
-            console.log(
-              `[WIDTH EXPANSION] ${item.node.label}: ${item.targetW.toFixed(1)} -> ${newWidth.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
-            );
             item.targetW = newWidth;
           }
         }
@@ -1186,10 +1064,6 @@ function layoutNodeRecursive(
 
     // Very aggressive expansion for extremely low utilization
     if (utilizationRatio < 0.1 && sortedPackerItems.length > 0) {
-      console.log(
-        `[layoutNodeRecursive] VERY LOW UTILIZATION - expanding all item widths`
-      );
-
       for (const item of sortedPackerItems) {
         const isLeaf = !item.node.children || item.node.children.length === 0;
         if (isLeaf) {
@@ -1199,55 +1073,13 @@ function layoutNodeRecursive(
             item.targetW * 4 // Or up to 4x the original width
           );
 
-          console.log(
-            `[AGGRESSIVE WIDTH EXPANSION] ${item.node.label}: ${item.targetW.toFixed(1)} -> ${expandedWidth.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
-          );
           item.targetW = expandedWidth;
         }
       }
     }
 
-    // Simplified utilization optimization - focus on the adaptive placement to handle space utilization
-    console.log(
-      `[layoutNodeRecursive] FREE-SPACE PACKING: ${node.label} (ID: ${node.id})`,
-      {
-        utilizationRatio,
-        message:
-          "Items will be placed in best available free rectangles without grid constraints",
-      }
-    );
-
-    // Pack items using free-space 2D bin packing (no grid constraints)
-    console.log(
-      `[layoutNodeRecursive] FREE-SPACE PACKING CHILDREN: ${node.label} (ID: ${node.id})`,
-      {
-        approach: "Free-space 2D bin packing without grid constraints",
-        totalChildren: sortedPackerItems.length,
-        childrenToProcess: sortedPackerItems.map((item) => ({
-          id: item.id,
-          targetW: item.targetW,
-          targetH: item.targetH,
-          label: item.node.label,
-          isContainer: !!(item.node.children && item.node.children.length > 0),
-        })),
-        contentPackingArea,
-        availableFreeRectsAtStart:
-          (packer as any).packer?.freeRectangles?.length || 0,
-      }
-    );
-
     for (const packerInput of sortedPackerItems) {
       const childNode = packerInput.node;
-
-      console.log(
-        `[layoutNodeRecursive] ATTEMPTING TO PACK CHILD: ${childNode.label} (ID: ${childNode.id})`,
-        {
-          targetW: packerInput.targetW,
-          targetH: packerInput.targetH,
-          availableFreeRects:
-            (packer as any).packer?.freeRectangles?.length || 0,
-        }
-      );
 
       const placement = packer.add(packerInput);
 
@@ -1285,48 +1117,11 @@ function layoutNodeRecursive(
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
 
-            // Add logging for successful child placement
-            console.log(
-              `[layoutNodeRecursive] CHILD (in ${node.label} container, ID: ${node.id}) - LAID OUT: ${childNode.label} (ID: ${childNode.id})`,
-              {
-                childAllocatedW: allocatedCellForChild.w,
-                childAllocatedH: allocatedCellForChild.h,
-                childAllocatedX: allocatedCellForChild.x,
-                childAllocatedY: allocatedCellForChild.y,
-                childFinalW: laidOutChild.w,
-                childFinalH: laidOutChild.h,
-                placementW: placement.w,
-                placementH: placement.h,
-                spaceSavings: {
-                  widthSaved: allocatedCellForChild.w - laidOutChild.w,
-                  heightSaved: allocatedCellForChild.h - laidOutChild.h,
-                  percentageUsed: `${(((laidOutChild.w * laidOutChild.h) / (allocatedCellForChild.w * allocatedCellForChild.h)) * 100).toFixed(1)}%`,
-                },
-              }
-            );
-
             // Enhanced Dynamic Container Resizing: Handle both container AND leaf children that use less space
             const heightDifference = placement.h - laidOutChild.h;
             const widthDifference = placement.w - laidOutChild.w;
 
             if (heightDifference > 0 || widthDifference > 0) {
-              const nodeType = laidOutChild.isContainer ? "Container" : "Leaf";
-
-              console.log(
-                `[DYNAMIC RESIZE] ${nodeType} ${childNode.label} used less space than allocated`,
-                {
-                  allocatedW: placement.w,
-                  allocatedH: placement.h,
-                  actualW: laidOutChild.w,
-                  actualH: laidOutChild.h,
-                  reclaimedW: widthDifference,
-                  reclaimedH: heightDifference,
-                  placementX: placement.x,
-                  placementY: placement.y,
-                  nodeType,
-                }
-              );
-
               // Update the packer's state to reflect the actual space used
               const packerInstance = (packer as any).packer;
               if (packerInstance && packerInstance.packedItems) {
@@ -1400,20 +1195,6 @@ function layoutNodeRecursive(
                     if (!hasOverlap) {
                       // Use full-width rectangle for better space utilization
                       unusedRects.push(fullWidthBottomRect);
-                      console.log(
-                        `[ENHANCED HEIGHT RECLAIM] Created full-width bottom rectangle for better vertical packing`,
-                        {
-                          fullWidthRect: fullWidthBottomRect,
-                          originalChildRect: {
-                            x: placement.x,
-                            y: placement.y,
-                            w: laidOutChild.w,
-                            h: laidOutChild.h,
-                          },
-                          benefit:
-                            "Enables better vertical stacking by avoiding fragmentation",
-                        }
-                      );
                     } else {
                       // Fall back to child-width rectangle to avoid overlaps
                       unusedRects.push({
@@ -1422,19 +1203,6 @@ function layoutNodeRecursive(
                         w: laidOutChild.w, // Only as wide as the actual child
                         h: heightDifference,
                       });
-                      console.log(
-                        `[HEIGHT RECLAIM] Using child-width bottom rectangle to avoid overlaps`,
-                        {
-                          childWidthRect: {
-                            x: placement.x,
-                            y: placement.y + laidOutChild.h,
-                            w: laidOutChild.w,
-                            h: heightDifference,
-                          },
-                          reason:
-                            "Full-width would overlap with existing items",
-                        }
-                      );
                     }
                   }
 
@@ -1471,26 +1239,6 @@ function layoutNodeRecursive(
                         unusedRect.w >= options.leafMinWidth * 0.7)
                     ) {
                       packer.addFreeRectangle(unusedRect);
-
-                      console.log(
-                        `[DYNAMIC RESIZE] Added unused space back as free rectangle`,
-                        {
-                          newFreeRect: unusedRect,
-                          area: rectArea,
-                          minUsefulArea,
-                          totalFreeRects: packerInstance.freeRectangles.length,
-                        }
-                      );
-                    } else {
-                      console.log(
-                        `[DYNAMIC RESIZE] Skipped small unused rectangle`,
-                        {
-                          unusedRect,
-                          area: rectArea,
-                          minUsefulArea,
-                          reason: "too small to be useful",
-                        }
-                      );
                     }
                   }
                 }
@@ -1499,32 +1247,9 @@ function layoutNodeRecursive(
           } else {
             // Log when recursive layout returned null (child was skipped internally)
           }
-        } else {
-          // Log when child allocation is too small
-          console.log(
-            `[layoutNodeRecursive] CHILD SKIPPED (allocation too small): ${childNode.label} (ID: ${childNode.id}) in container ${node.label}`,
-            {
-              neededMinW: options.leafMinWidth,
-              neededMinH: options.leafMinHeight,
-              allocatedW: allocatedCellForChild.w,
-              allocatedH: allocatedCellForChild.h,
-              packerPlacementW: placement.w,
-              packerPlacementH: placement.h,
-              reason: "allocatedCellForChild dimensions <= 0",
-            }
-          );
         }
       } else {
         // Try to fit the item by adapting its dimensions to available space
-        console.log(
-          `[layoutNodeRecursive] ATTEMPTING ADAPTIVE PLACEMENT: ${childNode.label} (ID: ${childNode.id})`,
-          {
-            originalW: packerInput.targetW,
-            originalH: packerInput.targetH,
-            availableW: contentPackingArea.w,
-            availableH: contentPackingArea.h,
-          }
-        );
 
         // Get the free rectangles from the packer to find actual available spaces
         let bestFitRect: FreeRectangle | null = null;
@@ -1535,21 +1260,6 @@ function layoutNodeRecursive(
 
         // Access free rectangles from the underlying Guillotine2DPacker
         const freeRects = (packer as any).packer?.freeRectangles || [];
-
-        console.log(
-          `[ADAPTIVE PLACEMENT] Analyzing ${freeRects.length} free rectangles for ${childNode.label}`,
-          {
-            freeRects: freeRects.map((r: FreeRectangle) => ({
-              x: r.x,
-              y: r.y,
-              w: r.w,
-              h: r.h,
-              area: r.w * r.h,
-            })),
-            targetW: packerInput.targetW,
-            targetH: packerInput.targetH,
-          }
-        );
 
         for (const rect of freeRects) {
           // Calculate what dimensions we could fit in this rectangle
@@ -1613,10 +1323,6 @@ function layoutNodeRecursive(
             }
           }
 
-          console.log(
-            `[AGGRESSIVE ADAPTIVE EXPANSION] ${childNode.label}: ${Math.min(packerInput.targetW, rect.w)}x${Math.min(packerInput.targetH, rect.h)} -> ${fitW.toFixed(1)}x${fitH.toFixed(1)} (rect: ${rect.w}x${rect.h})`
-          );
-
           // Ensure minimum dimensions
           fitW = Math.max(fitW, options.leafMinWidth);
           fitH = Math.max(fitH, options.leafMinHeight);
@@ -1654,21 +1360,6 @@ function layoutNodeRecursive(
             // Combined score: position is PRIMARY, everything else is secondary
             const score =
               positionScore + areaScore + utilizationScore - aspectPenalty;
-
-            console.log(
-              `[ADAPTIVE RECTANGLE SCORING] ${childNode.label} in rect @ (${rect.x}, ${rect.y}) ${rect.w}x${rect.h}`,
-              {
-                fitDimensions: `${fitW.toFixed(1)}x${fitH.toFixed(1)}`,
-                yPositionScore: yPositionScore.toFixed(1),
-                xPositionScore: xPositionScore.toFixed(1),
-                positionScore: positionScore.toFixed(1),
-                areaScore: areaScore.toFixed(1),
-                utilizationScore: utilizationScore.toFixed(1),
-                aspectPenalty: aspectPenalty.toFixed(1),
-                totalScore: score.toFixed(1),
-                isBest: score > bestFitScore,
-              }
-            );
 
             if (score > bestFitScore) {
               bestFitScore = score;
@@ -1712,24 +1403,6 @@ function layoutNodeRecursive(
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
 
-            console.log(
-              `[layoutNodeRecursive] CHILD ADAPTIVELY PLACED: ${childNode.label} (ID: ${childNode.id})`,
-              {
-                originalW: packerInput.targetW,
-                originalH: packerInput.targetH,
-                adaptiveW: bestFitW,
-                adaptiveH: bestFitH,
-                finalW: laidOutChild.w,
-                finalH: laidOutChild.h,
-                placedInRect: {
-                  x: bestFitRect.x,
-                  y: bestFitRect.y,
-                  w: bestFitRect.w,
-                  h: bestFitRect.h,
-                },
-              }
-            );
-
             // Manual rectangle splitting since we're bypassing the normal packer flow
             const packerInstance = (packer as any).packer;
             if (packerInstance && packerInstance.splitRectangle) {
@@ -1765,39 +1438,7 @@ function layoutNodeRecursive(
                 fits: true,
               });
             }
-
-            console.log(
-              `[layoutNodeRecursive] PACKER STATE UPDATED after adaptive placement`,
-              {
-                newUsedWidth: (packer as any).packer?.usedWidth,
-                newUsedHeight: (packer as any).packer?.usedHeight,
-                remainingFreeRects:
-                  (packer as any).packer?.freeRectangles?.length || 0,
-              }
-            );
-          } else {
-            console.log(
-              `[layoutNodeRecursive] ADAPTIVE PLACEMENT FAILED (recursive returned null): ${childNode.label} (ID: ${childNode.id})`,
-              {
-                adaptiveW: adaptivePlacement.w,
-                adaptiveH: adaptivePlacement.h,
-                rectW: bestFitRect.w,
-                rectH: bestFitRect.h,
-              }
-            );
           }
-        } else {
-          console.log(
-            `[layoutNodeRecursive] CHILD SKIPPED (no suitable free rectangle): ${childNode.label} (ID: ${childNode.id})`,
-            {
-              originalW: packerInput.targetW,
-              originalH: packerInput.targetH,
-              minW: options.leafMinWidth,
-              minH: options.leafMinHeight,
-              availableFreeRects: freeRects.length,
-              reason: "no free rectangle can accommodate minimum dimensions",
-            }
-          );
         }
       }
     }
@@ -1806,19 +1447,6 @@ function layoutNodeRecursive(
     if (typeof packer.logPackingVisualization === "function") {
       packer.logPackingVisualization(`${node.label || "Container"}-${node.id}`);
     }
-
-    console.log(
-      `[layoutNodeRecursive] FINISHED PROCESSING ALL CHILDREN: ${node.label} (ID: ${node.id})`,
-      {
-        totalChildrenAttempted: sortedPackerItems.length,
-        successfullyPlaced: currentLayoutNode.children?.length || 0,
-        finalFreeRects: (packer as any).packer?.freeRectangles?.length || 0,
-        packerUsedSpace: {
-          width: (packer as any).packer?.usedWidth || 0,
-          height: packer.getPackedHeight(),
-        },
-      }
-    );
 
     // COLLECT FREE RECTANGLES FOR DEBUGGING VISUALIZATION
     const packerInstance = (packer as any).packer;
@@ -1847,17 +1475,6 @@ function layoutNodeRecursive(
 
       if (meaningfulFreeRects.length > 0) {
         currentLayoutNode.freeRectangles = meaningfulFreeRects;
-        console.log(
-          `[FREE RECTANGLES COLLECTED] ${node.label}: ${meaningfulFreeRects.length} free rectangles stored for visualization`,
-          {
-            totalFreeRects: freeRects.length,
-            meaningfulFreeRects: meaningfulFreeRects.length,
-            rectangles: meaningfulFreeRects.map(
-              (r: any) =>
-                `(${r.x.toFixed(0)},${r.y.toFixed(0)}) ${r.w.toFixed(0)}x${r.h.toFixed(0)}`
-            ),
-          }
-        );
       }
     }
 
@@ -1882,28 +1499,6 @@ function layoutNodeRecursive(
       }
 
       actualContentHeight = maxChildBottomRelative;
-
-      console.log(
-        `[layoutNodeRecursive] ACTUAL CONTENT HEIGHT CALCULATION: ${node.label}`,
-        {
-          packerHeight: packer.getPackedHeight(),
-          actualContentHeight,
-          childCount: currentLayoutNode.children.length,
-          childDetails: currentLayoutNode.children.map((child) => ({
-            label: child.node.label,
-            x: child.x,
-            y: child.y,
-            h: child.h,
-            relativeY:
-              child.y -
-              (parentAllocatedSpace.y + headerActualHeight + options.padding),
-            bottomRelative:
-              child.y -
-              (parentAllocatedSpace.y + headerActualHeight + options.padding) +
-              child.h,
-          })),
-        }
-      );
     } else {
       actualContentHeight = 0;
     }
@@ -1914,21 +1509,6 @@ function layoutNodeRecursive(
       headerActualHeight +
         actualContentHeight +
         (actualContentHeight > 0 ? options.padding * 2 : options.padding) // top padding is part of contentPackingArea.y
-    );
-
-    console.log(
-      `[layoutNodeRecursive] CONTAINER FINAL: ${node.label} (ID: ${node.id})`,
-      {
-        finalW: currentLayoutNode.w,
-        finalH: currentLayoutNode.h,
-        parentAllocatedW: parentAllocatedSpace.w,
-        parentAllocatedH: parentAllocatedSpace.h,
-        packedContentHeight: packer.getPackedHeight(),
-        actualContentHeight,
-        heightSaved: parentAllocatedSpace.h - currentLayoutNode.h,
-        headerActualHeight,
-        optionsPadding: options.padding,
-      }
     );
 
     if (
