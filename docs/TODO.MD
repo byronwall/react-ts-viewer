@@ -79,6 +79,7 @@
 - Adjust the 1234 folding to adjust the value on the visible nodes
 - Fill the empty spaces when done - don't want to show empty space when it could be filled
 - Add some memo or something to remove layouts when nothing changed
+- Need to run a second pass once the sizes are known to fine tune some of the big blocks - end up with whitespace in some cases that could be filled if a top level size was changed, algo is fast, could iterate several times
 
 ### Barrel file
 
