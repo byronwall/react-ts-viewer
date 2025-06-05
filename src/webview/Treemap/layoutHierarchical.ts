@@ -664,6 +664,41 @@ function layoutNodeRecursive(
     let targetW = Math.max(options.leafMinWidth, options.leafPrefWidth);
     let targetH = Math.max(options.leafMinHeight, options.leafPrefHeight);
 
+    // Expand to fill allocated space when possible - this is the key fix!
+    // Check if we can expand width to fill available space
+    if (parentAllocatedSpace.w > targetW) {
+      // Expand width but maintain reasonable aspect ratio
+      const maxExpansionRatio = 4; // Allow up to 4x expansion from preferred
+      const maxAllowedWidth = Math.min(
+        parentAllocatedSpace.w,
+        options.leafPrefWidth * maxExpansionRatio
+      );
+      targetW = maxAllowedWidth;
+
+      // For very wide nodes, also expand height proportionally to maintain some aspect ratio
+      const aspectRatio = targetW / targetH;
+      if (aspectRatio > 6) {
+        // If getting very wide
+        const minReasonableHeight = Math.min(
+          options.leafPrefHeight * 1.5,
+          parentAllocatedSpace.h
+        );
+        targetH = Math.max(targetH, minReasonableHeight);
+      }
+    }
+
+    // Check if we can expand height to fill available space (less aggressive)
+    if (parentAllocatedSpace.h > targetH) {
+      const heightExpansionRatio = Math.min(
+        2, // Allow up to 2x height expansion
+        parentAllocatedSpace.h / targetH
+      );
+      targetH = Math.min(
+        targetH * heightExpansionRatio,
+        parentAllocatedSpace.h
+      );
+    }
+
     // Aspect ratio adjustment (simplified)
     // If too wide for aspect ratio: h = w / maxAspect
     // If too tall for aspect ratio: w = h * maxAspect (or w = h / minAspect if defined that way)
@@ -687,6 +722,22 @@ function layoutNodeRecursive(
     // Ensure it still fits after min enforcement (could clip if min is larger than allocated)
     currentLayoutNode.w = Math.min(currentLayoutNode.w, parentAllocatedSpace.w);
     currentLayoutNode.h = Math.min(currentLayoutNode.h, parentAllocatedSpace.h);
+
+    // Add logging to track leaf expansion
+    console.log(
+      `[layoutNodeRecursive] LEAF FINAL: ${node.label} (ID: ${node.id})`,
+      {
+        finalW: currentLayoutNode.w,
+        finalH: currentLayoutNode.h,
+        parentW: parentAllocatedSpace.w,
+        parentH: parentAllocatedSpace.h,
+        parentX: parentAllocatedSpace.x,
+        parentY: parentAllocatedSpace.y,
+        prefW: options.leafPrefWidth,
+        prefH: options.leafPrefHeight,
+        expansionRatio: currentLayoutNode.w / options.leafPrefWidth,
+      }
+    );
 
     currentLayoutNode.isContainer = false; // It's a leaf
   } else {
@@ -865,6 +916,66 @@ function layoutNodeRecursive(
       }
     );
 
+    // Width expansion optimization for low utilization scenarios
+    if (utilizationRatio < 0.5 && sortedPackerItems.length > 0) {
+      console.log(
+        `[layoutNodeRecursive] LOW UTILIZATION DETECTED - expanding widths for better space usage`
+      );
+
+      // Calculate how much extra width we can distribute
+      const totalCurrentWidth = sortedPackerItems.reduce(
+        (sum, item) => sum + item.targetW,
+        0
+      );
+      const availableWidth = contentPackingArea.w;
+      const extraWidth = availableWidth - totalCurrentWidth;
+
+      if (extraWidth > 0) {
+        // Distribute extra width proportionally, but cap expansion
+        for (const item of sortedPackerItems) {
+          const isLeaf = !item.node.children || item.node.children.length === 0;
+          if (isLeaf) {
+            const currentRatio = item.targetW / totalCurrentWidth;
+            const additionalWidth = extraWidth * currentRatio;
+            const maxExpansion = Math.min(
+              additionalWidth,
+              item.targetW * 2.5, // Don't expand more than 2.5x original
+              availableWidth * 0.8 // Don't use more than 80% of available width
+            );
+
+            const newWidth = item.targetW + maxExpansion;
+            console.log(
+              `[WIDTH EXPANSION] ${item.node.label}: ${item.targetW.toFixed(1)} -> ${newWidth.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
+            );
+            item.targetW = newWidth;
+          }
+        }
+      }
+    }
+
+    // Very aggressive expansion for extremely low utilization
+    if (utilizationRatio < 0.1 && sortedPackerItems.length > 0) {
+      console.log(
+        `[layoutNodeRecursive] VERY LOW UTILIZATION - expanding all item widths`
+      );
+
+      for (const item of sortedPackerItems) {
+        const isLeaf = !item.node.children || item.node.children.length === 0;
+        if (isLeaf) {
+          // For very low utilization, be more aggressive with width expansion
+          const expandedWidth = Math.min(
+            contentPackingArea.w * 0.8, // Use up to 80% of container width
+            item.targetW * 4 // Or up to 4x the original width
+          );
+
+          console.log(
+            `[AGGRESSIVE WIDTH EXPANSION] ${item.node.label}: ${item.targetW.toFixed(1)} -> ${expandedWidth.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
+          );
+          item.targetW = expandedWidth;
+        }
+      }
+    }
+
     // Simplified utilization optimization - focus on the adaptive placement to handle space utilization
     console.log(
       `[layoutNodeRecursive] FREE-SPACE PACKING: ${node.label} (ID: ${node.id})`,
@@ -943,17 +1054,35 @@ function layoutNodeRecursive(
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
 
-            // Dynamic Container Resizing: If this is a container child that used less space than allocated,
-            // reclaim the unused space for subsequent siblings
-            if (
-              laidOutChild.isContainer &&
-              (laidOutChild.h < placement.h || laidOutChild.w < placement.w)
-            ) {
-              const heightDifference = placement.h - laidOutChild.h;
-              const widthDifference = placement.w - laidOutChild.w;
+            // Add logging for successful child placement
+            console.log(
+              `[layoutNodeRecursive] CHILD (in ${node.label} container, ID: ${node.id}) - LAID OUT: ${childNode.label} (ID: ${childNode.id})`,
+              {
+                childAllocatedW: allocatedCellForChild.w,
+                childAllocatedH: allocatedCellForChild.h,
+                childAllocatedX: allocatedCellForChild.x,
+                childAllocatedY: allocatedCellForChild.y,
+                childFinalW: laidOutChild.w,
+                childFinalH: laidOutChild.h,
+                placementW: placement.w,
+                placementH: placement.h,
+                spaceSavings: {
+                  widthSaved: allocatedCellForChild.w - laidOutChild.w,
+                  heightSaved: allocatedCellForChild.h - laidOutChild.h,
+                  percentageUsed: `${(((laidOutChild.w * laidOutChild.h) / (allocatedCellForChild.w * allocatedCellForChild.h)) * 100).toFixed(1)}%`,
+                },
+              }
+            );
+
+            // Enhanced Dynamic Container Resizing: Handle both container AND leaf children that use less space
+            const heightDifference = placement.h - laidOutChild.h;
+            const widthDifference = placement.w - laidOutChild.w;
+
+            if (heightDifference > 0 || widthDifference > 0) {
+              const nodeType = laidOutChild.isContainer ? "Container" : "Leaf";
 
               console.log(
-                `[DYNAMIC RESIZE] Container ${childNode.label} used less space than allocated`,
+                `[DYNAMIC RESIZE] ${nodeType} ${childNode.label} used less space than allocated`,
                 {
                   allocatedW: placement.w,
                   allocatedH: placement.h,
@@ -963,6 +1092,7 @@ function layoutNodeRecursive(
                   reclaimedH: heightDifference,
                   placementX: placement.x,
                   placementY: placement.y,
+                  nodeType,
                 }
               );
 
@@ -1014,11 +1144,17 @@ function layoutNodeRecursive(
                     });
                   }
 
-                  // Add meaningful unused rectangles back to the packer
+                  // Add meaningful unused rectangles back to the packer - be more generous about what's "meaningful"
                   for (const unusedRect of unusedRects) {
+                    // Lower the threshold for reclaiming space - even small areas can be useful
+                    const minUsefulArea =
+                      options.leafMinWidth * options.leafMinHeight * 0.5; // 50% of min leaf area
+                    const rectArea = unusedRect.w * unusedRect.h;
+
                     if (
-                      unusedRect.h >= options.leafMinHeight &&
-                      unusedRect.w >= options.leafMinWidth
+                      rectArea >= minUsefulArea &&
+                      (unusedRect.h >= options.leafMinHeight * 0.7 ||
+                        unusedRect.w >= options.leafMinWidth * 0.7)
                     ) {
                       packer.addFreeRectangle(unusedRect);
 
@@ -1026,7 +1162,19 @@ function layoutNodeRecursive(
                         `[DYNAMIC RESIZE] Added unused space back as free rectangle`,
                         {
                           newFreeRect: unusedRect,
+                          area: rectArea,
+                          minUsefulArea,
                           totalFreeRects: packerInstance.freeRectangles.length,
+                        }
+                      );
+                    } else {
+                      console.log(
+                        `[DYNAMIC RESIZE] Skipped small unused rectangle`,
+                        {
+                          unusedRect,
+                          area: rectArea,
+                          minUsefulArea,
+                          reason: "too small to be useful",
                         }
                       );
                     }
@@ -1317,15 +1465,61 @@ function layoutNodeRecursive(
       }
     );
 
-    // Determine Container's Final Dimensions
-    const packedContentHeight = packer.getPackedHeight();
+    // Determine Container's Final Dimensions - Use actual child heights instead of packer height
+    // The packer height doesn't account for children that use less space than allocated
+    let actualContentHeight = 0;
+
+    if (currentLayoutNode.children && currentLayoutNode.children.length > 0) {
+      // Calculate the actual content height based on positioned children
+      let maxChildBottomRelative = 0;
+
+      for (const child of currentLayoutNode.children) {
+        // Convert child position to relative coordinates within this container's content area
+        const childRelativeY =
+          child.y -
+          (parentAllocatedSpace.y + headerActualHeight + options.padding);
+        const childBottomRelative = childRelativeY + child.h;
+        maxChildBottomRelative = Math.max(
+          maxChildBottomRelative,
+          childBottomRelative
+        );
+      }
+
+      actualContentHeight = maxChildBottomRelative;
+
+      console.log(
+        `[layoutNodeRecursive] ACTUAL CONTENT HEIGHT CALCULATION: ${node.label}`,
+        {
+          packerHeight: packer.getPackedHeight(),
+          actualContentHeight,
+          childCount: currentLayoutNode.children.length,
+          childDetails: currentLayoutNode.children.map((child) => ({
+            label: child.node.label,
+            x: child.x,
+            y: child.y,
+            h: child.h,
+            relativeY:
+              child.y -
+              (parentAllocatedSpace.y + headerActualHeight + options.padding),
+            bottomRelative:
+              child.y -
+              (parentAllocatedSpace.y + headerActualHeight + options.padding) +
+              child.h,
+          })),
+        }
+      );
+    } else {
+      actualContentHeight = 0;
+    }
+
     currentLayoutNode.w = parentAllocatedSpace.w; // Typically takes full allocated width
     currentLayoutNode.h = Math.min(
       parentAllocatedSpace.h,
       headerActualHeight +
-        packedContentHeight +
-        (packedContentHeight > 0 ? options.padding * 2 : options.padding) // top padding is part of contentPackingArea.y
+        actualContentHeight +
+        (actualContentHeight > 0 ? options.padding * 2 : options.padding) // top padding is part of contentPackingArea.y
     );
+
     console.log(
       `[layoutNodeRecursive] CONTAINER FINAL: ${node.label} (ID: ${node.id})`,
       {
@@ -1333,7 +1527,9 @@ function layoutNodeRecursive(
         finalH: currentLayoutNode.h,
         parentAllocatedW: parentAllocatedSpace.w,
         parentAllocatedH: parentAllocatedSpace.h,
-        packedContentHeight,
+        packedContentHeight: packer.getPackedHeight(),
+        actualContentHeight,
+        heightSaved: parentAllocatedSpace.h - currentLayoutNode.h,
         headerActualHeight,
         optionsPadding: options.padding,
       }
@@ -1342,7 +1538,7 @@ function layoutNodeRecursive(
     if (
       currentLayoutNode.children &&
       currentLayoutNode.children.length === 0 &&
-      packedContentHeight === 0
+      actualContentHeight === 0
     ) {
       // If it was supposed to be a container but has no visible children and no packed height
       // currentLayoutNode.isContainer = false; // Re-evaluate if it should render as a simple box/leaf
