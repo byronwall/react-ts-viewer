@@ -80,6 +80,7 @@
 - Fill the empty spaces when done - don't want to show empty space when it could be filled
 - Space giving back is not working
 - Grid layout is ugly
+- Add some memo or something to remove layouts when nothing changed
 
 ### Barrel file
 

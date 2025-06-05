@@ -687,17 +687,6 @@ function layoutNodeRecursive(
     // Ensure it still fits after min enforcement (could clip if min is larger than allocated)
     currentLayoutNode.w = Math.min(currentLayoutNode.w, parentAllocatedSpace.w);
     currentLayoutNode.h = Math.min(currentLayoutNode.h, parentAllocatedSpace.h);
-    console.log(
-      `[layoutNodeRecursive] LEAF FINAL: ${node.label} (ID: ${node.id})`,
-      {
-        finalW: currentLayoutNode.w,
-        finalH: currentLayoutNode.h,
-        parentW: parentAllocatedSpace.w,
-        parentH: parentAllocatedSpace.h,
-        parentX: parentAllocatedSpace.x,
-        parentY: parentAllocatedSpace.y,
-      }
-    );
 
     currentLayoutNode.isContainer = false; // It's a leaf
   } else {
@@ -715,26 +704,8 @@ function layoutNodeRecursive(
       h: parentAllocatedSpace.h - headerActualHeight - 2 * options.padding, // Account for T/B padding (header + bottom)
     };
 
-    console.log("***ContentPackingArea", {
-      contentPackingArea,
-      headerActualHeight,
-      parentAllocatedSpace,
-    });
-
     if (contentPackingArea.w <= 0 || contentPackingArea.h <= 0) {
       // Not enough space for content, render as box without children
-      console.log(
-        `[layoutNodeRecursive] CONTAINER rendered as BOX (no content space): ${node.label} (ID: ${node.id})`,
-        {
-          neededMinContentW: options.leafMinWidth,
-          neededMinContentH: options.leafMinHeight,
-          availableContentW: contentPackingArea.w,
-          availableContentH: contentPackingArea.h,
-          headerHeight: headerActualHeight,
-          padding: options.padding,
-          reason: "contentPackingArea too small - rendering as box",
-        }
-      );
 
       // Render as a simple box that fits in the allocated space
       currentLayoutNode.w = parentAllocatedSpace.w;
@@ -790,7 +761,6 @@ function layoutNodeRecursive(
 
           if (widthFillRatio >= 0.8) {
             // Close to filling width - snap to full width and adjust height
-            console.log("***Going full width based on 20% fill ratio");
             childTargetW = contentPackingArea.w;
             childTargetH = Math.min(
               targetArea / childTargetW,
@@ -815,7 +785,6 @@ function layoutNodeRecursive(
               targetArea / childTargetW,
               contentPackingArea.h
             );
-            console.log("***Filling to avoid small residual width");
           } else if (
             residualHeight > 0 &&
             residualHeight < options.leafMinHeight
@@ -849,10 +818,6 @@ function layoutNodeRecursive(
           childTargetH = Math.max(
             options.leafPrefHeight,
             (contentPackingArea.h / itemsPerCol) * 0.9 // Use 90% of grid cell height
-          );
-
-          console.log(
-            `[GRID SIZING] ${childNode.label}: targeting ${itemsPerRow}x${itemsPerCol} grid, size: ${childTargetW.toFixed(1)}x${childTargetH.toFixed(1)}`
           );
         } else {
           // For fewer items, use standard preferred size but expand width if space allows
@@ -1139,41 +1104,8 @@ function layoutNodeRecursive(
                 }
               }
             }
-
-            console.log(
-              `[layoutNodeRecursive] CHILD (in ${node.label} container, ID: ${node.id}) - LAID OUT: ${childNode.label} (ID: ${childNode.id})`,
-              {
-                childAllocatedW: allocatedCellForChild.w,
-                childAllocatedH: allocatedCellForChild.h,
-                childAllocatedX: allocatedCellForChild.x,
-                childAllocatedY: allocatedCellForChild.y,
-                childFinalW: laidOutChild.w,
-                childFinalH: laidOutChild.h,
-                childFinalX: laidOutChild.x,
-                childFinalY: laidOutChild.y,
-                parentContainerW: currentLayoutNode.w, // Parent container's current calculated width
-                parentContainerH: currentLayoutNode.h, // Parent container's current calculated height
-                dynamicResize:
-                  laidOutChild.isContainer &&
-                  (laidOutChild.h < placement.h || laidOutChild.w < placement.w)
-                    ? `Reclaimed ${placement.h - laidOutChild.h}px height and ${placement.w - laidOutChild.w}px width`
-                    : "None",
-              }
-            );
           } else {
             // Log when recursive layout returned null (child was skipped internally)
-            console.log(
-              `[layoutNodeRecursive] CHILD SKIPPED (recursive layout returned null): ${childNode.label} (ID: ${childNode.id}) in container ${node.label}`,
-              {
-                allocatedW: allocatedCellForChild.w,
-                allocatedH: allocatedCellForChild.h,
-                allocatedX: allocatedCellForChild.x,
-                allocatedY: allocatedCellForChild.y,
-                packerPlacementW: placement.w,
-                packerPlacementH: placement.h,
-                reason: "layoutNodeRecursive returned null",
-              }
-            );
           }
         } else {
           // Log when child allocation is too small

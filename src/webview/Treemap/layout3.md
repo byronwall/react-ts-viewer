@@ -259,3 +259,159 @@ const containerHeight = Math.min(
 - Expected: `finalH: 76` (to accommodate header + content + padding)
 
 The visual rendering suggests the container does have sufficient height, indicating this may be a logging artifact related to when `currentLayoutNode.h` is captured.
+
+Based on the hierarchical layout code, here's a detailed summary of the layout modes and strategies used:
+
+## Layout Modes Overview
+
+The hierarchical layout system uses different rendering modes and layout strategies depending on the node type and available space:
+
+### **Render Modes**
+
+- **`"text"`** - Default mode for most nodes
+- **`"box"`** - Used for containers that are too small to display children
+- **`"none"`** - For nodes that shouldn't be rendered (though this isn't actively used in the current code)
+
+## **Container vs Leaf Handling**
+
+### **Container Nodes** (nodes with children)
+
+Containers reserve space for:
+
+- **Header area**: `headerHeight` pixels at the top
+- **Content packing area**: Remaining space minus padding for child layout
+- **Padding**: Applied around content area (`2 * padding` for left/right, top/bottom)
+
+### **Leaf Nodes** (nodes without children)
+
+Leaves use preferred dimensions with aspect ratio constraints:
+
+- Target preferred width/height (`leafPrefWidth`, `leafPrefHeight`)
+- Minimum dimensions (`leafMinWidth`, `leafMinHeight`)
+- Aspect ratio bounds (`leafMinAspectRatio`, `leafMaxAspectRatio`)
+
+## **Grid-Based Layout Strategy**
+
+The system switches to **grid-based layout** for leaf nodes when there are **more than 6 children**:
+
+```typescript
+if (childrenToLayout.length > 6) {
+  // Grid-based approach for many items
+  const itemsPerRow = Math.min(
+    4,
+    Math.ceil(Math.sqrt(childrenToLayout.length))
+  );
+  const itemsPerCol = Math.ceil(childrenToLayout.length / itemsPerRow);
+
+  childTargetW = Math.max(
+    options.leafPrefWidth,
+    (contentPackingArea.w / itemsPerRow) * 0.9 // Use 90% of grid cell
+  );
+  childTargetH = Math.max(
+    options.leafPrefHeight,
+    (contentPackingArea.h / itemsPerCol) * 0.9
+  );
+}
+```
+
+**Grid Logic:**
+
+- Maximum 4 items per row
+- Uses square root to determine initial grid dimensions
+- Each cell uses 90% of allocated grid space (10% for implicit spacing)
+- Prevents creation of many narrow, unusable columns
+
+## **2D Bin Packing System**
+
+The layout uses a sophisticated **Guillotine-based 2D bin packer** for optimal space utilization:
+
+### **Core Algorithm**
+
+1. **Initialize** with one large free rectangle covering the entire content area
+2. **Find best fit** using heuristics (Best Short Side Fit by default)
+3. **Place item** and split the used rectangle
+4. **Update free rectangles** and remove overlapping ones
+
+### **Packing Heuristics**
+
+The system supports multiple fit strategies:
+
+- **BestShortSideFit** (default) - Minimizes wasted space on shorter side
+- **BestAreaFit** - Minimizes total wasted area
+- **BestLongSideFit** - Optimizes for longer dimension fit
+
+### **Rectangle Splitting Strategy**
+
+When an item is placed, the used rectangle is split intelligently:
+
+```typescript
+// Create right rectangle (vertical split)
+if (rightWidth >= minUsefulWidth) {
+  // Add right rectangle using full remaining height
+}
+
+// Create bottom rectangle (horizontal split)
+if (bottomHeight >= minUsefulHeight) {
+  // Add bottom rectangle, extend width if right area too narrow
+}
+```
+
+**Key Features:**
+
+- **Minimum useful dimensions** (20px width, 12px height) prevent creation of unusable slivers
+- **Smart width extension** - bottom rectangles extend full width if right area is too narrow
+- **Overlap removal** - Automatically removes rectangles contained within others
+
+## **Space Utilization Optimization**
+
+### **Low Utilization Detection**
+
+The system analyzes space efficiency and adapts:
+
+```typescript
+const utilizationRatio = totalTargetArea / availableArea;
+
+if (utilizationRatio < 0.8 && sortedPackerItems.length > 2) {
+  // Expand widths for better space usage
+  const expansionFactor = Math.min(3.0, Math.sqrt(1 / utilizationRatio));
+}
+```
+
+**Optimization Strategies:**
+
+- **Width expansion** for utilization < 80%
+- **Aggressive expansion** for utilization < 60%
+- **Small item targeting** - preferentially expand items below average size
+- **Aspect ratio preservation** - maintain reasonable width/height ratios
+
+### **Dynamic Container Resizing**
+
+When containers use less space than allocated, the system reclaims unused space:
+
+1. **Detect unused space** - Compare allocated vs actual container dimensions
+2. **Create free rectangles** - Convert unused areas back to available space
+3. **Update packer state** - Add new free rectangles for subsequent siblings
+
+## **Adaptive Placement Fallback**
+
+When normal packing fails, the system attempts **adaptive placement**:
+
+1. **Analyze free rectangles** - Find best available space
+2. **Aggressive expansion** - Use up to 98% of available width, respect 6:1 max aspect ratio
+3. **Score-based selection** - Choose rectangle with best area × utilization score
+4. **Manual rectangle splitting** - Update packer state after placement
+
+## **Layout Decision Flow**
+
+The system follows this decision hierarchy:
+
+1. **Space check** - Skip if insufficient space for minimum dimensions
+2. **Container vs leaf** determination
+3. **Small container handling** - Render as box if below minimum thresholds
+4. **Grid vs standard** sizing based on child count
+5. **2D bin packing** with sorted items (largest area first)
+6. **Space utilization optimization** and width expansion
+7. **Adaptive placement** for failed standard placements
+8. **Dynamic resizing** and space reclamation
+
+This multi-layered approach ensures optimal space utilization while maintaining visual hierarchy and readability across different content densities and viewport sizes.
