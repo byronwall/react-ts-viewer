@@ -802,34 +802,24 @@ function layoutNodeRecursive(
         childTargetW = Math.min(childTargetW, contentPackingArea.w);
         childTargetH = Math.min(childTargetH, contentPackingArea.h);
       } else {
-        // Is a Leaf - use grid-based sizing to prevent narrow columns
-        if (childrenToLayout.length > 6) {
-          // For many items, use grid-based approach
-          const itemsPerRow = Math.min(
-            4,
-            Math.ceil(Math.sqrt(childrenToLayout.length))
-          );
-          const itemsPerCol = Math.ceil(childrenToLayout.length / itemsPerRow);
+        // Is a Leaf - use preferred sizing and let the packer handle optimal placement
+        // Start with preferred dimensions
+        childTargetW = options.leafPrefWidth;
+        childTargetH = options.leafPrefHeight;
 
-          childTargetW = Math.max(
-            options.leafPrefWidth,
-            (contentPackingArea.w / itemsPerRow) * 0.9 // Use 90% of grid cell width
+        // For small containers with few children, allow some expansion to better use space
+        if (childrenToLayout.length <= 3) {
+          // Allow expansion up to a reasonable portion of available space
+          const maxExpandedW = Math.min(
+            contentPackingArea.w * 0.7, // Use up to 70% of width
+            options.leafPrefWidth * 2.5 // But don't exceed 2.5x preferred width
           );
-          childTargetH = Math.max(
-            options.leafPrefHeight,
-            (contentPackingArea.h / itemsPerCol) * 0.9 // Use 90% of grid cell height
-          );
-        } else {
-          // For fewer items, use standard preferred size but expand width if space allows
-          childTargetW = Math.min(
-            contentPackingArea.w * 0.6, // Use up to 60% of width for individual items
-            Math.max(
-              options.leafPrefWidth,
-              contentPackingArea.w / Math.min(3, childrenToLayout.length)
-            )
-          );
-          childTargetH = options.leafPrefHeight;
+          childTargetW = Math.max(childTargetW, maxExpandedW);
         }
+
+        console.log(
+          `[FREE-SPACE SIZING] ${childNode.label}: preferred size ${childTargetW.toFixed(1)}x${childTargetH.toFixed(1)}, will be placed in best available free space`
+        );
       }
 
       childTargetW = Math.max(options.leafMinWidth, childTargetW);
@@ -875,81 +865,21 @@ function layoutNodeRecursive(
       }
     );
 
-    // If utilization is low and we have many small items, expand their widths
-    if (utilizationRatio < 0.8 && sortedPackerItems.length > 2) {
-      console.log(
-        `[layoutNodeRecursive] LOW UTILIZATION DETECTED - expanding widths for better space usage`
-      );
-
-      // Calculate expansion factor based on available space
-      const expansionFactor = Math.min(3.0, Math.sqrt(1 / utilizationRatio));
-
-      for (const item of sortedPackerItems) {
-        // Expand width more aggressively for small items
-        const currentArea = item.targetW * item.targetH;
-        const averageItemArea = availableArea / sortedPackerItems.length;
-        const isSmallItem = currentArea < averageItemArea * 0.7;
-
-        if (isSmallItem) {
-          const oldWidth = item.targetW;
-          const maxExpandedWidth = Math.min(
-            contentPackingArea.w * 0.95, // Increase to 95% of width
-            item.targetW * expansionFactor * 2.5 // Increase expansion multiplier
-          );
-
-          item.targetW = Math.min(maxExpandedWidth, contentPackingArea.w);
-
-          // Slightly reduce height to maintain similar area if we expanded width significantly
-          if (item.targetW > oldWidth * 1.2) {
-            item.targetH = Math.max(
-              options.leafMinHeight,
-              (currentArea / item.targetW) * 1.1 // Slight area increase
-            );
-          }
-
-          console.log(
-            `[WIDTH EXPANSION] ${item.node.label}: ${oldWidth.toFixed(1)} -> ${item.targetW.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
-          );
-        }
-      }
-    }
-
-    // Also apply width expansion when utilization is very low, regardless of item count
-    if (utilizationRatio < 0.6) {
-      console.log(
-        `[layoutNodeRecursive] VERY LOW UTILIZATION - expanding all item widths`
-      );
-
-      for (const item of sortedPackerItems) {
-        const oldWidth = item.targetW;
-        const currentArea = item.targetW * item.targetH;
-
-        // Expand width to use more of the available space
-        const targetWidth = Math.min(
-          contentPackingArea.w * 0.8, // Increase to 80% of container width
-          item.targetW * 2.5 // Increase multiplier from 2.0 to 2.5
-        );
-
-        if (targetWidth > item.targetW) {
-          item.targetW = targetWidth;
-
-          // Adjust height to maintain reasonable area
-          item.targetH = Math.max(
-            options.leafMinHeight,
-            Math.min(item.targetH, (currentArea / item.targetW) * 1.2)
-          );
-
-          console.log(
-            `[AGGRESSIVE WIDTH EXPANSION] ${item.node.label}: ${oldWidth.toFixed(1)} -> ${item.targetW.toFixed(1)} (width), height: ${item.targetH.toFixed(1)}`
-          );
-        }
-      }
-    }
-
-    // Second pass: pack the sorted items
+    // Simplified utilization optimization - focus on the adaptive placement to handle space utilization
     console.log(
-      `[layoutNodeRecursive] CONTAINER PACKING CHILDREN: ${node.label} (ID: ${node.id})`,
+      `[layoutNodeRecursive] FREE-SPACE PACKING: ${node.label} (ID: ${node.id})`,
       {
+        utilizationRatio,
+        message:
+          "Items will be placed in best available free rectangles without grid constraints",
+      }
+    );
+
+    // Pack items using free-space 2D bin packing (no grid constraints)
+    console.log(
+      `[layoutNodeRecursive] FREE-SPACE PACKING CHILDREN: ${node.label} (ID: ${node.id})`,
+      {
+        approach: "Free-space 2D bin packing without grid constraints",
         totalChildren: sortedPackerItems.length,
         childrenToProcess: sortedPackerItems.map((item) => ({
           id: item.id,
@@ -1164,36 +1094,66 @@ function layoutNodeRecursive(
           let fitW = Math.min(packerInput.targetW, rect.w);
           let fitH = Math.min(packerInput.targetH, rect.h);
 
-          // Much more aggressive expansion logic to use available space
-          // Always try to expand width if we have extra horizontal space
-          if (rect.w > fitW) {
-            // Expand width aggressively, but maintain reasonable aspect ratio
-            const maxAspectRatio = 6.0; // Allow wider rectangles
-            const availableExtraWidth = rect.w - fitW;
+          // Extremely aggressive expansion logic to maximize space utilization
+          // Try to use as much of the available rectangle as possible
 
-            // Use most of the available width unless it creates an extremely wide aspect ratio
+          // First, determine if we should expand width, height, or both
+          const availableExtraWidth = rect.w - fitW;
+          const availableExtraHeight = rect.h - fitH;
+
+          // Prioritize filling the larger available dimension
+          if (
+            availableExtraWidth >= availableExtraHeight &&
+            availableExtraWidth > 0
+          ) {
+            // Focus on width expansion first
+            const maxAspectRatio = 8.0; // Allow very wide rectangles for better space usage
             const maxExpandedWidth = Math.min(
-              rect.w * 0.98, // Use up to 98% of available width
-              fitH * maxAspectRatio // Respect maximum aspect ratio
+              rect.w * 0.99, // Use up to 99% of available width
+              Math.max(
+                fitH * maxAspectRatio, // Respect maximum aspect ratio
+                options.leafPrefWidth * 4 // But allow significant expansion from preferred
+              )
             );
 
             fitW = Math.max(fitW, maxExpandedWidth);
 
-            console.log(
-              `[ADAPTIVE EXPANSION] ${childNode.label}: expanding width from ${Math.min(packerInput.targetW, rect.w)} to ${fitW} (rect.w: ${rect.w})`
+            // After width expansion, see if we can also expand height
+            if (availableExtraHeight > 0) {
+              const minAspectRatio = 0.12; // Allow tall rectangles too
+              const maxExpandedHeight = Math.min(
+                rect.h * 0.95,
+                Math.max(fitW / minAspectRatio, options.leafPrefHeight * 3)
+              );
+              fitH = Math.max(fitH, maxExpandedHeight);
+            }
+          } else if (availableExtraHeight > 0) {
+            // Focus on height expansion first
+            const minAspectRatio = 0.1; // Allow very tall rectangles
+            const maxExpandedHeight = Math.min(
+              rect.h * 0.99, // Use up to 99% of available height
+              Math.max(
+                fitW / minAspectRatio,
+                options.leafPrefHeight * 4 // Allow significant expansion
+              )
             );
+
+            fitH = Math.max(fitH, maxExpandedHeight);
+
+            // After height expansion, see if we can also expand width
+            if (availableExtraWidth > 0) {
+              const maxAspectRatio = 10.0; // Allow very wide rectangles
+              const maxExpandedWidth = Math.min(
+                rect.w * 0.95,
+                Math.max(fitH * maxAspectRatio, options.leafPrefWidth * 3)
+              );
+              fitW = Math.max(fitW, maxExpandedWidth);
+            }
           }
 
-          // Also expand height if beneficial and we have space
-          if (rect.h > fitH && rect.w >= fitW * 0.5) {
-            // Expand height more conservatively
-            const minAspectRatio = 0.15; // Don't make it too tall
-            const maxExpandedHeight = Math.min(
-              rect.h * 0.95, // Use up to 95% of available height
-              fitW / minAspectRatio // Respect minimum aspect ratio
-            );
-            fitH = Math.max(fitH, maxExpandedHeight);
-          }
+          console.log(
+            `[AGGRESSIVE ADAPTIVE EXPANSION] ${childNode.label}: ${Math.min(packerInput.targetW, rect.w)}x${Math.min(packerInput.targetH, rect.h)} -> ${fitW.toFixed(1)}x${fitH.toFixed(1)} (rect: ${rect.w}x${rect.h})`
+          );
 
           // Ensure minimum dimensions
           fitW = Math.max(fitW, options.leafMinWidth);
