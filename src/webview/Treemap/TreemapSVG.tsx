@@ -104,6 +104,20 @@ export interface TreemapSVGProps {
 
 /* ---------- defaults ------------ */
 
+// Helper function to detect unrendered children
+const hasUnrenderedChildren = (
+  originalNode: ScopeNode,
+  layoutNode: AnyLayoutNode
+): { hasUnrendered: boolean; unrenderedCount: number } => {
+  const originalChildrenCount = originalNode.children?.length || 0;
+  const renderedChildrenCount = layoutNode.children?.length || 0;
+
+  return {
+    hasUnrendered: originalChildrenCount > renderedChildrenCount,
+    unrenderedCount: originalChildrenCount - renderedChildrenCount,
+  };
+};
+
 // Create rendering functions that use the full styling logic
 const createStyledRenderHeader =
   (
@@ -114,7 +128,8 @@ const createStyledRenderHeader =
     onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
     onMouseLeave: () => void,
     minFontSize: number,
-    maxFontSize: number
+    maxFontSize: number,
+    layoutRoot: AnyLayoutNode
   ): Required<TreemapSVGProps>["renderHeader"] =>
   ({ node, w, h, depth }) => {
     const category = node.category;
@@ -124,6 +139,26 @@ const createStyledRenderHeader =
     const isSelected = selectedNodeId === node.id;
     const isSearchMatch = matchingNodes.has(node.id);
 
+    // Find the corresponding layout node to check for unrendered children
+    const findLayoutNode = (
+      ln: AnyLayoutNode,
+      nodeId: string
+    ): AnyLayoutNode | null => {
+      if (ln.node.id === nodeId) return ln;
+      if (ln.children) {
+        for (const child of ln.children) {
+          const found = findLayoutNode(child as AnyLayoutNode, nodeId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const layoutNode = findLayoutNode(layoutRoot, node.id);
+    const unrenderedInfo = layoutNode
+      ? hasUnrenderedChildren(node, layoutNode)
+      : { hasUnrendered: false, unrenderedCount: 0 };
+
     // Check if this node has hidden children
     const meta = (node as any).meta || {};
     const hasHiddenChildren =
@@ -132,16 +167,21 @@ const createStyledRenderHeader =
     const hiddenChildrenCount =
       meta.hiddenChildrenCount || (node as any).hiddenChildrenCount || 0;
 
-    // Use subdued borders for headers since group container handles main border
+    // Determine border styling - prioritize unrendered children indicator
     let borderColor = "#333333";
-    if (isSelected) {
-      borderColor = "#cc0000"; // Darker red for header within selected group
+    let strokeWidth = 0.5;
+
+    if (unrenderedInfo.hasUnrendered) {
+      borderColor = "#FF0000"; // Bright red for unrendered children
+      strokeWidth = 3; // Thick border
+    } else if (isSelected) {
+      borderColor = "#cc0000"; // Darker red for selected
+      strokeWidth = 2;
     } else if (isSearchMatch) {
-      borderColor = "#ccaa00"; // Darker gold for header within matching group
+      borderColor = "#ccaa00"; // Darker gold for search match
+      strokeWidth = 1.5;
     }
 
-    // Subdued stroke width for headers - group border is the primary visual
-    const strokeWidth = 0.5;
     const opacity = Math.max(0.8, 1 - depth * 0.02);
 
     // Calculate font size with proper constraints
@@ -160,13 +200,15 @@ const createStyledRenderHeader =
     // Use the calculated fontSize for character width to ensure consistency
     const actualCharWidth = fontSize * 0.5;
 
-    // Calculate space needed for hidden children indicator
+    // Calculate space needed for indicators
     const indicatorSize = Math.min(12, h * 0.4, fontSize * 0.8);
-    const indicatorPadding = hasHiddenChildren ? indicatorSize + 4 : 0;
+    const totalIndicatorSpace =
+      (hasHiddenChildren ? indicatorSize + 4 : 0) +
+      (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0);
 
     // Reduce padding to allow more text space
     const textPaddingLeft = 4;
-    const textPaddingRight = 2 + indicatorPadding;
+    const textPaddingRight = 2 + totalIndicatorSpace;
     const availableTextWidth = Math.max(
       0,
       w - textPaddingLeft - textPaddingRight
@@ -214,32 +256,32 @@ const createStyledRenderHeader =
             {truncatedLabel}
           </text>
         )}
-        {/* Hidden children indicator */}
-        {hasHiddenChildren && w >= 24 && h >= 16 && (
+        {/* Unrendered children indicator - positioned first (rightmost) */}
+        {unrenderedInfo.hasUnrendered && w >= 24 && h >= 16 && (
           <g>
-            {/* Background circle for the indicator */}
+            {/* Background circle for the unrendered indicator */}
             <circle
               cx={w - indicatorSize / 2 - 2}
               cy={h / 2}
               r={indicatorSize / 2}
-              fill="rgba(255, 165, 0, 0.8)"
-              stroke="rgba(0, 0, 0, 0.6)"
-              strokeWidth={0.5}
+              fill="rgba(255, 0, 0, 0.9)"
+              stroke="rgba(0, 0, 0, 0.8)"
+              strokeWidth={1}
             />
-            {/* Three dots to indicate hidden content */}
+            {/* Exclamation mark to indicate missing content */}
             <text
               x={w - indicatorSize / 2 - 2}
               y={h / 2}
-              fontSize={Math.min(indicatorSize * 0.6, 8)}
-              fill="#000"
+              fontSize={Math.min(indicatorSize * 0.7, 10)}
+              fill="#FFF"
               textAnchor="middle"
               dominantBaseline="middle"
               pointerEvents="none"
               style={{ userSelect: "none", fontWeight: "bold" }}
             >
-              ⋯
+              !
             </text>
-            {/* Tooltip-like text for count when there's space */}
+            {/* Count of unrendered children */}
             {w >= 40 && h >= 20 && (
               <text
                 x={w - indicatorSize / 2 - 2}
@@ -251,9 +293,67 @@ const createStyledRenderHeader =
                 pointerEvents="none"
                 style={{ userSelect: "none" }}
               >
-                +{hiddenChildrenCount}
+                -{unrenderedInfo.unrenderedCount}
               </text>
             )}
+          </g>
+        )}
+        {/* Hidden children indicator - positioned second if both exist */}
+        {hasHiddenChildren && w >= 24 && h >= 16 && (
+          <g>
+            {/* Position to the left of unrendered indicator if both exist */}
+            <circle
+              cx={
+                w -
+                indicatorSize / 2 -
+                2 -
+                (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0)
+              }
+              cy={h / 2}
+              r={indicatorSize / 2}
+              fill="rgba(255, 165, 0, 0.8)"
+              stroke="rgba(0, 0, 0, 0.6)"
+              strokeWidth={0.5}
+            />
+            {/* Three dots to indicate hidden content */}
+            <text
+              x={
+                w -
+                indicatorSize / 2 -
+                2 -
+                (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0)
+              }
+              y={h / 2}
+              fontSize={Math.min(indicatorSize * 0.6, 8)}
+              fill="#000"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              pointerEvents="none"
+              style={{ userSelect: "none", fontWeight: "bold" }}
+            >
+              ⋯
+            </text>
+            {/* Tooltip-like text for count when there's space */}
+            {w >= 60 &&
+              h >= 20 && ( // Increased width requirement since we need more space
+                <text
+                  x={
+                    w -
+                    indicatorSize / 2 -
+                    2 -
+                    (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0)
+                  }
+                  y={h / 2 + indicatorSize / 2 + 2}
+                  fontSize={Math.min(6, indicatorSize * 0.4)}
+                  fill={getContrastingTextColor(color)}
+                  textAnchor="middle"
+                  dominantBaseline="hanging"
+                  pointerEvents="none"
+                  style={{ userSelect: "none" }}
+                >
+                  +{hiddenChildrenCount}
+                </text>
+              )}
           </g>
         )}
       </>
@@ -269,7 +369,8 @@ const createStyledRenderNode =
     onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
     onMouseLeave: () => void,
     minFontSize: number,
-    maxFontSize: number
+    maxFontSize: number,
+    layoutRoot: AnyLayoutNode
   ): Required<TreemapSVGProps>["renderNode"] =>
   ({ node, w, h, depth }) => {
     const category = node.category;
@@ -279,6 +380,26 @@ const createStyledRenderNode =
     const isSelected = selectedNodeId === node.id;
     const isSearchMatch = matchingNodes.has(node.id);
 
+    // Find the corresponding layout node to check for unrendered children
+    const findLayoutNode = (
+      ln: AnyLayoutNode,
+      nodeId: string
+    ): AnyLayoutNode | null => {
+      if (ln.node.id === nodeId) return ln;
+      if (ln.children) {
+        for (const child of ln.children) {
+          const found = findLayoutNode(child as AnyLayoutNode, nodeId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const layoutNode = findLayoutNode(layoutRoot, node.id);
+    const unrenderedInfo = layoutNode
+      ? hasUnrenderedChildren(node, layoutNode)
+      : { hasUnrendered: false, unrenderedCount: 0 };
+
     // Check if this node has hidden children
     const meta = (node as any).meta || {};
     const hasHiddenChildren =
@@ -287,11 +408,14 @@ const createStyledRenderNode =
     const hiddenChildrenCount =
       meta.hiddenChildrenCount || (node as any).hiddenChildrenCount || 0;
 
-    // For leaf nodes, keep stronger borders since they don't have group containers
+    // Determine border styling - prioritize unrendered children indicator
     let borderColor = "#555555";
     let strokeWidth = Math.max(0.5, settings.borderWidth - depth * 0.1);
 
-    if (isSelected) {
+    if (unrenderedInfo.hasUnrendered) {
+      borderColor = "#FF0000"; // Bright red for unrendered children
+      strokeWidth = 4; // Very thick border for leaf nodes
+    } else if (isSelected) {
       borderColor = "red";
       strokeWidth = Math.max(1, settings.borderWidth + 1 - depth * 0.2);
     } else if (isSearchMatch) {
@@ -315,15 +439,17 @@ const createStyledRenderNode =
     // Use the calculated fontSize for character width to ensure consistency
     const actualCharWidth = fontSize * 0.5;
 
-    // Calculate space needed for hidden children indicator
+    // Calculate space needed for indicators
     const indicatorSize = Math.min(10, h * 0.3, fontSize * 0.7);
-    const indicatorMargin = hasHiddenChildren ? indicatorSize + 2 : 0;
+    const totalIndicatorMargin =
+      (hasHiddenChildren ? indicatorSize + 2 : 0) +
+      (unrenderedInfo.hasUnrendered ? indicatorSize + 2 : 0);
 
     // Reduce margins when centering text - allow more text space
     const textMargin = 4;
     const availableTextWidth = Math.max(
       0,
-      w - 2 * textMargin - indicatorMargin
+      w - 2 * textMargin - totalIndicatorMargin
     );
 
     const displayLabel = getDynamicNodeDisplayLabel(
@@ -374,32 +500,31 @@ const createStyledRenderNode =
             {displayLabel}
           </text>
         )}
-        {/* Hidden children indicator for leaf nodes */}
-        {hasHiddenChildren && w >= 20 && h >= 16 && (
+        {/* Unrendered children indicator - positioned first (top-right) */}
+        {unrenderedInfo.hasUnrendered && w >= 20 && h >= 16 && (
           <g>
-            {/* Position indicator in top-right corner */}
             <circle
               cx={w - indicatorSize / 2 - 2}
               cy={indicatorSize / 2 + 2}
               r={indicatorSize / 2}
-              fill="rgba(255, 165, 0, 0.9)"
-              stroke="rgba(0, 0, 0, 0.7)"
-              strokeWidth={0.3}
+              fill="rgba(255, 0, 0, 0.95)"
+              stroke="rgba(0, 0, 0, 0.8)"
+              strokeWidth={0.5}
             />
-            {/* Three dots to indicate hidden content */}
+            {/* Exclamation mark to indicate missing content */}
             <text
               x={w - indicatorSize / 2 - 2}
               y={indicatorSize / 2 + 2}
-              fontSize={Math.min(indicatorSize * 0.6, 6)}
-              fill="#000"
+              fontSize={Math.min(indicatorSize * 0.7, 8)}
+              fill="#FFF"
               textAnchor="middle"
               dominantBaseline="middle"
               pointerEvents="none"
               style={{ userSelect: "none", fontWeight: "bold" }}
             >
-              ⋯
+              !
             </text>
-            {/* Small count indicator if there's space */}
+            {/* Count of unrendered children */}
             {w >= 30 && h >= 24 && (
               <text
                 x={w - indicatorSize / 2 - 2}
@@ -411,9 +536,64 @@ const createStyledRenderNode =
                 pointerEvents="none"
                 style={{ userSelect: "none" }}
               >
-                +{hiddenChildrenCount}
+                -{unrenderedInfo.unrenderedCount}
               </text>
             )}
+          </g>
+        )}
+        {/* Hidden children indicator - positioned below unrendered indicator if both exist */}
+        {hasHiddenChildren && w >= 20 && h >= 16 && (
+          <g>
+            {/* Position below unrendered indicator if both exist */}
+            <circle
+              cx={w - indicatorSize / 2 - 2}
+              cy={
+                indicatorSize / 2 +
+                2 +
+                (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0)
+              }
+              r={indicatorSize / 2}
+              fill="rgba(255, 165, 0, 0.9)"
+              stroke="rgba(0, 0, 0, 0.7)"
+              strokeWidth={0.3}
+            />
+            {/* Three dots to indicate hidden content */}
+            <text
+              x={w - indicatorSize / 2 - 2}
+              y={
+                indicatorSize / 2 +
+                2 +
+                (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0)
+              }
+              fontSize={Math.min(indicatorSize * 0.6, 6)}
+              fill="#000"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              pointerEvents="none"
+              style={{ userSelect: "none", fontWeight: "bold" }}
+            >
+              ⋯
+            </text>
+            {/* Small count indicator if there's space */}
+            {w >= 30 &&
+              h >= 40 && ( // Increased height requirement since we have two indicators
+                <text
+                  x={w - indicatorSize / 2 - 2}
+                  y={
+                    indicatorSize +
+                    4 +
+                    (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0)
+                  }
+                  fontSize={Math.min(5, indicatorSize * 0.3)}
+                  fill={getContrastingTextColor(color)}
+                  textAnchor="middle"
+                  dominantBaseline="hanging"
+                  pointerEvents="none"
+                  style={{ userSelect: "none" }}
+                >
+                  +{hiddenChildrenCount}
+                </text>
+              )}
           </g>
         )}
       </>
@@ -439,57 +619,6 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   onMouseEnter = () => {},
   onMouseLeave = () => {},
 }) => {
-  // Create the styled render functions if custom ones aren't provided
-  const finalRenderHeader = useMemo(() => {
-    if (renderHeader) return renderHeader;
-
-    return createStyledRenderHeader(
-      settings,
-      matchingNodes,
-      selectedNodeId,
-      onNodeClick,
-      onMouseEnter,
-      onMouseLeave,
-      minFontSize,
-      maxFontSize
-    );
-  }, [
-    renderHeader,
-    settings,
-    matchingNodes,
-    selectedNodeId,
-    onNodeClick,
-    onMouseEnter,
-    onMouseLeave,
-    minFontSize,
-    maxFontSize,
-  ]);
-
-  const finalRenderNode = useMemo(() => {
-    if (renderNode) return renderNode;
-
-    return createStyledRenderNode(
-      settings,
-      matchingNodes,
-      selectedNodeId,
-      onNodeClick,
-      onMouseEnter,
-      onMouseLeave,
-      minFontSize,
-      maxFontSize
-    );
-  }, [
-    renderNode,
-    settings,
-    matchingNodes,
-    selectedNodeId,
-    onNodeClick,
-    onMouseEnter,
-    onMouseLeave,
-    minFontSize,
-    maxFontSize,
-  ]);
-
   // Determine which layout options to use based on the layout function
   const layoutOptions = useMemo(() => {
     // Check if the provided layout function is geminiLayout or binaryLayout
@@ -543,6 +672,61 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   const layoutRoot = useMemo(() => {
     return layout(root, width, height, layoutOptions as any); // Cast to any to satisfy differing option types
   }, [root, width, height, layout, layoutOptions]);
+
+  // Create the styled render functions if custom ones aren't provided
+  const finalRenderHeader = useMemo(() => {
+    if (renderHeader) return renderHeader;
+
+    return createStyledRenderHeader(
+      settings,
+      matchingNodes,
+      selectedNodeId,
+      onNodeClick,
+      onMouseEnter,
+      onMouseLeave,
+      minFontSize,
+      maxFontSize,
+      layoutRoot as AnyLayoutNode
+    );
+  }, [
+    renderHeader,
+    settings,
+    matchingNodes,
+    selectedNodeId,
+    onNodeClick,
+    onMouseEnter,
+    onMouseLeave,
+    minFontSize,
+    maxFontSize,
+    layoutRoot,
+  ]);
+
+  const finalRenderNode = useMemo(() => {
+    if (renderNode) return renderNode;
+
+    return createStyledRenderNode(
+      settings,
+      matchingNodes,
+      selectedNodeId,
+      onNodeClick,
+      onMouseEnter,
+      onMouseLeave,
+      minFontSize,
+      maxFontSize,
+      layoutRoot as AnyLayoutNode
+    );
+  }, [
+    renderNode,
+    settings,
+    matchingNodes,
+    selectedNodeId,
+    onNodeClick,
+    onMouseEnter,
+    onMouseLeave,
+    minFontSize,
+    maxFontSize,
+    layoutRoot,
+  ]);
 
   // Calculate header height based on depth - prioritize headers!
   const getHeaderHeight = (depth: number, availableHeight: number): number => {
