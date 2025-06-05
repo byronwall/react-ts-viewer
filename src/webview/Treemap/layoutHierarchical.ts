@@ -608,12 +608,33 @@ export type HierarchicalLayoutFn = (
   options: HierarchicalLayoutOptions
 ) => HierarchicalLayoutNode;
 
+// Function to calculate values for all nodes recursively before layout
+function calculateNodeValues(node: ScopeNode): number {
+  if (!node.children || node.children.length === 0) {
+    // Leaf node gets value of 1
+    node.value = 1;
+    return 1;
+  }
+
+  // Container node - sum of children's values
+  let totalValue = 0;
+  for (const child of node.children) {
+    totalValue += calculateNodeValues(child);
+  }
+
+  node.value = totalValue;
+  return totalValue;
+}
+
 export const layoutHierarchical: HierarchicalLayoutFn = (
   rootNode,
   viewportWidth,
   viewportHeight,
   options
 ) => {
+  // Calculate values for all nodes before starting layout
+  calculateNodeValues(rootNode);
+
   const layoutRoot = layoutNodeRecursive(
     rootNode,
     { x: 0, y: 0, w: viewportWidth, h: viewportHeight },
