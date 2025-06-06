@@ -1,5 +1,4 @@
 export interface TreemapSettings {
-  tile: "squarify" | "binary" | "dice" | "slice" | "sliceDice";
   leavesOnly: boolean;
   innerPadding: number;
   outerPadding: number;
@@ -73,16 +72,6 @@ export type SettingConfig =
 
 export const treemapSettingsConfig: SettingConfig[] = [
   // Treemap Display Settings
-  {
-    id: "tile",
-    label: "Tiling Algorithm",
-    type: "select",
-    group: "Treemap Display",
-    options: [
-      { value: "binary", label: "Binary (d3-hierarchy)" },
-      { value: "hierarchical", label: "Hierarchical" },
-    ],
-  },
   {
     id: "leavesOnly",
     label: "Show Leaves Only",
@@ -307,10 +296,7 @@ export const treemapSettingsConfig: SettingConfig[] = [
     label: "Select Layout Engine",
     type: "select",
     group: "Layout Engines",
-    options: [
-      { value: "binary", label: "Binary Tree (d3-hierarchy)" },
-      { value: "hierarchical", label: "Hierarchical Packer" },
-    ],
+    options: [{ value: "hierarchical", label: "Hierarchical Packer" }],
   },
   // Hierarchical Layout Settings (only enabled if selectedLayout is 'hierarchical')
   {
@@ -400,7 +386,6 @@ export const settingGroupOrder: string[] = [
 
 // Default Treemap settings, aligned with the interface
 export const defaultTreemapSettings: TreemapSettings = {
-  tile: "binary",
   leavesOnly: false,
   innerPadding: 2,
   outerPadding: 1,

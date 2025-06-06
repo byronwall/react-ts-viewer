@@ -10,12 +10,7 @@ import {
   HierarchicalLayoutOptions,
   layoutHierarchical,
 } from "./layoutHierarchical";
-import {
-  binaryLayout,
-  BinaryLayoutFn,
-  BinaryLayoutNode,
-  BinaryLayoutOptions,
-} from "./layoutSmarter";
+
 import { pastelSet } from "./pastelSet";
 
 /* ---------- utility functions ------------ */
@@ -61,11 +56,11 @@ export interface RenderHeaderProps extends RenderNodeProps {
   depth: number;
 }
 
-export type AnyLayoutNode = BinaryLayoutNode | HierarchicalLayoutNode;
+export type AnyLayoutNode = HierarchicalLayoutNode;
 
-export type AnyLayoutOptions = BinaryLayoutOptions | HierarchicalLayoutOptions;
+export type AnyLayoutOptions = HierarchicalLayoutOptions;
 
-export type AnyLayoutFn = BinaryLayoutFn | HierarchicalLayoutFn;
+export type AnyLayoutFn = HierarchicalLayoutFn;
 
 export interface TreemapSVGProps {
   root: ScopeNode;
@@ -590,7 +585,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   root,
   width,
   height,
-  layout = binaryLayout,
+  layout = layoutHierarchical,
   renderNode,
   renderHeader,
   padding = 4,
@@ -606,38 +601,17 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   // Determine which layout options to use based on the layout function
   const layoutOptions = useMemo(() => {
     // This is a bit of a hack; a more robust way might be to pass a layout 'type' string
-    if (layout === (binaryLayout as AnyLayoutFn)) {
-      return {
-        minTextWidth: 40,
-        minTextHeight: 20,
-        minBoxSize: 12,
-        padding: padding, // Use the component prop padding for binary
-        headerHeight: 28,
-        fontSize: 11, // binaryLayout uses this
-      } as BinaryLayoutOptions; // Cast to common or binary options
-    } else if (layout === (layoutHierarchical as AnyLayoutFn)) {
-      return {
-        headerHeight: settings.hierarchicalHeaderHeight,
-        padding: settings.hierarchicalPadding,
-        leafMinWidth: settings.hierarchicalLeafMinWidth,
-        leafMinHeight: settings.hierarchicalLeafMinHeight,
-        leafPrefWidth: settings.hierarchicalLeafPrefWidth,
-        leafPrefHeight: settings.hierarchicalLeafPrefHeight,
-        leafMinAspectRatio: settings.hierarchicalLeafMinAspectRatio,
-        leafMaxAspectRatio: settings.hierarchicalLeafMaxAspectRatio,
-      } as HierarchicalLayoutOptions;
-    } else {
-      // Default to options for binaryLayout
-      console.log(
-        "[TreemapSVG] Constructing BinaryLayoutOptions (default/fallback). settings.innerPadding:",
-        settings.innerPadding
-      );
-      return {
-        padding: settings.innerPadding, // Example, d3-hierarchy based
-        headerHeight: settings.hierarchicalHeaderHeight, // Fallback
-        // sizeAccessor: (n: ScopeNode) => n.value,
-      } as BinaryLayoutOptions; // Cast to common or binary options
-    }
+
+    return {
+      headerHeight: settings.hierarchicalHeaderHeight,
+      padding: settings.hierarchicalPadding,
+      leafMinWidth: settings.hierarchicalLeafMinWidth,
+      leafMinHeight: settings.hierarchicalLeafMinHeight,
+      leafPrefWidth: settings.hierarchicalLeafPrefWidth,
+      leafPrefHeight: settings.hierarchicalLeafPrefHeight,
+      leafMinAspectRatio: settings.hierarchicalLeafMinAspectRatio,
+      leafMaxAspectRatio: settings.hierarchicalLeafMaxAspectRatio,
+    } as HierarchicalLayoutOptions;
   }, [layout, settings, padding]);
 
   const layoutRoot = useMemo(() => {
@@ -830,9 +804,6 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     const isSelected = selectedNodeId === ln.node.id;
     const isSearchMatch = matchingNodes.has(ln.node.id);
 
-    // Common properties for BinaryLayoutNode being checked
-    const isConstrainedByDepth = (ln as BinaryLayoutNode).isConstrainedByDepth;
-
     // For nodes with render mode 'box', render simplified representation
     if (ln.renderMode === "box") {
       const baseColor =
@@ -898,32 +869,6 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
                 style={{ userSelect: "none", fontWeight: "bold" }}
               >
                 ⊞
-              </text>
-            </g>
-          )}
-
-          {/* Show depth constraint indicator - specific to BinaryLayoutNode for now */}
-          {isConstrainedByDepth && ln.w >= 16 && ln.h >= 16 && (
-            <g>
-              <circle
-                cx={ln.x + ln.w - 8}
-                cy={ln.y + 8}
-                r={4}
-                fill="rgba(255, 140, 0, 0.9)"
-                stroke="rgba(0, 0, 0, 0.7)"
-                strokeWidth={0.5}
-              />
-              <text
-                x={ln.x + ln.w - 8}
-                y={ln.y + 8}
-                fontSize="6"
-                fill="#000"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                pointerEvents="none"
-                style={{ userSelect: "none", fontWeight: "bold" }}
-              >
-                ⊡
               </text>
             </g>
           )}

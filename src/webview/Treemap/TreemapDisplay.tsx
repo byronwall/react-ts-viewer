@@ -8,7 +8,6 @@ import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer 
 import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { AnyLayoutFn, TreemapSVG } from "./TreemapSVG"; // Added AnyLayoutFn
 import { layoutHierarchical } from "./layoutHierarchical";
-import { binaryLayout } from "./layoutSmarter";
 import { pastelSet } from "./pastelSet";
 
 interface TreemapDisplayProps {
@@ -751,10 +750,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   }, []);
 
   // Determine which layout function and options to use based on settings
-  const currentLayoutFn: AnyLayoutFn =
-    settings.selectedLayout === "hierarchical"
-      ? layoutHierarchical
-      : binaryLayout;
+  const currentLayoutFn: AnyLayoutFn = layoutHierarchical;
 
   return (
     <div
