@@ -7,7 +7,6 @@ import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singlet
 import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
 import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { AnyLayoutFn, TreemapSVG } from "./TreemapSVG"; // Added AnyLayoutFn
-import { geminiLayout } from "./layoutGemini"; // Added geminiLayout and its options
 import { layoutHierarchical } from "./layoutHierarchical";
 import { binaryLayout } from "./layoutSmarter";
 import { pastelSet } from "./pastelSet";
@@ -753,11 +752,9 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 
   // Determine which layout function and options to use based on settings
   const currentLayoutFn: AnyLayoutFn =
-    settings.selectedLayout === "gemini"
-      ? geminiLayout
-      : settings.selectedLayout === "hierarchical"
-        ? layoutHierarchical
-        : binaryLayout;
+    settings.selectedLayout === "hierarchical"
+      ? layoutHierarchical
+      : binaryLayout;
 
   return (
     <div

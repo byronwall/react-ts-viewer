@@ -5,12 +5,6 @@ import { TreemapSettings } from "../settingsConfig";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
 import {
-  geminiLayout,
-  GeminiLayoutFn,
-  GeminiLayoutNode,
-  GeminiLayoutOptions,
-} from "./layoutGemini";
-import {
   HierarchicalLayoutFn,
   HierarchicalLayoutNode,
   HierarchicalLayoutOptions,
@@ -67,21 +61,11 @@ export interface RenderHeaderProps extends RenderNodeProps {
   depth: number;
 }
 
-// Allow BinaryLayoutNode, GeminiLayoutNode, or HierarchicalLayoutNode
-export type AnyLayoutNode =
-  | BinaryLayoutNode
-  | GeminiLayoutNode
-  | HierarchicalLayoutNode;
+export type AnyLayoutNode = BinaryLayoutNode | HierarchicalLayoutNode;
 
-export type AnyLayoutOptions =
-  | BinaryLayoutOptions
-  | GeminiLayoutOptions
-  | HierarchicalLayoutOptions;
+export type AnyLayoutOptions = BinaryLayoutOptions | HierarchicalLayoutOptions;
 
-export type AnyLayoutFn =
-  | BinaryLayoutFn
-  | GeminiLayoutFn
-  | HierarchicalLayoutFn;
+export type AnyLayoutFn = BinaryLayoutFn | HierarchicalLayoutFn;
 
 export interface TreemapSVGProps {
   root: ScopeNode;
@@ -621,18 +605,8 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 }) => {
   // Determine which layout options to use based on the layout function
   const layoutOptions = useMemo(() => {
-    // Check if the provided layout function is geminiLayout or binaryLayout
     // This is a bit of a hack; a more robust way might be to pass a layout 'type' string
-    if (layout === (geminiLayout as AnyLayoutFn)) {
-      return {
-        // Options for geminiLayout
-        minTextWidth: settings.minGeminiTextWidth, // Example: use settings for Gemini
-        minTextHeight: settings.minGeminiTextHeight,
-        minBoxSize: settings.minGeminiBoxSize,
-        padding: settings.geminiPadding,
-        headerHeight: settings.geminiHeaderHeight,
-      };
-    } else if (layout === (binaryLayout as AnyLayoutFn)) {
+    if (layout === (binaryLayout as AnyLayoutFn)) {
       return {
         minTextWidth: 40,
         minTextHeight: 20,
@@ -659,11 +633,8 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
         settings.innerPadding
       );
       return {
-        minTextWidth: settings.minGeminiTextWidth, // Fallback, consider specific binary settings
-        minTextHeight: settings.minGeminiTextHeight, // Fallback
-        minBoxSize: settings.minGeminiBoxSize, // Fallback
         padding: settings.innerPadding, // Example, d3-hierarchy based
-        headerHeight: settings.geminiHeaderHeight, // Fallback
+        headerHeight: settings.hierarchicalHeaderHeight, // Fallback
         // sizeAccessor: (n: ScopeNode) => n.value,
       } as BinaryLayoutOptions; // Cast to common or binary options
     }
@@ -734,9 +705,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     // For now, using a generic approach or the one from binaryLayout.
     let maxHeaderHeight = 28; // Default for binary layout
 
-    if (layout === (geminiLayout as AnyLayoutFn)) {
-      maxHeaderHeight = settings.geminiHeaderHeight;
-    } else if (layout === (layoutHierarchical as AnyLayoutFn)) {
+    if (layout === (layoutHierarchical as AnyLayoutFn)) {
       maxHeaderHeight = settings.hierarchicalHeaderHeight;
     }
 
@@ -861,10 +830,8 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     const isSelected = selectedNodeId === ln.node.id;
     const isSearchMatch = matchingNodes.has(ln.node.id);
 
-    // Common properties for GeminiLayoutNode and BinaryLayoutNode being checked
-    const isConstrainedByDepth =
-      (ln as BinaryLayoutNode).isConstrainedByDepth ||
-      (ln as GeminiLayoutNode).node?.meta?.isConstrainedByDepth;
+    // Common properties for BinaryLayoutNode being checked
+    const isConstrainedByDepth = (ln as BinaryLayoutNode).isConstrainedByDepth;
 
     // For nodes with render mode 'box', render simplified representation
     if (ln.renderMode === "box") {
@@ -966,11 +933,8 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
     // For 'text' render mode (containers or leaf nodes with text)
     // HEADERS ARE PRIORITY for containers!
-    // Gemini layout uses `isContainer` property. Binary layout implies container if children exist.
-    const isActuallyContainer =
-      (ln as GeminiLayoutNode).isContainer !== undefined
-        ? (ln as GeminiLayoutNode).isContainer
-        : hasRenderableChildren;
+    // Binary layout implies container if children exist.
+    const isActuallyContainer = hasRenderableChildren;
 
     const shouldRenderHeader = isActuallyContainer && ln.h >= 16 && ln.w >= 24;
 

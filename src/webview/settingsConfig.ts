@@ -28,12 +28,7 @@ export interface TreemapSettings {
   avgCharPixelWidth: number;
   enableDepthLimit: boolean;
   maxDepth: number;
-  minGeminiTextWidth: number;
-  minGeminiTextHeight: number;
-  minGeminiBoxSize: number;
-  geminiPadding: number;
-  geminiHeaderHeight: number;
-  selectedLayout: "binary" | "gemini" | "hierarchical";
+  selectedLayout: "binary" | "hierarchical";
   hierarchicalPadding: number;
   hierarchicalHeaderHeight: number;
   hierarchicalLeafMinWidth: number;
@@ -85,7 +80,6 @@ export const treemapSettingsConfig: SettingConfig[] = [
     group: "Treemap Display",
     options: [
       { value: "binary", label: "Binary (d3-hierarchy)" },
-      { value: "gemini", label: "Gemini" },
       { value: "hierarchical", label: "Hierarchical" },
     ],
   },
@@ -315,50 +309,8 @@ export const treemapSettingsConfig: SettingConfig[] = [
     group: "Layout Engines",
     options: [
       { value: "binary", label: "Binary Tree (d3-hierarchy)" },
-      { value: "gemini", label: "Gemini Optimized" },
       { value: "hierarchical", label: "Hierarchical Packer" },
     ],
-  },
-  // Gemini Settings (only enabled if selectedLayout is 'gemini')
-  {
-    id: "minGeminiTextWidth",
-    label: "Gemini: Min Text Width (px)",
-    type: "number",
-    group: "Layout Engines",
-    min: 10,
-    disabled: (s) => s.selectedLayout !== "gemini",
-  },
-  {
-    id: "minGeminiTextHeight",
-    label: "Gemini: Min Text Height (px)",
-    type: "number",
-    group: "Layout Engines",
-    min: 10,
-    disabled: (s) => s.selectedLayout !== "gemini",
-  },
-  {
-    id: "minGeminiBoxSize",
-    label: "Gemini: Min Box Size (px)",
-    type: "number",
-    group: "Layout Engines",
-    min: 1,
-    disabled: (s) => s.selectedLayout !== "gemini",
-  },
-  {
-    id: "geminiPadding",
-    label: "Gemini: Padding (px)",
-    type: "number",
-    group: "Layout Engines",
-    min: 0,
-    disabled: (s) => s.selectedLayout !== "gemini",
-  },
-  {
-    id: "geminiHeaderHeight",
-    label: "Gemini: Header Height (px)",
-    type: "number",
-    group: "Layout Engines",
-    min: 10,
-    disabled: (s) => s.selectedLayout !== "gemini",
   },
   // Hierarchical Layout Settings (only enabled if selectedLayout is 'hierarchical')
   {
@@ -477,71 +429,9 @@ export const defaultTreemapSettings: TreemapSettings = {
   avgCharPixelWidth: 5,
   enableDepthLimit: false,
   maxDepth: 5,
-  minGeminiTextWidth: 80,
-  minGeminiTextHeight: 40,
-  minGeminiBoxSize: 20,
-  geminiPadding: 5,
-  geminiHeaderHeight: 25,
-  selectedLayout: "gemini",
-  hierarchicalPadding: 5,
-  hierarchicalHeaderHeight: 14,
-  hierarchicalLeafMinWidth: 20,
-  hierarchicalLeafMinHeight: 20,
-  hierarchicalLeafPrefWidth: 80,
-  hierarchicalLeafPrefHeight: 40,
-  hierarchicalLeafMinAspectRatio: 1.0,
-  hierarchicalLeafMaxAspectRatio: 4.0,
-  showDebugFreeRectangles: true,
-};
-
-export const initialTreemapSettings: TreemapSettings = {
-  // d3-hierarchy based binary tree default settings
-  tile: "binary",
-  leavesOnly: false,
-  innerPadding: 2,
-  outerPadding: 1,
-  // General display
-  nodeOpacity: 0.9,
-  borderWidth: 1.5,
-  // Labels
-  enableLabel: true,
-  labelSkipSize: 12,
-  minLabelHeight: 12,
-  truncateLabel: true,
-  labelMaxChars: 200,
-  avgCharPixelWidth: 5,
-  // Depth
-  enableDepthLimit: false,
-  maxDepth: 5,
-  // Node Structure
-  enableNodeFlattening: true,
-  flattenBlocks: true,
-  flattenArrowFunctions: true,
-  createSyntheticGroups: true,
-  // Node Visibility
-  showImports: true,
-  showTypes: true,
-  showLiterals: false,
-  showComments: false,
-  // Tooltip
-  enableTooltip: true,
-  showTooltipId: true,
-  showTooltipCategory: true,
-  showTooltipValue: true,
-  showTooltipLines: true,
-  showTooltipSourceSnippet: true,
-  tooltipSourceSnippetLength: 250,
-  // Layout Engine Selection
   selectedLayout: "hierarchical",
-  // Gemini Layout Settings
-  minGeminiTextWidth: 80,
-  minGeminiTextHeight: 30, // Matched to the screenshot
-  minGeminiBoxSize: 10, // Matched to the screenshot
-  geminiPadding: 5,
-  geminiHeaderHeight: 24, // Matched to the screenshot
-  // Hierarchical Layout Settings
   hierarchicalPadding: 5,
-  hierarchicalHeaderHeight: 14,
+  hierarchicalHeaderHeight: 25,
   hierarchicalLeafMinWidth: 20,
   hierarchicalLeafMinHeight: 20,
   hierarchicalLeafPrefWidth: 80,
