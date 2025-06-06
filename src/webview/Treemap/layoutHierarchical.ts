@@ -387,8 +387,6 @@ function layoutNodeRecursive(
   depth: number,
   parentLayoutNode?: HierarchicalLayoutNode
 ): HierarchicalLayoutNode | null {
-  const nodeLabel = node.label || node.id;
-
   if (parentAllocatedSpace.w <= 0 || parentAllocatedSpace.h <= 0) {
     return null;
   }
@@ -713,7 +711,6 @@ function layoutNodeRecursive(
 
     for (const packerInput of sortedPackerItems) {
       const childNode = packerInput.node;
-      const childLabel = childNode.label || childNode.id;
 
       const placement = packer.add(packerInput);
 
