@@ -743,6 +743,10 @@ export const layoutHierarchical: HierarchicalLayoutFn = (
   // Calculate values for all nodes before starting layout
   calculateNodeValues(rootNode);
 
+  console.log(`\n🎯 === STARTING HIERARCHICAL LAYOUT ===`);
+  console.log(`Viewport: ${viewportWidth} x ${viewportHeight}`);
+  console.log(`Options:`, options);
+
   const layoutRoot = layoutNodeRecursive(
     rootNode,
     { x: 0, y: 0, w: viewportWidth, h: viewportHeight },
@@ -750,6 +754,85 @@ export const layoutHierarchical: HierarchicalLayoutFn = (
     0, // depth
     undefined // parent
   );
+
+  // Add overlap detection and logging
+  console.log(`\n🔍 === CHECKING FOR OVERLAPS ===`);
+  if (layoutRoot) {
+    const allNodes = collectAllLayoutNodes(layoutRoot);
+    const overlaps = detectOverlaps(allNodes);
+
+    if (overlaps.length > 0) {
+      console.error(`❌ FOUND ${overlaps.length} OVERLAPPING PAIRS:`);
+
+      // Apply overlap corrections
+      console.log(`\n🔧 === APPLYING OVERLAP CORRECTIONS ===`);
+      let correctionsMade = 0;
+
+      for (const overlap of overlaps) {
+        const { nodeA, nodeB } = overlap;
+
+        // Simple correction strategy: move the node with higher Y coordinate down
+        // This preserves the general layout while fixing overlaps
+        const nodeToMove = nodeA.y > nodeB.y ? nodeA : nodeB;
+        const staticNode = nodeA.y > nodeB.y ? nodeB : nodeA;
+
+        // Calculate how much to move the node
+        const requiredYMove =
+          staticNode.y + staticNode.h - nodeToMove.y + options.padding;
+
+        if (requiredYMove > 0) {
+          const oldY = nodeToMove.y;
+          nodeToMove.y += requiredYMove;
+          correctionsMade++;
+
+          console.log(
+            `🔧 CORRECTED: "${nodeToMove.node.label || nodeToMove.node.id}" moved from Y=${oldY.toFixed(1)} to Y=${nodeToMove.y.toFixed(1)} (+${requiredYMove.toFixed(1)})`
+          );
+
+          // Also adjust any children's positions accordingly
+          if (nodeToMove.children) {
+            adjustChildrenPositions(nodeToMove, 0, requiredYMove);
+          }
+        }
+      }
+
+      if (correctionsMade > 0) {
+        console.log(`✅ Applied ${correctionsMade} overlap corrections`);
+
+        // Re-check for any remaining overlaps
+        const remainingOverlaps = detectOverlaps(
+          collectAllLayoutNodes(layoutRoot)
+        );
+        if (remainingOverlaps.length > 0) {
+          console.warn(
+            `⚠️ ${remainingOverlaps.length} overlaps still remain after corrections`
+          );
+        } else {
+          console.log(`✅ All overlaps successfully resolved`);
+        }
+      }
+
+      // Log remaining overlaps for debugging
+      overlaps.forEach((overlap, index) => {
+        console.error(
+          `  ${index + 1}. "${overlap.nodeA.node.label || overlap.nodeA.node.id}" overlaps "${overlap.nodeB.node.label || overlap.nodeB.node.id}"`
+        );
+        console.error(
+          `     A: [${overlap.nodeA.x.toFixed(1)}, ${overlap.nodeA.y.toFixed(1)}, ${overlap.nodeA.w.toFixed(1)}x${overlap.nodeA.h.toFixed(1)}]`
+        );
+        console.error(
+          `     B: [${overlap.nodeB.x.toFixed(1)}, ${overlap.nodeB.y.toFixed(1)}, ${overlap.nodeB.w.toFixed(1)}x${overlap.nodeB.h.toFixed(1)}]`
+        );
+        console.error(
+          `     Overlap area: ${overlap.overlapArea.toFixed(1)} px²`
+        );
+      });
+    } else {
+      console.log(`✅ No overlaps detected`);
+    }
+  } else {
+    console.warn(`⚠️ Layout root is null, cannot check for overlaps`);
+  }
 
   // Count total nodes in input tree vs rendered nodes in output tree
   const countTotalNodes = (
@@ -869,6 +952,103 @@ export const layoutHierarchical: HierarchicalLayoutFn = (
   );
 };
 
+// Helper functions for overlap detection
+function collectAllLayoutNodes(
+  root: HierarchicalLayoutNode | null
+): HierarchicalLayoutNode[] {
+  if (!root) return [];
+
+  const nodes: HierarchicalLayoutNode[] = [root];
+  if (root.children) {
+    for (const child of root.children) {
+      nodes.push(...collectAllLayoutNodes(child));
+    }
+  }
+  return nodes;
+}
+
+// Helper function to adjust children positions recursively
+function adjustChildrenPositions(
+  parent: HierarchicalLayoutNode,
+  deltaX: number,
+  deltaY: number
+): void {
+  if (!parent.children) return;
+
+  for (const child of parent.children) {
+    child.x += deltaX;
+    child.y += deltaY;
+
+    // Recursively adjust grandchildren
+    if (child.children) {
+      adjustChildrenPositions(child, deltaX, deltaY);
+    }
+  }
+}
+
+interface OverlapInfo {
+  nodeA: HierarchicalLayoutNode;
+  nodeB: HierarchicalLayoutNode;
+  overlapArea: number;
+}
+
+function detectOverlaps(nodes: HierarchicalLayoutNode[]): OverlapInfo[] {
+  const overlaps: OverlapInfo[] = [];
+
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const nodeA = nodes[i];
+      const nodeB = nodes[j];
+
+      if (!nodeA || !nodeB) continue;
+
+      // Skip if one is ancestor of the other
+      if (isAncestor(nodeA, nodeB) || isAncestor(nodeB, nodeA)) {
+        continue;
+      }
+
+      const overlapArea = calculateOverlapArea(nodeA, nodeB);
+      if (overlapArea > 0.1) {
+        // Small tolerance for floating point errors
+        overlaps.push({ nodeA, nodeB, overlapArea });
+      }
+    }
+  }
+
+  return overlaps;
+}
+
+function isAncestor(
+  ancestor: HierarchicalLayoutNode | undefined,
+  descendant: HierarchicalLayoutNode | undefined
+): boolean {
+  if (!ancestor || !descendant) return false;
+
+  let current = descendant?.parent;
+  while (current) {
+    if (current === ancestor) return true;
+    current = current.parent;
+  }
+  return false;
+}
+
+function calculateOverlapArea(
+  nodeA: HierarchicalLayoutNode | undefined,
+  nodeB: HierarchicalLayoutNode | undefined
+): number {
+  if (!nodeA || !nodeB) return 0;
+
+  const left = Math.max(nodeA.x, nodeB.x);
+  const right = Math.min(nodeA.x + nodeA.w, nodeB.x + nodeB.w);
+  const top = Math.max(nodeA.y, nodeB.y);
+  const bottom = Math.min(nodeA.y + nodeA.h, nodeB.y + nodeB.h);
+
+  if (left < right && top < bottom) {
+    return (right - left) * (bottom - top);
+  }
+  return 0;
+}
+
 // --- Recursive Layout Engine ---
 interface Rect {
   x: number;
@@ -884,7 +1064,13 @@ function layoutNodeRecursive(
   depth: number,
   parentLayoutNode?: HierarchicalLayoutNode
 ): HierarchicalLayoutNode | null {
+  const nodeLabel = node.label || node.id;
+  console.log(
+    `📐 [${depth}] LAYOUT START: "${nodeLabel}" in space [${parentAllocatedSpace.x.toFixed(1)}, ${parentAllocatedSpace.y.toFixed(1)}, ${parentAllocatedSpace.w.toFixed(1)}x${parentAllocatedSpace.h.toFixed(1)}]`
+  );
+
   if (parentAllocatedSpace.w <= 0 || parentAllocatedSpace.h <= 0) {
+    console.log(`❌ [${depth}] SKIPPED: "${nodeLabel}" - zero area`);
     return null;
   }
   if (
@@ -893,6 +1079,7 @@ function layoutNodeRecursive(
     isNaN(parentAllocatedSpace.x) ||
     isNaN(parentAllocatedSpace.y)
   ) {
+    console.log(`❌ [${depth}] SKIPPED: "${nodeLabel}" - invalid coordinates`);
     return null;
   }
 
@@ -904,6 +1091,7 @@ function layoutNodeRecursive(
     (parentAllocatedSpace.w < options.leafMinWidth ||
       parentAllocatedSpace.h < options.leafMinHeight)
   ) {
+    console.log(`📦 [${depth}] SMALL CONTAINER: "${nodeLabel}" -> box mode`);
     return {
       node,
       x: parentAllocatedSpace.x,
@@ -936,6 +1124,7 @@ function layoutNodeRecursive(
 
   if (isEffectivelyLeaf) {
     // --- Handle Leaf Node ---
+    console.log(`🍃 [${depth}] LEAF: "${nodeLabel}" processing`);
     // Apply heuristics: min/pref size, aspect ratio. Fit within parentAllocatedSpace.
     let targetW = Math.max(options.leafMinWidth, options.leafPrefWidth);
     let targetH = Math.max(options.leafMinHeight, options.leafPrefHeight);
@@ -1000,8 +1189,15 @@ function layoutNodeRecursive(
     currentLayoutNode.h = Math.min(currentLayoutNode.h, parentAllocatedSpace.h);
 
     currentLayoutNode.isContainer = false; // It's a leaf
+
+    console.log(
+      `✅ [${depth}] LEAF DONE: "${nodeLabel}" -> [${currentLayoutNode.x.toFixed(1)}, ${currentLayoutNode.y.toFixed(1)}, ${currentLayoutNode.w.toFixed(1)}x${currentLayoutNode.h.toFixed(1)}]`
+    );
   } else {
     // --- Handle Container Node ---
+    console.log(
+      `📁 [${depth}] CONTAINER: "${nodeLabel}" with ${node.children?.length || 0} children`
+    );
     currentLayoutNode.isContainer = true;
     const headerActualHeight = Math.min(
       options.headerHeight,
@@ -1015,8 +1211,16 @@ function layoutNodeRecursive(
       h: parentAllocatedSpace.h - headerActualHeight - 2 * options.padding, // Account for T/B padding (header + bottom)
     };
 
+    console.log(
+      `📦 [${depth}] PACKING AREA: [${contentPackingArea.x}, ${contentPackingArea.y}, ${contentPackingArea.w.toFixed(1)}x${contentPackingArea.h.toFixed(1)}] (header: ${headerActualHeight}, padding: ${options.padding})`
+    );
+    console.log(
+      `🌍 [${depth}] CONTAINER ABSOLUTE POSITION: [${parentAllocatedSpace.x.toFixed(1)}, ${parentAllocatedSpace.y.toFixed(1)}] for coordinate reference`
+    );
+
     if (contentPackingArea.w <= 0 || contentPackingArea.h <= 0) {
       // Not enough space for content, render as box without children
+      console.log(`❌ [${depth}] NO PACKING SPACE: "${nodeLabel}" -> box mode`);
 
       // Render as a simple box that fits in the allocated space
       currentLayoutNode.w = parentAllocatedSpace.w;
@@ -1148,6 +1352,10 @@ function layoutNodeRecursive(
         targetH: childTargetH,
         node: childNode,
       });
+
+      console.log(
+        `📏 [${depth}] CHILD SIZE: "${childNode.label || childNode.id}" -> ${childTargetW.toFixed(1)}x${childTargetH.toFixed(1)} (${isChildContainer ? "container" : "leaf"})`
+      );
     }
 
     // Sort items for optimal 2D bin packing (largest area first instead of height first)
@@ -1209,6 +1417,11 @@ function layoutNodeRecursive(
 
     for (const packerInput of sortedPackerItems) {
       const childNode = packerInput.node;
+      const childLabel = childNode.label || childNode.id;
+
+      console.log(
+        `🎯 [${depth}] PACKING: "${childLabel}" size ${packerInput.targetW.toFixed(1)}x${packerInput.targetH.toFixed(1)}`
+      );
 
       const placement = packer.add(packerInput);
 
@@ -1224,6 +1437,13 @@ function layoutNodeRecursive(
           w: placement.w,
           h: placement.h,
         };
+
+        console.log(
+          `📍 [${depth}] PLACEMENT: "${childLabel}" at packer coords [${placement.x.toFixed(1)}, ${placement.y.toFixed(1)}] -> absolute [${allocatedCellForChild.x.toFixed(1)}, ${allocatedCellForChild.y.toFixed(1)}, ${allocatedCellForChild.w.toFixed(1)}x${allocatedCellForChild.h.toFixed(1)}]`
+        );
+        console.log(
+          `🔄 [${depth}] COORDINATE TRANSFORM: parent=[${parentAllocatedSpace.x.toFixed(1)}, ${parentAllocatedSpace.y.toFixed(1)}] + padding=${options.padding} + header=${headerActualHeight} + packer=[${placement.x.toFixed(1)}, ${placement.y.toFixed(1)}]`
+        );
 
         // Ensure child allocation does not exceed the content packing area boundaries
         // placement.x and placement.y are relative to contentPackingArea's origin (top-left of the area where children are packed).
@@ -1246,138 +1466,193 @@ function layoutNodeRecursive(
           if (laidOutChild) {
             currentLayoutNode.children?.push(laidOutChild);
 
+            console.log(
+              `✅ [${depth}] CHILD PLACED: "${childLabel}" final [${laidOutChild.x.toFixed(1)}, ${laidOutChild.y.toFixed(1)}, ${laidOutChild.w.toFixed(1)}x${laidOutChild.h.toFixed(1)}]`
+            );
+
             // Enhanced Dynamic Container Resizing: Handle both container AND leaf children that use less space
-            const heightDifference = placement.h - laidOutChild.h;
-            const widthDifference = placement.w - laidOutChild.w;
+            // Calculate differences using the SAME coordinate system - absolute coordinates first for logging
+            const absoluteHeightDiff = placement.h - laidOutChild.h;
+            const absoluteWidthDiff = placement.w - laidOutChild.w;
 
-            if (heightDifference > 0 || widthDifference > 0) {
-              // Update the packer's state to reflect the actual space used
-              const packerInstance = (packer as any).packer;
-              if (packerInstance && packerInstance.packedItems) {
-                // Find and update the packed item for this child
-                const packedItemIndex = packerInstance.packedItems.findIndex(
-                  (item: any) => item.id === packerInput.id
-                );
+            if (absoluteHeightDiff > 0 || absoluteWidthDiff > 0) {
+              console.log(
+                `🔄 [${depth}] SPACE RECLAIM: "${childLabel}" freed ${absoluteWidthDiff.toFixed(1)}w x ${absoluteHeightDiff.toFixed(1)}h`
+              );
+              console.log(
+                `🔍 [${depth}] RECLAIM CONTEXT: allocated=[${placement.x.toFixed(1)}, ${placement.y.toFixed(1)}, ${placement.w.toFixed(1)}x${placement.h.toFixed(1)}] actual=[${laidOutChild.x.toFixed(1)}, ${laidOutChild.y.toFixed(1)}, ${laidOutChild.w.toFixed(1)}x${laidOutChild.h.toFixed(1)}]`
+              );
 
-                if (packedItemIndex !== -1) {
-                  // Update the packed item to reflect actual usage
-                  packerInstance.packedItems[packedItemIndex].w =
-                    laidOutChild.w;
-                  packerInstance.packedItems[packedItemIndex].h =
-                    laidOutChild.h;
+              // CRITICAL FIX: Only reclaim significant amounts of space and use strict validation
+              const minReclaimableWidth = options.leafMinWidth * 0.8;
+              const minReclaimableHeight = options.leafMinHeight * 0.8;
 
-                  // Create free rectangles for the unused space
-                  const unusedRects: FreeRectangle[] = [];
+              // Only proceed if the freed space is significant enough to be useful
+              if (
+                absoluteWidthDiff >= minReclaimableWidth ||
+                absoluteHeightDiff >= minReclaimableHeight
+              ) {
+                // Update the packer's state to reflect the actual space used
+                const packerInstance = (packer as any).packer;
+                if (packerInstance && packerInstance.packedItems) {
+                  // Find and update the packed item for this child
+                  const packedItemIndex = packerInstance.packedItems.findIndex(
+                    (item: any) => item.id === packerInput.id
+                  );
 
-                  // IMPROVED HEIGHT RECLAIMING: Create rectangles that span full available width when possible
-                  // Right unused rectangle (if width difference)
-                  if (widthDifference > 0) {
-                    unusedRects.push({
-                      x: placement.x + laidOutChild.w,
-                      y: placement.y,
-                      w: widthDifference,
-                      h: laidOutChild.h, // Only as tall as the actual child
-                    });
-                  }
-
-                  // Bottom unused rectangle (if height difference) - ENHANCED to span full width when beneficial
-                  if (heightDifference > 0) {
-                    // Check if we can create a rectangle that spans the full container width
-                    // This helps avoid fragmentation and creates better placement opportunities
-                    const contentAreaStartX = 0; // Relative to content packing area
-                    const contentAreaEndX = contentPackingArea.w; // Full width of content area
-
-                    // Create bottom rectangle that spans from start of content area to end
-                    // This is much better for vertical packing than narrow rectangles
-                    const fullWidthBottomRect = {
-                      x: contentAreaStartX,
-                      y: placement.y + laidOutChild.h,
-                      w: contentAreaEndX,
-                      h: heightDifference,
+                  if (packedItemIndex !== -1) {
+                    // Update the packed item to reflect actual usage in PACKER coordinates
+                    const originalPackedItem =
+                      packerInstance.packedItems[packedItemIndex];
+                    packerInstance.packedItems[packedItemIndex] = {
+                      ...originalPackedItem,
+                      w: laidOutChild.w,
+                      h: laidOutChild.h,
                     };
 
-                    // Check if this full-width rectangle would overlap with other already-placed items
-                    let hasOverlap = false;
-                    const existingItems = packerInstance.packedItems || [];
+                    // Create free rectangles for the unused space - ALL IN PACKER COORDINATES
+                    const unusedRects: FreeRectangle[] = [];
 
-                    for (const existingItem of existingItems) {
-                      if (existingItem.id === packerInput.id) continue; // Skip self
+                    // Only create right rectangle if width difference is significant
+                    if (absoluteWidthDiff >= minReclaimableWidth) {
+                      const rightRect = {
+                        x: placement.x + laidOutChild.w, // PACKER coordinates
+                        y: placement.y, // PACKER coordinates
+                        w: absoluteWidthDiff,
+                        h: laidOutChild.h,
+                      };
 
-                      // Check for overlap with existing items
-                      const overlapX = !(
-                        existingItem.x >=
-                          fullWidthBottomRect.x + fullWidthBottomRect.w ||
-                        existingItem.x + existingItem.w <= fullWidthBottomRect.x
-                      );
-                      const overlapY = !(
-                        existingItem.y >=
-                          fullWidthBottomRect.y + fullWidthBottomRect.h ||
-                        existingItem.y + existingItem.h <= fullWidthBottomRect.y
-                      );
-
-                      if (overlapX && overlapY) {
-                        hasOverlap = true;
-                        break;
+                      // Validate that this rectangle is within bounds
+                      if (
+                        rightRect.x + rightRect.w <= contentPackingArea.w &&
+                        rightRect.y + rightRect.h <= contentPackingArea.h
+                      ) {
+                        unusedRects.push(rightRect);
+                        console.log(
+                          `🆓 [${depth}] RIGHT RECT (packer coords): [${rightRect.x.toFixed(1)}, ${rightRect.y.toFixed(1)}, ${rightRect.w.toFixed(1)}x${rightRect.h.toFixed(1)}]`
+                        );
                       }
                     }
 
-                    if (!hasOverlap) {
-                      // Use full-width rectangle for better space utilization
-                      unusedRects.push(fullWidthBottomRect);
-                    } else {
-                      // Fall back to child-width rectangle to avoid overlaps
-                      unusedRects.push({
-                        x: placement.x,
-                        y: placement.y + laidOutChild.h,
-                        w: laidOutChild.w, // Only as wide as the actual child
-                        h: heightDifference,
-                      });
+                    // Only create bottom rectangle if height difference is significant
+                    if (absoluteHeightDiff >= minReclaimableHeight) {
+                      // Create bottom rectangle spanning only the child's width to avoid overlaps
+                      const bottomRect = {
+                        x: placement.x, // PACKER coordinates
+                        y: placement.y + laidOutChild.h, // PACKER coordinates
+                        w: laidOutChild.w, // Use actual child width, not allocated width
+                        h: absoluteHeightDiff,
+                      };
+
+                      // Validate that this rectangle is within bounds
+                      if (
+                        bottomRect.x + bottomRect.w <= contentPackingArea.w &&
+                        bottomRect.y + bottomRect.h <= contentPackingArea.h
+                      ) {
+                        unusedRects.push(bottomRect);
+                        console.log(
+                          `🆓 [${depth}] BOTTOM RECT (packer coords): [${bottomRect.x.toFixed(1)}, ${bottomRect.y.toFixed(1)}, ${bottomRect.w.toFixed(1)}x${bottomRect.h.toFixed(1)}]`
+                        );
+                      }
                     }
-                  }
 
-                  // Bottom-right unused rectangle (if both width and height differences)
-                  // Note: This may be redundant if we used full-width bottom rectangle
-                  if (widthDifference > 0 && heightDifference > 0) {
-                    // Only add this if we didn't create a full-width bottom rectangle
-                    const createdFullWidthBottom = unusedRects.some(
-                      (rect) =>
-                        rect.w === contentPackingArea.w &&
-                        rect.y === placement.y + laidOutChild.h
-                    );
+                    // Strict validation: only add rectangles that don't overlap with existing items
+                    for (const unusedRect of unusedRects) {
+                      const rectArea = unusedRect.w * unusedRect.h;
+                      const minUsefulArea =
+                        options.leafMinWidth * options.leafMinHeight * 0.5;
 
-                    if (!createdFullWidthBottom) {
-                      unusedRects.push({
-                        x: placement.x + laidOutChild.w,
-                        y: placement.y + laidOutChild.h,
-                        w: widthDifference,
-                        h: heightDifference,
-                      });
-                    }
-                  }
+                      // Check if rectangle is large enough to be useful
+                      if (rectArea >= minUsefulArea) {
+                        // CRITICAL: Check for overlaps with ALL existing packed items
+                        let overlapsWithExisting = false;
+                        const existingItems = packerInstance.packedItems || [];
 
-                  // Add meaningful unused rectangles back to the packer - be more generous about what's "meaningful"
-                  for (const unusedRect of unusedRects) {
-                    // Lower the threshold for reclaiming space - even small areas can be useful
-                    const minUsefulArea =
-                      options.leafMinWidth * options.leafMinHeight * 0.5; // 50% of min leaf area
-                    const rectArea = unusedRect.w * unusedRect.h;
+                        for (const existingItem of existingItems) {
+                          if (existingItem.id === packerInput.id) continue; // Skip self
 
-                    if (
-                      rectArea >= minUsefulArea &&
-                      (unusedRect.h >= options.leafMinHeight * 0.7 ||
-                        unusedRect.w >= options.leafMinWidth * 0.7)
-                    ) {
-                      packer.addFreeRectangle(unusedRect);
+                          // Check for overlap using strict bounds checking
+                          const overlapX = !(
+                            existingItem.x >= unusedRect.x + unusedRect.w ||
+                            existingItem.x + existingItem.w <= unusedRect.x
+                          );
+                          const overlapY = !(
+                            existingItem.y >= unusedRect.y + unusedRect.h ||
+                            existingItem.y + existingItem.h <= unusedRect.y
+                          );
+
+                          if (overlapX && overlapY) {
+                            overlapsWithExisting = true;
+                            console.log(
+                              `⚠️ [${depth}] OVERLAP PREVENTION: Free rect [${unusedRect.x.toFixed(1)}, ${unusedRect.y.toFixed(1)}, ${unusedRect.w.toFixed(1)}x${unusedRect.h.toFixed(1)}] overlaps with "${existingItem.id}" [${existingItem.x.toFixed(1)}, ${existingItem.y.toFixed(1)}, ${existingItem.w.toFixed(1)}x${existingItem.h.toFixed(1)}] - REJECTING`
+                            );
+                            break;
+                          }
+                        }
+
+                        if (!overlapsWithExisting) {
+                          // Additional validation: check against existing free rectangles to prevent duplicates
+                          let duplicatesExistingFree = false;
+                          const existingFreeRects =
+                            packerInstance.freeRectangles || [];
+
+                          for (const existingFree of existingFreeRects) {
+                            // Check if this rectangle significantly overlaps with existing free rectangles
+                            const overlapX = !(
+                              existingFree.x >= unusedRect.x + unusedRect.w ||
+                              existingFree.x + existingFree.w <= unusedRect.x
+                            );
+                            const overlapY = !(
+                              existingFree.y >= unusedRect.y + unusedRect.h ||
+                              existingFree.y + existingFree.h <= unusedRect.y
+                            );
+
+                            if (overlapX && overlapY) {
+                              duplicatesExistingFree = true;
+                              console.log(
+                                `⚠️ [${depth}] DUPLICATE PREVENTION: Free rect [${unusedRect.x.toFixed(1)}, ${unusedRect.y.toFixed(1)}, ${unusedRect.w.toFixed(1)}x${unusedRect.h.toFixed(1)}] overlaps with existing free rect - REJECTING`
+                              );
+                              break;
+                            }
+                          }
+
+                          if (!duplicatesExistingFree) {
+                            packer.addFreeRectangle(unusedRect);
+                            console.log(
+                              `✅ [${depth}] RECT RECLAIMED (packer coords): [${unusedRect.x.toFixed(1)}, ${unusedRect.y.toFixed(1)}, ${unusedRect.w.toFixed(1)}x${unusedRect.h.toFixed(1)}] (area: ${rectArea.toFixed(1)})`
+                            );
+                          }
+                        }
+                      } else {
+                        console.log(
+                          `❌ [${depth}] RECT IGNORED: [${unusedRect.x.toFixed(1)}, ${unusedRect.y.toFixed(1)}, ${unusedRect.w.toFixed(1)}x${unusedRect.h.toFixed(1)}] (area: ${rectArea.toFixed(1)}, too small)`
+                        );
+                      }
                     }
                   }
                 }
+              } else {
+                console.log(
+                  `❌ [${depth}] SPACE RECLAIM SKIPPED: differences too small (w: ${absoluteWidthDiff.toFixed(1)}, h: ${absoluteHeightDiff.toFixed(1)})`
+                );
               }
             }
           } else {
+            console.log(
+              `❌ [${depth}] CHILD FAILED: "${childLabel}" - recursive layout returned null`
+            );
             // Log when recursive layout returned null (child was skipped internally)
           }
+        } else {
+          console.log(
+            `❌ [${depth}] CHILD SKIPPED: "${childLabel}" - negative dimensions after bounds check`
+          );
         }
       } else {
+        console.log(
+          `🔍 [${depth}] PACKER FAILED: "${childLabel}" - trying adaptive placement`
+        );
+
         // Try to fit the item by adapting its dimensions to available space
 
         // Get the free rectangles from the packer to find actual available spaces
@@ -1501,73 +1776,135 @@ function layoutNodeRecursive(
         }
 
         if (bestFitRect) {
-          const adaptivePlacement: PackerPlacement = {
-            id: packerInput.id,
-            x: bestFitRect.x,
-            y: bestFitRect.y,
-            w: bestFitW,
-            h: bestFitH,
-            fits: true,
-          };
-
-          const allocatedCellForChild: Rect = {
-            x: parentAllocatedSpace.x + options.padding + adaptivePlacement.x,
-            y:
-              parentAllocatedSpace.y +
-              headerActualHeight +
-              options.padding +
-              adaptivePlacement.y,
-            w: adaptivePlacement.w,
-            h: adaptivePlacement.h,
-          };
-
-          const laidOutChild = layoutNodeRecursive(
-            childNode,
-            allocatedCellForChild,
-            options,
-            depth + 1,
-            currentLayoutNode
+          console.log(
+            `🎯 [${depth}] ADAPTIVE FIT: "${childLabel}" -> [${bestFitRect.x.toFixed(1)}, ${bestFitRect.y.toFixed(1)}] size ${bestFitW.toFixed(1)}x${bestFitH.toFixed(1)}`
           );
 
-          if (laidOutChild) {
-            currentLayoutNode.children?.push(laidOutChild);
+          // Additional validation before placing: ensure the placement won't exceed container bounds
+          const wouldExceedWidth =
+            bestFitRect.x + bestFitW > contentPackingArea.w;
+          const wouldExceedHeight =
+            bestFitRect.y + bestFitH > contentPackingArea.h;
 
-            // Manual rectangle splitting since we're bypassing the normal packer flow
+          if (wouldExceedWidth || wouldExceedHeight) {
+            console.log(
+              `❌ [${depth}] ADAPTIVE FIT REJECTED: "${childLabel}" would exceed container bounds`
+            );
+            console.log(
+              `   Container: [0, 0, ${contentPackingArea.w.toFixed(1)}x${contentPackingArea.h.toFixed(1)}]`
+            );
+            console.log(
+              `   Proposed: [${bestFitRect.x.toFixed(1)}, ${bestFitRect.y.toFixed(1)}, ${bestFitW.toFixed(1)}x${bestFitH.toFixed(1)}]`
+            );
+          } else {
+            // Check one more time for overlaps with existing packed items
             const packerInstance = (packer as any).packer;
-            if (packerInstance && packerInstance.splitRectangle) {
-              // Split the rectangle to mark this space as used
-              (packer as any).packer.splitRectangle(
-                bestFitRect,
-                bestFitW,
-                laidOutChild.h // Use actual height instead of bestFitH
-              );
+            let hasOverlapWithPacked = false;
+
+            if (packerInstance && packerInstance.packedItems) {
+              const existingItems = packerInstance.packedItems || [];
+
+              for (const existingItem of existingItems) {
+                const overlapX = !(
+                  existingItem.x >= bestFitRect.x + bestFitW ||
+                  existingItem.x + existingItem.w <= bestFitRect.x
+                );
+                const overlapY = !(
+                  existingItem.y >= bestFitRect.y + bestFitH ||
+                  existingItem.y + existingItem.h <= bestFitRect.y
+                );
+
+                if (overlapX && overlapY) {
+                  hasOverlapWithPacked = true;
+                  console.log(
+                    `❌ [${depth}] ADAPTIVE FIT REJECTED: "${childLabel}" would overlap with "${existingItem.id}"`
+                  );
+                  break;
+                }
+              }
             }
 
-            // Update packer usage tracking
-            const packerInstance2 = (packer as any).packer;
-            if (packerInstance2) {
-              const rightEdge = bestFitRect.x + bestFitW;
-              const bottomEdge = bestFitRect.y + laidOutChild.h; // Use actual height
-              packerInstance2.usedWidth = Math.max(
-                packerInstance2.usedWidth,
-                rightEdge
-              );
-              packerInstance2.usedHeight = Math.max(
-                packerInstance2.usedHeight,
-                bottomEdge
-              );
-
-              // Add this item to the packed items list
-              packerInstance2.packedItems.push({
+            if (!hasOverlapWithPacked) {
+              const adaptivePlacement: PackerPlacement = {
                 id: packerInput.id,
                 x: bestFitRect.x,
                 y: bestFitRect.y,
                 w: bestFitW,
-                h: laidOutChild.h, // Use actual height instead of bestFitH
+                h: bestFitH,
                 fits: true,
-              });
+              };
+
+              const allocatedCellForChild: Rect = {
+                x:
+                  parentAllocatedSpace.x +
+                  options.padding +
+                  adaptivePlacement.x,
+                y:
+                  parentAllocatedSpace.y +
+                  headerActualHeight +
+                  options.padding +
+                  adaptivePlacement.y,
+                w: adaptivePlacement.w,
+                h: adaptivePlacement.h,
+              };
+
+              const laidOutChild = layoutNodeRecursive(
+                childNode,
+                allocatedCellForChild,
+                options,
+                depth + 1,
+                currentLayoutNode
+              );
+
+              if (laidOutChild) {
+                currentLayoutNode.children?.push(laidOutChild);
+
+                console.log(
+                  `✅ [${depth}] ADAPTIVE CHILD PLACED: "${childLabel}" final [${laidOutChild.x.toFixed(1)}, ${laidOutChild.y.toFixed(1)}, ${laidOutChild.w.toFixed(1)}x${laidOutChild.h.toFixed(1)}]`
+                );
+
+                // Manual rectangle splitting since we're bypassing the normal packer flow
+                const packerInstance = (packer as any).packer;
+                if (packerInstance && packerInstance.splitRectangle) {
+                  // Split the rectangle to mark this space as used
+                  (packer as any).packer.splitRectangle(
+                    bestFitRect,
+                    bestFitW,
+                    laidOutChild.h // Use actual height instead of bestFitH
+                  );
+                }
+
+                // Update packer usage tracking
+                const packerInstance2 = (packer as any).packer;
+                if (packerInstance2) {
+                  const rightEdge = bestFitRect.x + bestFitW;
+                  const bottomEdge = bestFitRect.y + laidOutChild.h; // Use actual height
+                  packerInstance2.usedWidth = Math.max(
+                    packerInstance2.usedWidth,
+                    rightEdge
+                  );
+                  packerInstance2.usedHeight = Math.max(
+                    packerInstance2.usedHeight,
+                    bottomEdge
+                  );
+
+                  // Add this item to the packed items list
+                  packerInstance2.packedItems.push({
+                    id: packerInput.id,
+                    x: bestFitRect.x,
+                    y: bestFitRect.y,
+                    w: bestFitW,
+                    h: laidOutChild.h, // Use actual height instead of bestFitH
+                    fits: true,
+                  });
+                }
+              }
             }
           }
+        } else {
+          console.log(
+            `❌ [${depth}] NO ADAPTIVE FIT: "${childLabel}" - no suitable free rectangles found`
+          );
         }
       }
     }
@@ -1632,12 +1969,17 @@ function layoutNodeRecursive(
       actualContentHeight = 0;
     }
 
+    const originalHeight = currentLayoutNode.h;
     currentLayoutNode.w = parentAllocatedSpace.w; // Typically takes full allocated width
     currentLayoutNode.h = Math.min(
       parentAllocatedSpace.h,
       headerActualHeight +
         actualContentHeight +
         (actualContentHeight > 0 ? options.padding * 2 : options.padding) // top padding is part of contentPackingArea.y
+    );
+
+    console.log(
+      `📐 [${depth}] CONTAINER HEIGHT ADJUST: "${nodeLabel}" ${originalHeight.toFixed(1)} -> ${currentLayoutNode.h.toFixed(1)} (content: ${actualContentHeight.toFixed(1)}, header: ${headerActualHeight})`
     );
 
     if (
@@ -1649,7 +1991,14 @@ function layoutNodeRecursive(
       // currentLayoutNode.isContainer = false; // Re-evaluate if it should render as a simple box/leaf
       // or just show header
       currentLayoutNode.h = headerActualHeight;
+      console.log(
+        `📦 [${depth}] EMPTY CONTAINER: "${nodeLabel}" -> header only (${headerActualHeight})`
+      );
     }
+
+    console.log(
+      `✅ [${depth}] CONTAINER DONE: "${nodeLabel}" -> [${currentLayoutNode.x.toFixed(1)}, ${currentLayoutNode.y.toFixed(1)}, ${currentLayoutNode.w.toFixed(1)}x${currentLayoutNode.h.toFixed(1)}] with ${currentLayoutNode.children?.length || 0} children`
+    );
   }
 
   // Ensure node dimensions are not smaller than minimums if it's not 'none'
@@ -1673,6 +2022,9 @@ function layoutNodeRecursive(
     isNaN(currentLayoutNode.x) ||
     isNaN(currentLayoutNode.y)
   ) {
+    console.error(
+      `🚨 [${depth}] INVALID COORDINATES: "${nodeLabel}" [${currentLayoutNode.x}, ${currentLayoutNode.y}, ${currentLayoutNode.w}x${currentLayoutNode.h}]`
+    );
     // Provide default values to prevent SVG errors, though layout will be wrong.
     currentLayoutNode.x = currentLayoutNode.x || 0;
     currentLayoutNode.y = currentLayoutNode.y || 0;
