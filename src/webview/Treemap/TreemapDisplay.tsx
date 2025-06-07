@@ -915,12 +915,15 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           className="treemap-internal-header" // Added class for clarity
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <h3 style={{ margin: 0, fontSize: "1em", fontWeight: "normal" }}>
-              {/* Title removed from here, will be handled by App.tsx's main header */}
-              Treemap:{" "}
-              <span style={{ color: "#ddd", fontStyle: "italic" }}>
-                {fileName}
-              </span>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "1.2em",
+                fontWeight: "500",
+                color: "#ffffff",
+              }}
+            >
+              {fileName}
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
               <input
@@ -951,13 +954,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {(isolatedNode || isolationPath.length > 0) && (
               <>
                 {isolatedNode && (
                   <button
                     onClick={resetIsolation}
-                    className="treemap-action-button"
+                    className="treemap-header-button"
                     title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
                   >
                     Reset Zoom
@@ -966,7 +969,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                 {isolationPath.length > 0 && (
                   <button
                     onClick={goUpOneLevel}
-                    className="treemap-action-button"
+                    className="treemap-header-button"
                     title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
                   >
                     Up One Level
@@ -976,22 +979,38 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             )}
             <button
               onClick={handleExportToJson}
-              className="treemap-action-button"
+              className="treemap-export-button"
               title="Export tree data as JSON"
             >
-              Export JSON
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M5,3H7V5H5V10A2,2 0 0,1 3,8V6A2,2 0 0,1 5,4V3M19,3V4A2,2 0 0,1 21,6V8A2,2 0 0,1 19,10V5H17V3H19M5,21V20A2,2 0 0,1 3,18V16A2,2 0 0,1 5,14V19H7V21H5M19,21H17V19H19V14A2,2 0 0,1 21,16V18A2,2 0 0,1 19,20V21Z" />
+              </svg>
+              JSON
             </button>
             <button
               onClick={handleExportToPng}
-              className="treemap-action-button"
+              className="treemap-export-button"
               title="Export treemap as PNG"
             >
-              Export PNG
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+              </svg>
+              PNG
             </button>
             <button
               ref={setLegendButtonRef}
               onClick={() => setIsLegendVisible(!isLegendVisible)}
-              className="treemap-action-button"
+              className="treemap-header-button"
               title="Toggle Legend"
             >
               {isLegendVisible ? "Hide Legend" : "Show Legend"}
@@ -999,24 +1018,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             <button
               onClick={onToggleSettingsPanel}
               title={isSettingsPanelOpen ? "Hide Settings" : "Show Settings"}
-              style={{
-                padding: "6px",
-                backgroundColor: isSettingsPanelOpen ? "#0056b3" : "#007bff",
-                color: "white",
-                border: isSettingsPanelOpen
-                  ? "2px solid #ffc107"
-                  : "2px solid transparent",
-                borderRadius: "50%",
-                cursor: "pointer",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                width: "32px",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background-color 0.2s, border-color 0.2s",
-              }}
-              className="settings-cog-button-treemap"
+              className={`treemap-settings-button ${isSettingsPanelOpen ? "active" : ""}`}
             >
               <svg
                 width="16"

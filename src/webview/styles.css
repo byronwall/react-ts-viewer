@@ -153,6 +153,136 @@ input[type="checkbox"] {
   ); /* Make dots slightly visible */
 }
 
+/* Treemap Header Button Styles */
+.treemap-header-button {
+  background-color: var(--vscode-button-secondaryBackground, #3c3c3c);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  border: 1px solid var(--vscode-button-border, #555555);
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+.treemap-header-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, #4a4a4a);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.treemap-export-button {
+  background-color: var(--vscode-button-secondaryBackground, #3c3c3c);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  border: 1px solid var(--vscode-button-border, #555555);
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+.treemap-export-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, #4a4a4a);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.treemap-export-button svg {
+  flex-shrink: 0;
+}
+
+.treemap-settings-button {
+  background-color: var(--vscode-button-secondaryBackground, #3c3c3c);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  border: 1px solid var(--vscode-button-border, #555555);
+  border-radius: 3px;
+  padding: 6px;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+.treemap-settings-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, #4a4a4a);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.treemap-settings-button.active {
+  background-color: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #ffffff);
+  border-color: var(--vscode-focusBorder, #007fd4);
+  box-shadow: 0 0 0 2px rgba(0, 127, 212, 0.3);
+}
+
+.treemap-settings-button.active:hover {
+  background-color: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+/* Search Input Styles */
+.treemap-search-input {
+  background-color: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #cccccc);
+  border: 1px solid var(--vscode-input-border, #555555);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 200px;
+  margin: 0;
+}
+
+.treemap-search-input:focus {
+  outline: none;
+  border-color: var(--vscode-focusBorder, #007fd4);
+  box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007fd4);
+}
+
+.treemap-search-cancel {
+  background-color: transparent;
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  border: 1px solid var(--vscode-button-border, #555555);
+  border-radius: 3px;
+  padding: 4px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+}
+
+.treemap-search-cancel:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, #4a4a4a);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.treemap-search-status {
+  color: var(--vscode-descriptionForeground, #999999);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 /* Depth Breadcrumb Styles */
 .depth-breadcrumb {
   background-color: #404040;
