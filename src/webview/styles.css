@@ -318,3 +318,41 @@ input[type="checkbox"] {
   border-color: #1177bb !important;
   box-shadow: 0 0 0 2px rgba(17, 119, 187, 0.3) !important;
 }
+
+/* Treemap Settings Popover Styles */
+.treemap-settings-popover {
+  background-color: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-widget-border, #454545);
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: var(--vscode-editorWidget-foreground, #ccc);
+  max-height: 70vh;
+  overflow-y: auto;
+  width: 320px;
+}
+
+.treemap-settings-popover h4 {
+  margin: 0 0 15px 0;
+  border-bottom: 1px solid var(--vscode-widget-border, #454545);
+  padding-bottom: 8px;
+  fontsize: 1.1em;
+  color: #ffffff;
+}
+
+.treemap-settings-popover::-webkit-scrollbar {
+  width: 8px;
+}
+
+.treemap-settings-popover::-webkit-scrollbar-track {
+  background: var(--vscode-scrollbarSlider-background, #3e3e42);
+}
+
+.treemap-settings-popover::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-activeBackground, #6f6f6f);
+  border-radius: 4px;
+}
+
+.treemap-settings-popover::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, #8a8a8a);
+}
