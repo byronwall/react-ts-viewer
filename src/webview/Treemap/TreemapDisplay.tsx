@@ -35,6 +35,21 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   return null;
 }
 
+// Helper function to calculate the maximum depth of a tree
+function calculateMaxDepth(node: ScopeNode, currentDepth: number = 0): number {
+  if (!node.children || node.children.length === 0) {
+    return currentDepth;
+  }
+
+  let maxChildDepth = currentDepth;
+  for (const child of node.children) {
+    const childDepth = calculateMaxDepth(child, currentDepth + 1);
+    maxChildDepth = Math.max(maxChildDepth, childDepth);
+  }
+
+  return maxChildDepth;
+}
+
 // Exported helper function to check if a node matches the search text
 export function nodeMatchesSearch(
   node: ScopeNode,
@@ -505,6 +520,79 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     };
   }, [onSettingsChange, vscodeApi]);
 
+  // New useEffect for comma/period depth limit shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if the event target is an input, select, or textarea
+      const target = event.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "SELECT" ||
+          target.tagName === "TEXTAREA")
+      ) {
+        // If the event originates from an input field, don't process the shortcut
+        return;
+      }
+
+      // Comma key: decrease depth limit
+      if (
+        event.key === "," &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+        if (!settings.enableDepthLimit) {
+          // If depth limit is disabled, enable it with max depth - 1
+          const maxDepth = calculateMaxDepth(initialData);
+          const newDepth = Math.max(1, maxDepth - 1);
+          onSettingsChange("enableDepthLimit", true);
+          onSettingsChange("maxDepth", newDepth);
+        } else {
+          // Decrease current depth limit, minimum 1
+          const newDepth = Math.max(1, settings.maxDepth - 1);
+          onSettingsChange("maxDepth", newDepth);
+        }
+      }
+
+      // Period key: increase depth limit
+      if (
+        event.key === "." &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+        const maxDepth = calculateMaxDepth(initialData);
+
+        if (!settings.enableDepthLimit) {
+          // If depth limit is disabled (show all), do nothing - stop here
+          return;
+        } else if (settings.maxDepth >= maxDepth) {
+          // If at or above max depth, disable depth limit (show all)
+          onSettingsChange("enableDepthLimit", false);
+        } else {
+          // Increase current depth limit
+          const newDepth = Math.min(maxDepth, settings.maxDepth + 1);
+          onSettingsChange("maxDepth", newDepth);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    onSettingsChange,
+    settings.enableDepthLimit,
+    settings.maxDepth,
+    initialData,
+  ]);
+
   // Search functionality effects
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -752,6 +840,48 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   // Determine which layout function and options to use based on settings
   const currentLayoutFn: AnyLayoutFn = layoutHierarchical;
 
+  // Calculate max depth for breadcrumbs
+  const maxDepth = calculateMaxDepth(baseDisplayData || initialData);
+
+  // Generate breadcrumb buttons
+  const renderDepthBreadcrumbs = () => {
+    const buttons = [];
+
+    // Add buttons from 1 to maxDepth (skip 0 as it's confusing)
+    for (let depth = 1; depth <= maxDepth; depth++) {
+      const isActive = settings.enableDepthLimit && settings.maxDepth === depth;
+
+      buttons.push(
+        <button
+          key={depth}
+          onClick={() => {
+            onSettingsChange("enableDepthLimit", true);
+            onSettingsChange("maxDepth", depth);
+          }}
+          className={`depth-breadcrumb ${isActive ? "active" : ""}`}
+          title={`Depth limit: ${depth}`}
+        >
+          {depth}
+        </button>
+      );
+    }
+
+    // Add unlimited option (*)
+    const isUnlimitedActive = !settings.enableDepthLimit;
+    buttons.push(
+      <button
+        key="unlimited"
+        onClick={() => onSettingsChange("enableDepthLimit", false)}
+        className={`depth-breadcrumb ${isUnlimitedActive ? "active" : ""}`}
+        title="No depth limit (show all levels)"
+      >
+        *
+      </button>
+    );
+
+    return buttons;
+  };
+
   return (
     <div
       style={{
@@ -820,6 +950,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               </span>
             )}
           </div>
+
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {(isolatedNode || isolationPath.length > 0) && (
               <>
@@ -903,6 +1034,28 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Depth Breadcrumbs Row - Outside Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "3px",
+            padding: "8px 10px",
+            backgroundColor: "#2d2d30",
+            borderBottom: "1px solid #333333",
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ fontSize: "11px", color: "#999", marginRight: "6px" }}>
+            Depth:
+          </span>
+          {renderDepthBreadcrumbs()}
+          <span style={{ fontSize: "10px", color: "#777", marginLeft: "6px" }}>
+            Use , and . keys to navigate
+          </span>
+        </div>
+
         <div
           ref={treemapContainerRef}
           style={{
