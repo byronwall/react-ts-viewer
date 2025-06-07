@@ -87,6 +87,15 @@ Example treemap of itself:
     - **Root Level Protection**: The root node is guaranteed to show all its direct children; the layout will compress larger children to make room rather than hide any root-level nodes
     - **Layout Constraint Tracking**: Different reasons for hiding are tracked (size constraints vs. layout constraints) and displayed in tooltips
   - **Experimental Treemap Layout**: Introduced an alternative treemap layout algorithm (`geminiLayout`) based on bin packing and breadth-first rendering. This is currently an experimental feature and can be enabled by modifying the `selectedLayout` setting (defaults to the original `binaryLayout`). The new layout aims to fulfill specifications outlined in `src/webview/Treemap/layout2.md`.
+- **Interactive Viewport Controls**: Advanced zoom and pan functionality for detailed exploration:
+  - **Mouse Wheel Zoom**: Zoom in and out using the mouse wheel (supports trackpad gestures on Mac)
+  - **Cursor-Focused Zoom**: Zoom operations center on the cursor position for intuitive navigation
+  - **Click and Drag Panning**: Click and drag to move the viewport around when zoomed in
+  - **Reset View Button**: Convenient reset button to return to the default view that fits the entire treemap
+  - **Performance Optimized**: Viewport transforms are applied at the rendering layer without triggering treemap re-calculations
+  - **Smooth Interactions**: Uses hardware-accelerated CSS transforms for smooth zoom and pan operations
+  - **Visual Feedback**: Cursor changes to indicate interaction modes (grab/grabbing during panning)
+  - **Debug Information**: When debug mode is enabled, shows current scale and pan coordinates
 
 ### Color Scheme
 

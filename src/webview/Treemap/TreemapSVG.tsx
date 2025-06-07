@@ -950,7 +950,8 @@ export interface TreemapSVGProps {
 
 /* ---------- component ------------ */
 
-export const TreemapSVG: React.FC<TreemapSVGProps> = ({
+// Internal component that renders just the treemap content without the outer SVG wrapper
+export const TreemapContent: React.FC<TreemapSVGProps> = ({
   root,
   width,
   height,
@@ -1071,7 +1072,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
   ].sort((a, b) => a.node.renderOrder - b.node.renderOrder);
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+    <>
       {/* Stylesheet for transitions */}
       <defs>
         <style>{treemapStyles}</style>
@@ -1104,6 +1105,17 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
           freeRects={collectAllFreeRectangles(layoutRoot as AnyLayoutNode)}
         />
       )}
+    </>
+  );
+};
+
+// Main component that wraps content in SVG
+export const TreemapSVG: React.FC<TreemapSVGProps> = (props) => {
+  const { width, height } = props;
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <TreemapContent {...props} />
     </svg>
   );
 };

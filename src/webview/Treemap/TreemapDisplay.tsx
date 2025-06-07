@@ -15,7 +15,8 @@ import CollapsibleSection from "../CollapsibleSection"; // Import CollapsibleSec
 import SettingsControl from "../SettingsControl"; // Import SettingsControl
 import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
 import { TreemapLegendPopover } from "./TreemapLegendPopover";
-import { AnyLayoutFn, TreemapSVG } from "./TreemapSVG"; // Added AnyLayoutFn
+import { AnyLayoutFn } from "./TreemapSVG"; // Added AnyLayoutFn
+import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
 import { layoutHierarchical } from "./layoutHierarchical";
 import { pastelSet } from "./pastelSet";
 
@@ -1121,7 +1122,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           className="custom-treemap-container"
         >
           {finalDisplayData ? (
-            <TreemapSVG
+            <ViewportTreemapSVG
               root={finalDisplayData}
               width={containerDimensions.width}
               height={containerDimensions.height}
