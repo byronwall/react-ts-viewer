@@ -465,13 +465,20 @@ const collectAllNodes = (
   return { containers, leaves };
 };
 
-// Render function for container nodes
-const renderContainer = (
-  container: FlatContainerNode,
-  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void,
-  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
-  onMouseLeave: () => void
-): React.ReactNode => {
+// React component for container nodes
+interface ContainerNodeProps {
+  container: FlatContainerNode;
+  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseLeave: () => void;
+}
+
+const ContainerNode: React.FC<ContainerNodeProps> = ({
+  container,
+  onNodeClick,
+  onMouseEnter,
+  onMouseLeave,
+}) => {
   const {
     id,
     node,
@@ -644,13 +651,20 @@ const renderContainer = (
   );
 };
 
-// Render function for leaf nodes
-const renderLeaf = (
-  leaf: FlatLeafNode,
-  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void,
-  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
-  onMouseLeave: () => void
-): React.ReactNode => {
+// React component for leaf nodes
+interface LeafNodeProps {
+  leaf: FlatLeafNode;
+  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseLeave: () => void;
+}
+
+const LeafNode: React.FC<LeafNodeProps> = ({
+  leaf,
+  onNodeClick,
+  onMouseEnter,
+  onMouseLeave,
+}) => {
   const {
     id,
     node,
@@ -848,6 +862,52 @@ const renderLeaf = (
   );
 };
 
+// React component for free rectangles debug visualization
+interface FreeRectanglesProps {
+  freeRects: Array<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    containerPath: string;
+  }>;
+}
+
+const FreeRectangles: React.FC<FreeRectanglesProps> = ({ freeRects }) => {
+  return (
+    <>
+      {freeRects.map((rect, index) => (
+        <g key={`free-rect-${index}`}>
+          <rect
+            x={rect.x}
+            y={rect.y}
+            width={rect.w}
+            height={rect.h}
+            fill="rgba(255, 0, 0, 0.1)" // Semi-transparent red
+            stroke="rgba(255, 0, 0, 0.8)" // Red border
+            strokeWidth="1"
+            strokeDasharray="4,2" // Dashed border
+            pointerEvents="none" // Don't interfere with clicks
+          />
+          {/* Add a small label if the rectangle is large enough */}
+          {rect.w > 30 && rect.h > 20 && (
+            <text
+              x={rect.x + 2}
+              y={rect.y + 12}
+              fontSize="8"
+              fill="rgba(255, 0, 0, 0.8)"
+              pointerEvents="none"
+              style={{ userSelect: "none", fontFamily: "monospace" }}
+            >
+              FREE
+            </text>
+          )}
+        </g>
+      ))}
+    </>
+  );
+};
+
 /* ---------- type definitions ------------ */
 
 export type AnyLayoutNode = HierarchicalLayoutNode;
@@ -983,46 +1043,6 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     return allFreeRects;
   };
 
-  /* render free rectangles for debugging */
-  const renderFreeRectangles = (
-    freeRects: Array<{
-      x: number;
-      y: number;
-      w: number;
-      h: number;
-      containerPath: string;
-    }>
-  ): React.ReactNode => {
-    return freeRects.map((rect, index) => (
-      <g key={`free-rect-${index}`}>
-        <rect
-          x={rect.x}
-          y={rect.y}
-          width={rect.w}
-          height={rect.h}
-          fill="rgba(255, 0, 0, 0.1)" // Semi-transparent red
-          stroke="rgba(255, 0, 0, 0.8)" // Red border
-          strokeWidth="1"
-          strokeDasharray="4,2" // Dashed border
-          pointerEvents="none" // Don't interfere with clicks
-        />
-        {/* Add a small label if the rectangle is large enough */}
-        {rect.w > 30 && rect.h > 20 && (
-          <text
-            x={rect.x + 2}
-            y={rect.y + 12}
-            fontSize="8"
-            fill="rgba(255, 0, 0, 0.8)"
-            pointerEvents="none"
-            style={{ userSelect: "none", fontFamily: "monospace" }}
-          >
-            FREE
-          </text>
-        )}
-      </g>
-    ));
-  };
-
   console.log("🚀 Using flat rendering system with breadth-first ordering:", {
     containers: containers.length,
     leaves: leaves.length,
@@ -1039,16 +1059,31 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       {/* Render all nodes in breadth-first order */}
       {allNodes.map(({ type, node }) =>
-        type === "container"
-          ? renderContainer(node, onNodeClick, onMouseEnter, onMouseLeave)
-          : renderLeaf(node, onNodeClick, onMouseEnter, onMouseLeave)
+        type === "container" ? (
+          <ContainerNode
+            key={node.id}
+            container={node}
+            onNodeClick={onNodeClick}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+          />
+        ) : (
+          <LeafNode
+            key={node.id}
+            leaf={node}
+            onNodeClick={onNodeClick}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+          />
+        )
       )}
 
       {/* Debug elements last */}
-      {settings.showDebugFreeRectangles &&
-        renderFreeRectangles(
-          collectAllFreeRectangles(layoutRoot as AnyLayoutNode)
-        )}
+      {settings.showDebugFreeRectangles && (
+        <FreeRectangles
+          freeRects={collectAllFreeRectangles(layoutRoot as AnyLayoutNode)}
+        />
+      )}
     </svg>
   );
 };
