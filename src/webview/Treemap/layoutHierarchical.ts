@@ -513,7 +513,7 @@ function layoutNodeRecursive(
 
     const contentPackingArea: Rect = {
       x: 0, // Relative to container's own (0,0)
-      y: headerActualHeight,
+      y: 0, // Start content packing at 0, not headerActualHeight
       w: parentAllocatedSpace.w - 2 * options.padding, // Account for L/R padding
       h: parentAllocatedSpace.h - headerActualHeight - 2 * options.padding, // Account for T/B padding (header + bottom)
     };
@@ -1165,7 +1165,7 @@ function layoutNodeRecursive(
       parentAllocatedSpace.h,
       headerActualHeight +
         actualContentHeight +
-        (actualContentHeight > 0 ? options.padding * 2 : options.padding) // top padding is part of contentPackingArea.y
+        (actualContentHeight > 0 ? options.padding * 2 : options.padding) // top and bottom padding
     );
 
     if (

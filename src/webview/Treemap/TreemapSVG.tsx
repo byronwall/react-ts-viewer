@@ -883,8 +883,10 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
     const shouldRenderHeader = isActuallyContainer && ln.h >= 16 && ln.w >= 24;
 
+    // FIXED: Use the layout engine's calculated header height instead of recalculating
+    // This ensures consistency between layout positioning and visual rendering
     const headerHeightToUse = shouldRenderHeader
-      ? getHeaderHeight(depth, ln.h)
+      ? Math.min(layoutOptions.headerHeight, ln.h) // Use layout's header height
       : 0;
 
     const shouldRenderBody = ln.h - headerHeightToUse > 8;
@@ -922,9 +924,9 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
         {isActuallyContainer && (
           <rect
             x={ln.x}
-            y={ln.y}
+            y={ln.y + headerHeightToUse}
             width={ln.w}
-            height={ln.h}
+            height={ln.h - headerHeightToUse}
             fill={groupFillColor}
             stroke={groupBorderColor}
             strokeWidth={groupStrokeWidth}
@@ -943,7 +945,7 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
             {finalRenderHeader({
               node: ln.node,
               w: ln.w,
-              h: headerHeightToUse, // Use calculated header height
+              h: headerHeightToUse,
               depth,
             })}
           </g>

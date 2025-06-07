@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When creating console log statements, prefer things that read like sentences instead of deeply nested dumps.  I want to copy the text of the console and have it make sense.  Prefer including some sort of identifier so that logs can be tied to the images.  Prefer adding a single emoji at the start that tracks the item.  If the log is obviously good or bad, include a check or X or something distinct that communicates good or bad.

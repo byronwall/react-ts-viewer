@@ -5,6 +5,8 @@ alwaysApply: true
 ---
 Testing Guidelines
 
+DO NOT RUN TESTS UNLESS EXPLICITLY ASKED. They are not needed for the majority of front end work.
+
 ## Running Tests
 
 Use command `npm run test:once` to run tests that exit immediately. The raw `test` command will stay in watch mode.
@@ -92,4 +94,4 @@ describe("Descriptive Test Suite Name", () => {
 
 ## Project Context
 
-This project uses [Vitest](https://vitest.dev) as the test runner. The `-u` flag is the standard Vitest option for updating snapshots, while `--update-snapshots` is not a valid option.
+This project uses [Vitest](mdc:https:/vitest.dev) as the test runner. The `-u` flag is the standard Vitest option for updating snapshots, while `--update-snapshots` is not a valid option.
