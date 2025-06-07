@@ -37,7 +37,6 @@ export interface TreemapSettings {
   hierarchicalLeafMinAspectRatio: number;
   hierarchicalLeafMaxAspectRatio: number;
   showDebugFreeRectangles: boolean;
-  useFlatRendering: boolean;
 }
 
 export interface SettingConfigBase<T> {
@@ -372,12 +371,6 @@ export const treemapSettingsConfig: SettingConfig[] = [
     type: "boolean",
     group: "Debug",
   },
-  {
-    id: "useFlatRendering",
-    label: "Use Flat Rendering (Experimental)",
-    type: "boolean",
-    group: "Debug",
-  },
 ];
 
 export const settingGroupOrder: string[] = [
@@ -431,5 +424,4 @@ export const defaultTreemapSettings: TreemapSettings = {
   hierarchicalLeafMinAspectRatio: 1.0,
   hierarchicalLeafMaxAspectRatio: 4.0,
   showDebugFreeRectangles: true,
-  useFlatRendering: true,
 };
