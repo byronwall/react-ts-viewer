@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+DO NOT OFFER OR TELL ME TO RUN THE APP AFTER MAKING FIXES.  My app is already running in a hot reload configuration.  I see the changes.  Just finish the chat or move on.  Don't wait for me to run the app.
