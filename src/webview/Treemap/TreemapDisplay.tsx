@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { svgAsPngUri } from "save-svg-as-png";
 import { Popover } from "@headlessui/react";
+import { Code, FileImage, Gear } from "@phosphor-icons/react";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
 import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
 import {
@@ -159,9 +160,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 }) => {
   const [isolatedNode, setIsolatedNode] = useState<ScopeNode | null>(null);
   const [isolationPath, setIsolationPath] = useState<ScopeNode[]>([]);
-  const [isLegendVisible, setIsLegendVisible] = useState<boolean>(false); // State for legend popover
-  const [legendButtonRef, setLegendButtonRef] =
-    useState<HTMLButtonElement | null>(null);
+
   const [selectedNodeForDrawer, setSelectedNodeForDrawer] =
     useState<ScopeNode | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
@@ -1020,14 +1019,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               className="treemap-export-button"
               title="Export tree data as JSON"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M5,3H7V5H5V10A2,2 0 0,1 3,8V6A2,2 0 0,1 5,4V3M19,3V4A2,2 0 0,1 21,6V8A2,2 0 0,1 19,10V5H17V3H19M5,21V20A2,2 0 0,1 3,18V16A2,2 0 0,1 5,14V19H7V21H5M19,21H17V19H19V14A2,2 0 0,1 21,16V18A2,2 0 0,1 19,20V21Z" />
-              </svg>
+              <Code size={14} />
               JSON
             </button>
             <button
@@ -1035,24 +1027,10 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               className="treemap-export-button"
               title="Export treemap as PNG"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-              </svg>
+              <FileImage size={14} />
               PNG
             </button>
-            <button
-              ref={setLegendButtonRef}
-              onClick={() => setIsLegendVisible(!isLegendVisible)}
-              className="treemap-header-button"
-              title="Toggle Legend"
-            >
-              {isLegendVisible ? "Hide Legend" : "Show Legend"}
-            </button>
+            <TreemapLegendPopover activePalette={pastelSet} />
 
             {/* Settings Popover */}
             <Popover>
@@ -1081,26 +1059,14 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                       className={`treemap-settings-button ${open ? "active" : ""}`}
                       title="Settings"
                     >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.68,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+                      <Gear size={16} />
                     </Popover.Button>
 
                     {open &&
                       createPortal(
                         <Popover.Panel
                           static
-                          className="treemap-settings-popover"
+                          className="treemap-popover-base treemap-settings-popover"
                           style={{
                             position: "fixed",
                             top: panelPosition.top,
@@ -1223,12 +1189,6 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           )}
         </div>
       </div>
-      <TreemapLegendPopover
-        activePalette={pastelSet}
-        isOpen={isLegendVisible}
-        onClose={() => setIsLegendVisible(false)}
-        anchorElement={legendButtonRef}
-      />
       {isDrawerOpen && selectedNodeForDrawer && (
         <>
           <div

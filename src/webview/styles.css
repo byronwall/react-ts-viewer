@@ -319,40 +319,64 @@ input[type="checkbox"] {
   box-shadow: 0 0 0 2px rgba(17, 119, 187, 0.3) !important;
 }
 
-/* Treemap Settings Popover Styles */
-.treemap-settings-popover {
+/* Common Popover Base Styles */
+.treemap-popover-base {
   background-color: var(--vscode-editorWidget-background, #252526);
   border: 1px solid var(--vscode-widget-border, #454545);
   border-radius: 4px;
-  padding: 15px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   color: var(--vscode-editorWidget-foreground, #ccc);
   max-height: 70vh;
   overflow-y: auto;
-  width: 320px;
 }
 
-.treemap-settings-popover h4 {
-  margin: 0 0 15px 0;
+.treemap-popover-base h4 {
+  margin: 0 0 12px 0;
   border-bottom: 1px solid var(--vscode-widget-border, #454545);
   padding-bottom: 8px;
-  fontsize: 1.1em;
+  font-size: 14px;
+  font-weight: 500;
   color: #ffffff;
 }
 
-.treemap-settings-popover::-webkit-scrollbar {
+.treemap-popover-base::-webkit-scrollbar {
   width: 8px;
 }
 
-.treemap-settings-popover::-webkit-scrollbar-track {
+.treemap-popover-base::-webkit-scrollbar-track {
   background: var(--vscode-scrollbarSlider-background, #3e3e42);
 }
 
-.treemap-settings-popover::-webkit-scrollbar-thumb {
+.treemap-popover-base::-webkit-scrollbar-thumb {
   background: var(--vscode-scrollbarSlider-activeBackground, #6f6f6f);
   border-radius: 4px;
 }
 
-.treemap-settings-popover::-webkit-scrollbar-thumb:hover {
+.treemap-popover-base::-webkit-scrollbar-thumb:hover {
   background: var(--vscode-scrollbarSlider-hoverBackground, #8a8a8a);
+}
+
+/* Treemap Settings Popover Styles */
+.treemap-settings-popover {
+  padding: 15px;
+  width: 320px;
+}
+
+/* Treemap Legend Popover Styles */
+.treemap-legend-popover {
+  padding: 10px 15px;
+  min-width: 200px;
+  max-height: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.treemap-legend-popover h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  border-bottom: none; /* Override base style for legend */
+  padding-bottom: 0;
 }
