@@ -13,6 +13,17 @@ import {
 
 import { pastelSet } from "./pastelSet";
 
+// Stylesheet for treemap animations
+const treemapStyles = `
+  .treemap-container {
+    transition: transform 500ms ease-in-out;
+  }
+  
+  .treemap-leaf {
+    transition: transform 500ms ease-in-out;
+  }
+`;
+
 /* ---------- utility functions ------------ */
 
 // Function to lighten a hex color by a percentage
@@ -509,7 +520,11 @@ const ContainerNode: React.FC<ContainerNodeProps> = ({
   const textY = Math.min(headerHeight - 2, fontSize + 2);
 
   return (
-    <g key={id} transform={`translate(${x}, ${y})`}>
+    <g
+      key={id}
+      transform={`translate(${x}, ${y})`}
+      className="treemap-container"
+    >
       {/* Container background */}
       <rect
         x={0}
@@ -692,7 +707,7 @@ const LeafNode: React.FC<LeafNodeProps> = ({
   if (!shouldShowLabel && fontSize === 0) {
     // This is a box mode node
     return (
-      <g key={id} transform={`translate(${x}, ${y})`}>
+      <g key={id} transform={`translate(${x}, ${y})`} className="treemap-leaf">
         <rect
           x={0}
           y={0}
@@ -739,7 +754,7 @@ const LeafNode: React.FC<LeafNodeProps> = ({
 
   // Regular leaf node
   return (
-    <g key={id} transform={`translate(${x}, ${y})`}>
+    <g key={id} transform={`translate(${x}, ${y})`} className="treemap-leaf">
       <rect
         x={0}
         y={0}
@@ -1057,6 +1072,11 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      {/* Stylesheet for transitions */}
+      <defs>
+        <style>{treemapStyles}</style>
+      </defs>
+
       {/* Render all nodes in breadth-first order */}
       {allNodes.map(({ type, node }) =>
         type === "container" ? (
