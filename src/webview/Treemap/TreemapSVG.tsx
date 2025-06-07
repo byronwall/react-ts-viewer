@@ -43,6 +43,752 @@ const lightenColor = (hex: string, percent: number): string => {
   return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
 };
 
+/* ---------- flat rendering system ------------ */
+
+interface FlatContainerNode {
+  id: string;
+  node: ScopeNode;
+  x: number; // Absolute position
+  y: number; // Absolute position
+  w: number;
+  h: number;
+  headerHeight: number;
+  depth: number;
+  renderOrder: number;
+  // Styling properties
+  color: string;
+  borderColor: string;
+  strokeWidth: number;
+  opacity: number;
+  groupBorderColor: string;
+  groupStrokeWidth: number;
+  groupOpacity: number;
+  groupFillColor: string;
+  // Interaction flags
+  isSelected: boolean;
+  isSearchMatch: boolean;
+  // Text properties
+  displayLabel: string;
+  fontSize: number;
+  textColor: string;
+  shouldShowLabel: boolean;
+  // Indicators
+  hasUnrenderedChildren: boolean;
+  unrenderedCount: number;
+  hasHiddenChildren: boolean;
+  hiddenChildrenCount: number;
+}
+
+interface FlatLeafNode {
+  id: string;
+  node: ScopeNode;
+  x: number; // Absolute position
+  y: number; // Absolute position
+  w: number;
+  h: number;
+  depth: number;
+  renderOrder: number;
+  // Styling properties
+  color: string;
+  borderColor: string;
+  strokeWidth: number;
+  opacity: number;
+  // Interaction flags
+  isSelected: boolean;
+  isSearchMatch: boolean;
+  // Text properties
+  displayLabel: string;
+  fontSize: number;
+  textColor: string;
+  shouldShowLabel: boolean;
+  // Indicators
+  hasUnrenderedChildren: boolean;
+  unrenderedCount: number;
+  hasHiddenChildren: boolean;
+  hiddenChildrenCount: number;
+}
+
+// Helper function to detect unrendered children (moved from existing code)
+const hasUnrenderedChildrenHelper = (
+  originalNode: ScopeNode,
+  layoutNode: AnyLayoutNode
+): { hasUnrendered: boolean; unrenderedCount: number } => {
+  const originalChildrenCount = originalNode.children?.length || 0;
+  const renderedChildrenCount = layoutNode.children?.length || 0;
+
+  return {
+    hasUnrendered: originalChildrenCount > renderedChildrenCount,
+    unrenderedCount: originalChildrenCount - renderedChildrenCount,
+  };
+};
+
+const collectAllNodes = (
+  layoutRoot: AnyLayoutNode,
+  settings: TreemapSettings,
+  matchingNodes: Set<string>,
+  selectedNodeId: string | undefined,
+  minFontSize: number,
+  maxFontSize: number,
+  layoutOptions: any
+): { containers: FlatContainerNode[]; leaves: FlatLeafNode[] } => {
+  const containers: FlatContainerNode[] = [];
+  const leaves: FlatLeafNode[] = [];
+  let renderOrder = 0;
+
+  const traverse = (ln: AnyLayoutNode, depth = 0) => {
+    // Skip rendering if the node is too small or marked as 'none'
+    if (ln.w < 2 || ln.h < 2 || ln.renderMode === "none") {
+      return;
+    }
+
+    const currentRenderOrder = renderOrder++;
+
+    // Determine if this node has children that will be rendered
+    const hasRenderableChildren = ln.children && ln.children.length > 0;
+    const isActuallyContainer = hasRenderableChildren;
+
+    // Common properties
+    const category = ln.node.category;
+    const baseColor = pastelSet[category] || pastelSet[NodeCategory.Other];
+    const isSelected = selectedNodeId === ln.node.id;
+    const isSearchMatch = matchingNodes.has(ln.node.id);
+
+    // Get unrendered children info
+    const unrenderedInfo = hasUnrenderedChildrenHelper(ln.node, ln);
+
+    // Get hidden children info
+    const meta = (ln.node as any).meta || {};
+    const hasHiddenChildren =
+      meta.hasHiddenChildren === true ||
+      (ln.node as any).hasHiddenChildren === true;
+    const hiddenChildrenCount =
+      meta.hiddenChildrenCount || (ln.node as any).hiddenChildrenCount || 0;
+
+    if (ln.renderMode === "box") {
+      // Box mode - treat as leaf with special styling
+      const isContainerBox = (ln as HierarchicalLayoutNode).isContainer;
+
+      let borderColor = "#6c757d";
+      let strokeWidth = 1;
+
+      if (isContainerBox) {
+        strokeWidth = 3;
+        borderColor = "#2c3e50";
+      }
+
+      if (isSelected) {
+        borderColor = "red";
+        strokeWidth = isContainerBox ? 4 : 2;
+      } else if (isSearchMatch) {
+        borderColor = "#FFD700";
+        strokeWidth = isContainerBox ? 3.5 : 1.5;
+      }
+
+      leaves.push({
+        id: ln.node.id,
+        node: ln.node,
+        x: ln.x,
+        y: ln.y,
+        w: ln.w,
+        h: ln.h,
+        depth,
+        renderOrder: currentRenderOrder,
+        color: baseColor,
+        borderColor,
+        strokeWidth,
+        opacity: isContainerBox ? 0.8 : 0.7,
+        isSelected,
+        isSearchMatch,
+        displayLabel: "", // Box mode doesn't show text
+        fontSize: 0,
+        textColor: "",
+        shouldShowLabel: false,
+        hasUnrenderedChildren: false,
+        unrenderedCount: 0,
+        hasHiddenChildren: Boolean(isContainerBox),
+        hiddenChildrenCount: 0,
+      });
+    } else if (isActuallyContainer) {
+      // Container node
+      const headerHeight = Math.min(layoutOptions.headerHeight, ln.h);
+
+      // Container border styling
+      let groupBorderColor = "#6c757d";
+      let groupStrokeWidth = Math.max(0.5, 1.5 - depth * 0.2);
+      let groupOpacity = Math.max(0.3, 0.6 - depth * 0.1);
+
+      if (isSelected) {
+        groupBorderColor = "red";
+        groupStrokeWidth = Math.max(2, 3 - depth * 0.3);
+        groupOpacity = 0.8;
+      } else if (isSearchMatch) {
+        groupBorderColor = "#FFD700";
+        groupStrokeWidth = Math.max(1, 2 - depth * 0.2);
+        groupOpacity = 0.7;
+      } else if (depth === 1) {
+        groupBorderColor = "#6c757d";
+      } else {
+        groupBorderColor = "#adb5bd";
+      }
+
+      const groupFillColor = lightenColor(baseColor, 30);
+
+      // Header styling
+      const color = baseColor;
+      let borderColor = "#333333";
+      let strokeWidth = 0.5;
+
+      if (unrenderedInfo.hasUnrendered) {
+        borderColor = "#FF0000";
+        strokeWidth = 3;
+      } else if (isSelected) {
+        borderColor = "#cc0000";
+        strokeWidth = 2;
+      } else if (isSearchMatch) {
+        borderColor = "#ccaa00";
+        strokeWidth = 1.5;
+      }
+
+      const opacity = Math.max(0.8, 1 - depth * 0.02);
+
+      // Calculate font size for header
+      const depthAdjustedMin = Math.max(8, minFontSize - 4 - depth * 1.5);
+      const heightBasedSize = headerHeight * 0.55;
+      const fontSize = Math.min(
+        maxFontSize,
+        Math.max(depthAdjustedMin, heightBasedSize)
+      );
+
+      const actualCharWidth = fontSize * 0.5;
+      const indicatorSize = Math.min(12, headerHeight * 0.4, fontSize * 0.8);
+      const totalIndicatorSpace =
+        (hasHiddenChildren ? indicatorSize + 4 : 0) +
+        (unrenderedInfo.hasUnrendered ? indicatorSize + 4 : 0);
+
+      const textPaddingLeft = 4;
+      const textPaddingRight = 2 + totalIndicatorSpace;
+      const availableTextWidth = Math.max(
+        0,
+        ln.w - textPaddingLeft - textPaddingRight
+      );
+
+      const displayLabel = getDynamicNodeDisplayLabel(
+        { data: ln.node, width: availableTextWidth, height: headerHeight },
+        { ...settings, avgCharPixelWidth: actualCharWidth }
+      );
+
+      const shouldShowLabel =
+        settings.enableLabel && displayLabel && ln.w >= 20 && headerHeight >= 8;
+
+      containers.push({
+        id: ln.node.id,
+        node: ln.node,
+        x: ln.x,
+        y: ln.y,
+        w: ln.w,
+        h: ln.h,
+        headerHeight,
+        depth,
+        renderOrder: currentRenderOrder,
+        color,
+        borderColor,
+        strokeWidth,
+        opacity,
+        groupBorderColor,
+        groupStrokeWidth,
+        groupOpacity,
+        groupFillColor,
+        isSelected,
+        isSearchMatch,
+        displayLabel: displayLabel || "",
+        fontSize,
+        textColor: getContrastingTextColor(color),
+        shouldShowLabel: Boolean(shouldShowLabel),
+        hasUnrenderedChildren: unrenderedInfo.hasUnrendered,
+        unrenderedCount: unrenderedInfo.unrenderedCount,
+        hasHiddenChildren,
+        hiddenChildrenCount,
+      });
+    } else {
+      // Leaf node
+      let borderColor = "#555555";
+      let strokeWidth = Math.max(0.5, settings.borderWidth - depth * 0.1);
+
+      if (unrenderedInfo.hasUnrendered) {
+        borderColor = "#FF0000";
+        strokeWidth = 4;
+      } else if (isSelected) {
+        borderColor = "red";
+        strokeWidth = Math.max(1, settings.borderWidth + 1 - depth * 0.2);
+      } else if (isSearchMatch) {
+        borderColor = "#FFD700";
+        strokeWidth = Math.max(0.8, settings.borderWidth + 0.5 - depth * 0.1);
+      }
+
+      const opacity = Math.max(0.6, settings.nodeOpacity - depth * 0.02);
+
+      // Calculate font size for leaf
+      const depthAdjustedMin = Math.max(
+        minFontSize,
+        minFontSize + 6 - depth * 1.5
+      );
+      const heightBasedSize = ln.h * 0.6;
+      const fontSize = Math.min(
+        maxFontSize,
+        Math.max(depthAdjustedMin, heightBasedSize)
+      );
+
+      const actualCharWidth = fontSize * 0.5;
+      const indicatorSize = Math.min(10, ln.h * 0.3, fontSize * 0.7);
+      const totalIndicatorMargin =
+        (hasHiddenChildren ? indicatorSize + 2 : 0) +
+        (unrenderedInfo.hasUnrendered ? indicatorSize + 2 : 0);
+
+      const textMargin = 4;
+      const availableTextWidth = Math.max(
+        0,
+        ln.w - 2 * textMargin - totalIndicatorMargin
+      );
+
+      const displayLabel = getDynamicNodeDisplayLabel(
+        { data: ln.node, width: availableTextWidth, height: ln.h },
+        { ...settings, avgCharPixelWidth: actualCharWidth }
+      );
+
+      const shouldShowLabel =
+        settings.enableLabel &&
+        displayLabel &&
+        ln.h >= Math.max(settings.minLabelHeight, fontSize + 4) &&
+        ln.w >= fontSize * 2;
+
+      leaves.push({
+        id: ln.node.id,
+        node: ln.node,
+        x: ln.x,
+        y: ln.y,
+        w: ln.w,
+        h: ln.h,
+        depth,
+        renderOrder: currentRenderOrder,
+        color: baseColor,
+        borderColor,
+        strokeWidth,
+        opacity,
+        isSelected,
+        isSearchMatch,
+        displayLabel: displayLabel || "",
+        fontSize,
+        textColor: getContrastingTextColor(baseColor),
+        shouldShowLabel: Boolean(shouldShowLabel),
+        hasUnrenderedChildren: unrenderedInfo.hasUnrendered,
+        unrenderedCount: unrenderedInfo.unrenderedCount,
+        hasHiddenChildren,
+        hiddenChildrenCount,
+      });
+    }
+
+    // Recursively process children
+    if (ln.children) {
+      for (const child of ln.children) {
+        traverse(child as AnyLayoutNode, depth + 1);
+      }
+    }
+  };
+
+  traverse(layoutRoot);
+
+  console.log("🎨 Flat rendering collected nodes:", {
+    containers: containers.length,
+    leaves: leaves.length,
+    totalNodes: containers.length + leaves.length,
+  });
+
+  return { containers, leaves };
+};
+
+// Render function for container nodes
+const renderContainer = (
+  container: FlatContainerNode,
+  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void,
+  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
+  onMouseLeave: () => void
+): React.ReactNode => {
+  const {
+    id,
+    node,
+    x,
+    y,
+    w,
+    h,
+    headerHeight,
+    color,
+    borderColor,
+    strokeWidth,
+    opacity,
+    groupBorderColor,
+    groupStrokeWidth,
+    groupOpacity,
+    groupFillColor,
+    displayLabel,
+    fontSize,
+    textColor,
+    shouldShowLabel,
+    hasUnrenderedChildren,
+    unrenderedCount,
+    hasHiddenChildren,
+    hiddenChildrenCount,
+  } = container;
+
+  const indicatorSize = Math.min(12, headerHeight * 0.4, fontSize * 0.8);
+  const textY = Math.min(headerHeight - 2, fontSize + 2);
+
+  return (
+    <g key={id} transform={`translate(${x}, ${y})`}>
+      {/* Container background */}
+      <rect
+        x={0}
+        y={headerHeight}
+        width={w}
+        height={h - headerHeight}
+        fill={groupFillColor}
+        stroke={groupBorderColor}
+        strokeWidth={groupStrokeWidth}
+        opacity={groupOpacity}
+        rx={Math.max(2, 4 - container.depth * 0.5)}
+        style={{ cursor: "pointer" }}
+        onClick={(e) => onNodeClick(node, e as any)}
+        onMouseEnter={(e) => onMouseEnter(node, e as any)}
+        onMouseLeave={onMouseLeave}
+      />
+      {/* Header background */}
+      <rect
+        x={0}
+        y={0}
+        width={w}
+        height={headerHeight}
+        fill={color}
+        stroke={borderColor}
+        strokeWidth={strokeWidth}
+        opacity={opacity}
+        style={{ cursor: "pointer" }}
+        onClick={(e) => onNodeClick(node, e as any)}
+        onMouseEnter={(e) => onMouseEnter(node, e as any)}
+        onMouseLeave={onMouseLeave}
+      />
+      {/* Header text */}
+      {shouldShowLabel && displayLabel && (
+        <text
+          x={4}
+          y={textY}
+          fontSize={fontSize}
+          fill={textColor}
+          pointerEvents="none"
+          style={{ userSelect: "none" }}
+        >
+          {displayLabel}
+        </text>
+      )}
+      {/* Unrendered children indicator */}
+      {hasUnrenderedChildren && w >= 24 && headerHeight >= 16 && (
+        <g>
+          <circle
+            cx={w - indicatorSize / 2 - 2}
+            cy={headerHeight / 2}
+            r={indicatorSize / 2}
+            fill="rgba(255, 0, 0, 0.9)"
+            stroke="rgba(0, 0, 0, 0.8)"
+            strokeWidth={1}
+          />
+          <text
+            x={w - indicatorSize / 2 - 2}
+            y={headerHeight / 2}
+            fontSize={Math.min(indicatorSize * 0.7, 10)}
+            fill="#FFF"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+            style={{ userSelect: "none", fontWeight: "bold" }}
+          >
+            !
+          </text>
+          {w >= 40 && headerHeight >= 20 && (
+            <text
+              x={w - indicatorSize / 2 - 2}
+              y={headerHeight / 2 + indicatorSize / 2 + 2}
+              fontSize={Math.min(6, indicatorSize * 0.4)}
+              fill={textColor}
+              textAnchor="middle"
+              dominantBaseline="hanging"
+              pointerEvents="none"
+              style={{ userSelect: "none" }}
+            >
+              -{unrenderedCount}
+            </text>
+          )}
+        </g>
+      )}
+      {/* Hidden children indicator */}
+      {hasHiddenChildren && w >= 24 && headerHeight >= 16 && (
+        <g>
+          <circle
+            cx={
+              w -
+              indicatorSize / 2 -
+              2 -
+              (hasUnrenderedChildren ? indicatorSize + 4 : 0)
+            }
+            cy={headerHeight / 2}
+            r={indicatorSize / 2}
+            fill="rgba(255, 165, 0, 0.8)"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth={0.5}
+          />
+          <text
+            x={
+              w -
+              indicatorSize / 2 -
+              2 -
+              (hasUnrenderedChildren ? indicatorSize + 4 : 0)
+            }
+            y={headerHeight / 2}
+            fontSize={Math.min(indicatorSize * 0.6, 8)}
+            fill="#000"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+            style={{ userSelect: "none", fontWeight: "bold" }}
+          >
+            ⋯
+          </text>
+          {w >= 60 && headerHeight >= 20 && (
+            <text
+              x={
+                w -
+                indicatorSize / 2 -
+                2 -
+                (hasUnrenderedChildren ? indicatorSize + 4 : 0)
+              }
+              y={headerHeight / 2 + indicatorSize / 2 + 2}
+              fontSize={Math.min(6, indicatorSize * 0.4)}
+              fill={textColor}
+              textAnchor="middle"
+              dominantBaseline="hanging"
+              pointerEvents="none"
+              style={{ userSelect: "none" }}
+            >
+              +{hiddenChildrenCount}
+            </text>
+          )}
+        </g>
+      )}
+    </g>
+  );
+};
+
+// Render function for leaf nodes
+const renderLeaf = (
+  leaf: FlatLeafNode,
+  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void,
+  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void,
+  onMouseLeave: () => void
+): React.ReactNode => {
+  const {
+    id,
+    node,
+    x,
+    y,
+    w,
+    h,
+    color,
+    borderColor,
+    strokeWidth,
+    opacity,
+    displayLabel,
+    fontSize,
+    textColor,
+    shouldShowLabel,
+    hasUnrenderedChildren,
+    unrenderedCount,
+    hasHiddenChildren,
+    hiddenChildrenCount,
+  } = leaf;
+
+  const indicatorSize = Math.min(10, h * 0.3, fontSize * 0.7);
+
+  // Handle special styling for box mode (collapsed containers)
+  if (!shouldShowLabel && fontSize === 0) {
+    // This is a box mode node
+    return (
+      <g key={id} transform={`translate(${x}, ${y})`}>
+        <rect
+          x={0}
+          y={0}
+          width={w}
+          height={h}
+          fill={color}
+          stroke={borderColor}
+          strokeWidth={strokeWidth}
+          opacity={opacity}
+          rx={2}
+          style={{ cursor: "pointer" }}
+          onClick={(e) => onNodeClick(node, e as any)}
+          onMouseEnter={(e) => onMouseEnter(node, e as any)}
+          onMouseLeave={onMouseLeave}
+        />
+        {/* Collapsed indicator for container boxes */}
+        {hasHiddenChildren && w >= 16 && h >= 16 && (
+          <g>
+            <circle
+              cx={w / 2}
+              cy={h / 2}
+              r={Math.min(w, h) * 0.15}
+              fill="rgba(44, 62, 80, 0.8)"
+              stroke="white"
+              strokeWidth={1}
+            />
+            <text
+              x={w / 2}
+              y={h / 2}
+              fontSize={Math.min(w, h) * 0.2}
+              fill="white"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              pointerEvents="none"
+              style={{ userSelect: "none", fontWeight: "bold" }}
+            >
+              ⊞
+            </text>
+          </g>
+        )}
+      </g>
+    );
+  }
+
+  // Regular leaf node
+  return (
+    <g key={id} transform={`translate(${x}, ${y})`}>
+      <rect
+        x={0}
+        y={0}
+        width={w}
+        height={h}
+        fill={color}
+        stroke={borderColor}
+        strokeWidth={strokeWidth}
+        opacity={opacity}
+        style={{ cursor: "pointer" }}
+        onClick={(e) => onNodeClick(node, e as any)}
+        onMouseEnter={(e) => onMouseEnter(node, e as any)}
+        onMouseLeave={onMouseLeave}
+      />
+      {shouldShowLabel && (
+        <text
+          x={w / 2}
+          y={h / 2}
+          fontSize={fontSize}
+          fill={textColor}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          pointerEvents="none"
+          style={{ userSelect: "none" }}
+        >
+          {displayLabel}
+        </text>
+      )}
+      {/* Unrendered children indicator */}
+      {hasUnrenderedChildren && w >= 20 && h >= 16 && (
+        <g>
+          <circle
+            cx={w - indicatorSize / 2 - 2}
+            cy={indicatorSize / 2 + 2}
+            r={indicatorSize / 2}
+            fill="rgba(255, 0, 0, 0.95)"
+            stroke="rgba(0, 0, 0, 0.8)"
+            strokeWidth={0.5}
+          />
+          <text
+            x={w - indicatorSize / 2 - 2}
+            y={indicatorSize / 2 + 2}
+            fontSize={Math.min(indicatorSize * 0.7, 8)}
+            fill="#FFF"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+            style={{ userSelect: "none", fontWeight: "bold" }}
+          >
+            !
+          </text>
+          {w >= 30 && h >= 24 && (
+            <text
+              x={w - indicatorSize / 2 - 2}
+              y={indicatorSize + 4}
+              fontSize={Math.min(5, indicatorSize * 0.3)}
+              fill={textColor}
+              textAnchor="middle"
+              dominantBaseline="hanging"
+              pointerEvents="none"
+              style={{ userSelect: "none" }}
+            >
+              -{unrenderedCount}
+            </text>
+          )}
+        </g>
+      )}
+      {/* Hidden children indicator */}
+      {hasHiddenChildren && w >= 20 && h >= 16 && (
+        <g>
+          <circle
+            cx={w - indicatorSize / 2 - 2}
+            cy={
+              indicatorSize / 2 +
+              2 +
+              (hasUnrenderedChildren ? indicatorSize + 4 : 0)
+            }
+            r={indicatorSize / 2}
+            fill="rgba(255, 165, 0, 0.9)"
+            stroke="rgba(0, 0, 0, 0.7)"
+            strokeWidth={0.3}
+          />
+          <text
+            x={w - indicatorSize / 2 - 2}
+            y={
+              indicatorSize / 2 +
+              2 +
+              (hasUnrenderedChildren ? indicatorSize + 4 : 0)
+            }
+            fontSize={Math.min(indicatorSize * 0.6, 6)}
+            fill="#000"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+            style={{ userSelect: "none", fontWeight: "bold" }}
+          >
+            ⋯
+          </text>
+          {w >= 30 && h >= 40 && (
+            <text
+              x={w - indicatorSize / 2 - 2}
+              y={
+                indicatorSize +
+                4 +
+                (hasUnrenderedChildren ? indicatorSize + 4 : 0)
+              }
+              fontSize={Math.min(5, indicatorSize * 0.3)}
+              fill={textColor}
+              textAnchor="middle"
+              dominantBaseline="hanging"
+              pointerEvents="none"
+              style={{ userSelect: "none" }}
+            >
+              +{hiddenChildrenCount}
+            </text>
+          )}
+        </g>
+      )}
+    </g>
+  );
+};
+
 /* ---------- render-time props ------------ */
 
 export interface RenderNodeProps {
@@ -618,6 +1364,31 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
     return layout(root, width, height, layoutOptions as any); // Cast to any to satisfy differing option types
   }, [root, width, height, layout, layoutOptions]);
 
+  // Collect flat nodes for the new rendering system
+  const { containers, leaves } = useMemo(() => {
+    if (!settings.useFlatRendering) {
+      return { containers: [], leaves: [] };
+    }
+
+    return collectAllNodes(
+      layoutRoot as AnyLayoutNode,
+      settings,
+      matchingNodes,
+      selectedNodeId,
+      minFontSize,
+      maxFontSize,
+      layoutOptions
+    );
+  }, [
+    layoutRoot,
+    settings,
+    matchingNodes,
+    selectedNodeId,
+    minFontSize,
+    maxFontSize,
+    layoutOptions,
+  ]);
+
   // Create the styled render functions if custom ones aren't provided
   const finalRenderHeader = useMemo(() => {
     if (renderHeader) return renderHeader;
@@ -983,6 +1754,42 @@ export const TreemapSVG: React.FC<TreemapSVGProps> = ({
       </g>
     );
   };
+
+  // Use flat rendering if enabled, otherwise use recursive rendering
+  if (settings.useFlatRendering) {
+    console.log("🚀 Using flat rendering system with", {
+      containers: containers.length,
+      leaves: leaves.length,
+      renderOrder: "containers first, then leaves",
+    });
+
+    return (
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        {/* Render all containers first (background layer) */}
+        {containers
+          .sort((a, b) => a.renderOrder - b.renderOrder)
+          .map((container) =>
+            renderContainer(container, onNodeClick, onMouseEnter, onMouseLeave)
+          )}
+
+        {/* Render all leaves second (foreground layer) */}
+        {leaves
+          .sort((a, b) => a.renderOrder - b.renderOrder)
+          .map((leaf) =>
+            renderLeaf(leaf, onNodeClick, onMouseEnter, onMouseLeave)
+          )}
+
+        {/* Debug elements last */}
+        {settings.showDebugFreeRectangles &&
+          renderFreeRectangles(
+            collectAllFreeRectangles(layoutRoot as AnyLayoutNode)
+          )}
+      </svg>
+    );
+  }
+
+  // Fallback to original recursive rendering
+  console.log("🔄 Using original recursive rendering system");
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
