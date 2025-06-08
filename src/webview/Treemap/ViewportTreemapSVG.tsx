@@ -23,6 +23,7 @@ export interface ViewportTreemapSVGProps {
   onNodeClick?: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseEnter?: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseLeave?: () => void;
+  onResetViewport?: React.MutableRefObject<(() => void) | undefined>; // Ref to expose reset function
 }
 
 export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
@@ -39,6 +40,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
   onNodeClick,
   onMouseEnter,
   onMouseLeave,
+  onResetViewport,
 }) => {
   // Viewport state
   const [viewport, setViewport] = useState<ViewportState>({
@@ -159,6 +161,13 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
     });
   }, []);
 
+  // Expose reset function to parent via ref
+  React.useEffect(() => {
+    if (onResetViewport) {
+      onResetViewport.current = resetViewport;
+    }
+  }, [onResetViewport, resetViewport]);
+
   // Memoize the transform string to avoid unnecessary re-calculations
   const transform = useMemo(
     () =>
@@ -207,36 +216,6 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
-      {/* Reset button */}
-      <button
-        onClick={resetViewport}
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 1000,
-          padding: "8px 12px",
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "12px",
-          fontWeight: "500",
-          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 1)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.9)";
-        }}
-      >
-        🔄 Reset View
-      </button>
-
       {/* Viewport info for debugging */}
       {settings.showDebugFreeRectangles && (
         <div

@@ -181,6 +181,9 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const [matchingNodes, setMatchingNodes] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Viewport reset function ref
+  const resetViewportRef = useRef<(() => void) | undefined>();
+
   // Tooltip state
   const [tooltip, setTooltip] = useState<{
     node: ScopeNode;
@@ -1016,6 +1019,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               </>
             )}
             <button
+              onClick={() => resetViewportRef.current?.()}
+              className="treemap-export-button"
+              title="Reset view to fit entire treemap"
+            >
+              🔄 Reset View
+            </button>
+            <button
               onClick={handleExportToJson}
               className="treemap-export-button"
               title="Export tree data as JSON"
@@ -1136,6 +1146,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
               padding={settings.outerPadding}
               minFontSize={settings.selectedLayout === "hierarchical" ? 7 : 12}
               maxFontSize={settings.selectedLayout === "hierarchical" ? 11 : 16}
+              onResetViewport={resetViewportRef}
             />
           ) : (
             <div
