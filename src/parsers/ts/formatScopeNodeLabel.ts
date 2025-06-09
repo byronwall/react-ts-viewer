@@ -45,7 +45,8 @@ export function formatScopeNodeLabel(node: ScopeNode): string {
       // If displayLabel was specific (e.g., "finally"), it remains.
       break;
     case NodeCategory.Import:
-      displayLabel = `import ${displayLabel}`; // baseLabel is usually the module name
+      // Remove "import " prefix, just use the module name directly
+      // displayLabel remains as is (the module name)
       break;
     case NodeCategory.TypeAlias:
       displayLabel = `type ${displayLabel}`;
