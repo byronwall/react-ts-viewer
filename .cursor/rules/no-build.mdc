@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Do not run a build step at the end of the work.  The build doesn't matter.  Just do linting stuff.

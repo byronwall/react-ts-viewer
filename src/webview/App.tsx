@@ -28,6 +28,7 @@ import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
 import { TreemapDisplay } from "./Treemap/TreemapDisplay";
+import { GridTreemapDisplay } from "./Treemap/GridTreemapDisplay";
 import { vscodeApi } from "./vscodeApi";
 
 // Import new settings components and types
@@ -374,6 +375,7 @@ const App: React.FC = () => {
   >(filePath);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] =
     useState<boolean>(false);
+  const [useGridMode, setUseGridMode] = useState<boolean>(true);
 
   // State persistence - restore state from VS Code on load (run only once on mount)
   useEffect(() => {
@@ -413,6 +415,9 @@ const App: React.FC = () => {
           if (savedState.isSettingsPanelOpen !== undefined) {
             setIsSettingsPanelOpen(savedState.isSettingsPanelOpen);
           }
+          if (savedState.useGridMode !== undefined) {
+            setUseGridMode(savedState.useGridMode);
+          }
         }
 
         // Mark restoration as complete after processing extension response
@@ -438,6 +443,7 @@ const App: React.FC = () => {
       treemapSettings,
       settings,
       isSettingsPanelOpen,
+      useGridMode,
     };
     try {
       vscodeApi.postMessage({
@@ -453,6 +459,7 @@ const App: React.FC = () => {
     treemapSettings,
     settings,
     isSettingsPanelOpen,
+    useGridMode,
   ]);
 
   const requestGraphData = useCallback(
@@ -688,16 +695,26 @@ const App: React.FC = () => {
 
             {activeView === "treemap" && scopeTreeData && (
               <div style={{ width: "100%", height: "100%" }}>
-                <TreemapDisplay
-                  data={scopeTreeData}
-                  settings={treemapSettings}
-                  onSettingsChange={handleTreemapSettingChange}
-                  isSettingsPanelOpen={isSettingsPanelOpen}
-                  onToggleSettingsPanel={() =>
-                    setIsSettingsPanelOpen(!isSettingsPanelOpen)
-                  }
-                  fileName={currentFileName || "No file selected"}
-                />
+                {useGridMode ? (
+                  <GridTreemapDisplay
+                    primaryData={scopeTreeData}
+                    settings={treemapSettings}
+                    onSettingsChange={handleTreemapSettingChange}
+                    fileName={currentFileName || "No file selected"}
+                    filePath={currentAnalysisTarget || ""}
+                  />
+                ) : (
+                  <TreemapDisplay
+                    data={scopeTreeData}
+                    settings={treemapSettings}
+                    onSettingsChange={handleTreemapSettingChange}
+                    isSettingsPanelOpen={isSettingsPanelOpen}
+                    onToggleSettingsPanel={() =>
+                      setIsSettingsPanelOpen(!isSettingsPanelOpen)
+                    }
+                    fileName={currentFileName || "No file selected"}
+                  />
+                )}
               </div>
             )}
             {/* ... placeholder overlays ... */}
@@ -830,6 +847,47 @@ const App: React.FC = () => {
                 Treemap
               </button>
             </div>
+
+            {/* Grid Mode Toggle - Visible for Treemap View */}
+            {activeView === "treemap" && (
+              <div style={{ marginBottom: "20px" }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={useGridMode}
+                    onChange={(e) => setUseGridMode(e.target.checked)}
+                    style={{ marginRight: "8px", accentColor: "#007bff" }}
+                  />
+                  <span
+                    style={{
+                      color: "#ddd",
+                      verticalAlign: "middle",
+                      fontSize: "0.9em",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Grid Mode (Multiple Files)
+                  </span>
+                </label>
+                <p
+                  style={{
+                    fontSize: "0.8em",
+                    color: "#999",
+                    margin: "4px 0 0 24px",
+                    lineHeight: "1.3",
+                  }}
+                >
+                  Show current file plus up to 5 additional files from the same
+                  folder in a grid layout
+                </p>
+              </div>
+            )}
 
             {/* Settings Sections */}
             {activeView === "treemap" && (

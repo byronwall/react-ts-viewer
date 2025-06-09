@@ -403,6 +403,63 @@ export function registerAnalyzeFileCommand(
                 }
                 return;
 
+              case "getAdditionalFiles":
+                try {
+                  const { folderPath, currentFilePath, maxFiles } = message;
+                  if (!folderPath) {
+                    throw new Error(
+                      "Folder path is required to get additional files."
+                    );
+                  }
+
+                  outputChannel.appendLine(
+                    `[Extension] Webview requested additional files from: ${folderPath}`
+                  );
+
+                  const folderUri = vscode.Uri.file(folderPath);
+                  const files =
+                    await vscode.workspace.fs.readDirectory(folderUri);
+
+                  // Filter for supported file types and exclude current file
+                  const supportedExtensions = [
+                    ".ts",
+                    ".tsx",
+                    ".js",
+                    ".jsx",
+                    ".css",
+                    ".scss",
+                    ".md",
+                    ".mdx",
+                  ];
+                  const additionalFiles = files
+                    .filter(([name, type]) => {
+                      if (type !== vscode.FileType.File) return false;
+                      const ext = path.extname(name).toLowerCase();
+                      return supportedExtensions.includes(ext);
+                    })
+                    .map(([name]) => ({
+                      fileName: name,
+                      filePath: path.join(folderPath, name),
+                    }))
+                    .filter((file) => file.filePath !== currentFilePath)
+                    .slice(0, maxFiles || 5);
+
+                  webviewPanel?.webview.postMessage({
+                    command: "additionalFilesResponse",
+                    files: additionalFiles,
+                  });
+                } catch (e: any) {
+                  outputChannel.appendLine(
+                    `[Extension] Error getting additional files: ${e.message}`
+                  );
+                  webviewPanel?.webview.postMessage({
+                    command: "additionalFilesResponse",
+                    files: [],
+                    error: e.message,
+                  });
+                }
+                return;
+
               default:
                 outputChannel.appendLine(
                   `[Extension] Received unknown command from webview: ${message.command}`

@@ -30,7 +30,7 @@ interface TreemapDisplayProps {
 }
 
 // Helper function to find a node by ID in the ScopeNode tree
-function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
+export function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   if (node.id === id) {
     return node;
   }
@@ -46,7 +46,10 @@ function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 }
 
 // Helper function to calculate the maximum depth of a tree
-function calculateMaxDepth(node: ScopeNode, currentDepth: number = 0): number {
+export function calculateMaxDepth(
+  node: ScopeNode,
+  currentDepth: number = 0
+): number {
   if (!node.children || node.children.length === 0) {
     return currentDepth;
   }

@@ -307,3 +307,88 @@ html,
   color: var(--vscode-descriptionForeground);
   font-style: italic;
 }
+
+/* Grid Treemap Styles */
+.grid-treemap-container {
+  background: #1e1e1e;
+}
+
+.grid-treemap-cell {
+  transition:
+    opacity 0.5s ease-in-out,
+    transform 0.5s ease-in-out;
+}
+
+.grid-treemap-cell.entering {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+}
+
+.grid-treemap-cell.entered {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.grid-treemap-cell.exiting {
+  opacity: 0;
+  transform: scale(0.8) translateY(-20px);
+}
+
+.grid-treemap-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.grid-treemap-loading-spinner {
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.grid-treemap-file-label {
+  font-family: monospace;
+  font-size: 10px;
+  fill: #ccc;
+  text-anchor: middle;
+}
+
+.grid-treemap-background {
+  fill: #2d2d30;
+  stroke: #444;
+  stroke-width: 1;
+  rx: 4;
+}
+
+/* Grid mode toggle styles */
+.grid-mode-toggle {
+  margin-bottom: 20px;
+}
+
+.grid-mode-toggle label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.grid-mode-toggle input[type="checkbox"] {
+  margin-right: 8px;
+  accent-color: #007bff;
+}
+
+.grid-mode-toggle .description {
+  font-size: 0.8em;
+  color: #999;
+  margin: 4px 0 0 24px;
+  line-height: 1.3;
+}

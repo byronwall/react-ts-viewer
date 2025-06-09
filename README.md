@@ -9,6 +9,16 @@ Example treemap of itself:
 ## Features
 
 - **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
+  - **Grid Mode (Multi-File Treemaps)**: NEW! Display multiple files from the same folder in a progressive grid layout:
+    - **Progressive Loading**: Primary file loads immediately, then up to 5 additional files from the same folder load progressively with smooth animations
+    - **Grid Layout**: Files are arranged in an intelligent grid (1x1, 2x2, 3x2, or 3x3) based on the number of files
+    - **Animated Entry**: New treemaps "fly" onto the screen with smooth scale and opacity transitions
+    - **Individual Interaction**: Each treemap in the grid supports full interaction (click, drill-down, tooltips)
+    - **Unified Controls**: Single settings panel controls all treemaps in the grid
+    - **Isolation Mode**: Alt+click any node to isolate and zoom into a single file's treemap
+    - **Cross-File Navigation**: Jump between files seamlessly while maintaining treemap context
+    - **Automatic File Discovery**: Automatically finds and loads TypeScript, JavaScript, CSS, SCSS, and Markdown files from the current folder
+    - **Toggle Option**: Easy toggle between single-file and grid mode in the settings panel
   - **2D Bin Packing Layout**: Advanced Guillotine-based bin packing algorithm that maximizes space utilization:
     - **True 2D Packing**: Places nodes in any available 2D space rather than limiting to rows/shelves like traditional algorithms
     - **Guillotine Rectangle Splitting**: Splits remaining space into optimal rectangular regions after each placement for maximum efficiency
