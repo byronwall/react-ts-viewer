@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ArrowSquareOut, FunnelSimple, X } from "@phosphor-icons/react";
 import { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { CodeBlock } from "../CodeBlock";
@@ -38,79 +39,55 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   return (
     <div
       style={{
-        // height: "300px", // Height will be controlled by parent or set to 100% for side view
+        height: "100%", // Ensure full height to eliminate transparent regions
         width: `${width}px`,
-        backgroundColor: "#252526",
+        backgroundColor: "#252526", // Opaque background
         color: "#cccccc",
-        borderLeft: "1px solid #333333", // Change border to left for side view
+        borderLeft: "1px solid #333333",
         padding: "10px",
         overflowY: "auto",
         flexShrink: 0,
-        display: "flex", // Added for internal layout
-        flexDirection: "column", // Added for internal layout
+        display: "flex",
+        flexDirection: "column",
+        position: "relative", // Ensure proper positioning
       }}
       className="node-detail-drawer"
     >
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "10px",
+          marginBottom: "8px",
           flexShrink: 0, // Prevent header from shrinking
         }}
       >
-        <h4 style={{ margin: 0, fontSize: "0.9em" }}>
-          Node Details: {node.id.split(":").pop()}
-        </h4>
-        <div>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           <button
             onClick={() => onJumpToSource(node)}
-            style={{
-              background: "none",
-              border: "1px solid #555",
-              borderRadius: "3px",
-              color: "#cccccc",
-              cursor: "pointer",
-              fontSize: "0.8em",
-              marginRight: "5px",
-              padding: "3px 6px",
-            }}
+            className="treemap-export-button"
             title="Jump to Source (Cmd+Click)"
           >
-            Jump to Source
+            <ArrowSquareOut size={14} />
+            Jump
           </button>
           <button
             onClick={() => onDrillIntoNode(node)}
-            style={{
-              background: "none",
-              border: "1px solid #555",
-              borderRadius: "3px",
-              color: "#cccccc",
-              cursor: "pointer",
-              fontSize: "0.8em",
-              marginRight: "10px",
-              padding: "3px 6px",
-            }}
+            className="treemap-export-button"
             title="Drill In (Alt+Click)"
           >
-            Drill In
+            <FunnelSimple size={14} />
+            Drill
           </button>
           <button
             onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#cccccc",
-              cursor: "pointer",
-              fontSize: "1.2em",
-            }}
+            className="treemap-settings-button"
             title="Close Details"
           >
-            &times;
+            <X size={16} />
           </button>
         </div>
       </div>
+      <h4 style={{ margin: 0, fontSize: "0.9em", marginBottom: "8px" }}>
+        Node Details: {node.id.split(":").pop()}
+      </h4>
 
       {/* Content div to handle overflow for the rest of the items */}
       <div style={{ overflowY: "auto", flexGrow: 1 }}>
