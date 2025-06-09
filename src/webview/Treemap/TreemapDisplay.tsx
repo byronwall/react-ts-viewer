@@ -184,6 +184,14 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   const [matchingNodes, setMatchingNodes] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Mouse tracking state for pan detection
+  const [mouseDownPosition, setMouseDownPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const panThreshold = 5; // Minimum pixels moved to consider it a pan
+
   // Viewport reset function ref
   const resetViewportRef = useRef<(() => void) | undefined>();
 
@@ -364,6 +372,16 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     node: ScopeNode, // Now directly a ScopeNode instead of Nivo's computed node
     event: React.MouseEvent
   ) => {
+    // If panning occurred, prevent the click action
+    if (isPanning) {
+      console.log("🚫 Blocking click action due to panning");
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    console.log("✅ Processing click action (no panning detected)");
+
     const clickedNodeData = node; // This is already the ScopeNode object
     const fullNodeFromInitialTree = findNodeInTree(
       initialData,
@@ -399,6 +417,46 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
       }
     }
   };
+
+  // Effect to handle window-level mouse events for better pan detection
+  useEffect(() => {
+    const handleWindowMouseDown = (event: MouseEvent) => {
+      console.log("🖱️ Mouse down at:", event.clientX, event.clientY);
+      setMouseDownPosition({ x: event.clientX, y: event.clientY });
+      setIsPanning(false);
+    };
+
+    const handleWindowMouseMove = (event: MouseEvent) => {
+      if (mouseDownPosition && !isPanning) {
+        const deltaX = Math.abs(event.clientX - mouseDownPosition.x);
+        const deltaY = Math.abs(event.clientY - mouseDownPosition.y);
+
+        if (deltaX > panThreshold || deltaY > panThreshold) {
+          console.log("🔄 Panning detected! Delta:", deltaX, deltaY);
+          setIsPanning(true);
+        }
+      }
+    };
+
+    const handleWindowMouseUp = () => {
+      console.log("🖱️ Mouse up, panning was:", isPanning);
+      // Reset panning state after a longer delay to ensure click handlers see the panning state
+      setTimeout(() => {
+        setMouseDownPosition(null);
+        setIsPanning(false);
+      }, 100);
+    };
+
+    window.addEventListener("mousedown", handleWindowMouseDown);
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
+
+    return () => {
+      window.removeEventListener("mousedown", handleWindowMouseDown);
+      window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
+    };
+  }, [mouseDownPosition, isPanning, panThreshold]);
 
   const resetIsolation = useCallback(() => {
     setIsolatedNode(null);
