@@ -468,6 +468,13 @@ export const GridTreemapDisplay: React.FC<GridTreemapDisplayProps> = ({
       event.preventDefault();
 
       const mousePos = getSVGMousePosition(event);
+
+      // Convert mouse position from display coordinates to viewBox coordinates
+      const scaleX = totalWidth / containerDimensions.width;
+      const scaleY = totalHeight / containerDimensions.height;
+      const viewBoxMouseX = mousePos.x * scaleX;
+      const viewBoxMouseY = mousePos.y * scaleY;
+
       const delta = -event.deltaY;
       const zoomIntensity = delta > 0 ? 1 + ZOOM_FACTOR : 1 - ZOOM_FACTOR;
 
@@ -477,13 +484,13 @@ export const GridTreemapDisplay: React.FC<GridTreemapDisplayProps> = ({
           Math.max(MIN_SCALE, prev.scale * zoomIntensity)
         );
 
-        // Calculate zoom center in world coordinates
-        const worldX = (mousePos.x - prev.translateX) / prev.scale;
-        const worldY = (mousePos.y - prev.translateY) / prev.scale;
+        // Calculate zoom center in world coordinates (using viewBox coordinates)
+        const worldX = (viewBoxMouseX - prev.translateX) / prev.scale;
+        const worldY = (viewBoxMouseY - prev.translateY) / prev.scale;
 
         // Calculate new translation to keep zoom centered on mouse
-        const newTranslateX = mousePos.x - worldX * newScale;
-        const newTranslateY = mousePos.y - worldY * newScale;
+        const newTranslateX = viewBoxMouseX - worldX * newScale;
+        const newTranslateY = viewBoxMouseY - worldY * newScale;
 
         return {
           scale: newScale,
@@ -492,7 +499,7 @@ export const GridTreemapDisplay: React.FC<GridTreemapDisplayProps> = ({
         };
       });
     },
-    [getSVGMousePosition]
+    [getSVGMousePosition, totalWidth, totalHeight, containerDimensions]
   );
 
   // Handle pan start
@@ -519,15 +526,29 @@ export const GridTreemapDisplay: React.FC<GridTreemapDisplayProps> = ({
       const deltaX = mousePos.x - lastPanPoint.x;
       const deltaY = mousePos.y - lastPanPoint.y;
 
+      // Account for viewBox scaling - the viewBox coordinates are different from display coordinates
+      const scaleX = totalWidth / containerDimensions.width;
+      const scaleY = totalHeight / containerDimensions.height;
+
+      const scaledDeltaX = deltaX * scaleX;
+      const scaledDeltaY = deltaY * scaleY;
+
       setViewport((prev) => ({
         ...prev,
-        translateX: prev.translateX + deltaX,
-        translateY: prev.translateY + deltaY,
+        translateX: prev.translateX + scaledDeltaX,
+        translateY: prev.translateY + scaledDeltaY,
       }));
 
       setLastPanPoint(mousePos);
     },
-    [isPanning, lastPanPoint, getSVGMousePosition]
+    [
+      isPanning,
+      lastPanPoint,
+      getSVGMousePosition,
+      totalWidth,
+      totalHeight,
+      containerDimensions,
+    ]
   );
 
   // Handle pan end

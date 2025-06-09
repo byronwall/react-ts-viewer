@@ -212,7 +212,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     return () => {
       window.removeEventListener("resize", updateDimensions);
     };
-  }, [isDrawerOpen, drawerWidth]);
+  }, []); // Removed dependencies on drawer state since drawer now overlays
 
   const handleExportToJson = useCallback(async () => {
     const jsonString = JSON.stringify(initialData, null, 2);
@@ -930,312 +930,311 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     <div
       style={{
         display: "flex",
-        flexDirection: "row",
+        flexDirection: "column",
         width: "100%",
         height: "100%",
+        position: "relative", // Added for absolute positioning of drawer
       }}
     >
       <div
         style={{
+          padding: "8px 10px",
+          backgroundColor: "#252526", // VS Code dark theme background
+          color: "#cccccc", // Light text
+          borderBottom: "1px solid #333333",
           display: "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          height: "100%",
-          overflow: "hidden",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexShrink: 0,
+          position: "relative", // For positioning the popover relative to the header
         }}
+        className="treemap-internal-header" // Added class for clarity
       >
-        <div
-          style={{
-            padding: "8px 10px",
-            backgroundColor: "#252526", // VS Code dark theme background
-            color: "#cccccc", // Light text
-            borderBottom: "1px solid #333333",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexShrink: 0,
-            position: "relative", // For positioning the popover relative to the header
-          }}
-          className="treemap-internal-header" // Added class for clarity
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "1.2em",
-                fontWeight: "500",
-                color: "#ffffff",
-              }}
-            >
-              {fileName}
-            </h3>
-            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search nodes... (press / to focus)"
-                className="treemap-search-input"
-              />
-              {searchText.trim() && (
-                <button
-                  onClick={() => {
-                    setSearchText("");
-                    setMatchingNodes(new Set());
-                  }}
-                  className="treemap-search-cancel"
-                  title="Clear search (Esc)"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "1.2em",
+              fontWeight: "500",
+              color: "#ffffff",
+            }}
+          >
+            {fileName}
+          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search nodes... (press / to focus)"
+              className="treemap-search-input"
+            />
             {searchText.trim() && (
-              <span className="treemap-search-status">
-                {matchingNodes.size} matches
-              </span>
+              <button
+                onClick={() => {
+                  setSearchText("");
+                  setMatchingNodes(new Set());
+                }}
+                className="treemap-search-cancel"
+                title="Clear search (Esc)"
+              >
+                ✕
+              </button>
             )}
           </div>
+          {searchText.trim() && (
+            <span className="treemap-search-status">
+              {matchingNodes.size} matches
+            </span>
+          )}
+        </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {(isolatedNode || isolationPath.length > 0) && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {(isolatedNode || isolationPath.length > 0) && (
+            <>
+              {isolatedNode && (
+                <button
+                  onClick={resetIsolation}
+                  className="treemap-header-button"
+                  title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
+                >
+                  Reset Zoom
+                </button>
+              )}
+              {isolationPath.length > 0 && (
+                <button
+                  onClick={goUpOneLevel}
+                  className="treemap-header-button"
+                  title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
+                >
+                  Up One Level
+                </button>
+              )}
+            </>
+          )}
+          <button
+            onClick={() => resetViewportRef.current?.()}
+            className="treemap-export-button"
+            title="Reset view to fit entire treemap"
+          >
+            🔄 Reset View
+          </button>
+          <button
+            onClick={handleExportToJson}
+            className="treemap-export-button"
+            title="Export tree data as JSON"
+          >
+            <Code size={14} />
+            JSON
+          </button>
+          <button
+            onClick={handleExportToPng}
+            className="treemap-export-button"
+            title="Export treemap as PNG"
+          >
+            <FileImage size={14} />
+            PNG
+          </button>
+          <TreemapLegendPopover activePalette={pastelSet} />
+
+          {/* Settings Popover */}
+          <Popover>
+            {({ open }) => {
+              const [buttonRef, setButtonRef] =
+                useState<HTMLButtonElement | null>(null);
+              const [panelPosition, setPanelPosition] = useState({
+                top: 0,
+                right: 0,
+              });
+
+              useEffect(() => {
+                if (open && buttonRef) {
+                  const rect = buttonRef.getBoundingClientRect();
+                  setPanelPosition({
+                    top: rect.bottom + 4, // Position below button with small gap
+                    right: window.innerWidth - rect.right, // Right align with button
+                  });
+                }
+              }, [open, buttonRef]);
+
+              return (
+                <>
+                  <Popover.Button
+                    ref={setButtonRef}
+                    className={`treemap-settings-button ${open ? "active" : ""}`}
+                    title="Settings"
+                  >
+                    <Gear size={16} />
+                  </Popover.Button>
+
+                  {open &&
+                    createPortal(
+                      <Popover.Panel
+                        static
+                        className="treemap-popover-base treemap-settings-popover"
+                        style={{
+                          position: "fixed",
+                          top: panelPosition.top,
+                          right: panelPosition.right,
+                          zIndex: 9999,
+                        }}
+                      >
+                        <div style={{ marginBottom: "15px" }}>
+                          <h4>Treemap Settings</h4>
+                          {renderSettingsContent()}
+                        </div>
+                      </Popover.Panel>,
+                      document.body
+                    )}
+                </>
+              );
+            }}
+          </Popover>
+        </div>
+      </div>
+
+      {/* Depth Breadcrumbs Row - Outside Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "3px",
+          padding: "8px 10px",
+          backgroundColor: "#2d2d30",
+          borderBottom: "1px solid #333333",
+          flexShrink: 0,
+        }}
+      >
+        <span style={{ fontSize: "11px", color: "#999", marginRight: "6px" }}>
+          Depth:
+        </span>
+        {renderDepthBreadcrumbs()}
+        <span style={{ fontSize: "10px", color: "#777", marginLeft: "6px" }}>
+          Use , and . keys to navigate
+        </span>
+      </div>
+
+      <div
+        ref={treemapContainerRef}
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          flexGrow: 1,
+          overflow: "hidden",
+        }}
+        className="custom-treemap-container"
+      >
+        {finalDisplayData ? (
+          <ViewportTreemapSVG
+            root={finalDisplayData}
+            width={containerDimensions.width}
+            height={containerDimensions.height}
+            layout={currentLayoutFn} // Pass the selected layout function
+            settings={settings}
+            matchingNodes={matchingNodes}
+            selectedNodeId={selectedNodeForDrawer?.id}
+            onNodeClick={handleNodeClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            padding={settings.outerPadding}
+            minFontSize={settings.selectedLayout === "hierarchical" ? 7 : 12}
+            maxFontSize={settings.selectedLayout === "hierarchical" ? 11 : 16}
+            onResetViewport={resetViewportRef}
+          />
+        ) : (
+          <div style={{ textAlign: "center", padding: "20px", color: "#ccc" }}>
+            {searchText.trim()
+              ? `No nodes found matching "${searchText}". Try a different search term or press Escape to clear the search.`
+              : "No data to display (possibly all filtered by depth limit or data is null)."}
+          </div>
+        )}
+        {tooltip && (
+          <div
+            style={{
+              position: "absolute",
+              left: tooltip.x + 10,
+              top: tooltip.y - 10,
+              padding: "5px 8px",
+              background: "#333",
+              color: "#f0f0f0",
+              border: "1px solid #555",
+              borderRadius: "2px",
+              fontSize: "11px",
+              maxWidth: "300px",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              pointerEvents: "none",
+              zIndex: 1000,
+            }}
+          >
+            {getNodeDisplayLabel(tooltip.node) ||
+              tooltip.node.id.split(":").pop() ||
+              "Node"}
+            {/* Show hidden children information in tooltip */}
+            {tooltip.node.meta?.hasHiddenChildren && (
               <>
-                {isolatedNode && (
-                  <button
-                    onClick={resetIsolation}
-                    className="treemap-header-button"
-                    title="Reset treemap zoom level (Cmd/Ctrl+Shift+ArrowUp to go up)"
-                  >
-                    Reset Zoom
-                  </button>
-                )}
-                {isolationPath.length > 0 && (
-                  <button
-                    onClick={goUpOneLevel}
-                    className="treemap-header-button"
-                    title="Go up one level in the treemap hierarchy (Cmd/Ctrl+Shift+ArrowUp)"
-                  >
-                    Up One Level
-                  </button>
+                {"\n"}
+                <span style={{ color: "#ffa500", fontWeight: "bold" }}>
+                  ⚠ {tooltip.node.meta.hiddenChildrenCount} hidden children
+                </span>
+                {tooltip.node.meta.hiddenReason && (
+                  <>
+                    {"\n"}
+                    <span style={{ color: "#ccc", fontSize: "10px" }}>
+                      Reason:{" "}
+                      {tooltip.node.meta.hiddenReason.replace(/_/g, " ")}
+                    </span>
+                  </>
                 )}
               </>
             )}
-            <button
-              onClick={() => resetViewportRef.current?.()}
-              className="treemap-export-button"
-              title="Reset view to fit entire treemap"
-            >
-              🔄 Reset View
-            </button>
-            <button
-              onClick={handleExportToJson}
-              className="treemap-export-button"
-              title="Export tree data as JSON"
-            >
-              <Code size={14} />
-              JSON
-            </button>
-            <button
-              onClick={handleExportToPng}
-              className="treemap-export-button"
-              title="Export treemap as PNG"
-            >
-              <FileImage size={14} />
-              PNG
-            </button>
-            <TreemapLegendPopover activePalette={pastelSet} />
-
-            {/* Settings Popover */}
-            <Popover>
-              {({ open }) => {
-                const [buttonRef, setButtonRef] =
-                  useState<HTMLButtonElement | null>(null);
-                const [panelPosition, setPanelPosition] = useState({
-                  top: 0,
-                  right: 0,
-                });
-
-                useEffect(() => {
-                  if (open && buttonRef) {
-                    const rect = buttonRef.getBoundingClientRect();
-                    setPanelPosition({
-                      top: rect.bottom + 4, // Position below button with small gap
-                      right: window.innerWidth - rect.right, // Right align with button
-                    });
-                  }
-                }, [open, buttonRef]);
-
-                return (
-                  <>
-                    <Popover.Button
-                      ref={setButtonRef}
-                      className={`treemap-settings-button ${open ? "active" : ""}`}
-                      title="Settings"
-                    >
-                      <Gear size={16} />
-                    </Popover.Button>
-
-                    {open &&
-                      createPortal(
-                        <Popover.Panel
-                          static
-                          className="treemap-popover-base treemap-settings-popover"
-                          style={{
-                            position: "fixed",
-                            top: panelPosition.top,
-                            right: panelPosition.right,
-                            zIndex: 9999,
-                          }}
-                        >
-                          <div style={{ marginBottom: "15px" }}>
-                            <h4>Treemap Settings</h4>
-                            {renderSettingsContent()}
-                          </div>
-                        </Popover.Panel>,
-                        document.body
-                      )}
-                  </>
-                );
-              }}
-            </Popover>
           </div>
-        </div>
+        )}
 
-        {/* Depth Breadcrumbs Row - Outside Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "3px",
-            padding: "8px 10px",
-            backgroundColor: "#2d2d30",
-            borderBottom: "1px solid #333333",
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontSize: "11px", color: "#999", marginRight: "6px" }}>
-            Depth:
-          </span>
-          {renderDepthBreadcrumbs()}
-          <span style={{ fontSize: "10px", color: "#777", marginLeft: "6px" }}>
-            Use , and . keys to navigate
-          </span>
-        </div>
-
-        <div
-          ref={treemapContainerRef}
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "100%",
-            flexGrow: 1,
-            overflow: "hidden",
-          }}
-          className="custom-treemap-container"
-        >
-          {finalDisplayData ? (
-            <ViewportTreemapSVG
-              root={finalDisplayData}
-              width={containerDimensions.width}
-              height={containerDimensions.height}
-              layout={currentLayoutFn} // Pass the selected layout function
-              settings={settings}
-              matchingNodes={matchingNodes}
-              selectedNodeId={selectedNodeForDrawer?.id}
-              onNodeClick={handleNodeClick}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              padding={settings.outerPadding}
-              minFontSize={settings.selectedLayout === "hierarchical" ? 7 : 12}
-              maxFontSize={settings.selectedLayout === "hierarchical" ? 11 : 16}
-              onResetViewport={resetViewportRef}
-            />
-          ) : (
+        {/* Drawer positioned absolutely over the treemap */}
+        {isDrawerOpen && selectedNodeForDrawer && (
+          <>
             <div
-              style={{ textAlign: "center", padding: "20px", color: "#ccc" }}
-            >
-              {searchText.trim()
-                ? `No nodes found matching "${searchText}". Try a different search term or press Escape to clear the search.`
-                : "No data to display (possibly all filtered by depth limit or data is null)."}
-            </div>
-          )}
-          {tooltip && (
+              ref={resizeHandleRef}
+              onMouseDown={startResizing}
+              style={{
+                position: "absolute",
+                top: 0,
+                right: drawerWidth,
+                width: "5px",
+                height: "100%",
+                cursor: "ew-resize",
+                backgroundColor: "#333333",
+                zIndex: 1001,
+              }}
+              title="Resize drawer"
+            />
             <div
               style={{
                 position: "absolute",
-                left: tooltip.x + 10,
-                top: tooltip.y - 10,
-                padding: "5px 8px",
-                background: "#333",
-                color: "#f0f0f0",
-                border: "1px solid #555",
-                borderRadius: "2px",
-                fontSize: "11px",
-                maxWidth: "300px",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-all",
-                pointerEvents: "none",
+                top: 0,
+                right: 0,
+                width: drawerWidth,
+                height: "100%",
                 zIndex: 1000,
               }}
             >
-              {getNodeDisplayLabel(tooltip.node) ||
-                tooltip.node.id.split(":").pop() ||
-                "Node"}
-              {/* Show hidden children information in tooltip */}
-              {tooltip.node.meta?.hasHiddenChildren && (
-                <>
-                  {"\n"}
-                  <span style={{ color: "#ffa500", fontWeight: "bold" }}>
-                    ⚠ {tooltip.node.meta.hiddenChildrenCount} hidden children
-                  </span>
-                  {tooltip.node.meta.hiddenReason && (
-                    <>
-                      {"\n"}
-                      <span style={{ color: "#ccc", fontSize: "10px" }}>
-                        Reason:{" "}
-                        {tooltip.node.meta.hiddenReason.replace(/_/g, " ")}
-                      </span>
-                    </>
-                  )}
-                </>
-              )}
+              <NodeDetailDrawer
+                node={selectedNodeForDrawer}
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                fileName={fileName}
+                settings={settings}
+                onJumpToSource={handleJumpToSource}
+                onDrillIntoNode={handleDrillIntoNode}
+                width={drawerWidth}
+              />
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
-      {isDrawerOpen && selectedNodeForDrawer && (
-        <>
-          <div
-            ref={resizeHandleRef}
-            onMouseDown={startResizing}
-            style={{
-              width: "5px",
-              cursor: "ew-resize",
-              backgroundColor: "#333333", // Darker handle for visibility
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 10, // Ensure handle is on top
-            }}
-            title="Resize drawer"
-          >
-            {/* Optional: Add an icon or visual indicator for the handle */}
-            {/* <div style={{ width: '2px', height: '20px', backgroundColor: '#666' }} /> */}
-          </div>
-          <NodeDetailDrawer
-            node={selectedNodeForDrawer}
-            isOpen={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            fileName={fileName}
-            settings={settings}
-            onJumpToSource={handleJumpToSource} // Pass the handler
-            onDrillIntoNode={handleDrillIntoNode} // Pass the handler
-            width={drawerWidth} // Pass the width to the drawer
-          />
-        </>
-      )}
     </div>
   );
 };

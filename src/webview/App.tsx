@@ -375,7 +375,7 @@ const App: React.FC = () => {
   >(filePath);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] =
     useState<boolean>(false);
-  const [useGridMode, setUseGridMode] = useState<boolean>(true);
+  const [useGridMode, setUseGridMode] = useState<boolean>(false);
 
   // State persistence - restore state from VS Code on load (run only once on mount)
   useEffect(() => {
@@ -695,7 +695,7 @@ const App: React.FC = () => {
 
             {activeView === "treemap" && scopeTreeData && (
               <div style={{ width: "100%", height: "100%" }}>
-                {useGridMode ? (
+                {/* {useGridMode ? (
                   <GridTreemapDisplay
                     primaryData={scopeTreeData}
                     settings={treemapSettings}
@@ -703,18 +703,18 @@ const App: React.FC = () => {
                     fileName={currentFileName || "No file selected"}
                     filePath={currentAnalysisTarget || ""}
                   />
-                ) : (
-                  <TreemapDisplay
-                    data={scopeTreeData}
-                    settings={treemapSettings}
-                    onSettingsChange={handleTreemapSettingChange}
-                    isSettingsPanelOpen={isSettingsPanelOpen}
-                    onToggleSettingsPanel={() =>
-                      setIsSettingsPanelOpen(!isSettingsPanelOpen)
-                    }
-                    fileName={currentFileName || "No file selected"}
-                  />
-                )}
+                ) : ( */}
+                <TreemapDisplay
+                  data={scopeTreeData}
+                  settings={treemapSettings}
+                  onSettingsChange={handleTreemapSettingChange}
+                  isSettingsPanelOpen={isSettingsPanelOpen}
+                  onToggleSettingsPanel={() =>
+                    setIsSettingsPanelOpen(!isSettingsPanelOpen)
+                  }
+                  fileName={currentFileName || "No file selected"}
+                />
+                {/* )} */}
               </div>
             )}
             {/* ... placeholder overlays ... */}
