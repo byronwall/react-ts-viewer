@@ -163,7 +163,10 @@ export function registerAnalyzeFileCommand(
                       workspaceRoot // <-- Pass workspace root
                     );
 
-                    progress.report({ increment: 100, message: "Done!" });
+                    progress.report({
+                      increment: 100,
+                      message: "Done!",
+                    });
                     webviewPanel?.webview.postMessage({
                       command: "showResults",
                       data: results,

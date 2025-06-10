@@ -50,7 +50,10 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       {isOpen && (
         <div
           id={`section-${title.replace(/\s+/g, "-").toLowerCase()}`}
-          style={{ padding: "15px 12px 5px 12px", background: "#252525" }}
+          style={{
+            padding: "15px 12px 5px 12px",
+            background: "#252525",
+          }}
         >
           {children}
         </div>

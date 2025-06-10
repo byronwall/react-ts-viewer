@@ -285,7 +285,11 @@ const App: React.FC = () => {
     <SettingsContext.Provider value={settings}>
       <div
         className="app-container"
-        style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+        }}
       >
         {/* Main Header / Toolbar */}
 

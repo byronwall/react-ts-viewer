@@ -89,7 +89,10 @@ export function registerIndexWorkspaceCommand(
           cancellable: false, // Consider adding cancellation support later
         },
         async (progress) => {
-          progress.report({ increment: 0, message: "Finding files..." });
+          progress.report({
+            increment: 0,
+            message: "Finding files...",
+          });
 
           let filesParsed = 0;
           let componentsFound = 0;

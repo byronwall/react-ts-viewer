@@ -282,7 +282,11 @@ const collectAllNodes = (
       );
 
       const displayLabel = getDynamicNodeDisplayLabel(
-        { data: ln.node, width: availableTextWidth, height: headerHeight },
+        {
+          data: ln.node,
+          width: availableTextWidth,
+          height: headerHeight,
+        },
         { ...settings, avgCharPixelWidth: actualCharWidth }
       );
 
@@ -912,7 +916,10 @@ const FreeRectangles: React.FC<FreeRectanglesProps> = ({ freeRects }) => {
               fontSize="8"
               fill="rgba(255, 0, 0, 0.8)"
               pointerEvents="none"
-              style={{ userSelect: "none", fontFamily: "monospace" }}
+              style={{
+                userSelect: "none",
+                fontFamily: "monospace",
+              }}
             >
               FREE
             </text>

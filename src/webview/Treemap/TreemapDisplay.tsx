@@ -1005,7 +1005,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         }}
         className="treemap-internal-header" // Added class for clarity
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
           <h3
             style={{
               margin: 0,
@@ -1016,7 +1022,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           >
             {fileName}
           </h3>
-          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
             <input
               ref={searchInputRef}
               type="text"
@@ -1045,7 +1057,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
           {(isolatedNode || isolationPath.length > 0) && (
             <>
               {isolatedNode && (
@@ -1135,7 +1153,11 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                           zIndex: 9999,
                         }}
                       >
-                        <div style={{ marginBottom: "15px" }}>
+                        <div
+                          style={{
+                            marginBottom: "15px",
+                          }}
+                        >
                           <h4>Treemap Settings XXX</h4>
                           {renderSettingsContent()}
                         </div>
@@ -1161,11 +1183,23 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: "11px", color: "#999", marginRight: "6px" }}>
+        <span
+          style={{
+            fontSize: "11px",
+            color: "#999",
+            marginRight: "6px",
+          }}
+        >
           Depth:
         </span>
         {renderDepthBreadcrumbs()}
-        <span style={{ fontSize: "10px", color: "#777", marginLeft: "6px" }}>
+        <span
+          style={{
+            fontSize: "10px",
+            color: "#777",
+            marginLeft: "6px",
+          }}
+        >
           Use , and . keys to navigate
         </span>
       </div>
@@ -1199,7 +1233,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             onResetViewport={resetViewportRef}
           />
         ) : (
-          <div style={{ textAlign: "center", padding: "20px", color: "#ccc" }}>
+          <div
+            style={{
+              textAlign: "center",
+              padding: "20px",
+              color: "#ccc",
+            }}
+          >
             {searchText.trim()
               ? `No nodes found matching "${searchText}". Try a different search term or press Escape to clear the search.`
               : "No data to display (possibly all filtered by depth limit or data is null)."}
@@ -1231,13 +1271,23 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             {tooltip.node.meta?.hasHiddenChildren && (
               <>
                 {"\n"}
-                <span style={{ color: "#ffa500", fontWeight: "bold" }}>
+                <span
+                  style={{
+                    color: "#ffa500",
+                    fontWeight: "bold",
+                  }}
+                >
                   ⚠ {tooltip.node.meta.hiddenChildrenCount} hidden children
                 </span>
                 {tooltip.node.meta.hiddenReason && (
                   <>
                     {"\n"}
-                    <span style={{ color: "#ccc", fontSize: "10px" }}>
+                    <span
+                      style={{
+                        color: "#ccc",
+                        fontSize: "10px",
+                      }}
+                    >
                       Reason:{" "}
                       {tooltip.node.meta.hiddenReason.replace(/_/g, " ")}
                     </span>
