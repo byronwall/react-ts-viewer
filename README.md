@@ -6,343 +6,192 @@ Example treemap of itself:
 
 ![Treemap](docs/treemap.png)
 
-## Features
+## Overview
 
-- **Treemap Visualization**: Visualize your codebase structure using an interactive treemap.
-  - **Grid Mode (Multi-File Treemaps)**: NEW! Display multiple files from the same folder in a progressive grid layout:
-    - **Progressive Loading**: Primary file loads immediately, then up to 5 additional files from the same folder load progressively with smooth animations
-    - **Grid Layout**: Files are arranged in an intelligent grid (1x1, 2x2, 3x2, or 3x3) based on the number of files
-    - **Animated Entry**: New treemaps "fly" onto the screen with smooth scale and opacity transitions
-    - **Individual Interaction**: Each treemap in the grid supports full interaction (click, drill-down, tooltips)
-    - **Unified Controls**: Single settings panel controls all treemaps in the grid
-    - **Isolation Mode**: Alt+click any node to isolate and zoom into a single file's treemap
-    - **Cross-File Navigation**: Jump between files seamlessly while maintaining treemap context
-    - **Automatic File Discovery**: Automatically finds and loads TypeScript, JavaScript, CSS, SCSS, and Markdown files from the current folder
-    - **Toggle Option**: Easy toggle between single-file and grid mode in the settings panel
-  - **2D Bin Packing Layout**: Advanced Guillotine-based bin packing algorithm that maximizes space utilization:
-    - **True 2D Packing**: Places nodes in any available 2D space rather than limiting to rows/shelves like traditional algorithms
-    - **Guillotine Rectangle Splitting**: Splits remaining space into optimal rectangular regions after each placement for maximum efficiency
-    - **Multiple Fit Heuristics**: Supports BestAreaFit, BestShortSideFit, and BestLongSideFit strategies for different packing scenarios
-    - **Overlap Prevention**: Maintains precise tracking of free rectangles to prevent any node overlaps or space conflicts
-    - **Optimal Item Sorting**: Pre-sorts items by area, width, height, or perimeter for improved packing density
-    - **Visual Space Debugging**: Includes comprehensive console visualization showing packed items and remaining free rectangles
-    - **Minimal White Space**: Eliminates the large gaps common in shelf-based layouts by utilizing irregular spaces left by different-sized nodes
-    - **Space-Efficient**: Significantly reduces wasted space compared to row-based packing approaches
-  - **Binary Layout Algorithm**: New bin-packing layout algorithm following the layout2.md specification:
-    - **Breadth-First Rendering**: Analyzes each tree level to determine optimal rendering strategy before layout decisions
-    - **Bin Packing Approach**: Treats layout as a bin packing problem, placing nodes in source order while optimizing space utilization
-    - **L-Shaped Container Support**: Containers can take on non-rectangular shapes to better fit around existing nodes
-    - **Text vs Box Mode Logic**: Smart decision-making between text rendering (80x40px minimum) and box rendering (20x20px minimum)
-    - **Level-Based Strategy**: Each depth level is analyzed to determine if all children can fit with text, or if some need box mode
-    - **Source Order Preservation**: Maintains original code order while optimizing for space efficiency
-    - **Proportional Value-Based Sizing**: Node sizes reflect their actual complexity while meeting minimum readability requirements
-    - **Value-Aware Layout Selection**: Hybrid approach that always prioritizes good aspect ratios by using grid layouts when horizontal layouts would be too tall, but applies proportional sizing within grid rows when nodes have significant value differences (3x+ ratio)
-    - **Space Splitting**: Available spaces are dynamically split after each node placement to create new packing opportunities
-  - **Improved Layout Algorithm**: New intelligent layout system that implements depth-first rendering with strict constraints:
-    - **Source Code Order Preservation**: All nodes are rendered in their original source code order, maintaining logical flow and making it easier to understand code structure
-    - **Text-First Design**: Layout decisions prioritize displaying readable text labels, with minimum character width requirements to ensure code readability
-    - **Depth-Constrained Rendering**: Implements strict depth constraints where nodes at deeper levels switch to simplified "box mode" rendering when text would be too small to read
-    - **Common Proportion Templates**: Pre-defined optimal layouts for 2, 3, and 4-child arrangements (horizontal, vertical, grid patterns) that create visually pleasing and space-efficient displays
-    - **Intelligent Text Fitting**: Algorithm determines if all nodes can fit with readable text at each depth level, switching to box mode when necessary to prevent illegible text
-    - **Smart Header Priority**: Container headers always get adequate space for readable labels, as group names are more important than individual element details
-    - **Proportional Value-Based Sizing**: Node dimensions reflect their actual complexity/value while maintaining readability constraints
-    - **Render Mode Management**: Three distinct rendering modes (text, box, none) based on available space and depth constraints
-  - **Custom Implementation**: Uses a hand-rolled treemap implementation with binary layout algorithm for optimal performance and customization.
-  - **Hierarchical Value Calculation**: Each leaf node (child without children) has a value of 1, and parent nodes recursively sum their children's values. This provides meaningful size representation where larger containers automatically reflect their complexity through the sum of their components.
-  - **Proportional Bin Packing Layout**: Advanced layout system that sizes nodes proportionally to their actual values rather than splitting space equally among siblings:
-    - **Value-Based Sizing**: Node dimensions directly reflect their relative importance based on complexity/size metrics
-    - **Bin Packing Algorithm**: Intelligently packs nodes to minimize wasted space while respecting proportional constraints
-    - **Flexible Grid Layouts**: Grid columns have variable widths based on the total value of nodes in each column
-    - **Proportional Horizontal Layouts**: Horizontal arrangements allocate width proportionally to each child's value
-    - **Multi-Layout Scoring**: Evaluates multiple layout approaches and selects the optimal one based on space utilization and visual quality
-  - **Grid-Based Layout Algorithm**: Advanced layout system that intelligently subdivides space to create optimal rectangle sizes for text display:
-    - **Text-First Approach**: Layout decisions prioritize displaying 10-15 characters per node for optimal readability
-    - **Smart Grid Generation**: Automatically calculates optimal column counts based on available space and content
-    - **Multi-Layout Comparison**: Evaluates vertical stacks, horizontal layouts, and grid arrangements to find the best fit
-    - **Width Constraints**: Prevents overly wide rectangles by breaking them into columns when beneficial
-    - **Header Priority**: Ensures headers always get adequate space for readable text labels
-    - **Improved Multi-Column Layouts**: Enhanced layout algorithm that aggressively prevents overly wide nodes by:
-      - **Reduced Optimal Width**: Uses more conservative character width calculations (8 chars optimal vs previous 12)
-      - **Extended Column Range**: Tests up to 6 columns for layouts with many child nodes
-      - **Width Penalties**: Heavily penalizes nodes that exceed 60% of available width
-      - **Multi-Item Preference**: Provides scoring bonuses for layouts that split content into multiple items
-      - **Constrained Node Widths**: Limits individual node widths to prevent single nodes from spanning entire page width
-  - **Container Padding System**: Intelligent padding system that ensures child nodes are rendered properly inside their parent containers:
-    - **Layout-Integrated Padding**: Padding is calculated during the layout phase, not just for visual rendering
-    - **Hierarchical Spacing**: Parent nodes automatically reserve space for padding, positioning children inside the padded area
-    - **Depth-Aware Padding**: Padding is only applied to non-root nodes to avoid wasting space at the top level
-    - **Visual Container Boundaries**: Parent containers render with subtle borders to clearly delineate hierarchical structure
-  - **Infinite Depth Rendering**: Supports rendering nested code structures to unlimited depth with intelligent visual scaling.
-  - **Dynamic Visual Hierarchy**: Header and body sections automatically adjust size, opacity, and stroke width based on nesting depth.
-  - **Smart Layout Algorithm**: Enhanced binary layout with aspect ratio optimization and minimum size constraints for deeply nested nodes.
-  - **Header and Body Rendering**: Each node has a customizable header (dynamic height) and body section, allowing for rich visual representation.
-  - **Improved Group Placement**: Fixed rendering issues where child nodes were appearing faint or misplaced within parent groups.
-  - **Enhanced Visibility**: Optimized opacity calculations to ensure nodes remain visible at deeper nesting levels (minimum 60% opacity for leaf nodes, 80% for headers).
-  - **Robust Coordinate System**: Improved coordinate calculations and bounds checking to prevent rendering artifacts and ensure proper node positioning.
-  - **Group Border Management**: Enhanced border rendering system that properly handles group selection and highlighting:
-    - **Group-Level Selection**: When parent nodes are selected, borders are drawn around the entire group container, not just the header
-    - **Hierarchical Border Logic**: Group containers get prominent selection borders (red for selected, gold for search matches) while child elements use subdued borders to avoid visual conflicts
-    - **Smart Border Inheritance**: Headers and leaf nodes within selected groups use darker, thinner borders that complement the main group border
-    - **Consistent Visual Hierarchy**: All parent nodes with children get container borders for clear visual grouping, regardless of depth
-  - Node sizes can represent lines of code or character counts, providing an intuitive overview of code distribution.
-  - Color-coded categories for different code elements (modules, components, functions, etc.).
-  - Interactive features like zoom, tooltips with detailed information (ID, category, value, source snippet), and customizable display settings.
-  - Export the treemap as a PNG image or the underlying data as JSON.
-  - **Search Functionality**: Filter and highlight nodes based on their content (see [Search Feature](#search-feature) below).
-  - **Responsive Design**: Automatically adjusts to container size changes and window resizing.
-  - **Hidden Children Indicators**: Visual indicators show when layout constraints have forced some child nodes to be hidden:
-    - **Orange Circle Indicators**: Small orange circles with three dots (⋯) appear on nodes that have hidden children
-    - **Hidden Count Display**: Shows the number of hidden children when space permits
-    - **Enhanced Tooltips**: Hover tooltips display detailed information about hidden children including count and reason
-    - **Root Level Protection**: The root node is guaranteed to show all its direct children; the layout will compress larger children to make room rather than hide any root-level nodes
-    - **Layout Constraint Tracking**: Different reasons for hiding are tracked (size constraints vs. layout constraints) and displayed in tooltips
-  - **Experimental Treemap Layout**: Introduced an alternative treemap layout algorithm (`geminiLayout`) based on bin packing and breadth-first rendering. This is currently an experimental feature and can be enabled by modifying the `selectedLayout` setting (defaults to the original `binaryLayout`). The new layout aims to fulfill specifications outlined in `src/webview/Treemap/layout2.md`.
-- **Interactive Viewport Controls**: Advanced zoom and pan functionality for detailed exploration:
-  - **Mouse Wheel Zoom**: Zoom in and out using the mouse wheel (supports trackpad gestures on Mac)
-  - **Cursor-Focused Zoom**: Zoom operations center on the cursor position for intuitive navigation
-  - **Click and Drag Panning**: Click and drag to move the viewport around when zoomed in
-  - **Reset View Button**: Convenient reset button to return to the default view that fits the entire treemap
-  - **Performance Optimized**: Viewport transforms are applied at the rendering layer without triggering treemap re-calculations
-  - **Smooth Interactions**: Uses hardware-accelerated CSS transforms for smooth zoom and pan operations
-  - **Visual Feedback**: Cursor changes to indicate interaction modes (grab/grabbing during panning)
-  - **Debug Information**: When debug mode is enabled, shows current scale and pan coordinates
+This extension analyzes source code and creates interactive treemap visualizations that help developers understand code structure, identify complexity hotspots, and navigate large codebases. The process consists of three main phases:
 
-### Color Scheme
+1. **Code Processing** - Parse and analyze source files
+2. **Tree Building** - Create hierarchical data structures
+3. **Tree Rendering** - Generate interactive visual treemaps
 
-## Search Feature
+## Code Processing
 
-### Overview
-
-The treemap view includes a powerful search functionality that allows you to filter and highlight nodes based on their content.
-
-### How to Use
-
-#### Using the Search
-
-- The search input is always visible in the treemap header
-- Type your search term to filter the treemap
-- Press the `/` key to quickly focus the search input
-
-#### Search Behavior
-
-- **Case-insensitive matching**: Search terms match regardless of case
-- **Label matching**: Searches node labels (function names, variable names, etc.)
-- **Source matching**: Searches the actual source code content of nodes
-- **Path preservation**: Shows parent nodes that lead to matching nodes
-
-#### Visual Indicators
-
-- **Yellow borders**: Nodes that directly match the search term get bright yellow borders
-- **Red borders**: Selected nodes (for detail drawer) get red borders (takes priority over search highlighting)
-- **Match count**: Shows the number of matching nodes in the header
-
-#### Keyboard Shortcuts
-
-- **`/`**: Focus the search input
-- **`Escape`**: Clear search and unfocus input
-- **Standard input controls**: Use normal text editing keys in the search field
-
-#### Clearing Search
-
-- Press `Escape` key to clear search and unfocus input
-- Click the `✕` button next to the search input (appears when there's text)
-- Manually delete all text from the search input
-
-### Examples
-
-#### Searching for Functions
-
-- Search: `function` - Shows all nodes with "function" in their label or source
-- Search: `useState` - Shows all nodes using the useState hook
-- Search: `component` - Shows all component-related nodes
-
-#### Searching for Specific Code
-
-- Search: `const` - Shows all nodes containing const declarations
-- Search: `return` - Shows all nodes with return statements
-- Search: `props` - Shows all nodes dealing with props
-
-## Development
-
-- Run `npm install` to install dependencies.
-- Run `npm run watch` to start the TypeScript compiler in watch mode.
-- Open the project in VS Code and press `F5` to launch the Extension Development Host.
-
-## Testing
-
-This project uses **Vitest** for testing with a focus on snapshot testing to verify code parsing accuracy across different file types.
-
-### Testing Philosophy
-
-The testing approach centers around **scope tree snapshot testing**, where files are parsed into hierarchical tree structures and compared against saved snapshots. This ensures that:
-
-- Code parsing logic remains consistent
-- Changes to parsers are intentional and visible
-- Different file types (TypeScript, CSS, Markdown) are properly analyzed
-
-### Directory Structure
-
-```
-src/__tests__/
-├── __fixtures__/              # Shared fixture files for all tests
-│   ├── sample.css
-│   ├── advanced.scss
-│   ├── SimpleComponent.tsx
-│   ├── sample.md
-│   └── tailwind-theme.css
-├── buildScopeTree/             # Core parser tests
-│   ├── testUtils.ts           # Testing utilities
-│   ├── complexExample.test.ts
-│   ├── simpleComponent.test.ts
-│   └── __snapshots__/
-├── cssAndScssTests/           # CSS/SCSS specific tests
-│   ├── cssAndScss.test.ts
-│   └── __snapshots__/
-└── markdownTests/             # Markdown specific tests
-    ├── markdown.test.ts
-    └── __snapshots__/
-```
-
-### Running Tests
-
-- **Watch mode** (reruns on file changes):
-
-  ```bash
-  npm test
-  ```
-
-- **Run once and exit**:
-
-  ```bash
-  npm run test:once
-  ```
-
-- **Update snapshots** for existing tests:
-
-  ```bash
-  npm run test:once -- -u
-  ```
-
-- **Run specific test file**:
-
-  ```bash
-  npm run test:once -- cssAndScss.test.ts
-  ```
-
-### Adding New Tests
-
-#### 1. Using Fixture Files (Recommended)
-
-**Step 1:** Create a fixture file in `src/__tests__/__fixtures__/`
-
-```bash
-# Example: Create a new CSS theme file
-touch src/__tests__/__fixtures__/my-theme.css
-```
-
-**Step 2:** Add your content to the fixture file
-
-```css
-/* src/__tests__/__fixtures__/my-theme.css */
-:root {
-  --primary: #007acc;
-  --secondary: #f0f0f0;
-}
-```
-
-**Step 3:** Add a test case to the appropriate test file
-
-```typescript
-// In src/__tests__/cssAndScssTests/cssAndScss.test.ts
-it("should match snapshot for my-theme.css", () => {
-  runScopeTreeSnapshotTest({
-    snapshotIdentifier: "myThemeCss",
-    filePath: "my-theme.css",
-    isFixture: true,
-  });
-});
-```
-
-#### 2. Using Inline Content
-
-For smaller tests or dynamic content:
-
-```typescript
-it("should handle inline CSS", () => {
-  runScopeTreeSnapshotTest({
-    snapshotIdentifier: "inlineCss",
-    filePath: "virtual-file.css",
-    isFixture: false,
-    inlineContent: `
-      .test { color: red; }
-      .another { margin: 10px; }
-    `,
-  });
-});
-```
-
-### Test Utility API
-
-The `runScopeTreeSnapshotTest` function supports:
-
-```typescript
-runScopeTreeSnapshotTest({
-  snapshotIdentifier: string;    // Unique identifier for the snapshot
-  filePath: string;              // For fixtures: filename, for inline: mock path
-  isFixture?: boolean;           // true = use fixture file, false = use inlineContent
-  inlineContent?: string;        // Required when isFixture is false
-});
-```
+The extension supports multiple file types and uses specialized parsers for each:
 
 ### Supported File Types
 
-The testing framework currently supports:
+- **TypeScript/JavaScript** (`.ts`, `.tsx`, `.js`, `.jsx`) - Full AST analysis using TypeScript compiler API
+- **CSS/SCSS** (`.css`, `.scss`) - Custom tokenizer and parser for stylesheets
+- **Markdown** (`.md`, `.mdx`) - Parses document structure and content blocks
 
-- **TypeScript/TSX**: React components, hooks, utilities
-- **CSS/SCSS**: Stylesheets, themes, component styles
-- **Markdown**: Documentation, README files
+### Parser Selection
 
-### Best Practices
+The system automatically selects the appropriate parser based on file extension via `buildScopeTree.ts`:
 
-1. **Use descriptive snapshot identifiers**: `tailwindThemeCss`, `complexReactComponent`, etc.
-2. **Group related tests**: Keep CSS tests in `cssAndScssTests/`, components in `buildScopeTree/`
-3. **Shared fixtures**: Place reusable test files in `src/__tests__/__fixtures__/`
-4. **Meaningful test names**: Describe what the test is validating
-5. **Review snapshots**: Always review generated snapshots to ensure they capture the expected structure
+- TypeScript files → `buildScopeTreeTs.ts`
+- CSS/SCSS files → `buildScopeTreeCss.ts`
+- Markdown files → `buildScopeTreeForMarkdown.ts`
 
-### Example: Adding a New Component Test
+### AST Analysis (TypeScript)
 
-```typescript
-// 1. Create fixture: src/__tests__/__fixtures__/MyButton.tsx
-import React from 'react';
+For TypeScript files, the extension:
 
-interface Props {
-  label: string;
-  onClick: () => void;
-}
+- Uses the TypeScript compiler API to generate Abstract Syntax Trees (AST)
+- Walks the AST to identify scope boundaries and significant code constructs
+- Categorizes nodes using `mapKindToCategory.ts` (Functions, Classes, Components, etc.)
+- Handles complex constructs like conditional blocks, try/catch statements, and loops
 
-export const MyButton: React.FC<Props> = ({ label, onClick }) => {
-  return <button onClick={onClick}>{label}</button>;
-};
+### Token Analysis (CSS/SCSS)
 
-// 2. Add test: src/__tests__/buildScopeTree/myButton.test.ts
-import { describe, it } from "vitest";
-import { runScopeTreeSnapshotTest } from "./testUtils";
+For stylesheet files, the extension:
 
-describe("MyButton Component", () => {
-  it("should parse button component structure", () => {
-    runScopeTreeSnapshotTest({
-      snapshotIdentifier: "MyButton",
-      filePath: "MyButton.tsx",
-      isFixture: true,
-    });
-  });
-});
+- Implements a custom tokenizer that recognizes CSS syntax
+- Parses tokens into structured elements (selectors, rules, at-rules, variables)
+- Supports SCSS-specific features (variables, mixins, functions, control directives)
+- Tracks nested structures and maintains proper hierarchy
 
-// 3. Run the test to generate snapshot
-// npm run test:once -- myButton.test.ts
-```
+## Tree Building
 
-## Contributing
+The tree building phase converts parsed code into hierarchical `ScopeNode` structures:
 
-(Add contribution guidelines later)
+### ScopeNode Structure
+
+Each node contains:
+
+- **id**: Unique identifier (`${filePath}:${startPos}-${endPos}`)
+- **category**: Type classification (Function, Class, Variable, etc.)
+- **label**: Human-readable name derived from code
+- **location**: Start/end positions in source file
+- **source**: Original code text
+- **value**: Complexity metric (starts at 1 for leaf nodes)
+- **children**: Array of child nodes
+- **meta**: Additional metadata (props, parameters, etc.)
+
+### Node Categorization
+
+The system recognizes numerous node types:
+
+- **Code Structure**: Program, Module, Class, Function, Block
+- **React Elements**: ReactComponent, ReactHook, JSX elements
+- **Control Flow**: IfStatement, TryStatement, ForLoop, etc.
+- **Declarations**: Variable, Import, TypeAlias, Interface
+- **CSS Elements**: Rule, Selector, AtRule, Property, Mixin
+- **Markdown Elements**: Heading, Paragraph, CodeBlock, List
+
+### Value Calculation
+
+Node values represent complexity and are calculated recursively:
+
+- **Leaf nodes**: Start with value = 1
+- **Parent nodes**: Sum of all children values + 1
+- This creates meaningful size representation where larger containers reflect their total complexity
+
+### Tree Processing Options
+
+Optional processing includes:
+
+- **Synthetic Groups**: Group related nodes (Imports, Type definitions)
+- **Filtering**: Include/exclude certain node types
+- **Flattening**: Remove unnecessary nesting levels
+- **Depth Limiting**: Control maximum tree depth for visualization
+
+## Tree Rendering
+
+The rendering phase converts hierarchical trees into interactive SVG treemaps:
+
+### Layout Algorithm
+
+The system uses a sophisticated hierarchical layout algorithm (`layoutHierarchical.ts`):
+
+- **Bin Packing**: Treats layout as a 2D bin packing problem
+- **Proportional Sizing**: Node dimensions reflect their relative values
+- **Source Order Preservation**: Maintains original code structure ordering
+- **Space Optimization**: Uses advanced algorithms to minimize wasted space
+
+### Rendering Modes
+
+Nodes can render in different modes based on available space:
+
+- **Text Mode**: Full node with readable text labels (minimum 80x40px)
+- **Box Mode**: Colored rectangle without text (minimum 20x20px)
+- **None Mode**: Hidden when space is insufficient
+
+### Visual Features
+
+- **Color Coding**: Different colors for each node category (see Color Scheme below)
+- **Hierarchical Borders**: Container borders to show grouping
+- **Depth-Based Styling**: Opacity and stroke width adjust with nesting depth
+- **Hidden Child Indicators**: Orange dots show when children are hidden due to space constraints
+
+### Interactive Features
+
+- **Click Navigation**: Single click opens detail drawer, Cmd+click jumps to source, Alt+click zooms into node
+- **Search**: Real-time filtering with `/` key shortcut and visual highlighting
+- **Zoom/Pan**: Mouse wheel zoom and drag panning with viewport controls
+- **Tooltips**: Hover information including hidden children details
+- **Export**: PNG image export and JSON data export
+
+### Flat Rendering System
+
+For performance, the system uses a flat rendering approach:
+
+- Converts hierarchical layout to flat arrays of container and leaf nodes
+- Renders in breadth-first order (containers first within each depth level)
+- Assigns render order numbers for consistent layering
+- Optimizes for smooth animations and interactions
+
+## Features Summary
+
+### Core Visualization
+
+- **Interactive Treemap**: Navigate code structure visually with proportional sizing
+- **Multi-File Support**: View multiple files from the same folder in grid layout
+- **Responsive Design**: Automatically adapts to container size changes
+
+### Search and Navigation
+
+- **Real-time Search**: Filter nodes by content with live highlighting
+- **Keyboard Shortcuts**: Quick access with `/` for search, number keys for depth control
+- **Breadcrumb Navigation**: Easy depth level switching
+- **Source Integration**: Jump directly to code locations
+
+### Customization
+
+- **Depth Control**: Adjust maximum tree depth (keys 1-9, 0 for unlimited)
+- **Visual Settings**: Customize colors, borders, opacity, and layout options
+- **Node Filtering**: Show/hide imports, types, literals, and other categories
+- **Export Options**: Save as PNG or export underlying JSON data
+
+### Color Scheme
+
+The treemap uses a carefully designed color palette to distinguish different code elements:
+
+- Functions and methods use coral/salmon tones
+- React components use purple/magenta shades
+- Variables use light pink
+- Control flow uses green tones
+- CSS elements use blue/purple theme
+- Markdown elements use warm earth tones
+
+## Search Feature
+
+### Quick Usage
+
+- Press `/` to focus search input
+- Type to filter nodes by content (case-insensitive)
+- Press `Escape` to clear search
+- Yellow borders highlight matching nodes
+- Parent paths to matches remain visible
+
+### Search Behavior
+
+- **Label Matching**: Searches node names and identifiers
+- **Source Matching**: Searches actual code content
+- **Path Preservation**: Shows parent nodes leading to matches
+- **Live Updates**: Results update as you type
+
+## Development
+
+For development setup, testing guidelines, and contribution information, see the [Development Guide](docs/DEV.md).
+
+For detailed technical specifications and implementation notes, see [OLD_NOTES.md](docs/OLD_NOTES.md).

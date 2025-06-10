@@ -1,34 +1,13 @@
 import ELK from "elkjs/lib/elk.bundled.js";
 import * as React from "react";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from "react";
-import ReactFlow, {
-  applyEdgeChanges,
-  applyNodeChanges,
-  Background,
-  Controls,
-  Edge,
-  EdgeChange,
-  MarkerType,
-  MiniMap,
-  Node,
-  NodeChange,
-  NodeProps,
-  ReactFlowProvider,
-  useReactFlow,
-} from "reactflow";
+import { useCallback, useEffect, useState } from "react";
+import { Edge, Node, NodeProps } from "reactflow";
 
 import "@reactflow/controls/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
 import { TreemapDisplay } from "./Treemap/TreemapDisplay";
-import { GridTreemapDisplay } from "./Treemap/GridTreemapDisplay";
 import { vscodeApi } from "./vscodeApi";
 
 // Import new settings components and types
@@ -49,10 +28,6 @@ export interface CustomNodeProps extends NodeProps {
 
 // Import custom node components
 import { ScopeNode } from "../types";
-import ComponentNodeDisplay from "./ComponentNodeDisplay";
-import { FileContainerNodeDisplay } from "./FileContainerNodeDisplay";
-import { LibraryContainerNodeDisplay } from "./LibraryContainerNodeDisplay";
-import { ExportedItemNodeDisplay } from "./ExportedItemNodeDisplay";
 // FileNodeDisplay and DependencyNodeDisplay will be removed
 // import FileNodeDisplay from "./FileNodeDisplay";
 // import DependencyNodeDisplay from "./DependencyNodeDisplay";
@@ -201,149 +176,6 @@ const getLayoutedElements = (
       return;
     });
 };
-
-// Inner component to handle React Flow instance and layout
-function FlowCanvas({
-  initialNodes,
-  initialEdges,
-  settings,
-}: {
-  initialNodes: Node[];
-  initialEdges: Edge[];
-  settings: AnalysisSettings;
-}) {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView } = useReactFlow();
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) =>
-      setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
-  );
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
-
-  useLayoutEffect(() => {
-    if (initialNodes.length > 0) {
-      getLayoutedElements(initialNodes, initialEdges)
-        .then((layoutResult) => {
-          if (layoutResult && layoutResult.nodes && layoutResult.edges) {
-            const { nodes: layoutedNodes, edges: layoutedEdges } = layoutResult;
-            setNodes(layoutedNodes);
-            setEdges(layoutedEdges);
-            window.requestAnimationFrame(() => {
-              fitView({ duration: 300 });
-            });
-          }
-        })
-        .catch(() => {});
-    } else {
-      setNodes([]);
-      setEdges([]);
-    }
-  }, [initialNodes, initialEdges, fitView]);
-
-  useEffect(() => {
-    let nodesChanged = false;
-    const nextNodes = nodes.map((node) => {
-      let newHidden = false;
-      if (
-        node.type === "ExportedItemNode" &&
-        node.data?.actualType === "Hook" &&
-        !settings.showHooks
-      ) {
-        newHidden = true;
-      }
-      if (node.type === "LibraryContainerNode" && !settings.showLibDeps) {
-        newHidden = true;
-      }
-      if (node.hidden !== newHidden) {
-        nodesChanged = true;
-        return { ...node, hidden: newHidden };
-      }
-      return node;
-    });
-
-    let edgesChanged = false;
-    const nextEdges = edges.map((edge) => {
-      let newHidden = false;
-      const sourceNode = nextNodes.find((n) => n.id === edge.source);
-      const targetNode = nextNodes.find((n) => n.id === edge.target);
-
-      if (sourceNode?.hidden || targetNode?.hidden) {
-        newHidden = true;
-      } else {
-        if (
-          targetNode?.type === "ExportedItemNode" &&
-          targetNode.data?.actualType === "Hook" &&
-          !settings.showHooks
-        ) {
-          newHidden = true;
-        }
-        if (
-          !newHidden &&
-          targetNode?.type === "LibraryContainerNode" &&
-          !settings.showLibDeps
-        ) {
-          newHidden = true;
-        }
-        if (
-          !newHidden &&
-          sourceNode?.type === "LibraryContainerNode" &&
-          !settings.showLibDeps
-        ) {
-          newHidden = true;
-        }
-      }
-      if (edge.hidden !== newHidden) {
-        edgesChanged = true;
-        return { ...edge, hidden: newHidden };
-      }
-      return edge;
-    });
-
-    if (nodesChanged) {
-      setNodes(nextNodes);
-    }
-    if (edgesChanged) {
-      setEdges(nextEdges);
-    }
-  }, [settings, nodes, edges, setNodes, setEdges]);
-
-  const nodeTypes = useMemo(
-    () => ({
-      ComponentNode: ComponentNodeDisplay,
-      FileContainerNode: FileContainerNodeDisplay,
-      LibraryContainerNode: LibraryContainerNodeDisplay,
-      ExportedItemNode: ExportedItemNodeDisplay,
-    }),
-    []
-  );
-
-  return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      nodeTypes={nodeTypes}
-      defaultEdgeOptions={{
-        markerEnd: { type: MarkerType.ArrowClosed },
-        style: { strokeWidth: 1.5 },
-      }}
-    >
-      <Controls />
-      {settings.showMinimap && (
-        <MiniMap nodeStrokeWidth={3} zoomable pannable />
-      )}
-      <Background gap={12} size={1} />
-    </ReactFlow>
-  );
-}
 
 const HEADER_HEIGHT = 60; // Define header height
 
@@ -683,27 +515,8 @@ const App: React.FC = () => {
               <div className="error-overlay">Treemap Error: {treemapError}</div>
             )}
 
-            {activeView === "graph" && rawAnalysisData && (
-              <ReactFlowProvider>
-                <FlowCanvas
-                  initialNodes={rawAnalysisData.nodes}
-                  initialEdges={rawAnalysisData.edges}
-                  settings={settings}
-                />
-              </ReactFlowProvider>
-            )}
-
             {activeView === "treemap" && scopeTreeData && (
               <div style={{ width: "100%", height: "100%" }}>
-                {/* {useGridMode ? (
-                  <GridTreemapDisplay
-                    primaryData={scopeTreeData}
-                    settings={treemapSettings}
-                    onSettingsChange={handleTreemapSettingChange}
-                    fileName={currentFileName || "No file selected"}
-                    filePath={currentAnalysisTarget || ""}
-                  />
-                ) : ( */}
                 <TreemapDisplay
                   data={scopeTreeData}
                   settings={treemapSettings}

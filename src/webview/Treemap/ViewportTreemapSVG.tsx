@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
-import { AnyLayoutFn, TreemapContent, TreemapSVGProps } from "./TreemapSVG";
+import { AnyLayoutFn, TreemapContent } from "./TreemapSVG";
 
 export interface ViewportState {
   scale: number;
