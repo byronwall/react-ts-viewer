@@ -2,7 +2,7 @@ import { ScopeNode } from "../../types";
 import { Guillotine2DPacker } from "./Guillotine2DPacker";
 
 // Base structure for all layout nodes, similar to other layouts
-export interface BaseLayoutNode {
+interface BaseLayoutNode {
   node: ScopeNode;
   x: number;
   y: number;

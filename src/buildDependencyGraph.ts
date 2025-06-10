@@ -13,7 +13,7 @@ import type {
 } from "./types";
 
 // New type for enhanced node data
-export interface GraphNodeData {
+interface GraphNodeData {
   label: string;
   type: "Component" | "File" | "FileDep" | "LibDep" | "HookUsage";
   filePath?: string; // For file nodes

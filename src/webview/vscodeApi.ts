@@ -3,7 +3,7 @@
 // but not explicitly imported.
 declare const acquireVsCodeApi: () => any;
 
-export interface VsCodeApi {
+interface VsCodeApi {
   postMessage(message: any): void;
   getState(): any;
   setState(newState: any): void;

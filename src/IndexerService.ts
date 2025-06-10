@@ -1,34 +1,26 @@
-import * as vscode from "vscode";
+import * as path from "path";
 import {
+  ClassDeclaration,
+  FunctionDeclaration,
+  Identifier,
+  Node,
   Project,
   SourceFile,
   SyntaxKind,
-  FunctionDeclaration,
-  ClassDeclaration,
-  VariableStatement,
   VariableDeclaration,
-  Node,
-  Identifier,
-  JsxOpeningElement,
-  JsxSelfClosingElement,
-  CallExpression,
-  ImportDeclaration,
-  ImportSpecifier,
 } from "ts-morph";
+import * as vscode from "vscode";
 import {
   ComponentNode,
-  HookNode,
+  DependencyInfo,
   FileNode,
+  HookNode,
+  HookUsage,
   ImportData,
   SymbolLocation,
-  HookUsage,
-  DependencyInfo,
 } from "./types";
-import * as path from "path";
 
 // Event emitter for index updates
-const _onDidIndexFile = new vscode.EventEmitter<string>(); // Emitter type
-export const onDidIndexFile = _onDidIndexFile.event; // Exposed event
 
 // Simple heuristic to check if a function/class name looks like a React component
 function isComponentName(name: string): boolean {
@@ -276,7 +268,6 @@ export class IndexerService {
 
     const name = nameNode.getText();
     const location = getNodeLocation(nameNode); // Location of the name identifier
-    const bodyLocation = getNodeLocation(bodyNode); // Location of the function body/initializer
 
     // Extract details from the body/initializer
     const {

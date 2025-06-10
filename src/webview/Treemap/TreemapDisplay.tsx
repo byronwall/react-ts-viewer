@@ -30,7 +30,7 @@ interface TreemapDisplayProps {
 }
 
 // Helper function to find a node by ID in the ScopeNode tree
-export function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
+function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
   if (node.id === id) {
     return node;
   }
@@ -46,10 +46,7 @@ export function findNodeInTree(node: ScopeNode, id: string): ScopeNode | null {
 }
 
 // Helper function to calculate the maximum depth of a tree
-export function calculateMaxDepth(
-  node: ScopeNode,
-  currentDepth: number = 0
-): number {
+function calculateMaxDepth(node: ScopeNode, currentDepth: number = 0): number {
   if (!node.children || node.children.length === 0) {
     return currentDepth;
   }
@@ -130,7 +127,7 @@ export function findMatchingNodesAndPaths(
 }
 
 // Exported helper function to filter nodes based on search
-export function filterNodesForSearch(
+function filterNodesForSearch(
   node: ScopeNode,
   visibleNodeIds: Set<string>
 ): ScopeNode | null {
@@ -1139,7 +1136,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                         }}
                       >
                         <div style={{ marginBottom: "15px" }}>
-                          <h4>Treemap Settings</h4>
+                          <h4>Treemap Settings XXX</h4>
                           {renderSettingsContent()}
                         </div>
                       </Popover.Panel>,

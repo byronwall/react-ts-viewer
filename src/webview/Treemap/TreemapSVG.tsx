@@ -925,13 +925,11 @@ const FreeRectangles: React.FC<FreeRectanglesProps> = ({ freeRects }) => {
 
 /* ---------- type definitions ------------ */
 
-export type AnyLayoutNode = HierarchicalLayoutNode;
-
-export type AnyLayoutOptions = HierarchicalLayoutOptions;
+type AnyLayoutNode = HierarchicalLayoutNode;
 
 export type AnyLayoutFn = HierarchicalLayoutFn;
 
-export interface TreemapSVGProps {
+interface TreemapSVGProps {
   root: ScopeNode;
   width: number;
   height: number;
@@ -1110,7 +1108,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
 };
 
 // Main component that wraps content in SVG
-export const TreemapSVG: React.FC<TreemapSVGProps> = (props) => {
+const TreemapSVG: React.FC<TreemapSVGProps> = (props) => {
   const { width, height } = props;
 
   return (

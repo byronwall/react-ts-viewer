@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { IndexerService } from "./IndexerService";
 import { SidebarProvider } from "./SidebarProvider";
 
-export let sidebarProvider: SidebarProvider; // Added
+let sidebarProvider: SidebarProvider; // Added
 
 // --- Tree View Setup ---
 export function setupTreeView(

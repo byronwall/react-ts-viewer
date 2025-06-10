@@ -1,12 +1,11 @@
 import * as vscode from "vscode";
 import { IndexerService } from "./IndexerService";
-import { FileNode, ComponentNode, HookNode } from "./types";
 import {
-  TreeNode,
-  FileTreeItem,
   ComponentTreeItem,
+  FileTreeItem,
   HookTreeItem,
   MessageTreeItem,
+  TreeNode,
 } from "./treeViewTypes";
 
 export class SidebarProvider implements vscode.TreeDataProvider<TreeNode> {

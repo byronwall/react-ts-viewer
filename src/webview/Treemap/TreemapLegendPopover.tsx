@@ -5,7 +5,7 @@ import { Palette } from "@phosphor-icons/react";
 import { TreemapLegendContent } from "./TreemapLegendContent";
 import { NodeCategory } from "../../types";
 
-export interface TreemapLegendPopoverProps {
+interface TreemapLegendPopoverProps {
   activePalette: Record<NodeCategory, string>;
 }
 

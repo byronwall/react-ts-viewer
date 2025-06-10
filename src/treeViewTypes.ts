@@ -9,7 +9,7 @@ export type TreeNode =
   | MessageTreeItem;
 
 // Base class for tree items to reduce boilerplate
-export abstract class BaseTreeItem extends vscode.TreeItem {
+abstract class BaseTreeItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,

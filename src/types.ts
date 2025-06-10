@@ -51,12 +51,6 @@ export interface HookNode extends BaseNode {
   exported: boolean;
 }
 
-export interface VariableNode extends BaseNode {
-  kind: "Variable";
-  filePath: string;
-  // Add more details as needed
-}
-
 /** Represents the usage of a hook within a component or another hook. */
 export interface HookUsage {
   hookName: string; // Name of the hook being used (e.g., "useState", "useCustomHook")
@@ -73,29 +67,6 @@ export interface ImportData {
   defaultImport?: string; // e.g., 'MyComponent'
   location: SymbolLocation;
   resolvedPath?: string; // Absolute path if resolved, undefined for external modules
-}
-
-/** Represents a "renders" relationship between components. */
-export interface RenderEdge {
-  sourceId: string; // ID of the rendering component
-  targetId: string; // ID of the rendered component
-  location: SymbolLocation; // Location of the JSX element/call site
-  callSites: number; // How many times does A render B?
-}
-
-/** Represents an import/export relationship between files or modules. */
-export interface ImportEdge {
-  sourceId: string; // ID of the importing file/module
-  targetId: string; // ID of the imported file/module (or external module name)
-  importData: ImportData; // Details of the import statement
-}
-
-/** Represents the definition of a component prop. */
-export interface PropDefinition {
-  name: string;
-  typeString: string; // Type representation (e.g., 'string', '() => void', 'MyInterface')
-  isRequired: boolean;
-  location?: SymbolLocation; // Where the prop is defined (e.g., in interface or type alias)
 }
 
 export interface Position {

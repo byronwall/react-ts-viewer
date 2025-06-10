@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { expect } from "vitest";
 import { buildScopeTree } from "../../parsers/buildScopeTree";
 
-export const getFixturePath = (fileName: string) =>
+const getFixturePath = (fileName: string) =>
   path.join(__dirname, "..", "__fixtures__", fileName);
 
 export const runScopeTreeSnapshotTest = (options: {

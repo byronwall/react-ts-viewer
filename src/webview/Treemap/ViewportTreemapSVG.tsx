@@ -3,13 +3,13 @@ import type { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { AnyLayoutFn, TreemapContent } from "./TreemapSVG";
 
-export interface ViewportState {
+interface ViewportState {
   scale: number;
   translateX: number;
   translateY: number;
 }
 
-export interface ViewportTreemapSVGProps {
+interface ViewportTreemapSVGProps {
   root: ScopeNode;
   width: number;
   height: number;

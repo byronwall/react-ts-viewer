@@ -8,7 +8,7 @@ import {
 } from "../../types";
 
 // CSS/SCSS specific node categories
-export enum CssNodeCategory {
+enum CssNodeCategory {
   Variable = "CssVariable",
   Mixin = "CssMixin",
   Function = "CssFunction",

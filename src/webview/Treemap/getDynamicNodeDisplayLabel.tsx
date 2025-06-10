@@ -39,7 +39,7 @@ export const getDynamicNodeDisplayLabel = (
   return displayLabel;
 }; // Define a type for the parts of a Nivo node needed for labeling
 
-export interface NodePartsForLabeling {
+interface NodePartsForLabeling {
   data: ScopeNode;
   width: number;
   height: number;

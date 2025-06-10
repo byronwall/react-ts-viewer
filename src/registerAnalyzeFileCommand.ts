@@ -8,7 +8,7 @@ import { outputChannel } from "./initializeExtension";
 import { getWebviewContent } from "./getWebviewContent";
 import { IndexerService } from "./IndexerService";
 
-export let webviewPanel: vscode.WebviewPanel | undefined;
+let webviewPanel: vscode.WebviewPanel | undefined;
 
 export function registerAnalyzeFileCommand(
   context: vscode.ExtensionContext,

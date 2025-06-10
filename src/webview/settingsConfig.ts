@@ -39,7 +39,7 @@ export interface TreemapSettings {
   showDebugFreeRectangles: boolean;
 }
 
-export interface SettingConfigBase<T> {
+interface SettingConfigBase<T> {
   id: keyof TreemapSettings;
   label: string;
   type: "boolean" | "number" | "select";
@@ -48,7 +48,7 @@ export interface SettingConfigBase<T> {
   indent?: boolean;
 }
 
-export interface BooleanSettingConfig extends SettingConfigBase<boolean> {
+interface BooleanSettingConfig extends SettingConfigBase<boolean> {
   type: "boolean";
 }
 

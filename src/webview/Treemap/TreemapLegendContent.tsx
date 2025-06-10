@@ -1,7 +1,7 @@
 import React from "react";
 import { NodeCategory } from "../../types";
 
-export interface TreemapLegendContentProps {
+interface TreemapLegendContentProps {
   activePalette: Record<NodeCategory, string>;
 }
 

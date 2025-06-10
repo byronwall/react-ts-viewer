@@ -1,7 +1,7 @@
 import { NodeCategory } from "../../types";
 
 // CSS categories for additional color mapping
-export enum CssNodeCategory {
+enum CssNodeCategory {
   Variable = "CssVariable",
   Mixin = "CssMixin",
   Function = "CssFunction",
