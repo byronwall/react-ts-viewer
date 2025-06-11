@@ -941,65 +941,52 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
   onMouseEnter,
   onMouseLeave,
 }) => {
-  console.log("🎨 === ELK GRAPH RENDERING STARTED ===");
-  console.log("🎨 ELK graph structure:", {
-    id: elkGraph.id,
+  console.log("🎨 Rendering ELK graph:", {
     childrenCount: elkGraph.children.length,
     edgesCount: elkGraph.edges.length,
-    layoutOptions: elkGraph.layoutOptions,
   });
 
-  console.log("🎨 ELK nodes to render:");
-  elkGraph.children.forEach((child, index) => {
-    console.log(`  ${index + 1}. ELK Node: ${child.id}`);
-    console.log(`     📏 Size: ${child.width}x${child.height}`);
-    console.log(`     📍 Position: (${child.x}, ${child.y})`);
-    console.log(`     👥 Children: ${child.children?.length || 0}`);
-  });
+  // Build a map of all ELK nodes (including nested ones) for edge rendering
+  const buildElkNodeMap = (
+    nodes: ELKLayoutNode[]
+  ): Map<string, ELKLayoutNode> => {
+    const map = new Map<string, ELKLayoutNode>();
 
-  console.log("🗂️  Scope node map analysis:", {
-    totalScopeNodes: scopeNodes.size,
-    scopeNodeIds: Array.from(scopeNodes.keys()).slice(0, 10), // Show first 10 IDs
-    hasMoreThan10: scopeNodes.size > 10,
-  });
+    const addToMap = (node: ELKLayoutNode, parentX = 0, parentY = 0) => {
+      // Store absolute position for this node
+      const absoluteNode = {
+        ...node,
+        x: (node.x || 0) + parentX,
+        y: (node.y || 0) + parentY,
+      };
+      map.set(node.id, absoluteNode);
+
+      // Recursively add children
+      if (node.children) {
+        node.children.forEach((child) =>
+          addToMap(child, absoluteNode.x, absoluteNode.y)
+        );
+      }
+    };
+
+    nodes.forEach((node) => addToMap(node));
+    return map;
+  };
+
+  const elkNodeMap = buildElkNodeMap(elkGraph.children);
 
   const renderELKNode = (elkNode: ELKLayoutNode, depth = 0) => {
-    const indentStr = "  ".repeat(depth);
-    console.log(
-      `${indentStr}🎨 Rendering ELK node at depth ${depth}:`,
-      elkNode.id
-    );
-
     const scopeNode = scopeNodes.get(elkNode.id);
     if (!scopeNode) {
-      console.warn(
-        `${indentStr}⚠️ No ScopeNode found for ELK node:`,
-        elkNode.id
-      );
-      console.warn(
-        `${indentStr}⚠️ Available scope node IDs:`,
-        Array.from(scopeNodes.keys()).slice(0, 5)
-      );
+      console.warn("⚠️ No ScopeNode found for ELK node:", elkNode.id);
       return null;
     }
-
-    console.log(`${indentStr}✅ Found scope node:`, {
-      id: scopeNode.id,
-      label: scopeNode.label,
-      category: scopeNode.category,
-      value: scopeNode.value,
-    });
 
     const category = scopeNode.category;
     const baseColor = pastelSet[category] || pastelSet[NodeCategory.Other];
 
-    console.log(`${indentStr}🎨 Styling node:`, {
-      category,
-      baseColor,
-      width: elkNode.width,
-      height: elkNode.height,
-      position: `(${elkNode.x}, ${elkNode.y})`,
-    });
+    const hasChildren = elkNode.children && elkNode.children.length > 0;
+    const headerHeight = hasChildren ? Math.min(30, elkNode.height * 0.2) : 0;
 
     return (
       <g
@@ -1007,33 +994,51 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
         transform={`translate(${elkNode.x || 0}, ${elkNode.y || 0})`}
         className="elk-node"
       >
+        {/* Container background (if has children) */}
+        {hasChildren && (
+          <rect
+            x={0}
+            y={headerHeight}
+            width={elkNode.width}
+            height={elkNode.height - headerHeight}
+            fill={lightenColor(baseColor, 30)}
+            stroke="#6c757d"
+            strokeWidth={1}
+            rx={4}
+            opacity={0.3}
+          />
+        )}
+
+        {/* Main node rectangle */}
         <rect
           x={0}
           y={0}
           width={elkNode.width}
-          height={elkNode.height}
+          height={hasChildren ? headerHeight : elkNode.height}
           fill={baseColor}
           stroke="#333333"
           strokeWidth={2}
           rx={4}
           style={{ cursor: "pointer" }}
           onClick={(e) => {
-            console.log("🖱️  ELK node clicked:", scopeNode.id, scopeNode.label);
             onNodeClick(scopeNode, e as any);
           }}
           onMouseEnter={(e) => {
-            console.log("🖱️  ELK node mouse enter:", scopeNode.id);
             onMouseEnter(scopeNode, e as any);
           }}
           onMouseLeave={() => {
-            console.log("🖱️  ELK node mouse leave:", scopeNode.id);
             onMouseLeave();
           }}
         />
+
+        {/* Node label */}
         <text
           x={elkNode.width / 2}
-          y={elkNode.height / 2}
-          fontSize={12}
+          y={(hasChildren ? headerHeight : elkNode.height) / 2}
+          fontSize={Math.min(
+            12,
+            Math.max(8, (hasChildren ? headerHeight : elkNode.height) * 0.4)
+          )}
           fill={getContrastingTextColor(baseColor)}
           textAnchor="middle"
           dominantBaseline="middle"
@@ -1045,24 +1050,13 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
 
         {/* Render children recursively if they exist */}
         {elkNode.children?.map((child) => {
-          console.log(
-            `${indentStr}👶 Processing child of ${elkNode.id}:`,
-            child.id
-          );
           return renderELKNode(child, depth + 1);
         })}
       </g>
     );
   };
 
-  console.log("🚀 Starting recursive ELK node rendering...");
-  const renderedNodes = elkGraph.children.map((node, index) => {
-    console.log(
-      `🎨 Processing top-level ELK node ${index + 1}/${elkGraph.children.length}:`,
-      node.id
-    );
-    return renderELKNode(node, 0);
-  });
+  const renderedNodes = elkGraph.children.map((node) => renderELKNode(node, 0));
 
   return (
     <>
@@ -1114,30 +1108,36 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
 
       {/* Render edges if any exist */}
       {elkGraph.edges.map((edge) => {
-        // Find source and target nodes to get their positions
+        // Find source and target nodes using the node map (which includes nested nodes)
         const sourceNodeId = edge.sources[0];
         const targetNodeId = edge.targets[0];
 
-        const sourceELKNode = elkGraph.children.find(
-          (n) => n.id === sourceNodeId
-        );
-        const targetELKNode = elkGraph.children.find(
-          (n) => n.id === targetNodeId
-        );
-
-        if (!sourceELKNode || !targetELKNode) {
+        if (!sourceNodeId || !targetNodeId) {
+          console.warn(`⚠️ Edge ${edge.id}: Missing source or target ID`, {
+            sourceNodeId,
+            targetNodeId,
+          });
           return null;
         }
 
-        // Calculate center points of the nodes for edge connections
-        const sourceCenterX =
-          (sourceELKNode.x || 0) + (sourceELKNode.width || 0) / 2;
-        const sourceCenterY =
-          (sourceELKNode.y || 0) + (sourceELKNode.height || 0) / 2;
-        const targetCenterX =
-          (targetELKNode.x || 0) + (targetELKNode.width || 0) / 2;
-        const targetCenterY =
-          (targetELKNode.y || 0) + (targetELKNode.height || 0) / 2;
+        const sourceELKNode = elkNodeMap.get(sourceNodeId);
+        const targetELKNode = elkNodeMap.get(targetNodeId);
+
+        if (!sourceELKNode || !targetELKNode) {
+          console.warn(`⚠️ Edge ${edge.id}: Could not find nodes`, {
+            sourceNodeId,
+            targetNodeId,
+            sourceFound: !!sourceELKNode,
+            targetFound: !!targetELKNode,
+          });
+          return null;
+        }
+
+        // Calculate center points of the nodes for edge connections (using absolute positions)
+        const sourceCenterX = (sourceELKNode.x || 0) + sourceELKNode.width / 2;
+        const sourceCenterY = (sourceELKNode.y || 0) + sourceELKNode.height / 2;
+        const targetCenterX = (targetELKNode.x || 0) + targetELKNode.width / 2;
+        const targetCenterY = (targetELKNode.y || 0) + targetELKNode.height / 2;
 
         // Determine edge style based on direction (from edge ID)
         const isIncoming = edge.id.includes("_incoming_");
@@ -1168,14 +1168,6 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
           markerEnd = "url(#arrowhead-outgoing)";
         }
 
-        // Calculate midpoint for label positioning
-        const midX = (sourceCenterX + targetCenterX) / 2;
-        const midY = (sourceCenterY + targetCenterY) / 2;
-
-        // Get label text from edge
-        const labelText =
-          edge.labels && edge.labels[0] ? edge.labels[0].text : "";
-
         return (
           <g key={edge.id}>
             <line
@@ -1189,24 +1181,6 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
               opacity={0.8}
               markerEnd={markerEnd}
             />
-            {/* Edge label if available */}
-            {labelText && (
-              <text
-                x={midX}
-                y={midY}
-                fontSize="10"
-                fill={strokeColor}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                pointerEvents="none"
-                style={{
-                  userSelect: "none",
-                  filter: "drop-shadow(1px 1px 1px rgba(255, 255, 255, 0.8))",
-                }}
-              >
-                {labelText}
-              </text>
-            )}
           </g>
         );
       })}

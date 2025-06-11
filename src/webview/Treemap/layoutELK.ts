@@ -24,7 +24,6 @@ export interface ELKLayoutEdge {
   id: string;
   sources: string[];
   targets: string[];
-  labels?: Array<{ text: string; id: string }>;
 }
 
 export interface ELKGraph {
@@ -229,12 +228,31 @@ function extractSemanticReferences(
       });
     }
 
+    // Property access expressions (not just calls)
+    if (ts.isPropertyAccessExpression(n) && !ts.isCallExpression(n.parent)) {
+      const objectName = ts.isIdentifier(n.expression)
+        ? n.expression.text
+        : "unknown";
+      const propertyName = n.name.text;
+      const name = `${objectName}.${propertyName}`;
+      const isInternal = isVariableDeclaredInScope(objectName, boiScope);
+
+      references.push({
+        name,
+        type: "property_access",
+        sourceNodeId,
+        position,
+        isInternal,
+        direction: isInternal ? "recursive" : "outgoing",
+      });
+    }
+
     // Variable references (not in declarations)
     if (ts.isIdentifier(n) && !isPartOfDeclaration(n)) {
       const name = n.text;
 
-      // Skip common keywords
-      if (!isKeyword(name)) {
+      // Skip common keywords and JSX component names
+      if (!isKeyword(name) && !isJSXComponentName(n)) {
         const isInternal = isVariableDeclaredInScope(name, boiScope);
 
         references.push({
@@ -246,6 +264,17 @@ function extractSemanticReferences(
           direction: isInternal ? "recursive" : "outgoing",
         });
       }
+    }
+
+    // JSX Expression containers - extract variables from {variable} expressions
+    if (ts.isJsxExpression(n) && n.expression) {
+      extractJSXExpressionReferences(
+        n.expression,
+        sourceNodeId,
+        boiScope,
+        references,
+        sourceFile
+      );
     }
 
     // Import declarations
@@ -286,6 +315,98 @@ function extractSemanticReferences(
 
   visitNode(node);
   return references;
+}
+
+// Helper function to extract references from JSX expressions
+function extractJSXExpressionReferences(
+  expression: ts.Expression,
+  sourceNodeId: string,
+  boiScope: VariableScope,
+  references: SemanticReference[],
+  sourceFile: ts.SourceFile
+) {
+  function visitExpression(expr: ts.Expression) {
+    const position = getLineAndCharacter(sourceFile, expr.pos);
+
+    if (ts.isIdentifier(expr)) {
+      const name = expr.text;
+      if (!isKeyword(name)) {
+        const isInternal = isVariableDeclaredInScope(name, boiScope);
+        references.push({
+          name,
+          type: "variable_reference",
+          sourceNodeId,
+          position,
+          isInternal,
+          direction: isInternal ? "recursive" : "outgoing",
+        });
+      }
+    } else if (ts.isPropertyAccessExpression(expr)) {
+      const objectName = ts.isIdentifier(expr.expression)
+        ? expr.expression.text
+        : "unknown";
+      const propertyName = expr.name.text;
+      const name = `${objectName}.${propertyName}`;
+      const isInternal = isVariableDeclaredInScope(objectName, boiScope);
+
+      references.push({
+        name,
+        type: "property_access",
+        sourceNodeId,
+        position,
+        isInternal,
+        direction: isInternal ? "recursive" : "outgoing",
+      });
+    } else if (ts.isCallExpression(expr)) {
+      if (ts.isIdentifier(expr.expression)) {
+        const name = expr.expression.text;
+        const isInternal = isVariableDeclaredInScope(name, boiScope);
+        references.push({
+          name,
+          type: "function_call",
+          sourceNodeId,
+          position,
+          isInternal,
+          direction: isInternal ? "recursive" : "outgoing",
+        });
+      } else if (ts.isPropertyAccessExpression(expr.expression)) {
+        const objectName = ts.isIdentifier(expr.expression.expression)
+          ? expr.expression.expression.text
+          : "unknown";
+        const propertyName = expr.expression.name.text;
+        const name = `${objectName}.${propertyName}`;
+        const isInternal = isVariableDeclaredInScope(objectName, boiScope);
+
+        references.push({
+          name,
+          type: "property_access",
+          sourceNodeId,
+          position,
+          isInternal,
+          direction: isInternal ? "recursive" : "outgoing",
+        });
+      }
+    }
+
+    // Recursively visit child expressions
+    ts.forEachChild(expr, (child) => {
+      if (ts.isExpression(child)) {
+        visitExpression(child);
+      }
+    });
+  }
+
+  visitExpression(expression);
+}
+
+// Helper function to check if an identifier is a JSX component name
+function isJSXComponentName(identifier: ts.Identifier): boolean {
+  const parent = identifier.parent;
+  return (
+    ts.isJsxOpeningElement(parent) ||
+    ts.isJsxClosingElement(parent) ||
+    ts.isJsxSelfClosingElement(parent)
+  );
 }
 
 // Helper function to check if an identifier is part of a declaration
@@ -341,10 +462,32 @@ function isKeyword(name: string): boolean {
   return keywords.has(name);
 }
 
+// Helper function to get node size from its ID
+function getNodeSize(node: ScopeNode): number {
+  if (!node || !node.id) return Infinity;
+  const parts = node.id.split(":");
+  if (parts.length > 1) {
+    const range = parts[parts.length - 1];
+    if (range) {
+      const rangeParts = range.split("-");
+      if (rangeParts.length === 2 && rangeParts[0] && rangeParts[1]) {
+        const start = parseInt(rangeParts[0], 10);
+        const end = parseInt(rangeParts[1], 10);
+        if (!isNaN(start) && !isNaN(end)) {
+          return end - start;
+        }
+      }
+    }
+  }
+  return Infinity; // If no range, treat as largest
+}
+
 // Analyze Block of Interest (BOI) for semantic references
 function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
-  console.log("🔬 === SEMANTIC BOI ANALYSIS STARTING ===");
-  console.log("🎯 Focus Node:", { id: focusNode.id, label: focusNode.label });
+  console.log("🔬 Analyzing semantic references for:", {
+    id: focusNode.id,
+    label: focusNode.label,
+  });
 
   if (!focusNode.source || typeof focusNode.source !== "string") {
     console.warn("⚠️ No source code available for BOI analysis");
@@ -360,19 +503,11 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
   try {
     // Create TypeScript source file
     const sourceFile = createSourceFile(focusNode.source);
-    console.log("✅ Created TypeScript AST for analysis");
 
     // Build variable scope for the BOI
     const boiScope = buildVariableScope(sourceFile, sourceFile);
-    console.log(
-      `📊 BOI scope analysis: ${boiScope.declarations.size} declarations found`
-    );
 
-    // Log internal declarations
-    console.log("🔍 Internal declarations in BOI:");
-    Array.from(boiScope.declarations.entries()).forEach(([name, info]) => {
-      console.log(`  📝 ${name} (line ${info.line})`);
-    });
+    console.log(`📊 Found ${boiScope.declarations.size} internal declarations`);
 
     // Extract semantic references
     const allReferences = extractSemanticReferences(
@@ -382,27 +517,12 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
       boiScope
     );
 
-    console.log(`🔗 Found ${allReferences.length} total references`);
-
     // Categorize references by direction
     const externalReferences = allReferences.filter((ref) => !ref.isInternal);
     const recursiveReferences = allReferences.filter((ref) => ref.isInternal);
 
-    console.log(
-      `📤 Outgoing external references: ${externalReferences.length}`
-    );
-    externalReferences.forEach((ref) => {
-      console.log(
-        `  🔗 ${ref.name} (${ref.type}) at line ${ref.position.line}`
-      );
-    });
-
-    console.log(`🔄 Recursive references: ${recursiveReferences.length}`);
-    recursiveReferences.forEach((ref) => {
-      console.log(
-        `  🔗 ${ref.name} (${ref.type}) at line ${ref.position.line}`
-      );
-    });
+    console.log(`📤 Found ${externalReferences.length} external references`);
+    console.log(`🔄 Found ${recursiveReferences.length} internal references`);
 
     // Find incoming references by searching the root node for references to BOI variables
     const incomingReferences = findIncomingReferences(
@@ -410,7 +530,7 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
       rootNode,
       boiScope
     );
-    console.log(`📥 Incoming references: ${incomingReferences.length}`);
+    console.log(`📥 Found ${incomingReferences.length} incoming references`);
 
     return {
       scopeBoundary: { start: 0, end: focusNode.source.length },
@@ -543,6 +663,320 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
   return matches;
 }
 
+// Helper function to build hierarchical path from root to node
+function getPathToNode(rootNode: ScopeNode, targetNodeId: string): ScopeNode[] {
+  const path: ScopeNode[] = [];
+
+  function findPath(node: ScopeNode, currentPath: ScopeNode[]): boolean {
+    const newPath = [...currentPath, node];
+
+    if (node.id === targetNodeId) {
+      path.splice(0, path.length, ...newPath);
+      return true;
+    }
+
+    if (node.children) {
+      for (const child of node.children) {
+        if (findPath(child, newPath)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  findPath(rootNode, []);
+  return path;
+}
+
+// Helper function to find common ancestor of multiple nodes
+function findCommonAncestor(rootNode: ScopeNode, nodeIds: string[]): ScopeNode {
+  if (nodeIds.length === 0) return rootNode;
+  if (nodeIds.length === 1) {
+    const nodeId = nodeIds[0];
+    if (!nodeId) return rootNode;
+    const path = getPathToNode(rootNode, nodeId);
+    const parentNode = path.length > 1 ? path[path.length - 2] : undefined;
+    return parentNode || rootNode;
+  }
+
+  // Get paths for all nodes
+  const paths = nodeIds
+    .filter((id) => id != null)
+    .map((id) => getPathToNode(rootNode, id));
+
+  // Filter out empty paths
+  const validPaths = paths.filter((path) => path.length > 0);
+  if (validPaths.length === 0) return rootNode;
+
+  // Find the deepest common ancestor
+  let commonAncestorIndex = 0;
+  const minPathLength = Math.min(...validPaths.map((p) => p.length));
+
+  for (let i = 0; i < minPathLength; i++) {
+    const firstNodeAtLevel = validPaths[0]?.[i];
+    if (!firstNodeAtLevel) break;
+
+    const allMatch = validPaths.every(
+      (path) => path[i]?.id === firstNodeAtLevel.id
+    );
+
+    if (allMatch) {
+      commonAncestorIndex = i;
+    } else {
+      break;
+    }
+  }
+
+  const commonAncestor = validPaths[0]?.[commonAncestorIndex];
+  return commonAncestor || rootNode;
+}
+
+// Helper function to flatten ELK hierarchy while preserving positions
+function flattenElkHierarchy(
+  elkNode: ElkNode,
+  offsetX = 0,
+  offsetY = 0
+): ELKLayoutNode[] {
+  const result: ELKLayoutNode[] = [];
+
+  const nodeWithPosition: ELKLayoutNode = {
+    id: elkNode.id,
+    width: elkNode.width || 0,
+    height: elkNode.height || 0,
+    x: (elkNode.x || 0) + offsetX,
+    y: (elkNode.y || 0) + offsetY,
+  };
+
+  result.push(nodeWithPosition);
+
+  if (elkNode.children) {
+    const childOffsetX = (elkNode.x || 0) + offsetX;
+    const childOffsetY = (elkNode.y || 0) + offsetY;
+
+    elkNode.children.forEach((child) => {
+      result.push(...flattenElkHierarchy(child, childOffsetX, childOffsetY));
+    });
+  }
+
+  return result;
+}
+
+// Helper function to build hierarchical structure preserving parent-child relationships
+function buildHierarchicalStructure(
+  nodes: ScopeNode[],
+  rootNode: ScopeNode
+): ScopeNode {
+  console.log("🏗️ Building hierarchical structure for layout");
+
+  const nodeIds = nodes.map((n) => n.id);
+  const commonAncestor = findCommonAncestor(rootNode, nodeIds);
+
+  console.log("🔍 Common ancestor found:", {
+    id: commonAncestor.id,
+    label: commonAncestor.label,
+    targetNodes: nodeIds.length,
+  });
+
+  // Build a tree that includes all necessary nodes and their hierarchical relationships
+  function buildSubtree(node: ScopeNode): ScopeNode | null {
+    // Check if this node should be included
+    const shouldInclude = nodeIds.includes(node.id);
+
+    // Process children recursively
+    const includedChildren: ScopeNode[] = [];
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        const builtChild = buildSubtree(child);
+        if (builtChild) {
+          includedChildren.push(builtChild);
+        }
+      }
+    }
+
+    // Include this node if either:
+    // 1. It's explicitly in our target nodes, OR
+    // 2. It has children that need to be included (intermediate node)
+    if (shouldInclude || includedChildren.length > 0) {
+      console.log(`📦 Including node in hierarchy: ${node.id} (${node.label})`);
+      const result: ScopeNode = {
+        ...node,
+        children: includedChildren, // Always use the array, even if empty
+      };
+      return result;
+    }
+
+    return null;
+  }
+
+  const hierarchicalTree = buildSubtree(commonAncestor);
+  return hierarchicalTree || commonAncestor;
+}
+
+// Convert hierarchical ScopeNode structure to ELK format
+function hierarchicalScopeNodeToELK(
+  node: ScopeNode,
+  targetNodeIds: Set<string>,
+  minWidth = 120,
+  minHeight = 60
+): ElkNode {
+  console.log("🔄 Converting hierarchical node to ELK format:", {
+    id: node.id,
+    label: node.label,
+    isTarget: targetNodeIds.has(node.id),
+    hasChildren: !!node.children?.length,
+  });
+
+  // Calculate dimensions based on whether this is a target node or container
+  const isTargetNode = targetNodeIds.has(node.id);
+  const labelLength = (node.label || node.id.split(":").pop() || "Node").length;
+
+  let width: number;
+  let height: number;
+
+  if (isTargetNode && (!node.children || node.children.length === 0)) {
+    // Target leaf nodes (actual referenced nodes) should be appropriately sized
+    width = Math.max(minWidth, labelLength * 8 + 20);
+    height = Math.max(minHeight, 60);
+  } else {
+    // Container nodes should be larger to accommodate children
+    const childrenWidth = node.children?.length ? 200 : 120;
+    const childrenHeight = node.children?.length ? 120 : 80;
+    width = Math.max(childrenWidth, labelLength * 8 + 40);
+    height = Math.max(childrenHeight, 80);
+  }
+
+  const elkNode: ElkNode = {
+    id: node.id,
+    width,
+    height,
+  };
+
+  // Process children if they exist and maintain hierarchy
+  if (node.children && node.children.length > 0) {
+    elkNode.children = [];
+
+    for (const child of node.children) {
+      const childElkNode = hierarchicalScopeNodeToELK(
+        child,
+        targetNodeIds,
+        minWidth,
+        minHeight
+      );
+      elkNode.children.push(childElkNode);
+    }
+
+    console.log(
+      `  📦 Node ${node.id} has ${elkNode.children.length} children in hierarchy`
+    );
+
+    // Set layout options for container nodes
+    elkNode.layoutOptions = {
+      "elk.algorithm": "layered",
+      "elk.direction": "DOWN",
+      "elk.spacing.nodeNode": "20",
+      "elk.padding": "[top=30,left=10,bottom=10,right=10]", // Extra top padding for container header
+    };
+  }
+
+  console.log(
+    `  ✅ ELK hierarchical node created: ${node.id} (${width}x${height}, children: ${elkNode.children?.length || 0})`
+  );
+  return elkNode;
+}
+
+// Helper function to extract the primary variable reference from JSX content
+function extractPrimaryVariableFromJSX(focusNode: ScopeNode): string | null {
+  if (!focusNode.source || typeof focusNode.source !== "string") {
+    return null;
+  }
+
+  // Look for patterns like {workspace.name} or {variableName}
+  const jsxExpressionMatch = focusNode.source.match(/\{([^}]+)\}/);
+  if (jsxExpressionMatch) {
+    const expression = jsxExpressionMatch[1]?.trim();
+    if (expression) {
+      // Extract the primary variable name (before any property access)
+      const primaryVar = expression.split(".")[0]?.trim();
+      if (primaryVar && primaryVar.length > 1 && !isKeyword(primaryVar)) {
+        console.log(`🎯 Extracted primary variable from JSX: ${primaryVar}`);
+        return primaryVar;
+      }
+    }
+  }
+
+  return null;
+}
+
+// Helper function to build a simple variable-focused reference graph
+function buildSimpleVariableGraph(
+  focusNode: ScopeNode,
+  rootNode: ScopeNode,
+  targetVariable: string
+): {
+  nodes: ScopeNode[];
+  references: SemanticReference[];
+  hierarchicalRoot: ScopeNode;
+} {
+  console.log(`🎯 Building simple variable graph for: ${targetVariable}`);
+
+  const referencedNodes: ScopeNode[] = [focusNode];
+  const references: SemanticReference[] = [];
+
+  // Find nodes that declare or use this variable
+  const declarationNodes = findNodesByName(rootNode, targetVariable);
+
+  console.log(
+    `🔍 Found ${declarationNodes.length} potential declaration nodes for ${targetVariable}`
+  );
+
+  // Only include the most relevant declaration (likely the closest one)
+  if (declarationNodes.length > 0) {
+    // Prefer nodes that look like variable declarations
+    const declarationNode =
+      declarationNodes.find(
+        (node) =>
+          node.category === "Variable" ||
+          node.label?.includes(targetVariable) ||
+          node.source?.includes(`const ${targetVariable}`) ||
+          node.source?.includes(`let ${targetVariable}`) ||
+          node.source?.includes(`var ${targetVariable}`)
+      ) || declarationNodes[0];
+
+    if (declarationNode && declarationNode.id !== focusNode.id) {
+      referencedNodes.push(declarationNode);
+
+      references.push({
+        name: targetVariable,
+        type: "variable_reference",
+        sourceNodeId: focusNode.id,
+        targetNodeId: declarationNode.id,
+        position: { line: 1, character: 1 },
+        isInternal: false,
+        direction: "outgoing",
+      });
+
+      console.log(
+        `✅ Added variable declaration: ${declarationNode.id} (${declarationNode.label})`
+      );
+    }
+  }
+
+  console.log(
+    `✅ Simple variable graph built: ${referencedNodes.length} nodes, ${references.length} references`
+  );
+
+  return {
+    nodes: referencedNodes,
+    references,
+    hierarchicalRoot:
+      referencedNodes.length > 1
+        ? buildHierarchicalStructure(referencedNodes, rootNode)
+        : focusNode,
+  };
+}
+
 // Helper function to build a reference graph from a focus node using semantic analysis
 function buildSemanticReferenceGraph(
   focusNode: ScopeNode,
@@ -550,11 +984,28 @@ function buildSemanticReferenceGraph(
 ): {
   nodes: ScopeNode[];
   references: SemanticReference[];
+  hierarchicalRoot: ScopeNode;
 } {
-  console.log("🔬 === BUILDING SEMANTIC REFERENCE GRAPH ===");
-  console.log("🎯 Focus node:", { id: focusNode.id, label: focusNode.label });
+  console.log("🔬 Building semantic reference graph for:", focusNode.label);
 
-  // Perform BOI analysis
+  // Check if focus node has meaningful source code for analysis
+  if (
+    !focusNode.source ||
+    typeof focusNode.source !== "string" ||
+    focusNode.source.trim().length < 10
+  ) {
+    console.log(
+      "ℹ️ Focus node has no meaningful source code - using simple visualization"
+    );
+    return {
+      nodes: [focusNode],
+      references: [],
+      hierarchicalRoot: focusNode,
+    };
+  }
+
+  // Perform full BOI analysis for all cases (including JSX)
+  console.log("🔬 Performing full semantic analysis on focus node");
   const boiAnalysis = analyzeBOI(focusNode, rootNode);
 
   const allReferences = [
@@ -563,144 +1014,250 @@ function buildSemanticReferenceGraph(
     ...boiAnalysis.recursiveReferences,
   ];
 
-  console.log(`📊 Total semantic references found: ${allReferences.length}`);
-  console.log(`  📤 Outgoing: ${boiAnalysis.externalReferences.length}`);
-  console.log(`  📥 Incoming: ${boiAnalysis.incomingReferences.length}`);
-  console.log(`  🔄 Recursive: ${boiAnalysis.recursiveReferences.length}`);
+  console.log(
+    `📊 Found ${allReferences.length} total references (${boiAnalysis.externalReferences.length} external, ${boiAnalysis.incomingReferences.length} incoming, ${boiAnalysis.recursiveReferences.length} recursive)`
+  );
+
+  // MUCH more restrictive filtering for focused analysis
+  const maxNodes = 20; // Increase to accommodate individual variable declarations
+  const maxReferences = 20; // Allow more meaningful references
 
   const referencedNodes: ScopeNode[] = [focusNode]; // Always include the focus node
   const resolvedReferences: SemanticReference[] = [];
 
-  // Resolve semantic references to actual nodes
-  for (const ref of allReferences) {
-    console.log(
-      `🔍 Resolving semantic reference: ${ref.name} (${ref.type}, ${ref.direction})`
-    );
+  // Filter to only the most relevant references with better filtering
+  const prioritizedReferences = allReferences
+    .filter((ref) => {
+      // Focus on variable references and property access
+      const isRelevantType =
+        ref.type === "variable_reference" ||
+        ref.type === "property_access" ||
+        ref.type === "function_call";
 
+      // Exclude very common/generic names that aren't meaningful
+      const isGenericName = [
+        "map",
+        "forEach",
+        "filter",
+        "length",
+        "push",
+        "pop",
+        "shift",
+        "unshift",
+        "className",
+        "style",
+        "onClick",
+        "onSubmit",
+        "onChange",
+        "onMouseEnter",
+        "onMouseLeave",
+        "value",
+        "id",
+        "key",
+        "children",
+        "props",
+        "state",
+        "ref",
+        "refs",
+        "type",
+        "name",
+        "title",
+        "text",
+        "data",
+        "index",
+        "item",
+        "items",
+        "e",
+        "event",
+        "target",
+        "currentTarget", // Common event parameter names
+        "undefined",
+        "null",
+        "true",
+        "false", // Literals
+        // JSX/HTML attribute names
+        "disabled",
+        "placeholder",
+        "autoComplete",
+        "form",
+        "input",
+        "button",
+        "div",
+        "span",
+        // React/Next.js common names
+        "React",
+        "useState",
+        "useEffect",
+        "useCallback",
+        "useMemo",
+        "Component",
+      ].includes(ref.name);
+
+      // Exclude very short names (likely not meaningful variables)
+      const isTooShort = ref.name.length < 2;
+
+      // Exclude single character variables unless they're likely meaningful
+      const isSingleChar = ref.name.length === 1 && !/[a-z]/.test(ref.name);
+
+      // Exclude common property names that appear in many contexts
+      const isCommonProperty =
+        ref.name.includes(".") &&
+        ["e.preventDefault", "e.target", "event.target", "target.value"].some(
+          (common) => ref.name.includes(common)
+        );
+
+      const shouldInclude =
+        isRelevantType &&
+        !isGenericName &&
+        !isTooShort &&
+        !isSingleChar &&
+        !isCommonProperty;
+
+      console.log(`🔍 Reference analysis: ${ref.name}`, {
+        type: ref.type,
+        isRelevantType,
+        isGenericName,
+        shouldInclude,
+      });
+
+      return shouldInclude;
+    })
+    // Sort by relevance - prioritize variables that are likely state or props
+    .sort((a, b) => {
+      // Prioritize state variables (containing 'set' or ending patterns)
+      const aIsState =
+        a.name.startsWith("set") ||
+        a.name.includes("State") ||
+        /^[a-z]+$/.test(a.name);
+      const bIsState =
+        b.name.startsWith("set") ||
+        b.name.includes("State") ||
+        /^[a-z]+$/.test(b.name);
+
+      if (aIsState && !bIsState) return -1;
+      if (!aIsState && bIsState) return 1;
+
+      // Then prioritize by type - variables over property access
+      if (a.type === "variable_reference" && b.type !== "variable_reference")
+        return -1;
+      if (a.type !== "variable_reference" && b.type === "variable_reference")
+        return 1;
+
+      return 0;
+    })
+    .slice(0, maxReferences); // Take only the most relevant ones
+
+  console.log(
+    `🔍 Filtered to ${prioritizedReferences.length} most relevant references`
+  );
+
+  // Resolve semantic references to actual nodes (with strict limits)
+  for (const ref of prioritizedReferences) {
     const matchingNodes = findNodesByName(rootNode, ref.name);
-    console.log(
-      `   Found ${matchingNodes.length} matching nodes for "${ref.name}"`
-    );
 
     if (matchingNodes.length > 0) {
-      for (const matchingNode of matchingNodes) {
-        // For incoming references, the target should be the focus node
-        if (ref.direction === "incoming") {
+      // Sort nodes by size to find the most specific match
+      const sortedMatchingNodes = matchingNodes.sort(
+        (a, b) => getNodeSize(a) - getNodeSize(b)
+      );
+
+      const specificDeclarationNode = sortedMatchingNodes[0];
+
+      if (!specificDeclarationNode) {
+        continue;
+      }
+
+      console.log(`🔍 Selected node for ${ref.name}:`, {
+        id: specificDeclarationNode.id,
+        label: specificDeclarationNode.label,
+        category: specificDeclarationNode.category,
+      });
+
+      if (referencedNodes.length >= maxNodes) {
+        console.log(`⚠️ Reached maximum node limit (${maxNodes}), stopping`);
+        break;
+      }
+
+      // For incoming references, the target should be the focus node
+      if (ref.direction === "incoming") {
+        resolvedReferences.push({
+          ...ref,
+          targetNodeId: focusNode.id,
+        });
+
+        // Add the source node (the one containing the reference)
+        const sourceNode = findNodeById(rootNode, ref.sourceNodeId);
+        if (
+          sourceNode &&
+          !referencedNodes.some((n) => n.id === sourceNode.id)
+        ) {
+          referencedNodes.push(sourceNode);
+        }
+      } else {
+        // For outgoing and recursive references
+        if (
+          specificDeclarationNode.id !== focusNode.id ||
+          ref.direction === "recursive"
+        ) {
           resolvedReferences.push({
             ...ref,
-            targetNodeId: focusNode.id,
+            targetNodeId: specificDeclarationNode.id,
           });
 
-          // Add the source node (the one containing the reference)
-          const sourceNode = findNodeById(rootNode, ref.sourceNodeId);
+          // Always add the specific declaration node as a separate node in the graph
           if (
-            sourceNode &&
-            !referencedNodes.some((n) => n.id === sourceNode.id)
+            !referencedNodes.some((n) => n.id === specificDeclarationNode.id)
           ) {
-            referencedNodes.push(sourceNode);
+            referencedNodes.push(specificDeclarationNode);
             console.log(
-              `  ➕ Added source node for incoming ref: ${sourceNode.id} (${sourceNode.label})`
+              `✅ Added specific declaration node: ${specificDeclarationNode.id} (${specificDeclarationNode.label}) for reference: ${ref.name}`
+            );
+          } else {
+            console.log(
+              `⚠️ Skipped duplicate node: ${specificDeclarationNode.id} (${specificDeclarationNode.label}) for reference: ${ref.name}`
             );
           }
         } else {
-          // For outgoing and recursive references
-          if (
-            matchingNode.id !== focusNode.id ||
-            ref.direction === "recursive"
-          ) {
-            resolvedReferences.push({
-              ...ref,
-              targetNodeId: matchingNode.id,
-            });
-
-            // Add to referenced nodes if not already included
-            if (!referencedNodes.some((n) => n.id === matchingNode.id)) {
-              referencedNodes.push(matchingNode);
-              console.log(
-                `  ➕ Added target node: ${matchingNode.id} (${matchingNode.label})`
-              );
-            }
-          }
+          console.log(
+            `⚠️ Skipped self-reference: ${specificDeclarationNode.id} (${specificDeclarationNode.label}) for reference: ${ref.name}`
+          );
         }
       }
     } else {
-      console.log(`  ❓ Could not resolve reference: ${ref.name}`);
+      console.log(`⚠️ No matching nodes found for reference: ${ref.name}`);
     }
   }
 
   console.log(
-    `✅ Semantic reference graph built: ${referencedNodes.length} nodes, ${resolvedReferences.length} references`
+    `✅ Reference graph built: ${referencedNodes.length} nodes, ${resolvedReferences.length} references`
   );
 
-  // Limit the number of nodes to prevent ELK from hanging
-  const maxNodes = 8; // Conservative limit for fast layout
-  if (referencedNodes.length > maxNodes) {
-    console.log(
-      `⚠️  Too many nodes (${referencedNodes.length}), limiting to ${maxNodes} for performance`
-    );
+  // Log all nodes that will be included
+  console.log("📋 Nodes to be included in reference graph:");
+  referencedNodes.forEach((node, index) => {
+    console.log(`  ${index + 1}. ${node.id} (${node.label})`);
+  });
 
-    // Keep the focus node plus the most referenced nodes
-    const focusNodeFromList = referencedNodes.find(
-      (n) => n.id === focusNode.id
-    )!;
-    const otherNodes = referencedNodes.filter((n) => n.id !== focusNode.id);
-
-    // Count references for each node to prioritize the most connected ones
-    const nodeRefCounts = new Map<string, number>();
-    resolvedReferences.forEach((ref) => {
-      if (ref.targetNodeId) {
-        nodeRefCounts.set(
-          ref.targetNodeId,
-          (nodeRefCounts.get(ref.targetNodeId) || 0) + 1
-        );
-      }
-      // Also count source nodes for incoming references
-      nodeRefCounts.set(
-        ref.sourceNodeId,
-        (nodeRefCounts.get(ref.sourceNodeId) || 0) + 1
-      );
-    });
-
-    // Sort other nodes by reference count (most referenced first)
-    const sortedOtherNodes = otherNodes.sort((a, b) => {
-      const aCount = nodeRefCounts.get(a.id) || 0;
-      const bCount = nodeRefCounts.get(b.id) || 0;
-      return bCount - aCount;
-    });
-
-    // Take top nodes
-    const limitedNodes: ScopeNode[] = [
-      focusNodeFromList,
-      ...sortedOtherNodes.slice(0, maxNodes - 1),
-    ];
-    const limitedNodeIds = new Set(limitedNodes.map((n) => n.id));
-
-    // Filter references to only include those between limited nodes
-    const limitedReferences = resolvedReferences.filter(
-      (ref) =>
-        limitedNodeIds.has(ref.sourceNodeId) &&
-        ref.targetNodeId &&
-        limitedNodeIds.has(ref.targetNodeId)
-    );
-
-    console.log(
-      `📊 Limited semantic graph: ${limitedNodes.length} nodes, ${limitedReferences.length} references`
-    );
-
+  // If we only have the focus node, just return a simple structure
+  if (referencedNodes.length === 1) {
+    console.log("ℹ️ Only focus node found - creating minimal visualization");
     return {
-      nodes: limitedNodes,
-      references: limitedReferences,
+      nodes: referencedNodes,
+      references: [],
+      hierarchicalRoot: focusNode, // Use focus node as root for simple case
     };
   }
 
-  console.log("📊 Semantic referenced nodes summary:");
-  referencedNodes.forEach((node, index) => {
-    console.log(`   ${index + 1}. ${node.id} (${node.label})`);
-  });
+  // Build hierarchical structure for all nodes
+  const hierarchicalRoot = buildHierarchicalStructure(
+    referencedNodes,
+    rootNode
+  );
 
   return {
     nodes: referencedNodes,
     references: resolvedReferences,
+    hierarchicalRoot,
   };
 }
 
@@ -776,17 +1333,7 @@ export async function layoutELKWithRoot(
   height: number,
   options: Partial<ELKLayoutOptions> = {}
 ): Promise<ELKGraph> {
-  console.log("🎯 === ELK REFERENCE LAYOUT PROCESS STARTING ===");
-  console.log("🎯 Focus node analysis:");
-  console.log("  🆔 Focus Node ID:", focusNode.id);
-  console.log("  🏷️  Focus Node Label:", focusNode.label);
-  console.log("  📂 Focus Node Category:", focusNode.category);
-  console.log("  📐 Canvas Dimensions:", { width, height });
-
-  console.log("🔍 Root node for reference search:");
-  console.log("  🆔 Root Node ID:", rootNode.id);
-  console.log("  🏷️  Root Node Label:", rootNode.label);
-  console.log("  👥 Root Node Children:", rootNode.children?.length || 0);
+  console.log("🎯 ELK Reference Layout starting for:", focusNode.label);
 
   const defaultOptions: ELKLayoutOptions = {
     algorithm: "layered", // Use layered algorithm for hierarchical layouts
@@ -797,115 +1344,96 @@ export async function layoutELKWithRoot(
     ...options,
   };
 
-  console.log("⚙️  ELK Layout options:", defaultOptions);
-
   // Build the reference graph using proper root for searching
-  console.log("🚀 Starting reference graph building...");
-  const startTime = Date.now();
-  const { nodes: referenceNodes, references } = buildSemanticReferenceGraph(
-    focusNode,
-    rootNode
-  );
-  const endTime = Date.now();
-  console.log(
-    `✅ Reference graph building completed in ${endTime - startTime}ms`
-  );
+  const {
+    nodes: referenceNodes,
+    references,
+    hierarchicalRoot,
+  } = buildSemanticReferenceGraph(focusNode, rootNode);
 
-  console.log("📊 Reference graph summary:");
-  console.log("  📦 Total nodes:", referenceNodes.length);
-  console.log("  🔗 Total references:", references.length);
+  console.log("📊 Reference graph:", {
+    nodes: referenceNodes.length,
+    references: references.length,
+  });
 
   if (referenceNodes.length === 1) {
-    console.log("⚠️  Only focus node found, no external references detected");
-    console.log("💡 This might be because:");
-    console.log("   - The node doesn't reference external code");
-    console.log("   - References are to nodes outside the current scope");
-    console.log("   - The reference resolution logic needs improvement");
-    console.log(
-      "🔍 Debug: Focus node source:",
-      focusNode.source
-        ? focusNode.source.substring(0, 200) + "..."
-        : "NO SOURCE"
-    );
+    console.log("ℹ️ Only focus node found - creating minimal visualization");
   }
 
-  // Convert all reference nodes to ELK format
-  console.log("🔄 === CONVERTING REFERENCE NODES TO ELK FORMAT ===");
-  const elkNodes: ElkNode[] = referenceNodes.map((node) =>
-    scopeNodeToELKNode(node)
+  // Convert hierarchical structure to ELK format
+  const targetNodeIds = new Set(referenceNodes.map((n) => n.id));
+  const elkHierarchy = hierarchicalScopeNodeToELK(
+    hierarchicalRoot,
+    targetNodeIds
   );
 
-  // Build edges from references
-  console.log("🔗 === BUILDING SEMANTIC REFERENCE EDGES ===");
-
-  // Create a set of valid node IDs for quick lookup
-  const validNodeIds = new Set(elkNodes.map((node) => node.id));
-  console.log("📝 Valid node IDs:", Array.from(validNodeIds));
+  // Build edges from references with proper direction indicators
+  // Create a set of valid node IDs for quick lookup (including all nodes in hierarchy)
+  const allElkNodeIds = new Set<string>();
+  function collectElkNodeIds(elkNode: ElkNode) {
+    allElkNodeIds.add(elkNode.id);
+    if (elkNode.children) {
+      elkNode.children.forEach(collectElkNodeIds);
+    }
+  }
+  collectElkNodeIds(elkHierarchy);
 
   const elkEdges: ElkExtendedEdge[] = references
     .map((ref, index) => {
-      console.log(
-        `🔗 Processing semantic reference: ${ref.name} (${ref.type}, ${ref.direction})`
-      );
-      console.log(
-        `   Source: ${ref.sourceNodeId} -> Target: ${ref.targetNodeId}`
-      );
-
       if (!ref.targetNodeId) {
-        console.warn(`⚠️ Skipping reference without target: ${ref.name}`);
         return null;
       }
 
       // Validate that both source and target exist in elkNodes
-      const sourceExists = validNodeIds.has(ref.sourceNodeId);
-      const targetExists = validNodeIds.has(ref.targetNodeId);
+      const sourceExists = allElkNodeIds.has(ref.sourceNodeId);
+      const targetExists = allElkNodeIds.has(ref.targetNodeId);
 
-      console.log(`   Source "${ref.sourceNodeId}" exists: ${sourceExists}`);
-      console.log(`   Target "${ref.targetNodeId}" exists: ${targetExists}`);
-
-      if (!sourceExists) {
-        console.warn(
-          `⚠️  Skipping edge - source node not found: ${ref.sourceNodeId}`
-        );
+      if (!sourceExists || !targetExists) {
         return null;
       }
 
-      if (!targetExists) {
-        console.warn(
-          `⚠️  Skipping edge - target node not found: ${ref.targetNodeId}`
-        );
-        return null;
-      }
-
-      // Create edge with direction-aware labeling
+      // Create edge with direction-aware styling and arrows
       const edgeId = `edge_${index}_${ref.direction}_${ref.type}`;
+
+      // Configure edge properties based on direction
       const edge: ElkExtendedEdge = {
         id: edgeId,
         sources: [ref.sourceNodeId],
         targets: [ref.targetNodeId],
-        // Add semantic information as labels for better debugging
-        labels: [
-          {
-            text: `${ref.name} (${ref.direction})`,
-            id: `${edgeId}_label`,
-          },
-        ],
+        // Remove labels since we're not displaying them
+        // Add arrow and direction properties
+        layoutOptions: {
+          // ELK edge routing and arrow configuration
+          "elk.edge.type": "DEPENDENCY",
+          ...(ref.direction === "incoming" && {
+            // For incoming references, emphasize the arrow pointing TO the BOI
+            "elk.port.anchor": "[INCOMING]",
+            "elk.edge.routing": "SPLINES",
+          }),
+          ...(ref.direction === "outgoing" && {
+            // For outgoing references, emphasize the arrow pointing FROM the BOI
+            "elk.port.anchor": "[OUTGOING]",
+            "elk.edge.routing": "SPLINES",
+          }),
+          ...(ref.direction === "recursive" && {
+            // For recursive references, use a different style
+            "elk.port.anchor": "[RECURSIVE]",
+            "elk.edge.routing": "SPLINES",
+          }),
+        },
       };
 
-      console.log(
-        `✅ Valid semantic edge created: ${ref.sourceNodeId} -> ${ref.targetNodeId} (${ref.direction}, ${ref.type})`
-      );
       return edge;
     })
     .filter((edge): edge is ElkExtendedEdge => edge !== null);
 
   console.log(
-    `🔗 Semantic edge validation complete: ${elkEdges.length} valid edges out of ${references.length} total references`
+    `🔗 Created ${elkEdges.length} edges out of ${references.length} references`
   );
 
   const elkGraph = {
     id: "reference_graph",
-    children: elkNodes,
+    children: [elkHierarchy], // Use hierarchical structure as children
     edges: elkEdges,
     layoutOptions: {
       "elk.algorithm": defaultOptions.algorithm,
@@ -919,105 +1447,75 @@ export async function layoutELKWithRoot(
       "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
       "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
       "elk.layered.nodePlacement.strategy": "SIMPLE",
+      // Enable proper hierarchical handling
+      "elk.layered.layering.strategy": "NETWORK_SIMPLEX",
+      "elk.spacing.componentComponent": "20",
+      "elk.spacing.portPort": "10",
     } as LayoutOptions,
   };
 
-  console.log("📐 === ELK GRAPH STRUCTURE ANALYSIS ===");
-  console.log("📐 ELK graph before layout:", {
-    id: elkGraph.id,
-    nodeCount: elkGraph.children.length,
-    edgeCount: elkGraph.edges.length,
-    algorithm: defaultOptions.algorithm,
-    direction: defaultOptions.direction,
-  });
-
-  console.log("📐 Nodes to be laid out:");
-  elkGraph.children.forEach((child, index) => {
-    console.log(
-      `  ${index + 1}. ID: ${child.id}, Size: ${child.width}x${child.height}`
-    );
-  });
-
-  console.log("📐 Edges to be laid out:");
-  elkGraph.edges.forEach((edge, index) => {
-    console.log(
-      `  ${index + 1}. ${edge.id}: ${edge.sources[0]} -> ${edge.targets[0]}`
-    );
-  });
-
   console.log("🚀 Running ELK layout algorithm...");
-  console.log("⏰ About to call elk.layout() - this might take a moment...");
-
-  // Add a progress indicator
-  const progressInterval = setInterval(() => {
-    console.log("⏳ ELK layout still running...");
-  }, 1000); // Log every 1 second
 
   try {
-    console.log("📞 Calling elk.layout() now...");
     const layoutedGraph = await elk.layout(elkGraph);
-    clearInterval(progressInterval); // Stop progress logging
-    console.log("✅ === ELK LAYOUT COMPLETED SUCCESSFULLY ===");
+    console.log("✅ ELK layout completed successfully");
 
-    console.log("📊 Layout results summary:");
-    console.log("  🆔 Graph ID:", layoutedGraph.id);
-    console.log("  📈 Nodes processed:", layoutedGraph.children?.length || 0);
-    console.log("  🔗 Edges processed:", layoutedGraph.edges?.length || 0);
+    // Instead of flattening, preserve the hierarchical structure
+    const preserveHierarchicalNodes = (
+      elkNodes: ElkNode[]
+    ): ELKLayoutNode[] => {
+      const result: ELKLayoutNode[] = [];
 
-    if (layoutedGraph.children) {
-      console.log("📍 Node positions after layout:");
-      layoutedGraph.children.forEach((child, index) => {
-        console.log(`  ${index + 1}. ${child.id}:`);
-        console.log(`     📏 Size: ${child.width}x${child.height}`);
-        console.log(`     📍 Position: (${child.x}, ${child.y})`);
+      elkNodes.forEach((elkNode) => {
+        const layoutNode: ELKLayoutNode = {
+          id: elkNode.id,
+          width: elkNode.width || 0,
+          height: elkNode.height || 0,
+          x: elkNode.x || 0,
+          y: elkNode.y || 0,
+        };
+
+        // Preserve children hierarchy
+        if (elkNode.children && elkNode.children.length > 0) {
+          layoutNode.children = preserveHierarchicalNodes(elkNode.children);
+        }
+
+        result.push(layoutNode);
       });
-    }
+
+      return result;
+    };
+
+    const hierarchicalNodes = layoutedGraph.children
+      ? preserveHierarchicalNodes(layoutedGraph.children)
+      : [];
+
+    console.log(
+      "📍 Layout complete with",
+      hierarchicalNodes.length,
+      "top-level nodes"
+    );
 
     const result: ELKGraph = {
       id: layoutedGraph.id!,
-      children:
-        layoutedGraph.children?.map((child) => ({
-          id: child.id!,
-          width: child.width!,
-          height: child.height!,
-          x: child.x,
-          y: child.y,
-        })) || [],
+      children: hierarchicalNodes, // Use hierarchical structure
       edges:
         layoutedGraph.edges?.map((edge) => ({
           id: edge.id!,
           sources: edge.sources || [],
           targets: edge.targets || [],
-          labels:
-            edge.labels?.map((label) => ({
-              text: label.text || "",
-              id: label.id || "",
-            })) || [],
         })) || [],
       layoutOptions: elkGraph.layoutOptions,
     };
 
-    console.log("🎉 === ELK REFERENCE LAYOUT PROCESS COMPLETE ===");
-    console.log("🎉 Final graph structure:", {
+    console.log("🎉 ELK layout complete:", {
       nodes: result.children.length,
       edges: result.edges.length,
-      totalElements: result.children.length + result.edges.length,
     });
 
     return result;
   } catch (error) {
-    clearInterval(progressInterval); // Stop progress logging on error
-    console.error("❌ === ELK LAYOUT FAILED ===");
-    console.error("❌ Error details:", error);
-    console.error("❌ Focus node that caused failure:", {
-      id: focusNode.id,
-      label: focusNode.label,
-    });
-    console.error("❌ Graph structure that failed:", {
-      nodeCount: elkGraph.children.length,
-      edgeCount: elkGraph.edges.length,
-      layoutOptions: elkGraph.layoutOptions,
-    });
+    console.error("❌ ELK layout failed:", error);
     throw error;
   }
 }
