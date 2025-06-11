@@ -1069,14 +1069,44 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
       {/* Define arrowhead marker for edges */}
       <defs>
         <marker
-          id="arrowhead"
+          id="arrowhead-default"
           markerWidth="10"
           markerHeight="7"
           refX="9"
           refY="3.5"
           orient="auto"
         >
-          <polygon points="0 0, 10 3.5, 0 7" fill="#4a90e2" opacity={0.7} />
+          <polygon points="0 0, 10 3.5, 0 7" fill="#4a90e2" opacity={0.8} />
+        </marker>
+        <marker
+          id="arrowhead-incoming"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e" opacity={0.8} />
+        </marker>
+        <marker
+          id="arrowhead-outgoing"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" opacity={0.8} />
+        </marker>
+        <marker
+          id="arrowhead-recursive"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" opacity={0.8} />
         </marker>
       </defs>
 
@@ -1109,19 +1139,75 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
         const targetCenterY =
           (targetELKNode.y || 0) + (targetELKNode.height || 0) / 2;
 
+        // Determine edge style based on direction (from edge ID)
+        const isIncoming = edge.id.includes("_incoming_");
+        const isRecursive = edge.id.includes("_recursive_");
+        const isOutgoing =
+          edge.id.includes("_outgoing_") || (!isIncoming && !isRecursive);
+
+        // Set edge styles based on direction
+        let strokeColor = "#4a90e2"; // Default blue
+        let strokeDasharray = "none";
+        let strokeWidth = 2;
+        let markerEnd = "url(#arrowhead-default)";
+
+        if (isIncoming) {
+          strokeColor = "#22c55e"; // Green for incoming
+          strokeDasharray = "none";
+          strokeWidth = 2.5;
+          markerEnd = "url(#arrowhead-incoming)";
+        } else if (isRecursive) {
+          strokeColor = "#f59e0b"; // Orange for recursive
+          strokeDasharray = "8,4";
+          strokeWidth = 2;
+          markerEnd = "url(#arrowhead-recursive)";
+        } else if (isOutgoing) {
+          strokeColor = "#3b82f6"; // Blue for outgoing
+          strokeDasharray = "4,2";
+          strokeWidth = 2;
+          markerEnd = "url(#arrowhead-outgoing)";
+        }
+
+        // Calculate midpoint for label positioning
+        const midX = (sourceCenterX + targetCenterX) / 2;
+        const midY = (sourceCenterY + targetCenterY) / 2;
+
+        // Get label text from edge
+        const labelText =
+          edge.labels && edge.labels[0] ? edge.labels[0].text : "";
+
         return (
-          <line
-            key={edge.id}
-            x1={sourceCenterX}
-            y1={sourceCenterY}
-            x2={targetCenterX}
-            y2={targetCenterY}
-            stroke="#4a90e2"
-            strokeWidth={2}
-            strokeDasharray="4,2"
-            opacity={0.7}
-            markerEnd="url(#arrowhead)"
-          />
+          <g key={edge.id}>
+            <line
+              x1={sourceCenterX}
+              y1={sourceCenterY}
+              x2={targetCenterX}
+              y2={targetCenterY}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeDasharray={strokeDasharray}
+              opacity={0.8}
+              markerEnd={markerEnd}
+            />
+            {/* Edge label if available */}
+            {labelText && (
+              <text
+                x={midX}
+                y={midY}
+                fontSize="10"
+                fill={strokeColor}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                pointerEvents="none"
+                style={{
+                  userSelect: "none",
+                  filter: "drop-shadow(1px 1px 1px rgba(255, 255, 255, 0.8))",
+                }}
+              >
+                {labelText}
+              </text>
+            )}
+          </g>
         );
       })}
     </>
