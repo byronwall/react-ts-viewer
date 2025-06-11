@@ -10,6 +10,7 @@ import {
   HierarchicalLayoutOptions,
   layoutHierarchical,
 } from "./layoutHierarchical";
+import { ELKGraph, ELKLayoutNode } from "./layoutELK";
 
 import { pastelSet } from "./pastelSet";
 
@@ -469,14 +470,6 @@ const collectAllNodes = (
     }
   }
 
-  console.log("🎨 Flat rendering collected nodes (breadth-first):", {
-    containers: containers.length,
-    leaves: leaves.length,
-    totalNodes: containers.length + leaves.length,
-    depthLevels: nodesByDepth.length,
-    orderingStrategy: "breadth-first: containers first within each level",
-  });
-
   return { containers, leaves };
 };
 
@@ -930,11 +923,279 @@ const FreeRectangles: React.FC<FreeRectanglesProps> = ({ freeRects }) => {
   );
 };
 
+// React component for ELK graph rendering (proof of life)
+interface ELKGraphRendererProps {
+  elkGraph: ELKGraph;
+  scopeNodes: Map<string, ScopeNode>; // Map from ID to ScopeNode for data lookup
+  settings: TreemapSettings;
+  onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void;
+  onMouseLeave: () => void;
+}
+
+const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
+  elkGraph,
+  scopeNodes,
+  settings,
+  onNodeClick,
+  onMouseEnter,
+  onMouseLeave,
+}) => {
+  console.log("🎨 Rendering ELK graph:", {
+    childrenCount: elkGraph.children.length,
+    edgesCount: elkGraph.edges.length,
+  });
+
+  // Build a map of all ELK nodes (including nested ones) for edge rendering
+  const buildElkNodeMap = (
+    nodes: ELKLayoutNode[]
+  ): Map<string, ELKLayoutNode> => {
+    const map = new Map<string, ELKLayoutNode>();
+
+    const addToMap = (node: ELKLayoutNode, parentX = 0, parentY = 0) => {
+      // Store absolute position for this node
+      const absoluteNode = {
+        ...node,
+        x: (node.x || 0) + parentX,
+        y: (node.y || 0) + parentY,
+      };
+      map.set(node.id, absoluteNode);
+
+      // Recursively add children
+      if (node.children) {
+        node.children.forEach((child) =>
+          addToMap(child, absoluteNode.x, absoluteNode.y)
+        );
+      }
+    };
+
+    nodes.forEach((node) => addToMap(node));
+    return map;
+  };
+
+  const elkNodeMap = buildElkNodeMap(elkGraph.children);
+
+  const renderELKNode = (elkNode: ELKLayoutNode, depth = 0) => {
+    const scopeNode = scopeNodes.get(elkNode.id);
+    if (!scopeNode) {
+      console.warn("⚠️ No ScopeNode found for ELK node:", elkNode.id);
+      return null;
+    }
+
+    const category = scopeNode.category;
+    const baseColor = pastelSet[category] || pastelSet[NodeCategory.Other];
+
+    const hasChildren = elkNode.children && elkNode.children.length > 0;
+    const headerHeight = hasChildren ? Math.min(30, elkNode.height * 0.2) : 0;
+
+    return (
+      <g
+        key={elkNode.id}
+        transform={`translate(${elkNode.x || 0}, ${elkNode.y || 0})`}
+        className="elk-node"
+      >
+        {/* Container background (if has children) */}
+        {hasChildren && (
+          <rect
+            x={0}
+            y={headerHeight}
+            width={elkNode.width}
+            height={elkNode.height - headerHeight}
+            fill={lightenColor(baseColor, 30)}
+            stroke="#6c757d"
+            strokeWidth={1}
+            rx={4}
+            opacity={0.3}
+          />
+        )}
+
+        {/* Main node rectangle */}
+        <rect
+          x={0}
+          y={0}
+          width={elkNode.width}
+          height={hasChildren ? headerHeight : elkNode.height}
+          fill={baseColor}
+          stroke="#333333"
+          strokeWidth={2}
+          rx={4}
+          style={{ cursor: "pointer" }}
+          onClick={(e) => {
+            onNodeClick(scopeNode, e as any);
+          }}
+          onMouseEnter={(e) => {
+            onMouseEnter(scopeNode, e as any);
+          }}
+          onMouseLeave={() => {
+            onMouseLeave();
+          }}
+        />
+
+        {/* Node label */}
+        <text
+          x={elkNode.width / 2}
+          y={(hasChildren ? headerHeight : elkNode.height) / 2}
+          fontSize={Math.min(
+            12,
+            Math.max(8, (hasChildren ? headerHeight : elkNode.height) * 0.4)
+          )}
+          fill={getContrastingTextColor(baseColor)}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          pointerEvents="none"
+          style={{ userSelect: "none" }}
+        >
+          {scopeNode.label || scopeNode.id.split(":").pop() || "Node"}
+        </text>
+
+        {/* Render children recursively if they exist */}
+        {elkNode.children?.map((child) => {
+          return renderELKNode(child, depth + 1);
+        })}
+      </g>
+    );
+  };
+
+  const renderedNodes = elkGraph.children.map((node) => renderELKNode(node, 0));
+
+  return (
+    <>
+      {/* Define arrowhead marker for edges */}
+      <defs>
+        <marker
+          id="arrowhead-default"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#4a90e2" opacity={0.8} />
+        </marker>
+        <marker
+          id="arrowhead-incoming"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e" opacity={0.8} />
+        </marker>
+        <marker
+          id="arrowhead-outgoing"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" opacity={0.8} />
+        </marker>
+        <marker
+          id="arrowhead-recursive"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" opacity={0.8} />
+        </marker>
+      </defs>
+
+      <g>{renderedNodes}</g>
+
+      {/* Render edges if any exist */}
+      {elkGraph.edges.map((edge) => {
+        // Find source and target nodes using the node map (which includes nested nodes)
+        const sourceNodeId = edge.sources[0];
+        const targetNodeId = edge.targets[0];
+
+        if (!sourceNodeId || !targetNodeId) {
+          console.warn(`⚠️ Edge ${edge.id}: Missing source or target ID`, {
+            sourceNodeId,
+            targetNodeId,
+          });
+          return null;
+        }
+
+        const sourceELKNode = elkNodeMap.get(sourceNodeId);
+        const targetELKNode = elkNodeMap.get(targetNodeId);
+
+        if (!sourceELKNode || !targetELKNode) {
+          console.warn(`⚠️ Edge ${edge.id}: Could not find nodes`, {
+            sourceNodeId,
+            targetNodeId,
+            sourceFound: !!sourceELKNode,
+            targetFound: !!targetELKNode,
+          });
+          return null;
+        }
+
+        // Calculate center points of the nodes for edge connections (using absolute positions)
+        const sourceCenterX = (sourceELKNode.x || 0) + sourceELKNode.width / 2;
+        const sourceCenterY = (sourceELKNode.y || 0) + sourceELKNode.height / 2;
+        const targetCenterX = (targetELKNode.x || 0) + targetELKNode.width / 2;
+        const targetCenterY = (targetELKNode.y || 0) + targetELKNode.height / 2;
+
+        // Determine edge style based on direction (from edge ID)
+        const isIncoming = edge.id.includes("_incoming_");
+        const isRecursive = edge.id.includes("_recursive_");
+        const isOutgoing =
+          edge.id.includes("_outgoing_") || (!isIncoming && !isRecursive);
+
+        // Set edge styles based on direction
+        let strokeColor = "#4a90e2"; // Default blue
+        let strokeDasharray = "none";
+        let strokeWidth = 2;
+        let markerEnd = "url(#arrowhead-default)";
+
+        if (isIncoming) {
+          strokeColor = "#22c55e"; // Green for incoming
+          strokeDasharray = "none";
+          strokeWidth = 2.5;
+          markerEnd = "url(#arrowhead-incoming)";
+        } else if (isRecursive) {
+          strokeColor = "#f59e0b"; // Orange for recursive
+          strokeDasharray = "8,4";
+          strokeWidth = 2;
+          markerEnd = "url(#arrowhead-recursive)";
+        } else if (isOutgoing) {
+          strokeColor = "#3b82f6"; // Blue for outgoing
+          strokeDasharray = "4,2";
+          strokeWidth = 2;
+          markerEnd = "url(#arrowhead-outgoing)";
+        }
+
+        return (
+          <g key={edge.id}>
+            <line
+              x1={sourceCenterX}
+              y1={sourceCenterY}
+              x2={targetCenterX}
+              y2={targetCenterY}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeDasharray={strokeDasharray}
+              opacity={0.8}
+              markerEnd={markerEnd}
+            />
+          </g>
+        );
+      })}
+    </>
+  );
+};
+
 /* ---------- type definitions ------------ */
 
 type AnyLayoutNode = HierarchicalLayoutNode;
 
 export type AnyLayoutFn = HierarchicalLayoutFn;
+
+// View mode types
+type ViewMode = "treemap" | "referenceGraph";
 
 interface TreemapSVGProps {
   root: ScopeNode;
@@ -951,6 +1212,9 @@ interface TreemapSVGProps {
   onNodeClick?: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseEnter?: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseLeave?: () => void;
+  // New props for reference graph mode
+  viewMode?: ViewMode;
+  elkGraph?: ELKGraph | null;
 }
 
 /* ---------- component ------------ */
@@ -970,6 +1234,8 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
   onNodeClick = () => {},
   onMouseEnter = () => {},
   onMouseLeave = () => {},
+  viewMode = "treemap",
+  elkGraph = null,
 }) => {
   // Determine which layout options to use based on the layout function
   const layoutOptions = useMemo(() => {
@@ -1064,11 +1330,62 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
     return allFreeRects;
   };
 
-  console.log("🚀 Using flat rendering system with breadth-first ordering:", {
-    containers: containers.length,
-    leaves: leaves.length,
-    renderOrder: "breadth-first: containers first within each level",
-  });
+  // Helper function to build ScopeNode map for ELK renderer
+  const buildScopeNodeMap = (
+    node: ScopeNode,
+    map = new Map<string, ScopeNode>()
+  ): Map<string, ScopeNode> => {
+    map.set(node.id, node);
+    if (node.children) {
+      node.children.forEach((child) => buildScopeNodeMap(child, map));
+    }
+    return map;
+  };
+
+  // Render based on view mode
+  if (viewMode === "referenceGraph") {
+    if (!elkGraph) {
+      // Show loading state for reference graph mode
+
+      return (
+        <>
+          <defs>
+            <style>{treemapStyles}</style>
+          </defs>
+          <text
+            x={width / 2}
+            y={height / 2}
+            textAnchor="middle"
+            fill="#cccccc"
+            fontSize="16"
+          >
+            Generating reference graph...
+          </text>
+        </>
+      );
+    }
+    const scopeNodesMap = buildScopeNodeMap(root);
+
+    return (
+      <>
+        {/* Stylesheet for transitions */}
+        <defs>
+          <style>{treemapStyles}</style>
+        </defs>
+
+        <ELKGraphRenderer
+          elkGraph={elkGraph}
+          scopeNodes={scopeNodesMap}
+          settings={settings}
+          onNodeClick={onNodeClick}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        />
+      </>
+    );
+  }
+
+  // Default treemap rendering
 
   // Combine all nodes and sort by render order for breadth-first rendering
   const allNodes = [

@@ -4,7 +4,11 @@ Provides static analysis, visualization, and code navigation features for React 
 
 Example treemap of itself:
 
-![Treemap](docs/treemap.png)
+![alt text](docs/treemap.png)
+
+Example of reference graph:
+
+![Reference Graph](docs/ref-graph.png)
 
 ## Overview
 

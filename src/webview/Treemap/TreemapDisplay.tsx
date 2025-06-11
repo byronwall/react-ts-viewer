@@ -18,6 +18,7 @@ import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { AnyLayoutFn } from "./TreemapSVG"; // Added AnyLayoutFn
 import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
 import { layoutHierarchical } from "./layoutHierarchical";
+import { layoutELKAsync, ELKGraph, layoutELKWithRoot } from "./layoutELK";
 import { pastelSet } from "./pastelSet";
 
 interface TreemapDisplayProps {
@@ -153,6 +154,15 @@ function filterNodesForSearch(
   } as ScopeNode;
 }
 
+// View mode types from the plan
+type ViewMode = "treemap" | "referenceGraph";
+
+interface ReferenceGraphState {
+  focusNodeId: string;
+  elkGraph: ELKGraph | null;
+  isLoading: boolean;
+}
+
 export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
   data: initialData,
   settings,
@@ -161,6 +171,11 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 }) => {
   const [isolatedNode, setIsolatedNode] = useState<ScopeNode | null>(null);
   const [isolationPath, setIsolationPath] = useState<ScopeNode[]>([]);
+
+  // New state for view mode and reference graph
+  const [viewMode, setViewMode] = useState<ViewMode>("treemap");
+  const [referenceGraphState, setReferenceGraphState] =
+    useState<ReferenceGraphState | null>(null);
 
   const [selectedNodeForDrawer, setSelectedNodeForDrawer] =
     useState<ScopeNode | null>(null);
@@ -365,7 +380,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     ]
   );
 
-  const handleNodeClick = (
+  const handleNodeClick = async (
     node: ScopeNode, // Now directly a ScopeNode instead of Nivo's computed node
     event: React.MouseEvent
   ) => {
@@ -390,7 +405,72 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
       return;
     }
 
-    if (event.metaKey || event.ctrlKey) {
+    if (event.shiftKey) {
+      // SHIFT + Click: Enter/Exit reference graph mode
+      event.preventDefault();
+
+      if (
+        viewMode === "referenceGraph" &&
+        referenceGraphState?.focusNodeId === fullNodeFromInitialTree.id
+      ) {
+        // Exit reference graph mode if clicking the same focus node
+        setViewMode("treemap");
+        setReferenceGraphState(null);
+      } else {
+        // Enter reference graph mode with this node as focus
+        setViewMode("referenceGraph");
+        setReferenceGraphState({
+          focusNodeId: fullNodeFromInitialTree.id,
+          elkGraph: null,
+          isLoading: true,
+        });
+
+        try {
+          // Add timeout to prevent hanging
+          const layoutPromise = layoutELKWithRoot(
+            fullNodeFromInitialTree, // Focus node (what was clicked)
+            initialData, // Root node (entire file tree for reference searching)
+            containerDimensions.width,
+            containerDimensions.height
+          );
+
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => {
+              console.error("⏰ ELK layout timed out after 5 seconds");
+              reject(new Error("ELK layout timed out after 5 seconds"));
+            }, 5000);
+          });
+
+          const elkGraph = await Promise.race([layoutPromise, timeoutPromise]);
+
+          setReferenceGraphState((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  elkGraph,
+                  isLoading: false,
+                }
+              : null
+          );
+        } catch (error) {
+          console.error("❌ Failed to generate reference graph:", error);
+          setReferenceGraphState((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  isLoading: false,
+                }
+              : null
+          );
+
+          // Show error message to user
+          vscodeApi.postMessage({
+            command: "showErrorMessage",
+            text: `Failed to generate reference graph: ${error instanceof Error ? error.message : String(error)}`,
+          });
+        }
+      }
+    } else if (event.metaKey || event.ctrlKey) {
       // CMD/CTRL + Click: Open file
       event.preventDefault();
       handleJumpToSource(fullNodeFromInitialTree); // Use the new handler
@@ -681,12 +761,21 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         searchInputRef.current?.focus();
       }
 
-      // Cancel search with Escape key
+      // Cancel search with Escape key OR exit reference graph mode
       if (event.key === "Escape") {
         event.preventDefault();
-        setSearchText("");
-        setMatchingNodes(new Set());
-        searchInputRef.current?.blur();
+
+        if (viewMode === "referenceGraph") {
+          // Exit reference graph mode
+          console.log("🔙 Escape pressed - exiting reference graph mode");
+          setViewMode("treemap");
+          setReferenceGraphState(null);
+        } else {
+          // Normal search cancellation
+          setSearchText("");
+          setMatchingNodes(new Set());
+          searchInputRef.current?.blur();
+        }
       }
     };
 
@@ -694,7 +783,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [viewMode]); // Added viewMode dependency
 
   // Update matching nodes when search text changes
   useEffect(() => {
@@ -1021,6 +1110,50 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             }}
           >
             {fileName}
+            {viewMode === "referenceGraph" && (
+              <span
+                style={{
+                  marginLeft: "8px",
+                  fontSize: "0.8em",
+                  color: "#4fc3f7",
+                  fontWeight: "normal",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                📊 Reference Graph Mode
+                <button
+                  onClick={() => {
+                    setViewMode("treemap");
+                    setReferenceGraphState(null);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#cccccc",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    padding: "2px 4px",
+                    borderRadius: "2px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: "20px",
+                    height: "20px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#444444";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }}
+                  title="Exit reference graph mode"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
           </h3>
           <div
             style={{
@@ -1200,7 +1333,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             marginLeft: "6px",
           }}
         >
-          Use , and . keys to navigate
+          Use , and . keys to navigate | Shift+Click for reference graph
         </span>
       </div>
 
@@ -1231,6 +1364,8 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             minFontSize={settings.selectedLayout === "hierarchical" ? 7 : 12}
             maxFontSize={settings.selectedLayout === "hierarchical" ? 11 : 16}
             onResetViewport={resetViewportRef}
+            viewMode={viewMode}
+            elkGraph={referenceGraphState?.elkGraph}
           />
         ) : (
           <div
