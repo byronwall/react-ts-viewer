@@ -2,7 +2,7 @@
   "name": "react-ts-code-analysis",
   "displayName": "React TypeScript Code Analysis",
   "description": "Provides static analysis and visualization for React/TypeScript codebases.",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "publisher": "byronwall",
   "private": false,
   "license": "MIT",
