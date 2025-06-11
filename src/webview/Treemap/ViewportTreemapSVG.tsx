@@ -2,12 +2,16 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { AnyLayoutFn, TreemapContent } from "./TreemapSVG";
+import { ELKGraph } from "./layoutELK";
 
 interface ViewportState {
   scale: number;
   translateX: number;
   translateY: number;
 }
+
+// View mode types
+type ViewMode = "treemap" | "referenceGraph";
 
 interface ViewportTreemapSVGProps {
   root: ScopeNode;
@@ -24,6 +28,9 @@ interface ViewportTreemapSVGProps {
   onMouseEnter?: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseLeave?: () => void;
   onResetViewport?: React.MutableRefObject<(() => void) | undefined>; // Ref to expose reset function
+  // New props for reference graph mode
+  viewMode?: ViewMode;
+  elkGraph?: ELKGraph | null;
 }
 
 export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
@@ -41,6 +48,8 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
   onMouseEnter,
   onMouseLeave,
   onResetViewport,
+  viewMode = "treemap",
+  elkGraph = null,
 }) => {
   // Viewport state
   const [viewport, setViewport] = useState<ViewportState>({
@@ -191,6 +200,8 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       onNodeClick,
       onMouseEnter,
       onMouseLeave: () => {}, // Handle mouse leave at viewport level
+      viewMode,
+      elkGraph,
     }),
     [
       root,
@@ -205,6 +216,8 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       selectedNodeId,
       onNodeClick,
       onMouseEnter,
+      viewMode,
+      elkGraph,
     ]
   );
 
