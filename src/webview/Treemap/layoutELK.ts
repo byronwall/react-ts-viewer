@@ -53,6 +53,10 @@ interface SemanticReference {
   sourceNodeId: string;
   targetNodeId?: string;
   position: { line: number; character: number };
+  /** Absolute character offset (from SourceFile) where this reference occurs */
+  offset: number;
+  /** ID of the innermost ScopeNode that contains the reference usage (filled later) */
+  usageNodeId?: string;
   isInternal: boolean; // true if declared within BOI scope
   direction: "outgoing" | "incoming" | "recursive";
 }
@@ -204,6 +208,7 @@ function extractSemanticReferences(
         type: "function_call",
         sourceNodeId,
         position,
+        offset: n.pos,
         isInternal,
         direction: isInternal ? "recursive" : "outgoing",
       });
@@ -223,6 +228,7 @@ function extractSemanticReferences(
         type: "property_access",
         sourceNodeId,
         position,
+        offset: n.pos,
         isInternal,
         direction: isInternal ? "recursive" : "outgoing",
       });
@@ -242,6 +248,7 @@ function extractSemanticReferences(
         type: "property_access",
         sourceNodeId,
         position,
+        offset: n.pos,
         isInternal,
         direction: isInternal ? "recursive" : "outgoing",
       });
@@ -260,6 +267,7 @@ function extractSemanticReferences(
           type: "variable_reference",
           sourceNodeId,
           position,
+          offset: n.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
         });
@@ -287,6 +295,7 @@ function extractSemanticReferences(
           type: "import",
           sourceNodeId,
           position,
+          offset: n.pos,
           isInternal: false,
           direction: "outgoing",
         });
@@ -302,6 +311,7 @@ function extractSemanticReferences(
               type: "import",
               sourceNodeId,
               position,
+              offset: n.pos,
               isInternal: false,
               direction: "outgoing",
             });
@@ -314,6 +324,13 @@ function extractSemanticReferences(
   }
 
   visitNode(node);
+
+  // Convert local offsets to absolute file offsets
+  const focusStartOffset = getRangeFromNodeId(sourceNodeId)?.start ?? 0;
+  references.forEach((r) => {
+    r.offset = r.offset + focusStartOffset;
+  });
+
   return references;
 }
 
@@ -337,6 +354,7 @@ function extractJSXExpressionReferences(
           type: "variable_reference",
           sourceNodeId,
           position,
+          offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
         });
@@ -354,6 +372,7 @@ function extractJSXExpressionReferences(
         type: "property_access",
         sourceNodeId,
         position,
+        offset: expr.pos,
         isInternal,
         direction: isInternal ? "recursive" : "outgoing",
       });
@@ -366,6 +385,7 @@ function extractJSXExpressionReferences(
           type: "function_call",
           sourceNodeId,
           position,
+          offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
         });
@@ -382,6 +402,7 @@ function extractJSXExpressionReferences(
           type: "property_access",
           sourceNodeId,
           position,
+          offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
         });
@@ -762,6 +783,15 @@ function buildHierarchicalStructure(
   const nodeIds = nodes.map((n) => n.id);
   const commonAncestor = findCommonAncestor(rootNode, nodeIds);
 
+  // Build the path from root to the common ancestor so we can include higher-level context
+  const ancestorPath = getPathToNode(rootNode, commonAncestor.id);
+
+  // Helper to attach child into shallow copy
+  const cloneNode = (n: ScopeNode): ScopeNode => ({
+    ...n,
+    children: n.children ? [] : [],
+  });
+
   console.log("🔍 Common ancestor found:", {
     id: commonAncestor.id,
     label: commonAncestor.label,
@@ -800,7 +830,18 @@ function buildHierarchicalStructure(
   }
 
   const hierarchicalTree = buildSubtree(commonAncestor);
-  return hierarchicalTree || commonAncestor;
+
+  // Now graft this subtree under the ancestor chain to reach the root
+  let current: ScopeNode = hierarchicalTree || commonAncestor;
+  for (let i = ancestorPath.length - 2; i >= 0; i--) {
+    const anc = ancestorPath[i];
+    if (!anc) continue;
+    const parent = cloneNode(anc);
+    parent.children = [current];
+    current = parent;
+  }
+
+  return current;
 }
 
 // Convert hierarchical ScopeNode structure to ELK format
@@ -942,6 +983,7 @@ function buildSimpleVariableGraph(
         sourceNodeId: focusNode.id,
         targetNodeId: declarationNode.id,
         position: { line: 1, character: 1 },
+        offset: 0,
         isInternal: false,
         direction: "outgoing",
       });
@@ -1223,9 +1265,14 @@ function buildSemanticReferenceGraph(
 
       // For incoming references, the target should be the focus node
       if (ref.direction === "incoming") {
+        const usageNodeId = ref.offset
+          ? findInnermostNodeByOffset(rootNode, ref.offset)?.id || focusNode.id
+          : focusNode.id;
+
         resolvedReferences.push({
           ...ref,
           targetNodeId: focusNode.id,
+          usageNodeId,
         });
 
         // Add the source node (the one containing the reference)
@@ -1242,23 +1289,32 @@ function buildSemanticReferenceGraph(
           specificDeclarationNode.id !== focusNode.id ||
           ref.direction === "recursive"
         ) {
+          const usageNodeId = ref.offset
+            ? findInnermostNodeByOffset(rootNode, ref.offset)?.id ||
+              focusNode.id
+            : focusNode.id;
+
           resolvedReferences.push({
             ...ref,
             targetNodeId: specificDeclarationNode.id,
+            usageNodeId,
           });
 
-          // Always add the specific declaration node as a separate node in the graph
+          // Ensure both the declaration and usage nodes are included in the graph
           if (
             !referencedNodes.some((n) => n.id === specificDeclarationNode.id)
           ) {
             referencedNodes.push(specificDeclarationNode);
-            console.log(
-              `✅ Added specific declaration node: ${specificDeclarationNode.id} (${specificDeclarationNode.label}) for reference: ${ref.name}`
-            );
-          } else {
-            console.log(
-              `⚠️ Skipped duplicate node: ${specificDeclarationNode.id} (${specificDeclarationNode.label}) for reference: ${ref.name}`
-            );
+          }
+
+          if (
+            usageNodeId &&
+            !referencedNodes.some((n) => n.id === usageNodeId)
+          ) {
+            const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
+            if (usageNode) {
+              referencedNodes.push(usageNode);
+            }
           }
         } else {
           console.log(
@@ -1281,8 +1337,8 @@ function buildSemanticReferenceGraph(
     console.log(`  ${index + 1}. ${node.id} (${node.label})`);
   });
 
-  // If we only have the focus node, just return a simple structure
-  if (referencedNodes.length === 1) {
+  // If no edges could be resolved, fall back to minimal visualization
+  if (resolvedReferences.length === 0) {
     console.log("ℹ️ Only focus node found - creating minimal visualization");
     return {
       nodes: referencedNodes,
@@ -1427,21 +1483,41 @@ export async function layoutELKWithRoot(
         return null;
       }
 
-      // Validate that both source and target exist in elkNodes
-      const sourceExists = allElkNodeIds.has(ref.sourceNodeId);
-      const targetExists = allElkNodeIds.has(ref.targetNodeId);
+      // Determine actual endpoints based on direction and usage node
+      let sourceId: string | undefined;
+      let targetId: string | undefined;
 
-      if (!sourceExists || !targetExists) {
+      if (ref.direction === "outgoing") {
+        // External declaration -> usage inside BOI
+        sourceId = ref.targetNodeId;
+        targetId = ref.usageNodeId || ref.sourceNodeId;
+      } else if (ref.direction === "incoming") {
+        // External usage -> declaration inside BOI (already mapped)
+        sourceId = ref.sourceNodeId;
+        targetId = ref.targetNodeId;
+      } else {
+        // recursive
+        sourceId = ref.sourceNodeId;
+        targetId = ref.targetNodeId;
+      }
+
+      if (!sourceId || !targetId) {
         return null;
       }
 
-      // User wants arrows to point TO the BOI for external deps it uses.
-      // 'outgoing' means BOI -> external, so we flip it.
-      // 'incoming' means external -> BOI, which is correct.
-      // 'recursive' means BOI -> BOI, which is correct.
-      const isOutgoing = ref.direction === "outgoing";
-      const sourceId = isOutgoing ? ref.targetNodeId : ref.sourceNodeId;
-      const targetId = isOutgoing ? ref.sourceNodeId : ref.targetNodeId;
+      // 🔍 Debug log for every reference edge being built
+      console.log("[EDGE_BUILD]", {
+        ref: ref.name,
+        dir: ref.direction,
+        usageNodeId: ref.usageNodeId,
+      });
+
+      // Ensure both endpoints exist in the ELK node set
+      const src = sourceId as string;
+      const tgt = targetId as string;
+      if (!allElkNodeIds.has(src) || !allElkNodeIds.has(tgt)) {
+        return null;
+      }
 
       // Create edge with direction-aware styling and arrows
       const edgeId = `edge_${index}_${ref.direction}_${ref.type}`;
@@ -1449,8 +1525,8 @@ export async function layoutELKWithRoot(
       // Configure edge properties based on direction
       const edge: ElkExtendedEdge = {
         id: edgeId,
-        sources: [sourceId],
-        targets: [targetId],
+        sources: [src],
+        targets: [tgt],
         // Remove labels since we're not displaying them
         // Add arrow and direction properties
         layoutOptions: {
@@ -1584,3 +1660,63 @@ export async function layoutWithELK(
 }
 
 export const layoutELKAsync: ELKLayoutFn = layoutWithELK;
+
+// -------- helper utilities for locating reference usage nodes --------
+
+// Extract start/end char offsets from a ScopeNode.id (format: "...:start-end")
+function getRangeFromNodeId(
+  nodeId: string
+): { start: number; end: number } | null {
+  const match = nodeId.match(/:(\d+)-(\d+)$/);
+  if (!match) return null;
+  const start = parseInt(match[1]!, 10);
+  const end = parseInt(match[2]!, 10);
+  if (isNaN(start) || isNaN(end)) return null;
+  return { start, end };
+}
+
+// Recursively find the smallest (innermost) ScopeNode that spans the given character offset
+function findInnermostNodeByOffset(
+  node: ScopeNode,
+  offset: number
+): ScopeNode | null {
+  const range = getRangeFromNodeId(node.id);
+  if (range && (offset < range.start || offset > range.end)) {
+    // Range exists and offset outside – prune branch
+    return null;
+  }
+
+  let bestMatch: ScopeNode | null = node;
+
+  if (node.children && node.children.length > 0) {
+    for (const child of node.children) {
+      const candidate = findInnermostNodeByOffset(child, offset);
+      if (candidate) {
+        const candRange = getRangeFromNodeId(candidate.id);
+        const bestRange = getRangeFromNodeId(bestMatch.id);
+        if (candRange) {
+          if (!bestRange) {
+            // Current best has no range (likely the file root) – prefer any ranged child
+            bestMatch = candidate;
+          } else if (
+            candRange.end - candRange.start <
+            bestRange.end - bestRange.start
+          ) {
+            bestMatch = candidate;
+          }
+        }
+      }
+    }
+  }
+
+  // 🔍 Debug log to see which node the offset maps to
+  if (bestMatch) {
+    console.log("[OFFSET_MATCH]", {
+      offset,
+      matchedNodeId: bestMatch.id,
+      matchedLabel: bestMatch.label,
+    });
+  }
+
+  return bestMatch;
+}
