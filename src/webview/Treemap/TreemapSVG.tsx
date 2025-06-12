@@ -931,6 +931,8 @@ interface ELKGraphRendererProps {
   onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseLeave: () => void;
+  selectedNodeId?: string;
+  originalFocusNodeId?: string;
 }
 
 const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
@@ -940,6 +942,8 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
   onNodeClick,
   onMouseEnter,
   onMouseLeave,
+  selectedNodeId,
+  originalFocusNodeId,
 }) => {
   console.log("🎨 Rendering ELK graph:", {
     childrenCount: elkGraph.children.length,
@@ -982,6 +986,8 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
       return null;
     }
 
+    const isSelectedNode = elkNode.id === selectedNodeId;
+    const isOriginalFocus = elkNode.id === originalFocusNodeId;
     const category = scopeNode.category;
     const baseColor = pastelSet[category] || pastelSet[NodeCategory.Other];
 
@@ -994,6 +1000,19 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
         transform={`translate(${elkNode.x || 0}, ${elkNode.y || 0})`}
         className="elk-node"
       >
+        {/* Blue border for original focus node */}
+        {isOriginalFocus && (
+          <rect
+            x={-2.5}
+            y={-2.5}
+            width={elkNode.width + 5}
+            height={(hasChildren ? headerHeight : elkNode.height) + 5}
+            fill="none"
+            stroke="#3b82f6" // blue
+            strokeWidth={3}
+            rx={6}
+          />
+        )}
         {/* Container background (if has children) */}
         {hasChildren && (
           <rect
@@ -1006,6 +1025,10 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
             strokeWidth={1}
             rx={4}
             opacity={0.3}
+            style={{ cursor: "pointer" }}
+            onClick={(e) => onNodeClick(scopeNode, e as any)}
+            onMouseEnter={(e) => onMouseEnter(scopeNode, e as any)}
+            onMouseLeave={onMouseLeave}
           />
         )}
 
@@ -1016,8 +1039,8 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
           width={elkNode.width}
           height={hasChildren ? headerHeight : elkNode.height}
           fill={baseColor}
-          stroke="#333333"
-          strokeWidth={2}
+          stroke={isSelectedNode ? "#f59e0b" : "#333333"}
+          strokeWidth={isSelectedNode ? 3 : 2}
           rx={4}
           style={{ cursor: "pointer" }}
           onClick={(e) => {
@@ -1380,6 +1403,8 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
           onNodeClick={onNodeClick}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
+          selectedNodeId={selectedNodeId}
+          originalFocusNodeId={selectedNodeId}
         />
       </>
     );

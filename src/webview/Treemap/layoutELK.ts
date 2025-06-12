@@ -630,7 +630,7 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
         // Handle patterns like "functionName [line]"
         node.label.match(
           new RegExp(
-            `^${targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\[`
+            `^${targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&")}\\s*\\[`
           )
         ))
     ) {
@@ -638,17 +638,6 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
       console.log(
         `  ✅ Found matching node: ${node.id} (${node.label}) for reference: ${targetName}`
       );
-    }
-
-    // Also check if the source contains the target name (for exact matches)
-    if (node.source && node.source.includes(targetName)) {
-      // Only add if not already found by label
-      if (!matches.some((m) => m.id === node.id)) {
-        matches.push(node);
-        console.log(
-          `  ✅ Found matching node by source: ${node.id} (${node.label}) for reference: ${targetName}`
-        );
-      }
     }
 
     // Recursively search children
@@ -1150,18 +1139,72 @@ function buildSemanticReferenceGraph(
   console.log(
     `🔍 Filtered to ${prioritizedReferences.length} most relevant references`
   );
+  console.log(
+    `[REF_GRAPH] Prioritized references to resolve:`,
+    prioritizedReferences.map((r) => r.name)
+  );
 
   // Resolve semantic references to actual nodes (with strict limits)
   for (const ref of prioritizedReferences) {
+    const isTargetRef =
+      ref.name === "password" ||
+      ref.name === "setPassword" ||
+      ref.name === "Input";
+
+    if (isTargetRef) {
+      console.log(`[REF_GRAPH] Resolving reference: "${ref.name}"`);
+    }
     const matchingNodes = findNodesByName(rootNode, ref.name);
 
     if (matchingNodes.length > 0) {
+      if (isTargetRef) {
+        console.log(
+          `[REF_GRAPH] Found ${
+            matchingNodes.length
+          } candidates for "${ref.name}":`,
+          matchingNodes.map((n) => ({
+            id: n.id,
+            label: n.label,
+            category: n.category,
+            size: getNodeSize(n),
+          }))
+        );
+      }
+
       // Sort nodes by size to find the most specific match
-      const sortedMatchingNodes = matchingNodes.sort(
-        (a, b) => getNodeSize(a) - getNodeSize(b)
-      );
+      const sortedMatchingNodes = matchingNodes.sort((a, b) => {
+        const declarationCategories = [
+          "Variable",
+          "Function",
+          "Class",
+          "Parameter",
+          "Import",
+        ];
+        const aIsDecl = declarationCategories.includes(a.category);
+        const bIsDecl = declarationCategories.includes(b.category);
+
+        if (aIsDecl && !bIsDecl) return -1;
+        if (!aIsDecl && bIsDecl) return 1;
+
+        // if both or neither are declarations, sort by size
+        return getNodeSize(a) - getNodeSize(b);
+      });
 
       const specificDeclarationNode = sortedMatchingNodes[0];
+
+      if (isTargetRef) {
+        console.log(
+          `[REF_GRAPH] Selected candidate for "${ref.name}":`,
+          specificDeclarationNode
+            ? {
+                id: specificDeclarationNode.id,
+                label: specificDeclarationNode.label,
+                category: specificDeclarationNode.category,
+                size: getNodeSize(specificDeclarationNode),
+              }
+            : "NONE"
+        );
+      }
 
       if (!specificDeclarationNode) {
         continue;
@@ -1392,14 +1435,22 @@ export async function layoutELKWithRoot(
         return null;
       }
 
+      // User wants arrows to point TO the BOI for external deps it uses.
+      // 'outgoing' means BOI -> external, so we flip it.
+      // 'incoming' means external -> BOI, which is correct.
+      // 'recursive' means BOI -> BOI, which is correct.
+      const isOutgoing = ref.direction === "outgoing";
+      const sourceId = isOutgoing ? ref.targetNodeId : ref.sourceNodeId;
+      const targetId = isOutgoing ? ref.sourceNodeId : ref.targetNodeId;
+
       // Create edge with direction-aware styling and arrows
       const edgeId = `edge_${index}_${ref.direction}_${ref.type}`;
 
       // Configure edge properties based on direction
       const edge: ElkExtendedEdge = {
         id: edgeId,
-        sources: [ref.sourceNodeId],
-        targets: [ref.targetNodeId],
+        sources: [sourceId],
+        targets: [targetId],
         // Remove labels since we're not displaying them
         // Add arrow and direction properties
         layoutOptions: {
