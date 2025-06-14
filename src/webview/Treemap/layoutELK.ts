@@ -1471,14 +1471,62 @@ export async function layoutELKWithRoot(
     hierarchicalRoot,
   } = buildSemanticReferenceGraph(focusNode, rootNode);
 
+  // ---------------- NEW: create synthetic Parameter nodes ----------------
+  // For variable references that ultimately resolved to a *function/arrow* node
+  // (meaning the identifier is very likely a parameter), create a small leaf
+  // node under that parent so the variable gets its own dedicated box.
+  type SyntheticParamInfo = { id: string; name: string; parentId: string };
+  const syntheticParams: SyntheticParamInfo[] = [];
+
+  const nodeById = new Map(referenceNodes.map((n) => [n.id, n]));
+
+  references.forEach((ref) => {
+    if (
+      ref.direction === "outgoing" &&
+      ref.type === "variable_reference" &&
+      ref.targetNodeId
+    ) {
+      const targetNode = nodeById.get(ref.targetNodeId);
+      if (targetNode) {
+        const cat = String(targetNode.category);
+        if (
+          cat === "ArrowFunction" ||
+          cat === "Function" ||
+          cat === "Method" ||
+          cat.endsWith("Function")
+        ) {
+          const paramId = `${targetNode.id}::param:${ref.name}`;
+          // Update the reference to point to the synthetic parameter node
+          ref.targetNodeId = paramId;
+
+          // Only add once per (parent,param)
+          if (!syntheticParams.some((p) => p.id === paramId)) {
+            syntheticParams.push({
+              id: paramId,
+              name: ref.name,
+              parentId: targetNode.id,
+            });
+            console.log(`➕ Created synthetic param node for ${ref.name}`, {
+              parent: targetNode.label,
+              id: paramId,
+            });
+          }
+        }
+      }
+    }
+  });
+
   console.log("📊 Reference graph:", {
     nodes: referenceNodes.length,
     references: references.length,
+    syntheticParams: syntheticParams.length,
   });
 
-  if (referenceNodes.length === 1) {
+  if (referenceNodes.length === 1 && syntheticParams.length === 0) {
     console.log("ℹ️ Only focus node found - creating minimal visualization");
   }
+
+  // ----------------------------------------------------------------------
 
   // Convert hierarchical structure to ELK format
   const targetNodeIds = new Set(referenceNodes.map((n) => n.id));
@@ -1487,15 +1535,49 @@ export async function layoutELKWithRoot(
     targetNodeIds
   );
 
+  // ---------------- Inject synthetic Parameter nodes into ELK hierarchy ----------------
+  if (syntheticParams.length > 0) {
+    // Helper to find a node in the ELK hierarchy by id
+    const findElkNodeById = (n: ElkNode, id: string): ElkNode | null => {
+      if (n.id === id) return n;
+      if (n.children) {
+        for (const child of n.children) {
+          const found = findElkNodeById(child, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    syntheticParams.forEach((param) => {
+      const parentElk = findElkNodeById(elkHierarchy, param.parentId);
+      if (!parentElk) return; // parent not in hierarchy – skip
+
+      if (!parentElk.children) parentElk.children = [];
+
+      // Avoid duplicates
+      if (parentElk.children.some((c) => c.id === param.id)) return;
+
+      parentElk.children.push({
+        id: param.id,
+        width: 120,
+        height: 60,
+        labels: [{ text: param.name } as any],
+      });
+      console.log(`🔧 Injected parameter node into ELK: ${param.name}`);
+    });
+  }
+
+  // ----------------------------------------------------------------------
   // Build edges from references with proper direction indicators
-  // Create a set of valid node IDs for quick lookup (including all nodes in hierarchy)
+  // Now that synthetic nodes are in the hierarchy, gather IDs.
   const allElkNodeIds = new Set<string>();
-  function collectElkNodeIds(elkNode: ElkNode) {
+  const collectElkNodeIds = (elkNode: ElkNode) => {
     allElkNodeIds.add(elkNode.id);
     if (elkNode.children) {
       elkNode.children.forEach(collectElkNodeIds);
     }
-  }
+  };
   collectElkNodeIds(elkHierarchy);
 
   const elkEdges: ElkExtendedEdge[] = references
@@ -1509,7 +1591,7 @@ export async function layoutELKWithRoot(
       let targetId: string | undefined;
 
       if (ref.direction === "outgoing") {
-        // External declaration -> usage inside BOI
+        // External declaration (param) -> usage inside BOI
         sourceId = ref.targetNodeId;
         targetId = ref.usageNodeId || ref.sourceNodeId;
       } else if (ref.direction === "incoming") {
@@ -1526,58 +1608,37 @@ export async function layoutELKWithRoot(
         return null;
       }
 
-      // 🔍 Debug log for every reference edge being built
-      console.log("[EDGE_BUILD]", {
-        ref: ref.name,
-        dir: ref.direction,
-        usageNodeId: ref.usageNodeId,
-      });
-
-      // Ensure both endpoints exist in the ELK node set
-      const src = sourceId as string;
-      const tgt = targetId as string;
-      if (!allElkNodeIds.has(src) || !allElkNodeIds.has(tgt)) {
+      // Skip edges that reference nodes not in the hierarchy
+      if (!allElkNodeIds.has(sourceId) || !allElkNodeIds.has(targetId)) {
         return null;
       }
 
-      // Create edge with direction-aware styling and arrows
+      // Debug log
+      console.log("[EDGE_BUILD]", {
+        ref: ref.name,
+        dir: ref.direction,
+        src: sourceId,
+        tgt: targetId,
+      });
+
       const edgeId = `edge_${index}_${ref.direction}_${ref.type}`;
 
-      // Configure edge properties based on direction
-      const edge: ElkExtendedEdge = {
+      return {
         id: edgeId,
-        sources: [src],
-        targets: [tgt],
-        // Remove labels since we're not displaying them
-        // Add arrow and direction properties
+        sources: [sourceId],
+        targets: [targetId],
         layoutOptions: {
-          // ELK edge routing and arrow configuration
           "elk.edge.type": "DEPENDENCY",
-          ...(ref.direction === "incoming" && {
-            // For incoming references, emphasize the arrow pointing TO the BOI
-            "elk.port.anchor": "[INCOMING]",
-            "elk.edge.routing": "SPLINES",
-          }),
-          ...(ref.direction === "outgoing" && {
-            // For outgoing references, emphasize the arrow pointing FROM the BOI
-            "elk.port.anchor": "[OUTGOING]",
-            "elk.edge.routing": "SPLINES",
-          }),
-          ...(ref.direction === "recursive" && {
-            // For recursive references, use a different style
-            "elk.port.anchor": "[RECURSIVE]",
-            "elk.edge.routing": "SPLINES",
-          }),
         },
-      };
-
-      return edge;
+      } as ElkExtendedEdge;
     })
     .filter((edge): edge is ElkExtendedEdge => edge !== null);
 
   console.log(
     `🔗 Created ${elkEdges.length} edges out of ${references.length} references`
   );
+
+  // ----------------------------------------------------------------------
 
   const elkGraph = {
     id: "reference_graph",

@@ -981,9 +981,48 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
 
   const renderELKNode = (elkNode: ELKLayoutNode, depth = 0) => {
     const scopeNode = scopeNodes.get(elkNode.id);
-    if (!scopeNode) {
-      console.warn("⚠️ No ScopeNode found for ELK node:", elkNode.id);
-      return null;
+
+    // Handle synthetic nodes (e.g. parameter placeholders) that do not exist in the Scope tree
+    const isSynthetic = !scopeNode;
+    if (isSynthetic) {
+      // Very small, simple node – derive a label from the ELK node metadata
+      const derivedLabel =
+        (elkNode as any).labels?.[0]?.text ||
+        elkNode.id.split("::param:")[1] ||
+        elkNode.id;
+
+      const baseColor = pastelSet[NodeCategory.Variable] || "#9ca3af"; // gray fallback
+
+      return (
+        <g
+          key={elkNode.id}
+          transform={`translate(${elkNode.x || 0}, ${elkNode.y || 0})`}
+          className="elk-node synthetic-param"
+        >
+          <rect
+            x={0}
+            y={0}
+            width={elkNode.width}
+            height={elkNode.height}
+            fill={baseColor}
+            stroke="#333"
+            strokeWidth={1}
+            rx={3}
+          />
+          <text
+            x={elkNode.width / 2}
+            y={elkNode.height / 2}
+            fontSize={Math.min(12, Math.max(8, elkNode.height * 0.4))}
+            fill={getContrastingTextColor(baseColor)}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+            style={{ userSelect: "none" }}
+          >
+            {derivedLabel}
+          </text>
+        </g>
+      );
     }
 
     const isSelectedNode = elkNode.id === selectedNodeId;

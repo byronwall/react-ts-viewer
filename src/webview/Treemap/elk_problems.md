@@ -2,7 +2,7 @@
 
 ## Problems
 
-- The image does not include a box for `keysToTrack`. Instead I get an arrow that points to a scope box, but I want to render a box for every reference.
+- The boxes for `setPressedModifiers` is rendered from the scope of a different function. I need it to refer to the parent call where the `setPressedModifiers` is declared.
 
 ## Test Scenario
 
