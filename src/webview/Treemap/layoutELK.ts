@@ -78,12 +78,6 @@ interface BOIAnalysis {
   recursiveReferences: SemanticReference[];
 }
 
-interface ReferenceGraph {
-  outgoing: SemanticReference[]; // BOI uses external variables/functions
-  incoming: SemanticReference[]; // External code references BOI variables
-  recursive: SemanticReference[]; // BOI references itself
-}
-
 // Helper function to create TypeScript source file from code
 function createSourceFile(source: string, fileName = "temp.ts"): ts.SourceFile {
   return ts.createSourceFile(
@@ -116,7 +110,7 @@ function buildVariableScope(
     level: parent ? parent.level + 1 : 0,
   };
 
-  function visitNode(n: ts.Node) {
+  const walk = (n: ts.Node): void => {
     // Variable declarations
     if (
       ts.isVariableDeclaration(n) ||
@@ -138,10 +132,10 @@ function buildVariableScope(
       });
     }
 
-    ts.forEachChild(n, visitNode);
-  }
+    ts.forEachChild(n, walk);
+  };
 
-  visitNode(node);
+  walk(node);
   return scope;
 }
 
@@ -214,48 +208,52 @@ function extractSemanticReferences(
       });
     }
 
-    // Property access calls
-    if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression)) {
-      const objectName = ts.isIdentifier(n.expression.expression)
-        ? n.expression.expression.text
-        : "unknown";
-      const propertyName = n.expression.name.text;
-      const name = `${objectName}.${propertyName}`;
-      const isInternal = isVariableDeclaredInScope(objectName, boiScope);
+    // Property access (calls or plain) – capture ONLY the root object identifier
+    const handlePropertyAccess = (pa: ts.PropertyAccessExpression) => {
+      const root = pa.expression;
+      if (ts.isIdentifier(root)) {
+        const name = root.text;
+        if (!isKeyword(name)) {
+          const isInternal = isVariableDeclaredInScope(name, boiScope);
+          references.push({
+            name,
+            type: "variable_reference",
+            sourceNodeId,
+            position,
+            offset: pa.pos,
+            isInternal,
+            direction: isInternal ? "recursive" : "outgoing",
+          });
+        }
+      }
+    };
 
-      references.push({
-        name,
-        type: "property_access",
-        sourceNodeId,
-        position,
-        offset: n.pos,
-        isInternal,
-        direction: isInternal ? "recursive" : "outgoing",
-      });
+    // Property access in a call expression: foo.bar()
+    if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression)) {
+      handlePropertyAccess(n.expression);
     }
 
-    // Property access expressions (not just calls)
-    if (ts.isPropertyAccessExpression(n) && !ts.isCallExpression(n.parent)) {
-      const objectName = ts.isIdentifier(n.expression)
-        ? n.expression.text
-        : "unknown";
-      const propertyName = n.name.text;
-      const name = `${objectName}.${propertyName}`;
-      const isInternal = isVariableDeclaredInScope(objectName, boiScope);
-
-      references.push({
-        name,
-        type: "property_access",
-        sourceNodeId,
-        position,
-        offset: n.pos,
-        isInternal,
-        direction: isInternal ? "recursive" : "outgoing",
-      });
+    // Stand-alone property access: foo.bar
+    if (
+      ts.isPropertyAccessExpression(n) &&
+      !ts.isCallExpression(n.parent) /* avoid double count */
+    ) {
+      handlePropertyAccess(n);
     }
 
     // Variable references (not in declarations)
-    if (ts.isIdentifier(n) && !isPartOfDeclaration(n)) {
+    if (
+      ts.isIdentifier(n) &&
+      !isPartOfDeclaration(n) &&
+      !isIdentifierTypePosition(n)
+    ) {
+      // Skip identifiers that are *property names* in a property access expression
+      // e.g. the `includes` in `keysToTrack.includes`. We only want the root object
+      // (handled separately by `handlePropertyAccess`).
+      if (ts.isPropertyAccessExpression(n.parent) && n.parent.name === n) {
+        return; // ignore property name part
+      }
+
       const name = n.text;
 
       // Skip common keywords and JSX component names
@@ -345,7 +343,7 @@ function extractJSXExpressionReferences(
   function visitExpression(expr: ts.Expression) {
     const position = getLineAndCharacter(sourceFile, expr.pos);
 
-    if (ts.isIdentifier(expr)) {
+    if (ts.isIdentifier(expr) && !isIdentifierTypePosition(expr)) {
       const name = expr.text;
       if (!isKeyword(name)) {
         const isInternal = isVariableDeclaredInScope(name, boiScope);
@@ -360,22 +358,21 @@ function extractJSXExpressionReferences(
         });
       }
     } else if (ts.isPropertyAccessExpression(expr)) {
-      const objectName = ts.isIdentifier(expr.expression)
-        ? expr.expression.text
-        : "unknown";
-      const propertyName = expr.name.text;
-      const name = `${objectName}.${propertyName}`;
-      const isInternal = isVariableDeclaredInScope(objectName, boiScope);
-
-      references.push({
-        name,
-        type: "property_access",
-        sourceNodeId,
-        position,
-        offset: expr.pos,
-        isInternal,
-        direction: isInternal ? "recursive" : "outgoing",
-      });
+      // Capture only the root object identifier of the JSX property access
+      const rootObj = expr.expression;
+      if (ts.isIdentifier(rootObj)) {
+        const name = rootObj.text;
+        const isInternal = isVariableDeclaredInScope(name, boiScope);
+        references.push({
+          name,
+          type: "variable_reference",
+          sourceNodeId,
+          position,
+          offset: expr.pos,
+          isInternal,
+          direction: isInternal ? "recursive" : "outgoing",
+        });
+      }
     } else if (ts.isCallExpression(expr)) {
       if (ts.isIdentifier(expr.expression)) {
         const name = expr.expression.text;
@@ -481,6 +478,132 @@ function isKeyword(name: string): boolean {
     "continue",
   ]);
   return keywords.has(name);
+}
+
+// INSERT: Add a helper that tells us whether an identifier occurs only in a type position
+function isIdentifierTypePosition(identifier: ts.Identifier): boolean {
+  const parent = identifier.parent;
+
+  // Directly inside a type node (e.g. foo: MyType or const x: Promise<string>)
+  if (
+    ts.isTypeReferenceNode(parent) ||
+    ts.isQualifiedName(parent) ||
+    ts.isTypeParameterDeclaration(parent) ||
+    ts.isImportSpecifier(parent) ||
+    ts.isImportClause(parent) ||
+    ts.isHeritageClause(parent) ||
+    ts.isExpressionWithTypeArguments(parent) ||
+    ts.isTypeAliasDeclaration(parent) ||
+    ts.isInterfaceDeclaration(parent) ||
+    ts.isTypeLiteralNode(parent)
+  ) {
+    return true;
+  }
+
+  // Inside an "as" assertion or angle-bracket cast (<MyType>value). The
+  // identifier will appear within the type portion of these nodes, so we
+  // treat it as a type-only position.
+  if (ts.isAsExpression(parent) || ts.isTypeAssertionExpression(parent)) {
+    return true;
+  }
+
+  return false;
+}
+
+// NEW: Cache declaration look-ups per node to avoid repeated AST parsing
+const declarationCache: Map<
+  string /*nodeId*/,
+  Map<string /*ident*/, boolean>
+> = new Map();
+
+/** Returns true if the provided ScopeNode's source actually CONTAINS a real
+ *  declaration (parameter, variable, function, import, class, enum, etc.) for
+ *  the identifier.
+ */
+function nodeDeclaresIdentifier(node: ScopeNode, ident: string): boolean {
+  if (!node.source || typeof node.source !== "string") return false;
+
+  // Quick substring filter first – cheap rejection for most nodes
+  if (!node.source.includes(ident)) return false;
+
+  // Cache key per node
+  let perNode = declarationCache.get(node.id);
+  if (!perNode) {
+    perNode = new Map();
+    declarationCache.set(node.id, perNode);
+  }
+  if (perNode.has(ident)) {
+    return perNode.get(ident)!;
+  }
+
+  let declares = false;
+  try {
+    const sf = createSourceFile(node.source);
+
+    // Walk the file looking for identifier declarations
+    const walk = (n: ts.Node): void => {
+      if (declares) return; // early exit
+
+      // Variable / const / let
+      if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name)) {
+        if (n.name.text === ident) {
+          declares = true;
+          return;
+        }
+      }
+
+      // Parameters
+      if (ts.isParameter(n) && ts.isIdentifier(n.name)) {
+        if (n.name.text === ident) {
+          declares = true;
+          return;
+        }
+      }
+
+      // Function / class / enum / type alias names
+      if (
+        (ts.isFunctionDeclaration(n) ||
+          ts.isClassDeclaration(n) ||
+          ts.isEnumDeclaration(n) ||
+          ts.isTypeAliasDeclaration(n) ||
+          ts.isInterfaceDeclaration(n)) &&
+        n.name &&
+        ts.isIdentifier(n.name) &&
+        n.name.text === ident
+      ) {
+        declares = true;
+        return;
+      }
+
+      // Import specifiers (named + default)
+      if (ts.isImportDeclaration(n) && n.importClause) {
+        if (n.importClause.name?.text === ident) {
+          declares = true;
+          return;
+        }
+        if (
+          n.importClause.namedBindings &&
+          ts.isNamedImports(n.importClause.namedBindings)
+        ) {
+          for (const el of n.importClause.namedBindings.elements) {
+            if (el.name.text === ident) {
+              declares = true;
+              return;
+            }
+          }
+        }
+      }
+
+      ts.forEachChild(n, walk);
+    };
+
+    walk(sf);
+  } catch (err) {
+    // parsing failed – treat as non-declaration
+  }
+
+  perNode.set(ident, declares);
+  return declares;
 }
 
 // Helper function to get node size from its ID
@@ -642,23 +765,29 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
   const matches: ScopeNode[] = [];
 
   function searchRecursively(node: ScopeNode) {
-    // Check if this node matches the target name
-    if (
-      node.label &&
-      (node.label.includes(targetName) ||
-        node.label.startsWith(targetName + " ") ||
-        node.label === targetName ||
-        // Handle patterns like "functionName [line]"
-        node.label.match(
-          new RegExp(
-            `^${targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&")}\\s*\\[`
-          )
-        ))
-    ) {
-      matches.push(node);
-      console.log(
-        `  ✅ Found matching node: ${node.id} (${node.label}) for reference: ${targetName}`
+    if (node.label) {
+      const exactStartRegex = new RegExp(
+        `^${targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
       );
+
+      const isMatch =
+        exactStartRegex.test(node.label) ||
+        node.label === targetName ||
+        node.label.includes(`${targetName}.`) ||
+        node.label.includes(` ${targetName} `);
+
+      const declaresHere = nodeDeclaresIdentifier(node, targetName);
+      const matched = isMatch || declaresHere;
+
+      if (matched) {
+        console.log(`  🔎 candidate ➜`, {
+          id: node.id,
+          label: node.label,
+          category: node.category,
+          declares: declaresHere,
+        });
+        matches.push(node);
+      }
     }
 
     // Recursively search children
@@ -917,96 +1046,8 @@ function hierarchicalScopeNodeToELK(
 }
 
 // Helper function to extract the primary variable reference from JSX content
-function extractPrimaryVariableFromJSX(focusNode: ScopeNode): string | null {
-  if (!focusNode.source || typeof focusNode.source !== "string") {
-    return null;
-  }
-
-  // Look for patterns like {workspace.name} or {variableName}
-  const jsxExpressionMatch = focusNode.source.match(/\{([^}]+)\}/);
-  if (jsxExpressionMatch) {
-    const expression = jsxExpressionMatch[1]?.trim();
-    if (expression) {
-      // Extract the primary variable name (before any property access)
-      const primaryVar = expression.split(".")[0]?.trim();
-      if (primaryVar && primaryVar.length > 1 && !isKeyword(primaryVar)) {
-        console.log(`🎯 Extracted primary variable from JSX: ${primaryVar}`);
-        return primaryVar;
-      }
-    }
-  }
-
-  return null;
-}
 
 // Helper function to build a simple variable-focused reference graph
-function buildSimpleVariableGraph(
-  focusNode: ScopeNode,
-  rootNode: ScopeNode,
-  targetVariable: string
-): {
-  nodes: ScopeNode[];
-  references: SemanticReference[];
-  hierarchicalRoot: ScopeNode;
-} {
-  console.log(`🎯 Building simple variable graph for: ${targetVariable}`);
-
-  const referencedNodes: ScopeNode[] = [focusNode];
-  const references: SemanticReference[] = [];
-
-  // Find nodes that declare or use this variable
-  const declarationNodes = findNodesByName(rootNode, targetVariable);
-
-  console.log(
-    `🔍 Found ${declarationNodes.length} potential declaration nodes for ${targetVariable}`
-  );
-
-  // Only include the most relevant declaration (likely the closest one)
-  if (declarationNodes.length > 0) {
-    // Prefer nodes that look like variable declarations
-    const declarationNode =
-      declarationNodes.find(
-        (node) =>
-          node.category === "Variable" ||
-          node.label?.includes(targetVariable) ||
-          node.source?.includes(`const ${targetVariable}`) ||
-          node.source?.includes(`let ${targetVariable}`) ||
-          node.source?.includes(`var ${targetVariable}`)
-      ) || declarationNodes[0];
-
-    if (declarationNode && declarationNode.id !== focusNode.id) {
-      referencedNodes.push(declarationNode);
-
-      references.push({
-        name: targetVariable,
-        type: "variable_reference",
-        sourceNodeId: focusNode.id,
-        targetNodeId: declarationNode.id,
-        position: { line: 1, character: 1 },
-        offset: 0,
-        isInternal: false,
-        direction: "outgoing",
-      });
-
-      console.log(
-        `✅ Added variable declaration: ${declarationNode.id} (${declarationNode.label})`
-      );
-    }
-  }
-
-  console.log(
-    `✅ Simple variable graph built: ${referencedNodes.length} nodes, ${references.length} references`
-  );
-
-  return {
-    nodes: referencedNodes,
-    references,
-    hierarchicalRoot:
-      referencedNodes.length > 1
-        ? buildHierarchicalStructure(referencedNodes, rootNode)
-        : focusNode,
-  };
-}
 
 // Helper function to build a reference graph from a focus node using semantic analysis
 function buildSemanticReferenceGraph(
@@ -1137,12 +1178,16 @@ function buildSemanticReferenceGraph(
           (common) => ref.name.includes(common)
         );
 
+      // Exclude references that are purely internal to the BOI (recursive)
+      const isRecursive = ref.direction === "recursive";
+
       const shouldInclude =
         isRelevantType &&
         !isGenericName &&
         !isTooShort &&
         !isSingleChar &&
-        !isCommonProperty;
+        !isCommonProperty &&
+        !isRecursive;
 
       console.log(`🔍 Reference analysis: ${ref.name}`, {
         type: ref.type,
@@ -1213,40 +1258,46 @@ function buildSemanticReferenceGraph(
         );
       }
 
-      // Sort nodes by size to find the most specific match
-      const sortedMatchingNodes = matchingNodes.sort((a, b) => {
-        const declarationCategories = [
-          "Variable",
-          "Function",
-          "Class",
-          "Parameter",
-          "Import",
-        ];
-        const aIsDecl = declarationCategories.includes(a.category);
-        const bIsDecl = declarationCategories.includes(b.category);
+      // Prefer real declaration nodes over incidental matches (e.g. an "if" clause that merely mentions the name)
+      const declarationCategories = [
+        "Variable",
+        "Parameter",
+        "Function",
+        "Import",
+        "Class",
+      ];
 
-        if (aIsDecl && !bIsDecl) return -1;
-        if (!aIsDecl && bIsDecl) return 1;
+      const declarationCandidates = matchingNodes.filter(
+        (n) =>
+          declarationCategories.includes(n.category) ||
+          nodeDeclaresIdentifier(n, ref.name)
+      );
 
-        // if both or neither are declarations, sort by size
+      if (declarationCandidates.length > 0) {
+        console.log(
+          `[REF_GRAPH] Filtering to ${declarationCandidates.length} declaration candidates for "${ref.name}"`
+        );
+      }
+
+      const sortedMatchingNodes = (
+        declarationCandidates.length > 0 ? declarationCandidates : matchingNodes
+      ).sort((a, b) => {
+        // Smaller node size → more specific → higher priority
         return getNodeSize(a) - getNodeSize(b);
       });
 
       const specificDeclarationNode = sortedMatchingNodes[0];
-
-      if (isTargetRef) {
-        console.log(
-          `[REF_GRAPH] Selected candidate for "${ref.name}":`,
-          specificDeclarationNode
-            ? {
-                id: specificDeclarationNode.id,
-                label: specificDeclarationNode.label,
-                category: specificDeclarationNode.category,
-                size: getNodeSize(specificDeclarationNode),
-              }
-            : "NONE"
-        );
-      }
+      console.log(
+        `[REF_GRAPH] Final chosen node for "${ref.name}":`,
+        specificDeclarationNode
+          ? {
+              id: specificDeclarationNode.id,
+              label: specificDeclarationNode.label,
+              category: specificDeclarationNode.category,
+              size: getNodeSize(specificDeclarationNode),
+            }
+          : "NONE"
+      );
 
       if (!specificDeclarationNode) {
         continue;
@@ -1383,36 +1434,6 @@ function findNodeById(rootNode: ScopeNode, nodeId: string): ScopeNode | null {
 }
 
 // Convert ScopeNode to ELK format for reference graph
-function scopeNodeToELKNode(
-  node: ScopeNode,
-  minWidth = 120,
-  minHeight = 60
-): ElkNode {
-  console.log("🔄 Converting reference node to ELK format:");
-  console.log("  🆔 Node ID:", node.id);
-  console.log("  🏷️  Node Label:", node.label);
-  console.log("  📂 Node Category:", node.category);
-
-  // Make nodes bigger for reference graph to show labels clearly
-  const labelLength = (node.label || node.id.split(":").pop() || "Node").length;
-  const calculatedWidth = Math.max(minWidth, labelLength * 8 + 20);
-  const calculatedHeight = Math.max(minHeight, 60);
-
-  console.log("  📏 Calculated dimensions:", {
-    width: calculatedWidth,
-    height: calculatedHeight,
-    labelLength,
-  });
-
-  const elkNode: ElkNode = {
-    id: node.id,
-    width: calculatedWidth,
-    height: calculatedHeight,
-  };
-
-  console.log("  ✅ ELK node conversion complete for:", node.id);
-  return elkNode;
-}
 
 // Layout function signature compatible with existing system
 export interface ELKLayoutFn {
@@ -1663,14 +1684,14 @@ export const layoutELKAsync: ELKLayoutFn = layoutWithELK;
 
 // -------- helper utilities for locating reference usage nodes --------
 
-// Extract start/end char offsets from a ScopeNode.id (format: "...:start-end")
+// Extract start/end character offsets from a ScopeNode.id (format: "...:start-end")
 function getRangeFromNodeId(
   nodeId: string
 ): { start: number; end: number } | null {
-  const match = nodeId.match(/:(\d+)-(\d+)$/);
-  if (!match) return null;
-  const start = parseInt(match[1]!, 10);
-  const end = parseInt(match[2]!, 10);
+  const m = nodeId.match(/:(\d+)-(\d+)$/);
+  if (!m) return null;
+  const start = parseInt(m[1]!, 10);
+  const end = parseInt(m[2]!, 10);
   if (isNaN(start) || isNaN(end)) return null;
   return { start, end };
 }
