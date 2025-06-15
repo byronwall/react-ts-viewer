@@ -257,7 +257,11 @@ function extractSemanticReferences(
       const name = n.text;
 
       // Skip common keywords and JSX component names
-      if (!isKeyword(name) && !isJSXComponentName(n)) {
+      if (
+        !isKeyword(name) &&
+        !isJSXComponentName(n) &&
+        !isIdentifierInsideJsxText(n)
+      ) {
         const isInternal = isVariableDeclaredInScope(name, boiScope);
 
         references.push({
@@ -425,6 +429,41 @@ function isJSXComponentName(identifier: ts.Identifier): boolean {
     ts.isJsxClosingElement(parent) ||
     ts.isJsxSelfClosingElement(parent)
   );
+}
+
+// NEW: Helper – detect identifiers that originate from *plain JSX text* rather
+// (e.g. the words "Request" "Admin" "Access" inside a <h2>).  Such tokens are
+// *not* genuine variable references and should therefore be ignored.
+function isIdentifierInsideJsxText(identifier: ts.Identifier): boolean {
+  let current: ts.Node | undefined = identifier.parent;
+
+  // Traverse upwards until we either hit a JsxText (meaning the identifier is
+  // embedded in raw text) or some JSX container/expression that proves it
+  // lives inside `{}` interpolation (which we *do* want).
+  while (current) {
+    if (ts.isJsxText(current)) {
+      return true; // inside raw text – skip
+    }
+
+    // If we encounter a JsxExpression, we know we are inside `{ ... }` and
+    // should *not* skip.
+    if (ts.isJsxExpression(current)) {
+      return false;
+    }
+
+    // Stop climbing once we exit JSX context entirely
+    if (
+      ts.isSourceFile(current) ||
+      ts.isFunctionLike(current) ||
+      ts.isBlock(current)
+    ) {
+      break;
+    }
+
+    current = current.parent;
+  }
+
+  return false;
 }
 
 // Helper function to check if an identifier is part of a declaration
