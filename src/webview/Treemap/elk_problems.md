@@ -2,7 +2,7 @@
 
 ## Problems
 
-- The boxes for `setPressedModifiers` is rendered from the scope of a different function. I need it to refer to the parent call where the `setPressedModifiers` is declared.
+- The boxes for `setPressedModifiers` is rendered from the scope of a different function. I need it to refer to the parent call where the `setPressedModifiers` is declared. THe issue appears to be that the symbol is matched but there is no consideration for whether or not the found instance is the DECLARATION or the USAGE. The one being found currently is another usage of the same symbol in a different scope.
 
 ## Test Scenario
 

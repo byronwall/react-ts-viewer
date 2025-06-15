@@ -111,7 +111,7 @@ function buildVariableScope(
   };
 
   const walk = (n: ts.Node): void => {
-    // Variable declarations
+    // Variable declarations (simple identifiers)
     if (
       ts.isVariableDeclaration(n) ||
       ts.isParameter(n) ||
@@ -124,7 +124,7 @@ function buildVariableScope(
       }
     }
 
-    // Destructuring patterns
+    // Destructuring patterns – capture each individual name
     if (ts.isVariableDeclaration(n) && n.name) {
       extractDestructuredNames(n.name).forEach((name) => {
         const position = getLineAndCharacter(sourceFile, n.name!.pos);
@@ -544,19 +544,36 @@ function nodeDeclaresIdentifier(node: ScopeNode, ident: string): boolean {
     const walk = (n: ts.Node): void => {
       if (declares) return; // early exit
 
-      // Variable / const / let
-      if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name)) {
-        if (n.name.text === ident) {
-          declares = true;
-          return;
+      // Variable declarations (supports identifiers AND destructuring patterns)
+      if (ts.isVariableDeclaration(n)) {
+        if (ts.isIdentifier(n.name)) {
+          if (n.name.text === ident) {
+            declares = true;
+            return;
+          }
+        } else {
+          // Handle array/object binding patterns (destructuring)
+          const names = extractDestructuredNames(n.name);
+          if (names.includes(ident)) {
+            declares = true;
+            return;
+          }
         }
       }
 
-      // Parameters
-      if (ts.isParameter(n) && ts.isIdentifier(n.name)) {
-        if (n.name.text === ident) {
-          declares = true;
-          return;
+      // Parameter declarations (supports identifiers AND destructuring patterns)
+      if (ts.isParameter(n)) {
+        if (ts.isIdentifier(n.name)) {
+          if (n.name.text === ident) {
+            declares = true;
+            return;
+          }
+        } else {
+          const names = extractDestructuredNames(n.name);
+          if (names.includes(ident)) {
+            declares = true;
+            return;
+          }
         }
       }
 
