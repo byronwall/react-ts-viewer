@@ -4,455 +4,580 @@ Review the problem description in this file and figure out how to fix it. Implem
 
 ## Problems
 
-- There are several references amongst nodes that are not really real.
-- The <h2> is being targeted with two references, but its contents are static: `<h2 className="mb-4 text-xl font-semibold">Request Admin Access</h2>;`
-- It seems that some simple string matching is being used -- or that the literal contents of the JSX are somehow being treated as variables?
-- What's odd is that the h2 is matched to the file root and also the `verifyAccess.mutate` function -- neither of these is actually referenced.
+- A entry shows up for `if(isPreview)` but it is linked to a random `return` statement. isPreview is coming from a destructured assignment from the `props` parameter to the parent function. There should be a synthetic node created for the destructured assignment. The arrow should point to the synthetic node. There should not be an arrow to the `return` statement. It looks like maybe the problem is the inclusion of a default value on the destructured assignment? Investigate.
+- There are a bunch of arrows to the wrong places in the if/else if/else blocks. Specifically, the incoming arrows should point to child nodes where needed. The `offsetY` variable is internal to the scope so it should not be counted as a reference. That is, there are no external refs directly referenced in the `if/else if/else` blocks.
+- There should be several add'l synthetic nodes inside the `onResizeStart` call. That call has several parameters which include `block`, `blockStart`, `blockEnd`, `e`. The `block` related ones are external and should get synthetic nodes.
 
 ## Test Scenario
 
-With the treemap loaded for the code below, I `SHIFT + CLICK` on the `<Card>` scope.
+With the treemap loaded for the code below, I `SHIFT + CLICK` on the `handleMouseDown` scope.
 
 ```tsx
 "use client";
+import { Link, Lock } from "lucide-react";
+import { type MouseEvent, type RefObject } from "react";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { cn } from "~/lib/utils";
+import { useEditTaskStore } from "~/stores/useEditTaskStore";
 
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { api } from "~/trpc/react";
+import { type TimeBlockWithPosition } from "./WeeklyCalendar";
 
-export const AdminAccessRequest = () => {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const router = useRouter();
+export type TimeBlockProps = {
+  block: TimeBlockWithPosition & {
+    isClippedStart?: boolean;
+    isClippedEnd?: boolean;
+  };
+  onDragStart: (
+    blockId: string,
+    offset: { x: number; y: number },
+    e: MouseEvent
+  ) => void;
+  onResizeStart: (
+    blockId: string,
+    edge: "top" | "bottom",
+    startTime: Date,
+    endTime: Date,
+    e: MouseEvent
+  ) => void;
+  isPreview?: boolean;
+  startHour: number;
+  endHour: number;
+  gridRef: RefObject<HTMLDivElement>;
+  isClipped?: boolean;
+  topOffset?: number;
+  numberOfDays?: number;
+  weekStart: Date;
+  blockHeight?: number;
+};
 
-  const { update } = useSession();
+export function TimeBlock({
+  block,
+  onDragStart,
+  onResizeStart,
+  isPreview = false,
+  isClipped = false,
+}: TimeBlockProps) {
+  const openEditDialog = useEditTaskStore((state) => state.open);
+  const blockStart = block.startTime;
+  const blockEnd = block.endTime;
 
-  const verifyAccess = api.admin.verifyAdminAccess.useMutation({
-    onSuccess: async () => {
-      await update();
-      router.refresh();
-    },
-    onError: (error) => {
-      setError(error.message);
-    },
-  });
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isPreview) {
+      return;
+    }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    verifyAccess.mutate({ password });
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    // Check if clicking on resize handles
+    if (offsetY < 8) {
+      onResizeStart(block.id, "top", blockStart, blockEnd, e);
+    } else if (offsetY > rect.height - 8) {
+      onResizeStart(block.id, "bottom", blockStart, blockEnd, e);
+    } else {
+      onDragStart(block.id, { x: offsetX, y: offsetY }, e);
+    }
   };
 
   return (
-    <Card className="mx-auto max-w-md p-6">
-      <h2 className="mb-4 text-xl font-semibold">Request Admin Access</h2>
-      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-        <div>
-          <Input
-            type="password"
-            placeholder="Enter admin password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+    <div
+      data-time-block="true"
+      className={cn(
+        "group absolute z-10 rounded-md border",
+        isPreview
+          ? "border-dashed border-gray-400 bg-gray-100/50"
+          : "border-solid bg-card shadow-sm hover:shadow-md",
+        isClipped && "rounded-none border-dashed",
+        block.isClippedStart && "rounded-t-none border-t-0",
+        block.isClippedEnd && "rounded-b-none border-b-0"
+      )}
+      onMouseDown={handleMouseDown}
+    >
+      <div className="h-full p-2 text-sm">
+        {!isPreview && (
+          <>
+            <div className="absolute inset-x-0 top-0 h-2 cursor-ns-resize hover:bg-black/10" />
+            <div className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize hover:bg-black/10" />
+          </>
+        )}
+        <div className="flex h-full flex-col justify-between overflow-hidden">
+          <div className="flex items-start gap-2">
+            <span className="flex-1 overflow-hidden">
+              {block.title || "Untitled Block"}
+            </span>
+            <div className="flex items-center gap-1">
+              {block.isFixedTime && <Lock className="h-3 w-3" />}
+              {block.taskAssignments?.length > 0 && (
+                <button
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (block.taskAssignments?.[0]?.task) {
+                      openEditDialog(block.taskAssignments[0].task.task_id);
+                    }
+                  }}
+                  className="rounded p-0.5 hover:bg-black/10"
+                >
+                  <Link className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        <Button type="submit" disabled={verifyAccess.isPending}>
-          {verifyAccess.isPending ? "Verifying..." : "Verify Access"}
-        </Button>
-      </form>
-    </Card>
+      </div>
+    </div>
   );
-};
+}
 ```
 
 ## Most recent logs
 
 ```
-bundle.js:387541 🖱️ Mouse down at: 154 182
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:387559 🖱️ Mouse down at: 257 193
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
  🖱️ Mouse up, panning was: false
  ✅ Processing click action (no panning detected)
- 🎯 ELK Reference Layout starting for: <Card> [36-52]
- 🔬 Building semantic reference graph for: <Card> [36-52]
+ 🎯 ELK Reference Layout starting for: handleMouseDown [49-66]
+ 🔬 Building semantic reference graph for: handleMouseDown [49-66]
  🔬 Performing full semantic analysis on focus node
- 🔬 Analyzing semantic references for: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546', label: '<Card> [36-52]'}
- 📊 Found 0 internal declarations
- 📤 Found 28 external references
- 🔄 Found 0 internal references
- 📥 Found 0 incoming references
- 📊 Found 28 total references (28 external, 0 incoming, 0 recursive)
- 🔍 Reference analysis: Request {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: Admin {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: Access {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: form {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: onSubmit {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: handleSubmit {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: className {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: autoComplete {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: placeholder {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: value {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: password {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: onChange {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔬 Analyzing semantic references for: {id: 'TimeBlock2.tsx:1150-1702', label: 'handleMouseDown [49-66]'}
+ 📊 Found 4 internal declarations
+ 📤 Found 17 external references
+ 🔄 Found 19 internal references
+ 🔍 Searching for incoming references to BOI variables: (4) ['e', 'rect', 'offsetX', 'offsetY']
+ 📥 Found 2 incoming references
+ 📊 Found 38 total references (17 external, 2 incoming, 19 recursive)
+ 🔍 Reference analysis: handleMouseDown {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: isPreview {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onResizeStart {type: 'function_call', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onResizeStart {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: block {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: blockStart {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: blockEnd {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onResizeStart {type: 'function_call', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onResizeStart {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: block {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: blockStart {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: blockEnd {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onDragStart {type: 'function_call', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onDragStart {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: block {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: x {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: y {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
  🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: setPassword {type: 'function_call', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: setPassword {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
  🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
  🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: error {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: error {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: disabled {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: verifyAccess {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Reference analysis: verifyAccess {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Filtered to 11 most relevant references
- [REF_GRAPH] Prioritized references to resolve: (11) ['password', 'setPassword', 'error', 'error', 'setPassword', 'Request', 'Admin', 'Access', 'handleSubmit', 'verifyAccess', 'verifyAccess']
- [REF_GRAPH] Resolving reference: "password"
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', declares: false}
- [REF_GRAPH] Found 4 candidates for "password": (4) [{…}, {…}, {…}, {…}]
- [REF_GRAPH] Filtering to 4 declaration candidates for "password"
- [REF_GRAPH] Final chosen node for "password": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', size: 38}
- 🔍 Selected node for password: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
- [REF_GRAPH] Resolving reference: "setPassword"
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1244-1271', label: 'setPassword [44]', category: 'Call', declares: false}
- [REF_GRAPH] Found 5 candidates for "setPassword": (5) [{…}, {…}, {…}, {…}, {…}]
- [REF_GRAPH] Filtering to 4 declaration candidates for "setPassword"
- [REF_GRAPH] Final chosen node for "setPassword": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', size: 38}
- 🔍 Selected node for setPassword: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:541-733', label: 'api.admin.verifyAdminAccess.useMutation [19-27]', category: 'ReactHook', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:678-727', label: '() => {} [24-26]', category: 'ArrowFunction', declares: true}
- [REF_GRAPH] Filtering to 7 declaration candidates for "error"
- [REF_GRAPH] Final chosen node for "error": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', size: 32}
- 🔍 Selected node for error: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:541-733', label: 'api.admin.verifyAdminAccess.useMutation [19-27]', category: 'ReactHook', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:678-727', label: '() => {} [24-26]', category: 'ArrowFunction', declares: true}
- [REF_GRAPH] Filtering to 7 declaration candidates for "error"
- [REF_GRAPH] Final chosen node for "error": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', size: 32}
- 🔍 Selected node for error: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
- [REF_GRAPH] Resolving reference: "setPassword"
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1244-1271', label: 'setPassword [44]', category: 'Call', declares: false}
- [REF_GRAPH] Found 5 candidates for "setPassword": (5) [{…}, {…}, {…}, {…}, {…}]
- [REF_GRAPH] Filtering to 4 declaration candidates for "setPassword"
- [REF_GRAPH] Final chosen node for "setPassword": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', size: 38}
- 🔍 Selected node for setPassword: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
- [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: false}
- [REF_GRAPH] Final chosen node for "Request": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', size: Infinity}
- 🔍 Selected node for Request: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- ⚠️ No matching nodes found for reference: Admin
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:541-733', label: 'api.admin.verifyAdminAccess.useMutation [19-27]', category: 'ReactHook', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', declares: false}
- [REF_GRAPH] Final chosen node for "Access": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', size: 33}
- 🔍 Selected node for Access: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call'}
- [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
- [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', category: 'Variable', declares: false}
- [REF_GRAPH] Filtering to 4 declaration candidates for "handleSubmit"
- [REF_GRAPH] Final chosen node for "handleSubmit": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', category: 'Variable', size: 125}
- 🔍 Selected node for handleSubmit: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
- [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', declares: false}
- [REF_GRAPH] Filtering to 4 declaration candidates for "verifyAccess"
- [REF_GRAPH] Final chosen node for "verifyAccess": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', size: 207}
- 🔍 Selected node for verifyAccess: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', declares: false}
- [REF_GRAPH] Filtering to 4 declaration candidates for "verifyAccess"
- [REF_GRAPH] Final chosen node for "verifyAccess": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', size: 207}
- 🔍 Selected node for verifyAccess: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
- ✅ Reference graph built: 13 nodes, 10 references
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: rect {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: rect {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: rect {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: rect {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: offsetY {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: offsetY {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: rect {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: rect {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: offsetX {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: offsetY {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Filtered to 15 most relevant references
+ [REF_GRAPH] Prioritized references to resolve: (15) ['block', 'block', 'block', 'handleMouseDown', 'isPreview', 'onResizeStart', 'blockStart', 'blockEnd', 'onResizeStart', 'blockStart', 'blockEnd', 'onDragStart', 'onResizeStart', 'onResizeStart', 'onDragStart']
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:3037-3175', label: 'if (block.taskAssignments?.[0]?.task)', category: 'IfClause', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "block"
+ [REF_GRAPH] Final chosen node for "block": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for block: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1467, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:3037-3175', label: 'if (block.taskAssignments?.[0]?.task)', category: 'IfClause', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "block"
+ [REF_GRAPH] Final chosen node for "block": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for block: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1574, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:3037-3175', label: 'if (block.taskAssignments?.[0]?.task)', category: 'IfClause', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "block"
+ [REF_GRAPH] Final chosen node for "block": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for block: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+ [OFFSET_MATCH] {offset: 1651, matchedNodeId: 'TimeBlock2.tsx:1639-1691', matchedLabel: 'onDragStart [64]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1150-1702', label: 'handleMouseDown [49-66]', category: 'Variable', declares: false}
+ [REF_GRAPH] Filtering to 3 declaration candidates for "handleMouseDown"
+ [REF_GRAPH] Final chosen node for "handleMouseDown": {id: 'TimeBlock2.tsx:1150-1702', label: 'handleMouseDown [49-66]', category: 'Variable', size: 552}
+ 🔍 Selected node for handleMouseDown: {id: 'TimeBlock2.tsx:1150-1702', label: 'handleMouseDown [49-66]', category: 'Variable'}
+ ⚠️ Skipped self-reference: TimeBlock2.tsx:1150-1702 (handleMouseDown [49-66]) for reference: handleMouseDown
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1199-1235', label: 'if (isPreview)', category: 'IfClause', declares: false}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1707-3446', label: 'return (\n    <div\n      data-time-blo... [68-114]', category: 'ReturnStatement', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1720-3441', label: '<div> [69-113]', category: 'JSXElementDOM', declares: true}
+ [REF_GRAPH] Filtering to 4 declaration candidates for "isPreview"
+ [REF_GRAPH] Final chosen node for "isPreview": {id: 'TimeBlock2.tsx:1720-3441', label: '<div> [69-113]', category: 'JSXElementDOM', size: 1721}
+ 🔍 Selected node for isPreview: {id: 'TimeBlock2.tsx:1720-3441', label: '<div> [69-113]', category: 'JSXElementDOM'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+ [OFFSET_MATCH] {offset: 1203, matchedNodeId: 'TimeBlock2.tsx:1199-1235', matchedLabel: 'if (isPreview)'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1453-1508', label: 'onResizeStart [60]', category: 'Call', declares: false}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1560-1618', label: 'onResizeStart [62]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "onResizeStart"
+ [REF_GRAPH] Final chosen node for "onResizeStart": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for onResizeStart: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', category: 'Variable', declares: false}
+ [REF_GRAPH] Filtering to 3 declaration candidates for "blockStart"
+ [REF_GRAPH] Final chosen node for "blockStart": {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', category: 'Variable', size: 28}
+ 🔍 Selected node for blockStart: {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1483, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', category: 'Variable', declares: false}
+ [REF_GRAPH] Filtering to 3 declaration candidates for "blockEnd"
+ [REF_GRAPH] Final chosen node for "blockEnd": {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', category: 'Variable', size: 24}
+ 🔍 Selected node for blockEnd: {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+ [OFFSET_MATCH] {offset: 1495, matchedNodeId: 'TimeBlock2.tsx:1453-1508', matchedLabel: 'onResizeStart [60]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1453-1508', label: 'onResizeStart [60]', category: 'Call', declares: false}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1560-1618', label: 'onResizeStart [62]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "onResizeStart"
+ [REF_GRAPH] Final chosen node for "onResizeStart": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for onResizeStart: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', category: 'Variable', declares: false}
+ [REF_GRAPH] Filtering to 3 declaration candidates for "blockStart"
+ [REF_GRAPH] Final chosen node for "blockStart": {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', category: 'Variable', size: 28}
+ 🔍 Selected node for blockStart: {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1593, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', category: 'Variable', declares: false}
+ [REF_GRAPH] Filtering to 3 declaration candidates for "blockEnd"
+ [REF_GRAPH] Final chosen node for "blockEnd": {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', category: 'Variable', size: 24}
+ 🔍 Selected node for blockEnd: {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+ [OFFSET_MATCH] {offset: 1605, matchedNodeId: 'TimeBlock2.tsx:1560-1618', matchedLabel: 'onResizeStart [62]'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1639-1691', label: 'onDragStart [64]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "onDragStart"
+ [REF_GRAPH] Final chosen node for "onDragStart": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for onDragStart: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1453-1508', label: 'onResizeStart [60]', category: 'Call', declares: false}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1560-1618', label: 'onResizeStart [62]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "onResizeStart"
+ [REF_GRAPH] Final chosen node for "onResizeStart": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for onResizeStart: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+ [OFFSET_MATCH] {offset: 1446, matchedNodeId: 'TimeBlock2.tsx:1428-1515', matchedLabel: 'if (offsetY < 8)'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1453-1508', label: 'onResizeStart [60]', category: 'Call', declares: false}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1560-1618', label: 'onResizeStart [62]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "onResizeStart"
+ [REF_GRAPH] Final chosen node for "onResizeStart": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for onResizeStart: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+ [OFFSET_MATCH] {offset: 1553, matchedNodeId: 'TimeBlock2.tsx:1521-1625', matchedLabel: 'else if (offsetY > rect.height - 8)'}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', declares: true}
+   🔎 candidate ➜ {id: 'TimeBlock2.tsx:1639-1691', label: 'onDragStart [64]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 2 declaration candidates for "onDragStart"
+ [REF_GRAPH] Final chosen node for "onDragStart": {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function', size: 2577}
+ 🔍 Selected node for onDragStart: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', category: 'Function'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ [OFFSET_MATCH] {offset: 1632, matchedNodeId: 'TimeBlock2.tsx:1631-1698', matchedLabel: 'else'}
+ ✅ Reference graph built: 12 nodes, 14 references
  📋 Nodes to be included in reference graph:
-   1. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 (<Card> [36-52])
-   2. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407 ([password, setPassword] [13])
-   3. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 (<Input> [40-45])
-   4. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271 (() => {} [44])
-   5. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449 ([error, setError] [14])
-   6. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 (<form> [38-51])
-   7. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366 (<p> [47])
-   8. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx (AdminAccessRequest.tsx)
-bundle.js:386884   9. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001 (<h2> [37])
-bundle.js:386884   10. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864 (verifyAccess.mutate [32])
-bundle.js:386884   11. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 (handleSubmit [29-33])
-bundle.js:386884   12. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733 (verifyAccess [19-27])
-bundle.js:386884   13. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520 (<Button> [48-50])
-bundle.js:386566 🏗️ Building hierarchical structure for layout
-bundle.js:386574 🔍 Common ancestor found: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', targetNodes: 13}
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407 ([password, setPassword] [13])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449 ([error, setError] [14])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733 (verifyAccess [19-27])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864 (verifyAccess.mutate [32])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869 (() => {} [29-33])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 (handleSubmit [29-33])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001 (<h2> [37])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271 (() => {} [44])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 (<Input> [40-45])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300 (<div> [39-46])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366 (<p> [47])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520 (<Button> [48-50])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 (<form> [38-51])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 (<Card> [36-52])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551 (return (
-    <Card className="mx-auto... [35-53])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553 (() => {} [12-54])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553 (AdminAccessRequest [12-54])
-bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx (AdminAccessRequest.tsx)
-bundle.js:386973 🔍 Param decision for password: cat=Variable => skip
-bundle.js:386973 🔍 Param decision for setPassword: cat=Variable => skip
-2bundle.js:386973 🔍 Param decision for error: cat=Variable => skip
-bundle.js:386973 🔍 Param decision for Request: cat=Program => skip
-bundle.js:386973 🔍 Param decision for Access: cat=Call => skip
-bundle.js:386973 🔍 Param decision for handleSubmit: cat=Variable => skip
-2bundle.js:386973 🔍 Param decision for verifyAccess: cat=Variable => skip
-bundle.js:386979 📊 Reference graph: {nodes: 13, references: 10, syntheticParams: 0}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', isTarget: true, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', isTarget: false, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', isTarget: false, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407 (244x60, children: 0)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449 (196x60, children: 0)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733 (180x60, children: 0)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', isTarget: true, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869', label: '() => {} [29-33]', isTarget: false, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864 (212x60, children: 0)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869 has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869 (200x120, children: 1)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 (200x120, children: 1)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551', label: 'return (\n    <Card className="mx-auto... [35-53]', isTarget: false, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546', label: '<Card> [36-52]', isTarget: true, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', label: '<h2> [37]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001 (120x60, children: 0)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', label: '<form> [38-51]', isTarget: true, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300', label: '<div> [39-46]', isTarget: false, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', label: '<Input> [40-45]', isTarget: true, hasChildren: true}
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', label: '() => {} [44]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271 (124x60, children: 0)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 (200x120, children: 1)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300 has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300 (200x120, children: 1)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', label: '<p> [47]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366 (120x60, children: 0)
-bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', label: '<Button> [48-50]', isTarget: true, hasChildren: false}
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520 (148x60, children: 0)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 has 3 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 (200x120, children: 3)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 has 2 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 (200x120, children: 2)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551 has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551 (424x120, children: 1)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553 has 5 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553 (200x120, children: 5)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553 has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553 (248x120, children: 1)
-bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx has 1 children in hierarchy
-bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx (216x120, children: 1)
-bundle.js:387047 [EDGE_BUILD] {ref: 'password', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'setPassword', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'error', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'error', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'setPassword', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'Request', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'Access', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'handleSubmit', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'verifyAccess', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520'}
-bundle.js:387047 [EDGE_BUILD] {ref: 'verifyAccess', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520'}
-bundle.js:387063 🔗 Created 10 edges out of 10 references
-bundle.js:387089 🚀 Running ELK layout algorithm...
-bundle.js:383890 ✅ No overlaps detected
+   1. TimeBlock2.tsx:1150-1702 (handleMouseDown [49-66])
+   2. TimeBlock2.tsx:871-3448 (TimeBlock() [38-115])
+   3. TimeBlock2.tsx:1453-1508 (onResizeStart [60])
+   4. TimeBlock2.tsx:1560-1618 (onResizeStart [62])
+   5. TimeBlock2.tsx:1639-1691 (onDragStart [64])
+   6. TimeBlock2.tsx:1720-3441 (<div> [69-113])
+   7. TimeBlock2.tsx:1199-1235 (if (isPreview))
+   8. TimeBlock2.tsx:1428-1515 (if (offsetY < 8))
+   9. TimeBlock2.tsx:1077-1105 (blockStart [46])
+   10. TimeBlock2.tsx:1115-1139 (blockEnd [47])
+   11. TimeBlock2.tsx:1521-1625 (else if (offsetY > rect.height - 8))
+   12. TimeBlock2.tsx:1631-1698 (else)
+ 🏗️ Building hierarchical structure for layout
+ 🔍 Common ancestor found: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', targetNodes: 12}
+ 📦 Including node in hierarchy: TimeBlock2.tsx:1077-1105 (blockStart [46])
+ 📦 Including node in hierarchy: TimeBlock2.tsx:1115-1139 (blockEnd [47])
+ 📦 Including node in hierarchy: TimeBlock2.tsx:1199-1235 (if (isPreview))
+ 📦 Including node in hierarchy: TimeBlock2.tsx:1453-1508 (onResizeStart [60])
+ 📦 Including node in hierarchy: TimeBlock2.tsx:1428-1515 (if (offsetY < 8))
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1560-1618 (onResizeStart [62])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1521-1625 (else if (offsetY > rect.height - 8))
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1639-1691 (onDragStart [64])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1631-1698 (else)
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1428-1698 (if/else if/else [59-65])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1168-1702 (() => {} [49-66])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1150-1702 (handleMouseDown [49-66])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1720-3441 (<div> [69-113])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:1707-3446 (return (
+    <div
+      data-time-blo... [68-114])
+bundle.js:386607 📦 Including node in hierarchy: TimeBlock2.tsx:871-3448 (TimeBlock() [38-115])
+bundle.js:386985 ➕ Created synthetic param node for block {parent: 'TimeBlock() [38-115]', id: 'TimeBlock2.tsx:871-3448::param:block'}
+3bundle.js:386991 🔍 Param decision for block: cat=Function => treat-as-param
+bundle.js:386991 🔍 Param decision for isPreview: cat=JSXElementDOM => skip
+bundle.js:386985 ➕ Created synthetic param node for onResizeStart {parent: 'TimeBlock() [38-115]', id: '/Users/byronwall/Projects/tasks-trpc/src/component…ocks/TimeBlock2.tsx:871-3448::param:onResizeStart'}
+bundle.js:386991 🔍 Param decision for onResizeStart: cat=Function => treat-as-param
+bundle.js:386991 🔍 Param decision for blockStart: cat=Variable => skip
+bundle.js:386991 🔍 Param decision for blockEnd: cat=Variable => skip
+bundle.js:386991 🔍 Param decision for onResizeStart: cat=Function => treat-as-param
+bundle.js:386991 🔍 Param decision for blockStart: cat=Variable => skip
+bundle.js:386991 🔍 Param decision for blockEnd: cat=Variable => skip
+bundle.js:386985 ➕ Created synthetic param node for onDragStart {parent: 'TimeBlock() [38-115]', id: '/Users/byronwall/Projects/tasks-trpc/src/component…blocks/TimeBlock2.tsx:871-3448::param:onDragStart'}
+bundle.js:386991 🔍 Param decision for onDragStart: cat=Function => treat-as-param
+bundle.js:386997 📊 Reference graph: {nodes: 12, references: 14, syntheticParams: 3}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx', label: 'TimeBlock2.tsx', isTarget: false, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:871-3448', label: 'TimeBlock() [38-115]', isTarget: true, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1077-1105', label: 'blockStart [46]', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1077-1105 (140x60, children: 0)
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1115-1139', label: 'blockEnd [47]', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1115-1139 (124x60, children: 0)
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1150-1702', label: 'handleMouseDown [49-66]', isTarget: true, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1168-1702', label: '() => {} [49-66]', isTarget: false, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1199-1235', label: 'if (isPreview)', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1199-1235 (132x60, children: 0)
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1428-1698', label: 'if/else if/else [59-65]', isTarget: false, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1428-1515', label: 'if (offsetY < 8)', isTarget: true, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1453-1508', label: 'onResizeStart [60]', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1453-1508 (164x60, children: 0)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1428-1515 has 1 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1428-1515 (200x120, children: 1)
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1521-1625', label: 'else if (offsetY > rect.height - 8)', isTarget: true, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1560-1618', label: 'onResizeStart [62]', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1560-1618 (164x60, children: 0)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1521-1625 has 1 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1521-1625 (320x120, children: 1)
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1631-1698', label: 'else', isTarget: true, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1639-1691', label: 'onDragStart [64]', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1639-1691 (148x60, children: 0)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1631-1698 has 1 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1631-1698 (200x120, children: 1)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1428-1698 has 3 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1428-1698 (224x120, children: 3)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1168-1702 has 2 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1168-1702 (200x120, children: 2)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1150-1702 has 1 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1150-1702 (224x120, children: 1)
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1707-3446', label: 'return (\n    <div\n      data-time-blo... [68-114]', isTarget: false, hasChildren: true}
+bundle.js:386629 🔄 Converting hierarchical node to ELK format: {id: 'TimeBlock2.tsx:1720-3441', label: '<div> [69-113]', isTarget: true, hasChildren: false}
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1720-3441 (132x60, children: 0)
+bundle.js:386664   📦 Node TimeBlock2.tsx:1707-3446 has 1 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:1707-3446 (432x120, children: 1)
+bundle.js:386664   📦 Node TimeBlock2.tsx:871-3448 has 4 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx:871-3448 (200x120, children: 4)
+bundle.js:386664   📦 Node TimeBlock2.tsx has 1 children in hierarchy
+bundle.js:386675   ✅ ELK hierarchical node created: TimeBlock2.tsx (200x120, children: 1)
+bundle.js:387032 🔧 Injected parameter node into ELK: block
+bundle.js:387032 🔧 Injected parameter node into ELK: onResizeStart
+bundle.js:387032 🔧 Injected parameter node into ELK: onDragStart
+bundle.js:387065 [EDGE_BUILD] {ref: 'block', dir: 'outgoing', src: 'TimeBlock2.tsx:871-3448::param:block', tgt: 'TimeBlock2.tsx:1453-1508'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'block', dir: 'outgoing', src: 'TimeBlock2.tsx:871-3448::param:block', tgt: 'TimeBlock2.tsx:1560-1618'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'block', dir: 'outgoing', src: 'TimeBlock2.tsx:871-3448::param:block', tgt: 'TimeBlock2.tsx:1639-1691'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'isPreview', dir: 'outgoing', src: 'TimeBlock2.tsx:1720-3441', tgt: 'TimeBlock2.tsx:1199-1235'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'onResizeStart', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/component…ocks/TimeBlock2.tsx:871-3448::param:onResizeStart', tgt: 'TimeBlock2.tsx:1428-1515'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'blockStart', dir: 'outgoing', src: 'TimeBlock2.tsx:1077-1105', tgt: 'TimeBlock2.tsx:1453-1508'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'blockEnd', dir: 'outgoing', src: 'TimeBlock2.tsx:1115-1139', tgt: 'TimeBlock2.tsx:1453-1508'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'onResizeStart', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/component…ocks/TimeBlock2.tsx:871-3448::param:onResizeStart', tgt: 'TimeBlock2.tsx:1521-1625'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'blockStart', dir: 'outgoing', src: 'TimeBlock2.tsx:1077-1105', tgt: 'TimeBlock2.tsx:1560-1618'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'blockEnd', dir: 'outgoing', src: 'TimeBlock2.tsx:1115-1139', tgt: 'TimeBlock2.tsx:1560-1618'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'onDragStart', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/component…blocks/TimeBlock2.tsx:871-3448::param:onDragStart', tgt: 'TimeBlock2.tsx:1631-1698'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'onResizeStart', dir: 'outgoing', src: 'TimeBlock2.tsx:871-3448', tgt: 'TimeBlock2.tsx:1428-1515'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'onResizeStart', dir: 'outgoing', src: 'TimeBlock2.tsx:871-3448', tgt: 'TimeBlock2.tsx:1521-1625'}
+bundle.js:387065 [EDGE_BUILD] {ref: 'onDragStart', dir: 'outgoing', src: 'TimeBlock2.tsx:871-3448', tgt: 'TimeBlock2.tsx:1631-1698'}
+bundle.js:387081 🔗 Created 14 edges out of 14 references
+bundle.js:387107 🚀 Running ELK layout algorithm...
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:387092 ✅ ELK layout completed successfully
-bundle.js:387111 📍 Layout complete with 1 top-level nodes
-bundle.js:387127 🎉 ELK layout complete: {nodes: 1, edges: 10}
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:387110 ✅ ELK layout completed successfully
+bundle.js:387129 📍 Layout complete with 1 top-level nodes
+bundle.js:387145 🎉 ELK layout complete: {nodes: 1, edges: 14}
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
-bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 14}
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 14}
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:383890 ✅ No overlaps detected
+bundle.js:383872 1 overlaps still remain
+bundle.js:383876   1. "useEditTaskStore [6]" overlaps "WeeklyCalendar [8]"
+bundle.js:383879      A: [690.5, 79.4, 93.5x37.4]
+bundle.js:383882      B: [571.5, 119.8, 120.0x24.0]
+bundle.js:383885      Overlap area: 1.8 px²
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
-bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
-bundle.js:387497 ⏰ ELK layout timed out after 5 seconds
-(anonymous) @ bundle.js:387497
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 14}
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 14}
+bundle.js:387515 ⏰ ELK layout timed out after 5 seconds
 setTimeout
-(anonymous) @ bundle.js:387496
-handleNodeClick @ bundle.js:387495
-onClick @ bundle.js:385000
-callCallback2 @ bundle.js:5593
-invokeGuardedCallbackDev @ bundle.js:5618
-invokeGuardedCallback @ bundle.js:5652
-invokeGuardedCallbackAndCatchFirstError @ bundle.js:5655
-executeDispatch @ bundle.js:8959
-processDispatchQueueItemsInOrder @ bundle.js:8979
-processDispatchQueue @ bundle.js:8988
-dispatchEventsForPlugins @ bundle.js:8996
-(anonymous) @ bundle.js:9119
-batchedUpdates$1 @ bundle.js:20879
-batchedUpdates @ bundle.js:5498
-dispatchEventForPluginEventSystem @ bundle.js:9118
-dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ bundle.js:7397
-dispatchEvent @ bundle.js:7391
-dispatchDiscreteEvent @ bundle.js:7368
 ```
