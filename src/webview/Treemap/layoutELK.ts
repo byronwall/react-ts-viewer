@@ -1526,12 +1526,14 @@ export async function layoutELKWithRoot(
           }
 
           if (cat === "Variable") {
-            // For destructuring declarations like "[foo, bar]" we still want
-            // individual leaf nodes.  A very cheap heuristic: label contains a
-            // comma or starts with "["/"{".
-            const lbl = String(targetNode.label);
-            const looksDestructured = /^(\[|\{).*[,].*(\]|\})?$/.test(lbl);
-            return looksDestructured;
+            // Use AST inspection to see if the identifier is part of a binding
+            // pattern (object / array destructuring) within this variable
+            // declaration.
+            const isDestructured = nodeDestructuresIdentifier(
+              targetNode,
+              ref.name
+            );
+            return isDestructured;
           }
 
           return false;
@@ -1555,6 +1557,11 @@ export async function layoutELKWithRoot(
             });
           }
         }
+
+        // Final decision for param creation is logged for easier debugging
+        console.log(
+          `🔍 Param decision for ${ref.name}: cat=${cat} => ${shouldTreatAsParam ? "treat-as-param" : "skip"}`
+        );
       }
     }
   });
@@ -1844,4 +1851,59 @@ function findInnermostNodeByOffset(
   }
 
   return bestMatch;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: detect if a ScopeNode declares the identifier as part of a *destructuring*
+// binding rather than a plain identifier declaration (e.g. `const [foo] = ...` or
+// `const { foo } = ...`).  This lets downstream logic know when to nest a tiny
+// leaf parameter box under the Variable declaration node.
+
+const destructuringCache: Map<
+  string /*nodeId*/,
+  Map<string /*ident*/, boolean>
+> = new Map();
+
+function nodeDestructuresIdentifier(node: ScopeNode, ident: string): boolean {
+  if (!node.source || typeof node.source !== "string") return false;
+
+  // Cheap reject – identifier not even present in source slice
+  if (!node.source.includes(ident)) return false;
+
+  let perNode = destructuringCache.get(node.id);
+  if (!perNode) {
+    perNode = new Map();
+    destructuringCache.set(node.id, perNode);
+  }
+  if (perNode.has(ident)) return perNode.get(ident)!;
+
+  let isDestructured = false;
+  try {
+    const sf = createSourceFile(node.source);
+
+    const walk = (n: ts.Node): void => {
+      if (isDestructured) return; // early exit once found
+
+      if (ts.isVariableDeclaration(n) || ts.isParameter(n)) {
+        const binding = n.name;
+        // We only care about non-Identifier binding patterns
+        if (!ts.isIdentifier(binding)) {
+          const names = extractDestructuredNames(binding);
+          if (names.includes(ident)) {
+            isDestructured = true;
+            return;
+          }
+        }
+      }
+
+      ts.forEachChild(n, walk);
+    };
+
+    walk(sf);
+  } catch {
+    // Ignore parse errors; fall back to false
+  }
+
+  perNode.set(ident, isDestructured);
+  return isDestructured;
 }
