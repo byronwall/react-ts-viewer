@@ -783,15 +783,23 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
 
   function searchRecursively(node: ScopeNode) {
     if (node.label) {
-      const exactStartRegex = new RegExp(
-        `^${targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
-      );
+      // Escape any regex characters in the target name once so we can safely build patterns
+      const escaped = targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      // 1) Exact start (fast path – common for most declarations)
+      const exactStartRegex = new RegExp(`^${escaped}\\b`);
+
+      // 2) Anywhere within the label but on *word* boundaries so we still avoid
+      //    partial matches (e.g. `key` inside `monkey`). This captures array /
+      //    object destructuring labels like "[foo, bar]" or "{ foo, bar }".
+      const wordBoundaryRegex = new RegExp(`\\b${escaped}\\b`);
 
       const isMatch =
         exactStartRegex.test(node.label) ||
         node.label === targetName ||
         node.label.includes(`${targetName}.`) ||
-        node.label.includes(` ${targetName} `);
+        node.label.includes(` ${targetName} `) ||
+        wordBoundaryRegex.test(node.label);
 
       const declaresHere = nodeDeclaresIdentifier(node, targetName);
       const matched = isMatch || declaresHere;
@@ -1506,12 +1514,30 @@ export async function layoutELKWithRoot(
       const targetNode = nodeById.get(ref.targetNodeId);
       if (targetNode) {
         const cat = String(targetNode.category);
-        if (
-          cat === "ArrowFunction" ||
-          cat === "Function" ||
-          cat === "Method" ||
-          cat.endsWith("Function")
-        ) {
+        const shouldTreatAsParam = (() => {
+          if (
+            cat === "ArrowFunction" ||
+            cat === "Function" ||
+            cat === "Method" ||
+            cat.endsWith("Function")
+          ) {
+            // Likely a real function parameter – always true here
+            return true;
+          }
+
+          if (cat === "Variable") {
+            // For destructuring declarations like "[foo, bar]" we still want
+            // individual leaf nodes.  A very cheap heuristic: label contains a
+            // comma or starts with "["/"{".
+            const lbl = String(targetNode.label);
+            const looksDestructured = /^(\[|\{).*[,].*(\]|\})?$/.test(lbl);
+            return looksDestructured;
+          }
+
+          return false;
+        })();
+
+        if (shouldTreatAsParam) {
           const paramId = `${targetNode.id}::param:${ref.name}`;
           // Update the reference to point to the synthetic parameter node
           ref.targetNodeId = paramId;
