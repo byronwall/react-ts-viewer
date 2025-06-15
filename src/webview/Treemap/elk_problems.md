@@ -1,289 +1,458 @@
 # Problems with ELK LAyout and Reference + Scope Graph
 
+Review the problem description in this file and figure out how to fix it. Implement those fixes. I will update the MD and we'll iterate until things are completely solved. Place an empahsis on concise but well placed logs that will help spot problems. I will be pasting them back in here.
+
 ## Problems
 
-- The box for `setPressedModifiers` is rendered outside of the expected scope. It looks like a synthetic node is being created. There should be an existing node for [pressedModifiers, setPressedModifiers] already. It appears in the main tree map. I expect the reference arrow to land on that node. It should then create the synthetic box inside there to handle the destructing assignment.
+- There are several references amongst nodes that are not really real.
+- The <h2> is being targeted with two references, but its contents are static: `<h2 className="mb-4 text-xl font-semibold">Request Admin Access</h2>;`
+- It seems that some simple string matching is being used -- or that the literal contents of the JSX are somehow being treated as variables?
+- What's odd is that the h2 is matched to the file root and also the `verifyAccess.mutate` function -- neither of these is actually referenced.
 
 ## Test Scenario
 
-With the treemap loaded for the code below, I `SHIFT + CLICK` on the `handleKeyDown` scope.
-
-I expect to see two external references to `setPressedModifiers` and `keysToTrack`.
+With the treemap loaded for the code below, I `SHIFT + CLICK` on the `<Card>` scope.
 
 ```tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-type ModifierKey = "Control" | "Shift" | "Alt" | "Meta";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { api } from "~/trpc/react";
 
-// Type for the hook's return value
-type KeyModifiersState = Partial<Record<ModifierKey, boolean>>;
+export const AdminAccessRequest = () => {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-export const useKeyModifiers = (
-  keysToTrack: ModifierKey[]
-): KeyModifiersState => {
-  const [pressedModifiers, setPressedModifiers] = useState<KeyModifiersState>(
-    {}
-  );
+  const { update } = useSession();
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (keysToTrack.includes(event.key as ModifierKey)) {
-        setPressedModifiers((prev) => ({
-          ...prev,
-          [event.key as ModifierKey]: true,
-        }));
-      }
+  const verifyAccess = api.admin.verifyAdminAccess.useMutation({
+    onSuccess: async () => {
+      await update();
+      router.refresh();
     },
-    [keysToTrack]
-  );
-
-  const handleKeyUp = useCallback(
-    (event: KeyboardEvent) => {
-      if (keysToTrack.includes(event.key as ModifierKey)) {
-        setPressedModifiers((prev) => ({
-          ...prev,
-          [event.key as ModifierKey]: false,
-        }));
-      }
+    onError: (error) => {
+      setError(error.message);
     },
-    [keysToTrack]
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    verifyAccess.mutate({ password });
+  };
+
+  return (
+    <Card className="mx-auto max-w-md p-6">
+      <h2 className="mb-4 text-xl font-semibold">Request Admin Access</h2>
+      <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+        <div>
+          <Input
+            type="password"
+            placeholder="Enter admin password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <Button type="submit" disabled={verifyAccess.isPending}>
+          {verifyAccess.isPending ? "Verifying..." : "Verify Access"}
+        </Button>
+      </form>
+    </Card>
   );
-
-  // Effect to add/remove global event listeners
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    // Cleanup listeners on unmount
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [handleKeyDown, handleKeyUp]); // Re-attach if handlers change (due to keysToTrack changing)
-
-  // Add visibility change listener to reset keys if window loses focus
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Reset all tracked keys to false when window is hidden
-        const resetState = keysToTrack.reduce((acc, key) => {
-          acc[key] = false;
-          return acc;
-        }, {} as KeyModifiersState);
-        setPressedModifiers(resetState);
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [keysToTrack]);
-
-  return pressedModifiers;
 };
 ```
 
 ## Most recent logs
 
 ```
-bundle.js:387485 🖱️ Mouse down at: 89 424
+bundle.js:387541 🖱️ Mouse down at: 154 182
 bundle.js:383890 ✅ No overlaps detected
 bundle.js:383945 ✅ All nodes successfully rendered!
 bundle.js:383890 ✅ No overlaps detected
 bundle.js:383945 ✅ All nodes successfully rendered!
  🖱️ Mouse up, panning was: false
  ✅ Processing click action (no panning detected)
- 🎯 ELK Reference Layout starting for: handleKeyDown [17-27]
- 🔬 Building semantic reference graph for: handleKeyDown [17-27]
+ 🎯 ELK Reference Layout starting for: <Card> [36-52]
+ 🔬 Building semantic reference graph for: <Card> [36-52]
  🔬 Performing full semantic analysis on focus node
- 🔬 Analyzing semantic references for: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698', label: 'handleKeyDown [17-27]'}
- 📊 Found 2 internal declarations
- 📤 Found 8 external references
- 🔄 Found 5 internal references
- 🔍 Searching for incoming references to BOI variables: (2) ['event', 'prev']
- 📥 Found 8 incoming references
- 📊 Found 21 total references (8 external, 8 incoming, 5 recursive)
- 🔍 Reference analysis: handleKeyDown {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: useCallback {type: 'function_call', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: useCallback {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: keysToTrack {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: keysToTrack {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: setPressedModifiers {type: 'function_call', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: setPressedModifiers {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: keysToTrack {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: prev {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Reference analysis: event {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
- 🔍 Filtered to 6 most relevant references
- [REF_GRAPH] Prioritized references to resolve: (6) ['setPressedModifiers', 'setPressedModifiers', 'handleKeyDown', 'keysToTrack', 'keysToTrack', 'keysToTrack']
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:552-659', label: 'setPressedModifiers [20-23]', category: 'Call', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:836-944', label: 'setPressedModifiers [32-35]', category: 'Call', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:1825-1856', label: 'setPressedModifiers [62]', category: 'Call', declares: false}
- [REF_GRAPH] Filtering to 3 declaration candidates for "setPressedModifiers"
- [REF_GRAPH] Final chosen node for "setPressedModifiers": {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', size: 1842}
- 🔍 Selected node for setPressedModifiers: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:552-659', label: 'setPressedModifiers [20-23]', category: 'Call', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:836-944', label: 'setPressedModifiers [32-35]', category: 'Call', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:1825-1856', label: 'setPressedModifiers [62]', category: 'Call', declares: false}
- [REF_GRAPH] Filtering to 3 declaration candidates for "setPressedModifiers"
- [REF_GRAPH] Final chosen node for "setPressedModifiers": {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', size: 1842}
- 🔍 Selected node for setPressedModifiers: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
- [OFFSET_MATCH] {offset: 543, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698', label: 'handleKeyDown [17-27]', category: 'Variable', declares: false}
- [REF_GRAPH] Filtering to 4 declaration candidates for "handleKeyDown"
- [REF_GRAPH] Final chosen node for "handleKeyDown": {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698', label: 'handleKeyDown [17-27]', category: 'Variable', size: 275}
- 🔍 Selected node for handleKeyDown: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698', label: 'handleKeyDown [17-27]', category: 'Variable'}
- ⚠️ Skipped self-reference: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698 (handleKeyDown [17-27]) for reference: handleKeyDown
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', category: 'Program', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', category: 'Variable', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', declares: true}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', label: 'if (keysToTrack.includes(event.key as ModifierKey))', category: 'IfClause', declares: false}
-   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:774-953', label: 'if (keysToTrack.includes(event.key as ModifierKey))', category: 'IfClause', declares: false}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:1695-1815', label: 'keysToTrack.reduce [58-61]', category: 'Call', declares: false}
-bundle.js:386805 [REF_GRAPH] Filtering to 3 declaration candidates for "keysToTrack"
-bundle.js:386813 [REF_GRAPH] Final chosen node for "keysToTrack": {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', size: 1842}
-bundle.js:386825 🔍 Selected node for keysToTrack: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', category: 'Program', declares: true}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', category: 'Variable', declares: true}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', declares: true}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', label: 'if (keysToTrack.includes(event.key as ModifierKey))', category: 'IfClause', declares: false}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:774-953', label: 'if (keysToTrack.includes(event.key as ModifierKey))', category: 'IfClause', declares: false}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:1695-1815', label: 'keysToTrack.reduce [58-61]', category: 'Call', declares: false}
-bundle.js:386805 [REF_GRAPH] Filtering to 3 declaration candidates for "keysToTrack"
-bundle.js:386813 [REF_GRAPH] Final chosen node for "keysToTrack": {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', size: 1842}
-bundle.js:386825 🔍 Selected node for keysToTrack: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 494, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', matchedLabel: 'if (keysToTrack.includes(event.key as ModifierKey))'}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', category: 'Program', declares: true}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', category: 'Variable', declares: true}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', declares: true}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', label: 'if (keysToTrack.includes(event.key as ModifierKey))', category: 'IfClause', declares: false}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:774-953', label: 'if (keysToTrack.includes(event.key as ModifierKey))', category: 'IfClause', declares: false}
-bundle.js:386491   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:1695-1815', label: 'keysToTrack.reduce [58-61]', category: 'Call', declares: false}
-bundle.js:386805 [REF_GRAPH] Filtering to 3 declaration candidates for "keysToTrack"
-bundle.js:386813 [REF_GRAPH] Final chosen node for "keysToTrack": {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction', size: 1842}
-bundle.js:386825 🔍 Selected node for keysToTrack: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', category: 'ArrowFunction'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:387145 [OFFSET_MATCH] {offset: 681, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', matchedLabel: 'useCallback [17-27]'}
-bundle.js:386872 ✅ Reference graph built: 4 nodes, 5 references
-bundle.js:386875 📋 Nodes to be included in reference graph:
-bundle.js:386877   1. /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698 (handleKeyDown [17-27])
-bundle.js:386877   2. /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106 (() => {} [10-74])
-bundle.js:386877   3. /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668 (if (keysToTrack.includes(event.key as ModifierKey)))
-bundle.js:386877   4. /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698 (useCallback [17-27])
-bundle.js:386559 🏗️ Building hierarchical structure for layout
-bundle.js:386567 🔍 Common ancestor found: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', targetNodes: 4}
-bundle.js:386584 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668 (if (keysToTrack.includes(event.key as ModifierKey)))
-bundle.js:386584 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:456-674 (() => {} [18-25])
-bundle.js:386584 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698 (useCallback [17-27])
-bundle.js:386584 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698 (handleKeyDown [17-27])
-bundle.js:386584 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106 (() => {} [10-74])
-bundle.js:386947 ➕ Created synthetic param node for setPressedModifiers {parent: '() => {} [10-74]', id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/use…yModifiers.ts:264-2106::param:setPressedModifiers'}
-bundle.js:386947 ➕ Created synthetic param node for keysToTrack {parent: '() => {} [10-74]', id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106::param:keysToTrack'}
-bundle.js:386956 📊 Reference graph: {nodes: 4, references: 5, syntheticParams: 2}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts', label: 'useKeyModifiers.ts', isTarget: false, hasChildren: true}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106', label: 'useKeyModifiers [10-74]', isTarget: false, hasChildren: true}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', label: '() => {} [10-74]', isTarget: true, hasChildren: true}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698', label: 'handleKeyDown [17-27]', isTarget: true, hasChildren: true}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698', label: 'useCallback [17-27]', isTarget: true, hasChildren: true}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:456-674', label: '() => {} [18-25]', isTarget: false, hasChildren: true}
-bundle.js:386606 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668', label: 'if (keysToTrack.includes(event.key as ModifierKey))', isTarget: true, hasChildren: false}
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668 (428x60, children: 0)
-bundle.js:386641   📦 Node /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:456-674 has 1 children in hierarchy
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:456-674 (200x120, children: 1)
-bundle.js:386641   📦 Node /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698 has 1 children in hierarchy
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698 (200x120, children: 1)
-bundle.js:386641   📦 Node /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698 has 1 children in hierarchy
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:423-698 (208x120, children: 1)
-bundle.js:386641   📦 Node /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106 has 1 children in hierarchy
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106 (200x120, children: 1)
-bundle.js:386641   📦 Node /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106 has 1 children in hierarchy
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:246-2106 (224x120, children: 1)
-bundle.js:386641   📦 Node /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts has 1 children in hierarchy
-bundle.js:386652   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts (200x120, children: 1)
-bundle.js:386991 🔧 Injected parameter node into ELK: setPressedModifiers
-bundle.js:386991 🔧 Injected parameter node into ELK: keysToTrack
-bundle.js:387024 [EDGE_BUILD] {ref: 'setPressedModifiers', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/hooks/use…yModifiers.ts:264-2106::param:setPressedModifiers', tgt: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668'}
-bundle.js:387024 [EDGE_BUILD] {ref: 'setPressedModifiers', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106', tgt: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668'}
-bundle.js:387024 [EDGE_BUILD] {ref: 'keysToTrack', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106::param:keysToTrack', tgt: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668'}
-bundle.js:387024 [EDGE_BUILD] {ref: 'keysToTrack', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106::param:keysToTrack', tgt: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:490-668'}
-bundle.js:387024 [EDGE_BUILD] {ref: 'keysToTrack', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:264-2106::param:keysToTrack', tgt: '/Users/byronwall/Projects/tasks-trpc/src/hooks/useKeyModifiers.ts:439-698'}
-bundle.js:387040 🔗 Created 5 edges out of 5 references
-bundle.js:387066 🚀 Running ELK layout algorithm...
+ 🔬 Analyzing semantic references for: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546', label: '<Card> [36-52]'}
+ 📊 Found 0 internal declarations
+ 📤 Found 28 external references
+ 🔄 Found 0 internal references
+ 📥 Found 0 incoming references
+ 📊 Found 28 total references (28 external, 0 incoming, 0 recursive)
+ 🔍 Reference analysis: Request {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: Admin {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: Access {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: form {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: onSubmit {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: handleSubmit {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: className {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: autoComplete {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: placeholder {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: value {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: password {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: onChange {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: setPassword {type: 'function_call', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: setPassword {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: e {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: error {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: error {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis: disabled {type: 'variable_reference', isRelevantType: true, isGenericName: true, shouldInclude: false}
+ 🔍 Reference analysis: verifyAccess {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis: verifyAccess {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: true}
+ 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Reference analysis:  {type: 'variable_reference', isRelevantType: true, isGenericName: false, shouldInclude: false}
+ 🔍 Filtered to 11 most relevant references
+ [REF_GRAPH] Prioritized references to resolve: (11) ['password', 'setPassword', 'error', 'error', 'setPassword', 'Request', 'Admin', 'Access', 'handleSubmit', 'verifyAccess', 'verifyAccess']
+ [REF_GRAPH] Resolving reference: "password"
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', declares: false}
+ [REF_GRAPH] Found 4 candidates for "password": (4) [{…}, {…}, {…}, {…}]
+ [REF_GRAPH] Filtering to 4 declaration candidates for "password"
+ [REF_GRAPH] Final chosen node for "password": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', size: 38}
+ 🔍 Selected node for password: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [OFFSET_MATCH] {offset: 1205, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', matchedLabel: '<Input> [40-45]'}
+ [REF_GRAPH] Resolving reference: "setPassword"
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1244-1271', label: 'setPassword [44]', category: 'Call', declares: false}
+ [REF_GRAPH] Found 5 candidates for "setPassword": (5) [{…}, {…}, {…}, {…}, {…}]
+ [REF_GRAPH] Filtering to 4 declaration candidates for "setPassword"
+ [REF_GRAPH] Final chosen node for "setPassword": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', size: 38}
+ 🔍 Selected node for setPassword: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:541-733', label: 'api.admin.verifyAdminAccess.useMutation [19-27]', category: 'ReactHook', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:678-727', label: '() => {} [24-26]', category: 'ArrowFunction', declares: true}
+ [REF_GRAPH] Filtering to 7 declaration candidates for "error"
+ [REF_GRAPH] Final chosen node for "error": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', size: 32}
+ 🔍 Selected node for error: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1310, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:541-733', label: 'api.admin.verifyAdminAccess.useMutation [19-27]', category: 'ReactHook', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:678-727', label: '() => {} [24-26]', category: 'ArrowFunction', declares: true}
+ [REF_GRAPH] Filtering to 7 declaration candidates for "error"
+ [REF_GRAPH] Final chosen node for "error": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable', size: 32}
+ 🔍 Selected node for error: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [OFFSET_MATCH] {offset: 1356, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', matchedLabel: '<p> [47]'}
+ [REF_GRAPH] Resolving reference: "setPassword"
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1244-1271', label: 'setPassword [44]', category: 'Call', declares: false}
+ [REF_GRAPH] Found 5 candidates for "setPassword": (5) [{…}, {…}, {…}, {…}, {…}]
+ [REF_GRAPH] Filtering to 4 declaration candidates for "setPassword"
+ [REF_GRAPH] Final chosen node for "setPassword": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable', size: 38}
+ 🔍 Selected node for setPassword: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+ [OFFSET_MATCH] {offset: 1243, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', matchedLabel: '() => {} [44]'}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: false}
+ [REF_GRAPH] Final chosen node for "Request": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', size: Infinity}
+ 🔍 Selected node for Request: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 976, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ ⚠️ No matching nodes found for reference: Admin
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:541-733', label: 'api.admin.verifyAdminAccess.useMutation [19-27]', category: 'ReactHook', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', declares: false}
+ [REF_GRAPH] Final chosen node for "Access": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', size: 33}
+ 🔍 Selected node for Access: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call'}
+ [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+ [OFFSET_MATCH] {offset: 989, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', matchedLabel: '<h2> [37]'}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', category: 'Variable', declares: false}
+ [REF_GRAPH] Filtering to 4 declaration candidates for "handleSubmit"
+ [REF_GRAPH] Final chosen node for "handleSubmit": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', category: 'Variable', size: 125}
+ 🔍 Selected node for handleSubmit: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+ [OFFSET_MATCH] {offset: 1024, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', matchedLabel: '<form> [38-51]'}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 4 declaration candidates for "verifyAccess"
+ [REF_GRAPH] Final chosen node for "verifyAccess": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', size: 207}
+ 🔍 Selected node for verifyAccess: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1408, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', category: 'Program', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', category: 'Variable', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', category: 'ArrowFunction', declares: true}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', declares: false}
+   🔎 candidate ➜ {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', category: 'Call', declares: false}
+ [REF_GRAPH] Filtering to 4 declaration candidates for "verifyAccess"
+ [REF_GRAPH] Final chosen node for "verifyAccess": {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable', size: 207}
+ 🔍 Selected node for verifyAccess: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', category: 'Variable'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ [OFFSET_MATCH] {offset: 1444, matchedNodeId: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', matchedLabel: '<Button> [48-50]'}
+ ✅ Reference graph built: 13 nodes, 10 references
+ 📋 Nodes to be included in reference graph:
+   1. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 (<Card> [36-52])
+   2. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407 ([password, setPassword] [13])
+   3. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 (<Input> [40-45])
+   4. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271 (() => {} [44])
+   5. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449 ([error, setError] [14])
+   6. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 (<form> [38-51])
+   7. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366 (<p> [47])
+   8. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx (AdminAccessRequest.tsx)
+bundle.js:386884   9. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001 (<h2> [37])
+bundle.js:386884   10. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864 (verifyAccess.mutate [32])
+bundle.js:386884   11. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 (handleSubmit [29-33])
+bundle.js:386884   12. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733 (verifyAccess [19-27])
+bundle.js:386884   13. /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520 (<Button> [48-50])
+bundle.js:386566 🏗️ Building hierarchical structure for layout
+bundle.js:386574 🔍 Common ancestor found: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', targetNodes: 13}
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407 ([password, setPassword] [13])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449 ([error, setError] [14])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733 (verifyAccess [19-27])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864 (verifyAccess.mutate [32])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869 (() => {} [29-33])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 (handleSubmit [29-33])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001 (<h2> [37])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271 (() => {} [44])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 (<Input> [40-45])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300 (<div> [39-46])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366 (<p> [47])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520 (<Button> [48-50])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 (<form> [38-51])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 (<Card> [36-52])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551 (return (
+    <Card className="mx-auto... [35-53])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553 (() => {} [12-54])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553 (AdminAccessRequest [12-54])
+bundle.js:386591 📦 Including node in hierarchy: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx (AdminAccessRequest.tsx)
+bundle.js:386973 🔍 Param decision for password: cat=Variable => skip
+bundle.js:386973 🔍 Param decision for setPassword: cat=Variable => skip
+2bundle.js:386973 🔍 Param decision for error: cat=Variable => skip
+bundle.js:386973 🔍 Param decision for Request: cat=Program => skip
+bundle.js:386973 🔍 Param decision for Access: cat=Call => skip
+bundle.js:386973 🔍 Param decision for handleSubmit: cat=Variable => skip
+2bundle.js:386973 🔍 Param decision for verifyAccess: cat=Variable => skip
+bundle.js:386979 📊 Reference graph: {nodes: 13, references: 10, syntheticParams: 0}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', label: 'AdminAccessRequest.tsx', isTarget: true, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553', label: 'AdminAccessRequest [12-54]', isTarget: false, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553', label: '() => {} [12-54]', isTarget: false, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', label: '[password, setPassword] [13]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407 (244x60, children: 0)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', label: '[error, setError] [14]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449 (196x60, children: 0)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', label: 'verifyAccess [19-27]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733 (180x60, children: 0)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', label: 'handleSubmit [29-33]', isTarget: true, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869', label: '() => {} [29-33]', isTarget: false, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', label: 'verifyAccess.mutate [32]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864 (212x60, children: 0)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869 has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:759-869 (200x120, children: 1)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869 (200x120, children: 1)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551', label: 'return (\n    <Card className="mx-auto... [35-53]', isTarget: false, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546', label: '<Card> [36-52]', isTarget: true, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001', label: '<h2> [37]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001 (120x60, children: 0)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534', label: '<form> [38-51]', isTarget: true, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300', label: '<div> [39-46]', isTarget: false, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285', label: '<Input> [40-45]', isTarget: true, hasChildren: true}
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271', label: '() => {} [44]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271 (124x60, children: 0)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285 (200x120, children: 1)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300 has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1088-1300 (200x120, children: 1)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366', label: '<p> [47]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366 (120x60, children: 0)
+bundle.js:386613 🔄 Converting hierarchical node to ELK format: {id: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520', label: '<Button> [48-50]', isTarget: true, hasChildren: false}
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520 (148x60, children: 0)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 has 3 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534 (200x120, children: 3)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 has 2 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:887-1546 (200x120, children: 2)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551 has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:874-1551 (424x120, children: 1)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553 has 5 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:353-1553 (200x120, children: 5)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553 has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:332-1553 (248x120, children: 1)
+bundle.js:386648   📦 Node /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx has 1 children in hierarchy
+bundle.js:386659   ✅ ELK hierarchical node created: /Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx (216x120, children: 1)
+bundle.js:387047 [EDGE_BUILD] {ref: 'password', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1104-1285'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'setPassword', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'error', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'error', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:417-449', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1319-1366'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'setPassword', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:369-407', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1237-1271'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'Request', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'Access', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:831-864', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:933-1001'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'handleSubmit', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:744-869', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1008-1534'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'verifyAccess', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520'}
+bundle.js:387047 [EDGE_BUILD] {ref: 'verifyAccess', dir: 'outgoing', src: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:526-733', tgt: '/Users/byronwall/Projects/tasks-trpc/src/components/admin/AdminAccessRequest.tsx:1376-1520'}
+bundle.js:387063 🔗 Created 10 edges out of 10 references
+bundle.js:387089 🚀 Running ELK layout algorithm...
 bundle.js:383890 ✅ No overlaps detected
 bundle.js:383945 ✅ All nodes successfully rendered!
 bundle.js:383890 ✅ No overlaps detected
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:387069 ✅ ELK layout completed successfully
-bundle.js:387088 📍 Layout complete with 1 top-level nodes
-bundle.js:387104 🎉 ELK layout complete: {nodes: 1, edges: 5}
+bundle.js:387092 ✅ ELK layout completed successfully
+bundle.js:387111 📍 Layout complete with 1 top-level nodes
+bundle.js:387127 🎉 ELK layout complete: {nodes: 1, edges: 10}
 bundle.js:383890 ✅ No overlaps detected
 bundle.js:383945 ✅ All nodes successfully rendered!
 bundle.js:383890 ✅ No overlaps detected
 bundle.js:383945 ✅ All nodes successfully rendered!
-bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 5}
-bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 5}
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
+bundle.js:383890 ✅ No overlaps detected
+bundle.js:383945 ✅ All nodes successfully rendered!
+bundle.js:383890 ✅ No overlaps detected
+bundle.js:383945 ✅ All nodes successfully rendered!
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
+bundle.js:385351 🎨 Rendering ELK graph: {childrenCount: 1, edgesCount: 10}
+bundle.js:387497 ⏰ ELK layout timed out after 5 seconds
+(anonymous) @ bundle.js:387497
+setTimeout
+(anonymous) @ bundle.js:387496
+handleNodeClick @ bundle.js:387495
+onClick @ bundle.js:385000
+callCallback2 @ bundle.js:5593
+invokeGuardedCallbackDev @ bundle.js:5618
+invokeGuardedCallback @ bundle.js:5652
+invokeGuardedCallbackAndCatchFirstError @ bundle.js:5655
+executeDispatch @ bundle.js:8959
+processDispatchQueueItemsInOrder @ bundle.js:8979
+processDispatchQueue @ bundle.js:8988
+dispatchEventsForPlugins @ bundle.js:8996
+(anonymous) @ bundle.js:9119
+batchedUpdates$1 @ bundle.js:20879
+batchedUpdates @ bundle.js:5498
+dispatchEventForPluginEventSystem @ bundle.js:9118
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ bundle.js:7397
+dispatchEvent @ bundle.js:7391
+dispatchDiscreteEvent @ bundle.js:7368
 ```

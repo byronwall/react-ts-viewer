@@ -794,11 +794,27 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
       //    object destructuring labels like "[foo, bar]" or "{ foo, bar }".
       const wordBoundaryRegex = new RegExp(`\\b${escaped}\\b`);
 
+      // ----------------------------------------------------------------
+      // Matching heuristics
+      // ----------------------------------------------------------------
+      // We want to find *proper* identifier matches while avoiding partial
+      // substring hits (e.g. the word "Access" inside "verifyAccess").  A
+      // match is considered valid when ONE of the following is true:
+      //   1) The label *starts* with the identifier followed by a word
+      //      boundary.  This covers most declarations like "password" or
+      //      "handleSubmit".
+      //   2) The entire label *is exactly* the identifier (rare but simple).
+      //   3) The identifier appears on its own word-boundary inside the
+      //      label (useful for destructuring labels such as "[foo, bar]").
+      //
+      // NOTE: We purposely *exclude* previously-used heuristics like
+      // `label.includes("${targetName}.")` because they allowed partial
+      // matches such as "Access" -> "verifyAccess.mutate", which produced
+      // spurious edges to unrelated nodes.
+
       const isMatch =
         exactStartRegex.test(node.label) ||
         node.label === targetName ||
-        node.label.includes(`${targetName}.`) ||
-        node.label.includes(` ${targetName} `) ||
         wordBoundaryRegex.test(node.label);
 
       const declaresHere = nodeDeclaresIdentifier(node, targetName);
@@ -1131,64 +1147,85 @@ function buildSemanticReferenceGraph(
         ref.type === "property_access" ||
         ref.type === "function_call";
 
-      // Exclude very common/generic names that aren't meaningful
-      const isGenericName = [
-        "map",
-        "forEach",
-        "filter",
-        "length",
-        "push",
-        "pop",
-        "shift",
-        "unshift",
-        "className",
-        "style",
-        "onClick",
-        "onSubmit",
-        "onChange",
-        "onMouseEnter",
-        "onMouseLeave",
-        "value",
-        "id",
-        "key",
-        "children",
-        "props",
-        "state",
-        "ref",
-        "refs",
-        "type",
-        "name",
-        "title",
-        "text",
-        "data",
-        "index",
-        "item",
-        "items",
-        "e",
-        "event",
-        "target",
-        "currentTarget", // Common event parameter names
-        "undefined",
-        "null",
-        "true",
-        "false", // Literals
-        // JSX/HTML attribute names
-        "disabled",
-        "placeholder",
-        "autoComplete",
-        "form",
-        "input",
-        "button",
-        "div",
-        "span",
-        // React/Next.js common names
-        "React",
-        "useState",
-        "useEffect",
-        "useCallback",
-        "useMemo",
-        "Component",
-      ].includes(ref.name);
+      // ================================================================
+      // Additional filtering to avoid bogus references that come from
+      // ordinary text content (e.g. words inside a static <h2>) or from
+      // partial substring matches inside longer identifiers.  For most
+      // real variable / function names we expect either camelCase, snake,
+      // or PascalCase identifiers *as-a-whole* – not a single English
+      // word plucked out of the middle.  A quick heuristic is:
+      //   1) Starts with an uppercase letter
+      //   2) Followed by only lowercase letters (i.e. a single word)
+      //   3) Not declared internally (so it would otherwise be treated as
+      //      an external reference)
+      // Such tokens frequently arise when plain JSX text like
+      // "Request Admin Access" is parsed – we see the words "Request",
+      // "Admin", "Access" even though they are not identifiers that are
+      // used in code.  We'll treat those as *generic* so they are filtered
+      // out just like "map", "length", etc.
+
+      const isLikelyTextToken =
+        /^[A-Z][a-z]+$/.test(ref.name) && !ref.isInternal;
+
+      const isGenericName =
+        [
+          "map",
+          "forEach",
+          "filter",
+          "length",
+          "push",
+          "pop",
+          "shift",
+          "unshift",
+          "className",
+          "style",
+          "onClick",
+          "onSubmit",
+          "onChange",
+          "onMouseEnter",
+          "onMouseLeave",
+          "value",
+          "id",
+          "key",
+          "children",
+          "props",
+          "state",
+          "ref",
+          "refs",
+          "type",
+          "name",
+          "title",
+          "text",
+          "data",
+          "index",
+          "item",
+          "items",
+          "e",
+          "event",
+          "target",
+          "currentTarget", // Common event parameter names
+          "undefined",
+          "null",
+          "true",
+          "false", // Literals
+          // JSX/HTML attribute names
+          "disabled",
+          "placeholder",
+          "autoComplete",
+          "form",
+          "input",
+          "button",
+          "div",
+          "span",
+          // React/Next.js common names
+          "React",
+          "useState",
+          "useEffect",
+          "useCallback",
+          "useMemo",
+          "Component",
+          // Treat likely text-only tokens as generic too
+        ].includes(ref.name) || isLikelyTextToken;
 
       // Exclude very short names (likely not meaningful variables)
       const isTooShort = ref.name.length < 2;
