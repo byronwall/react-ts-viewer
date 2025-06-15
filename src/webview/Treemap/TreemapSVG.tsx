@@ -1195,11 +1195,36 @@ const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
           return null;
         }
 
-        // Calculate center points of the nodes for edge connections (using absolute positions)
-        const sourceCenterX = (sourceELKNode.x || 0) + sourceELKNode.width / 2;
-        const sourceCenterY = (sourceELKNode.y || 0) + sourceELKNode.height / 2;
-        const targetCenterX = (targetELKNode.x || 0) + targetELKNode.width / 2;
-        const targetCenterY = (targetELKNode.y || 0) + targetELKNode.height / 2;
+        // Helper function to calculate a more semantically-correct anchor point for an ELK node.
+        // If the node is a *container* (has children), we want arrows to connect to the
+        // header region rather than the geometric centre to avoid visual overlap with
+        // its body contents.  Otherwise we fall back to the centre.
+        const calcAnchor = (
+          elkNode: ELKLayoutNode
+        ): { x: number; y: number } => {
+          const absX = elkNode.x || 0;
+          const absY = elkNode.y || 0;
+
+          const hasChildren = !!(
+            elkNode.children && elkNode.children.length > 0
+          );
+          const headerHeight = hasChildren
+            ? Math.min(30, elkNode.height * 0.2)
+            : 0;
+
+          const anchorX = absX + elkNode.width / 2;
+          const anchorY = hasChildren
+            ? absY + headerHeight / 2 // mid-point of the header bar
+            : absY + elkNode.height / 2; // simple centre for leaf nodes
+
+          return { x: anchorX, y: anchorY };
+        };
+
+        // Calculate anchor points of the nodes for edge connections (using absolute positions)
+        const { x: sourceCenterX, y: sourceCenterY } =
+          calcAnchor(sourceELKNode);
+        const { x: targetCenterX, y: targetCenterY } =
+          calcAnchor(targetELKNode);
 
         // Determine edge style based on direction (from edge ID)
         const isIncoming = edge.id.includes("_incoming_");
