@@ -33,6 +33,7 @@ export const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
   console.log("🎨 Rendering ELK graph:", {
     childrenCount: elkGraph.children.length,
     edgesCount: elkGraph.edges.length,
+    originalFocusNodeId: originalFocusNodeId,
   });
 
   // Build a map of all ELK nodes (including nested ones) for edge rendering
@@ -124,17 +125,19 @@ export const ELKGraphRenderer: React.FC<ELKGraphRendererProps> = ({
         transform={`translate(${elkNode.x || 0}, ${elkNode.y || 0})`}
         className="elk-node"
       >
-        {/* Blue border for original focus node */}
+        {/* Bold orange border for block of interest (original focus node) */}
         {isOriginalFocus && (
           <rect
-            x={-2.5}
-            y={-2.5}
-            width={elkNode.width + 5}
-            height={(hasChildren ? headerHeight : elkNode.height) + 5}
+            x={-4}
+            y={-4}
+            width={elkNode.width + 8}
+            height={elkNode.height + 8}
             fill="none"
-            stroke="#3b82f6" // blue
-            strokeWidth={3}
-            rx={6}
+            stroke="#ff6b35" // bold orange
+            strokeWidth={4}
+            strokeDasharray="8,4"
+            rx={8}
+            opacity={1}
           />
         )}
         {/* Container background (if has children) */}

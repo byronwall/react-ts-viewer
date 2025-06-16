@@ -951,6 +951,7 @@ interface TreemapSVGProps {
   // New props for reference graph mode
   viewMode?: ViewMode;
   elkGraph?: ELKGraph | null;
+  originalFocusNodeId?: string;
 }
 
 /* ---------- component ------------ */
@@ -972,6 +973,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
   onMouseLeave = () => {},
   viewMode = "treemap",
   elkGraph = null,
+  originalFocusNodeId,
 }) => {
   // Determine which layout options to use based on the layout function
   const layoutOptions = useMemo(() => {
@@ -1117,7 +1119,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           selectedNodeId={selectedNodeId}
-          originalFocusNodeId={selectedNodeId}
+          originalFocusNodeId={originalFocusNodeId}
         />
       </>
     );

@@ -31,6 +31,7 @@ interface ViewportTreemapSVGProps {
   // New props for reference graph mode
   viewMode?: ViewMode;
   elkGraph?: ELKGraph | null;
+  originalFocusNodeId?: string;
 }
 
 export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
@@ -50,6 +51,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
   onResetViewport,
   viewMode = "treemap",
   elkGraph = null,
+  originalFocusNodeId,
 }) => {
   // Viewport state
   const [viewport, setViewport] = useState<ViewportState>({
@@ -202,6 +204,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       onMouseLeave: () => {}, // Handle mouse leave at viewport level
       viewMode,
       elkGraph,
+      originalFocusNodeId,
     }),
     [
       root,
@@ -218,6 +221,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       onMouseEnter,
       viewMode,
       elkGraph,
+      originalFocusNodeId,
     ]
   );
 

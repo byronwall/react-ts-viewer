@@ -1366,6 +1366,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             onResetViewport={resetViewportRef}
             viewMode={viewMode}
             elkGraph={referenceGraphState?.elkGraph}
+            originalFocusNodeId={referenceGraphState?.focusNodeId}
           />
         ) : (
           <div
