@@ -17,6 +17,8 @@ export interface ELKLayoutNode {
   x?: number; // Set by ELK after layout
   y?: number; // Set by ELK after layout
   children?: ELKLayoutNode[];
+  /** Optional pre-rendered label(s) coming from ELK */
+  labels?: { text: string }[];
   layoutOptions?: { [key: string]: any };
 }
 
@@ -966,6 +968,8 @@ function flattenElkHierarchy(
     height: elkNode.height || 0,
     x: (elkNode.x || 0) + offsetX,
     y: (elkNode.y || 0) + offsetY,
+    // Preserve ELK "labels" array so the renderer can derive a short name
+    labels: (elkNode as any).labels,
   };
 
   result.push(nodeWithPosition);
@@ -1380,10 +1384,44 @@ function buildSemanticReferenceGraph(
         );
       }
 
-      const sortedMatchingNodes = (
-        declarationCandidates.length > 0 ? declarationCandidates : matchingNodes
-      ).sort((a, b) => {
-        // Smaller node size → more specific → higher priority
+      // ------------------------------------------------------------------
+      // Prioritize candidates that ACTUALLY declare the identifier and whose
+      // category suggests a real declaration site (e.g. Parameter, Variable,
+      // Function).  If several such candidates exist, prefer the *smallest*
+      // node slice (most specific).  Only if **none** declare the identifier
+      // do we fall back to incidental matches (e.g. a JSX element that merely
+      // references the variable).
+      // ------------------------------------------------------------------
+
+      const declPriorityOrder = [
+        "Parameter",
+        "Variable",
+        "Function",
+        "ArrowFunction",
+        "Method",
+        "Import",
+        "Class",
+      ];
+
+      const categorize = (n: ScopeNode): number => {
+        const idx = declPriorityOrder.findIndex((c) =>
+          String(n.category).startsWith(c)
+        );
+        return idx === -1 ? declPriorityOrder.length : idx;
+      };
+
+      const poolToSort =
+        declarationCandidates.length > 0
+          ? declarationCandidates
+          : matchingNodes;
+
+      const sortedMatchingNodes = poolToSort.sort((a, b) => {
+        // 1) Declaration category priority
+        const catA = categorize(a);
+        const catB = categorize(b);
+        if (catA !== catB) return catA - catB;
+
+        // 2) Slice size (smaller → more specific)
         return getNodeSize(a) - getNodeSize(b);
       });
 
@@ -1431,7 +1469,7 @@ function buildSemanticReferenceGraph(
         const sourceNode = findNodeById(rootNode, ref.sourceNodeId);
         if (
           sourceNode &&
-          !referencedNodes.some((n) => n.id === sourceNode.id)
+          !referencedNodes.some((sn: ScopeNode) => sn.id === sourceNode.id)
         ) {
           referencedNodes.push(sourceNode);
         }
@@ -1454,14 +1492,16 @@ function buildSemanticReferenceGraph(
 
           // Ensure both the declaration and usage nodes are included in the graph
           if (
-            !referencedNodes.some((n) => n.id === specificDeclarationNode.id)
+            !referencedNodes.some(
+              (sn: ScopeNode) => sn.id === specificDeclarationNode.id
+            )
           ) {
             referencedNodes.push(specificDeclarationNode);
           }
 
           if (
             usageNodeId &&
-            !referencedNodes.some((n) => n.id === usageNodeId)
+            !referencedNodes.some((sn: ScopeNode) => sn.id === usageNodeId)
           ) {
             const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
             if (usageNode) {
@@ -1572,24 +1612,30 @@ export async function layoutELKWithRoot(
     hierarchicalRoot,
   } = buildSemanticReferenceGraph(focusNode, rootNode);
 
-  // ---------------- NEW: create synthetic Parameter nodes ----------------
-  // For variable references that ultimately resolved to a *function/arrow* node
-  // (meaning the identifier is very likely a parameter), create a small leaf
-  // node under that parent so the variable gets its own dedicated box.
-  type SyntheticParamInfo = { id: string; name: string; parentId: string };
-  const syntheticParams: SyntheticParamInfo[] = [];
+  // ---------------- NEW: create synthetic Parameter and Argument nodes ----------------
+  // For *declarations* that correspond to function parameters / destructured
+  // bindings we create **parameter** boxes under the declaration node.
+  // For *usages* inside CallExpression nodes we create **argument** boxes
+  // under the Call node so that edges can land on a dedicated target rather
+  // than the whole call container.
+
+  type SyntheticLeafInfo = { id: string; name: string; parentId: string };
+  const syntheticParams: SyntheticLeafInfo[] = [];
+  const syntheticArgs: SyntheticLeafInfo[] = [];
 
   const nodeById = new Map(referenceNodes.map((n) => [n.id, n]));
 
   references.forEach((ref) => {
+    // ---------------- Parameter INJECTION ----------------
     if (
       ref.direction === "outgoing" &&
-      ref.type === "variable_reference" &&
+      (ref.type === "variable_reference" || ref.type === "function_call") &&
       ref.targetNodeId
     ) {
       const targetNode = nodeById.get(ref.targetNodeId);
       if (targetNode) {
         const cat = String(targetNode.category);
+
         const shouldTreatAsParam = (() => {
           if (
             cat === "ArrowFunction" ||
@@ -1597,30 +1643,18 @@ export async function layoutELKWithRoot(
             cat === "Method" ||
             cat.endsWith("Function")
           ) {
-            // Likely a real function parameter – always true here
             return true;
           }
-
           if (cat === "Variable") {
-            // Use AST inspection to see if the identifier is part of a binding
-            // pattern (object / array destructuring) within this variable
-            // declaration.
-            const isDestructured = nodeDestructuresIdentifier(
-              targetNode,
-              ref.name
-            );
-            return isDestructured;
+            return nodeDestructuresIdentifier(targetNode, ref.name);
           }
-
           return false;
         })();
 
         if (shouldTreatAsParam) {
           const paramId = `${targetNode.id}::param:${ref.name}`;
-          // Update the reference to point to the synthetic parameter node
-          ref.targetNodeId = paramId;
+          ref.targetNodeId = paramId; // Edge will originate from this param box
 
-          // Only add once per (parent,param)
           if (!syntheticParams.some((p) => p.id === paramId)) {
             syntheticParams.push({
               id: paramId,
@@ -1634,10 +1668,94 @@ export async function layoutELKWithRoot(
           }
         }
 
-        // Final decision for param creation is logged for easier debugging
         console.log(
           `🔍 Param decision for ${ref.name}: cat=${cat} => ${shouldTreatAsParam ? "treat-as-param" : "skip"}`
         );
+      }
+    }
+
+    // ---------------- Argument INJECTION (variables & calls) ----------------
+    if (
+      ref.direction === "outgoing" &&
+      (ref.type === "variable_reference" || ref.type === "function_call") &&
+      ref.usageNodeId
+    ) {
+      let usageNode = nodeById.get(ref.usageNodeId);
+
+      // If the detected usage node isn't a Call, try to find a descendant Call node that encloses the offset
+      if (!usageNode || String(usageNode.category) !== "Call") {
+        const callCandidates = findNodesByName(rootNode, ref.name).filter(
+          (n: ScopeNode) => String(n.category) === "Call"
+        );
+        const enclosing = callCandidates
+          .filter((n: ScopeNode) => {
+            const range = getRangeFromNodeId(n.id);
+            return (
+              range && ref.offset >= range.start && ref.offset <= range.end
+            );
+          })
+          .sort((a, b) => getNodeSize(a) - getNodeSize(b))[0];
+        if (enclosing) {
+          usageNode = enclosing;
+          ref.usageNodeId = enclosing.id;
+          if (!referenceNodes.some((sn: ScopeNode) => sn.id === enclosing.id)) {
+            referenceNodes.push(enclosing);
+          }
+          // Update nodeById for new node
+          nodeById.set(enclosing.id, enclosing);
+        }
+      }
+
+      if (usageNode && String(usageNode.category) === "Call") {
+        const argId = `${usageNode.id}::arg:${ref.name}`;
+        ref.usageNodeId = argId;
+
+        if (!syntheticArgs.some((a) => a.id === argId)) {
+          syntheticArgs.push({
+            id: argId,
+            name: ref.name,
+            parentId: usageNode.id,
+          });
+          console.log(`➕ Created synthetic arg node for ${ref.name}`, {
+            parent: usageNode.label,
+            id: argId,
+          });
+        }
+      }
+    }
+
+    // ---------------- Ensure FUNCTION_CALL targets the actual Call node ----------------
+    if (
+      ref.type === "function_call" &&
+      ref.direction === "outgoing" &&
+      ref.usageNodeId
+    ) {
+      const usageNode = nodeById.get(ref.usageNodeId);
+      if (!usageNode || String(usageNode.category) !== "Call") {
+        // Try to locate a better Call node for this function
+        const candidateCalls = findNodesByName(rootNode, ref.name).filter(
+          (n: ScopeNode) => String(n.category) === "Call"
+        );
+
+        if (candidateCalls.length > 0) {
+          // Prefer the smallest slice that encloses the offset
+          const suitable = candidateCalls
+            .filter((n: ScopeNode) => {
+              const range = getRangeFromNodeId(n.id);
+              return (
+                range && ref.offset >= range.start && ref.offset <= range.end
+              );
+            })
+            .sort((a, b) => getNodeSize(a) - getNodeSize(b));
+
+          const chosen = suitable.length > 0 ? suitable[0] : candidateCalls[0];
+          if (chosen) {
+            ref.usageNodeId = chosen.id;
+            if (!referenceNodes.some((sn: ScopeNode) => sn.id === chosen.id)) {
+              referenceNodes.push(chosen);
+            }
+          }
+        }
       }
     }
   });
@@ -1646,9 +1764,14 @@ export async function layoutELKWithRoot(
     nodes: referenceNodes.length,
     references: references.length,
     syntheticParams: syntheticParams.length,
+    syntheticArgs: syntheticArgs.length,
   });
 
-  if (referenceNodes.length === 1 && syntheticParams.length === 0) {
+  if (
+    referenceNodes.length === 1 &&
+    syntheticParams.length === 0 &&
+    syntheticArgs.length === 0
+  ) {
     console.log("ℹ️ Only focus node found - creating minimal visualization");
   }
 
@@ -1661,8 +1784,8 @@ export async function layoutELKWithRoot(
     targetNodeIds
   );
 
-  // ---------------- Inject synthetic Parameter nodes into ELK hierarchy ----------------
-  if (syntheticParams.length > 0) {
+  // ---------------- Inject synthetic Parameter and Argument nodes into ELK hierarchy ----------------
+  if (syntheticParams.length > 0 || syntheticArgs.length > 0) {
     // Helper to find a node in the ELK hierarchy by id
     const findElkNodeById = (n: ElkNode, id: string): ElkNode | null => {
       if (n.id === id) return n;
@@ -1675,23 +1798,26 @@ export async function layoutELKWithRoot(
       return null;
     };
 
-    syntheticParams.forEach((param) => {
-      const parentElk = findElkNodeById(elkHierarchy, param.parentId);
-      if (!parentElk) return; // parent not in hierarchy – skip
-
+    const inject = (
+      leaf: SyntheticLeafInfo,
+      kind: "parameter" | "argument"
+    ) => {
+      const parentElk = findElkNodeById(elkHierarchy, leaf.parentId);
+      if (!parentElk) return;
       if (!parentElk.children) parentElk.children = [];
-
-      // Avoid duplicates
-      if (parentElk.children.some((c) => c.id === param.id)) return;
+      if (parentElk.children.some((c) => c.id === leaf.id)) return;
 
       parentElk.children.push({
-        id: param.id,
+        id: leaf.id,
         width: 120,
         height: 60,
-        labels: [{ text: param.name } as any],
+        labels: [{ text: leaf.name } as any],
       });
-      console.log(`🔧 Injected parameter node into ELK: ${param.name}`);
-    });
+      console.log(`🔧 Injected ${kind} node into ELK: ${leaf.name}`);
+    };
+
+    syntheticParams.forEach((p) => inject(p, "parameter"));
+    syntheticArgs.forEach((a) => inject(a, "argument"));
   }
 
   // ----------------------------------------------------------------------
@@ -1732,6 +1858,50 @@ export async function layoutELKWithRoot(
 
       if (!sourceId || !targetId) {
         return null;
+      }
+
+      // Filter: avoid edges that land on control-flow wrappers UNLESS the variable really appears inside that node
+      const tgtScope = findNodeById(rootNode, targetId);
+      if (tgtScope) {
+        const cat = String(tgtScope.category);
+        const isControlFlow =
+          cat === "IfClause" || cat === "Else" || cat === "ElseIf";
+        if (isControlFlow) {
+          const actuallyUsed = nodeUsesIdentifier(tgtScope, ref.name);
+          console.log(
+            `[EDGE_FILTER] ${ref.name} ->`,
+            tgtScope.label,
+            `{cat:${cat}, used:${actuallyUsed}}`
+          );
+          if (!actuallyUsed) {
+            console.log(
+              `[EDGE_FILTER] ❌ Skipping edge (control-flow wrapper without usage)`
+            );
+            return null; // skip stray edge – variable not actually used here
+          } else {
+            // Additional check: if this wrapper has a Call child for the same ref, prefer the child edge over wrapper
+            const hasChildCall = (function check(n: ScopeNode): boolean {
+              if (
+                String(n.category) === "Call" &&
+                n.label?.startsWith(`${ref.name} [`)
+              ) {
+                return true;
+              }
+              if (n.children) return n.children.some(check);
+              return false;
+            })(tgtScope);
+
+            if (hasChildCall) {
+              console.log(
+                `[EDGE_FILTER] ⚠️ Skipping edge (child Call node exists for same ref)`
+              );
+              return null;
+            }
+            console.log(
+              `[EDGE_FILTER] ✅ Keeping edge (identifier used directly in control-flow)`
+            );
+          }
+        }
       }
 
       // Skip edges that reference nodes not in the hierarchy
@@ -1808,6 +1978,8 @@ export async function layoutELKWithRoot(
           height: elkNode.height || 0,
           x: elkNode.x || 0,
           y: elkNode.y || 0,
+          // Preserve ELK "labels" array so the renderer can derive a short name
+          labels: (elkNode as any).labels,
         };
 
         // Preserve children hierarchy
@@ -1982,4 +2154,60 @@ function nodeDestructuresIdentifier(node: ScopeNode, ident: string): boolean {
 
   perNode.set(ident, isDestructured);
   return isDestructured;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: detect whether a ScopeNode's *source* actually CONTAINS a *usage*
+// (non-declaration reference) of a given identifier.  This is more robust than
+// string includes because it leverages the TypeScript AST and ignores text in
+// comments / strings / unrelated identifiers.
+
+const usageCache: Map<string /*nodeId*/, Map<string, boolean>> = new Map();
+
+function nodeUsesIdentifier(node: ScopeNode, ident: string): boolean {
+  if (!node.source || typeof node.source !== "string") return false;
+
+  // Cheap reject – identifier not present in raw slice
+  if (!node.source.includes(ident)) return false;
+
+  let perNode = usageCache.get(node.id);
+  if (!perNode) {
+    perNode = new Map();
+    usageCache.set(node.id, perNode);
+  }
+  if (perNode.has(ident)) return perNode.get(ident)!;
+
+  let found = false;
+
+  try {
+    const sf = createSourceFile(node.source);
+
+    const walk = (n: ts.Node): void => {
+      if (found) return;
+
+      if (
+        ts.isIdentifier(n) &&
+        n.text === ident &&
+        !isPartOfDeclaration(n) &&
+        !isIdentifierTypePosition(n)
+      ) {
+        // Avoid property name part of foo.bar
+        if (ts.isPropertyAccessExpression(n.parent) && n.parent.name === n) {
+          return;
+        }
+
+        found = true;
+        return;
+      }
+
+      ts.forEachChild(n, walk);
+    };
+
+    walk(sf);
+  } catch {
+    // ignore parse errors and fall back to false
+  }
+
+  perNode.set(ident, found);
+  return found;
 }
