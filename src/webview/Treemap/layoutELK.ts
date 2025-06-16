@@ -954,38 +954,6 @@ function findCommonAncestor(rootNode: ScopeNode, nodeIds: string[]): ScopeNode {
   return commonAncestor || rootNode;
 }
 
-// Helper function to flatten ELK hierarchy while preserving positions
-function flattenElkHierarchy(
-  elkNode: ElkNode,
-  offsetX = 0,
-  offsetY = 0
-): ELKLayoutNode[] {
-  const result: ELKLayoutNode[] = [];
-
-  const nodeWithPosition: ELKLayoutNode = {
-    id: elkNode.id,
-    width: elkNode.width || 0,
-    height: elkNode.height || 0,
-    x: (elkNode.x || 0) + offsetX,
-    y: (elkNode.y || 0) + offsetY,
-    // Preserve ELK "labels" array so the renderer can derive a short name
-    labels: (elkNode as any).labels,
-  };
-
-  result.push(nodeWithPosition);
-
-  if (elkNode.children) {
-    const childOffsetX = (elkNode.x || 0) + offsetX;
-    const childOffsetY = (elkNode.y || 0) + offsetY;
-
-    elkNode.children.forEach((child) => {
-      result.push(...flattenElkHierarchy(child, childOffsetX, childOffsetY));
-    });
-  }
-
-  return result;
-}
-
 // Helper function to build hierarchical structure preserving parent-child relationships
 function buildHierarchicalStructure(
   nodes: ScopeNode[],
