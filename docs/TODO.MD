@@ -81,6 +81,13 @@
 - Add some memo or something to remove layouts when nothing changed
 - Need to run a second pass once the sizes are known to fine tune some of the big blocks - end up with whitespace in some cases that could be filled if a top level size was changed, algo is fast, could iterate several times
 
+## Reference view + ELK layout
+
+- Need to add an emphasis border on the node being focused
+- Something is off about imported JSX references - should include as an external reference
+- Still brokenness on the useKeyModifiers around incoming prop/parameter references
+- Clicking on a synthetic node should show the relevant code (currently nothing)
+
 ### Barrel file
 
 ```jsx

@@ -1864,8 +1864,8 @@ export async function layoutELKWithRoot(
       const tgtScope = findNodeById(rootNode, targetId);
       if (tgtScope) {
         const cat = String(tgtScope.category);
-        const isControlFlow =
-          cat === "IfClause" || cat === "Else" || cat === "ElseIf";
+        // Treat any category that mentions "If" or "Else" as a control-flow wrapper
+        const isControlFlow = /If|Else/.test(cat);
         if (isControlFlow) {
           const actuallyUsed = nodeUsesIdentifier(tgtScope, ref.name);
           console.log(
@@ -1873,18 +1873,58 @@ export async function layoutELKWithRoot(
             tgtScope.label,
             `{cat:${cat}, used:${actuallyUsed}}`
           );
+
+          // Hard-skip edges that end on a *plain* Else wrapper – they never make good visual anchors
+          if (cat.includes("Else") && !cat.includes("If")) {
+            console.log(
+              "[EDGE_FILTER] 🚫 Skipping edge – target is a bare Else block"
+            );
+            return null;
+          }
+
           if (!actuallyUsed) {
             console.log(
-              `[EDGE_FILTER] ❌ Skipping edge (control-flow wrapper without usage)`
+              `[EDGE_FILTER] ❌ Skipping edge (control-flow wrapper without direct identifier usage)`
             );
-            return null; // skip stray edge – variable not actually used here
+            return null;
+          }
+
+          // If the wrapper *does* use the identifier, try to re-route the edge to a more specific child node
+          const findBestChild = (function search(
+            n: ScopeNode
+          ): ScopeNode | null {
+            let best: ScopeNode | null = null;
+            if (n === tgtScope) {
+              // skip the wrapper itself – we only want descendants
+            } else if (nodeUsesIdentifier(n, ref.name)) {
+              const catLower = String(n.category).toLowerCase();
+              if (!/if|else/.test(catLower)) {
+                best = n; // candidate
+              }
+            }
+            if (n.children) {
+              for (const child of n.children) {
+                const cand = search(child);
+                if (!cand) continue;
+                if (!best || getNodeSize(cand) < getNodeSize(best)) {
+                  best = cand; // prefer the most specific (smallest slice)
+                }
+              }
+            }
+            return best;
+          })(tgtScope);
+
+          if (findBestChild) {
+            console.log(
+              `[EDGE_FILTER] ↪️ Re-routing edge from wrapper to child node`,
+              { oldTarget: targetId, newTarget: findBestChild.id }
+            );
+            targetId = findBestChild.id;
           } else {
-            // Additional check: if this wrapper has a Call child for the same ref, prefer the child edge over wrapper
+            // Lastly, check for Call nodes whose label starts with the identifier
             const hasChildCall = (function check(n: ScopeNode): boolean {
-              if (
-                String(n.category) === "Call" &&
-                n.label?.startsWith(`${ref.name} [`)
-              ) {
+              const catLower = String(n.category).toLowerCase();
+              if (catLower.includes("call") && n.label?.startsWith(ref.name)) {
                 return true;
               }
               if (n.children) return n.children.some(check);
@@ -1893,13 +1933,10 @@ export async function layoutELKWithRoot(
 
             if (hasChildCall) {
               console.log(
-                `[EDGE_FILTER] ⚠️ Skipping edge (child Call node exists for same ref)`
+                `[EDGE_FILTER] ⚠️ Skipping edge (dedicated Call child exists)`
               );
-              return null;
+              return null; // let the separate edge to the Call node cover this
             }
-            console.log(
-              `[EDGE_FILTER] ✅ Keeping edge (identifier used directly in control-flow)`
-            );
           }
         }
       }
