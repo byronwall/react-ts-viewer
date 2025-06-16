@@ -1614,7 +1614,15 @@ export async function layoutELKWithRoot(
             return true;
           }
           if (cat === "Variable") {
-            return nodeDestructuresIdentifier(targetNode, ref.name);
+            const isDestructured = nodeDestructuresIdentifier(
+              targetNode,
+              ref.name
+            );
+            const isArrowParam = nodeIsArrowFunctionWithParam(
+              targetNode,
+              ref.name
+            );
+            return isDestructured || isArrowParam;
           }
           return false;
         })();
@@ -2159,6 +2167,60 @@ function nodeDestructuresIdentifier(node: ScopeNode, ident: string): boolean {
 
   perNode.set(ident, isDestructured);
   return isDestructured;
+}
+
+const arrowFnParamCache: Map<
+  string /*nodeId*/,
+  Map<string /*ident*/, boolean>
+> = new Map();
+
+function nodeIsArrowFunctionWithParam(node: ScopeNode, ident: string): boolean {
+  if (!node.source || typeof node.source !== "string") return false;
+
+  // Cheap reject
+  if (!node.source.includes(ident)) return false;
+
+  let perNode = arrowFnParamCache.get(node.id);
+  if (!perNode) {
+    perNode = new Map();
+    arrowFnParamCache.set(node.id, perNode);
+  }
+  if (perNode.has(ident)) return perNode.get(ident)!;
+
+  let isParam = false;
+  try {
+    const sf = createSourceFile(node.source);
+
+    const walk = (n: ts.Node): void => {
+      if (isParam) return;
+
+      if (ts.isArrowFunction(n)) {
+        for (const param of n.parameters) {
+          if (ts.isIdentifier(param.name)) {
+            if (param.name.text === ident) {
+              isParam = true;
+              return;
+            }
+          } else {
+            const names = extractDestructuredNames(param.name);
+            if (names.includes(ident)) {
+              isParam = true;
+              return;
+            }
+          }
+        }
+      }
+
+      ts.forEachChild(n, walk);
+    };
+
+    walk(sf);
+  } catch {
+    // ignore parse errors
+  }
+
+  perNode.set(ident, isParam);
+  return isParam;
 }
 
 // ---------------------------------------------------------------------------
