@@ -752,12 +752,25 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
 
     // Categorize references by direction, excluding refs that point to the
     // BOI's own variable name (if detected).
-    const externalReferences = dedupedReferences.filter(
+    let externalReferences = dedupedReferences.filter(
       (ref) => !ref.isInternal && ref.name !== boiVarName
     );
     const recursiveReferences = dedupedReferences.filter(
       (ref) => ref.isInternal
     );
+
+    // Final de-duplication for external refs – one entry per (name,type)
+    {
+      const seen = new Map<string, SemanticReference>();
+      externalReferences.forEach((ref) => {
+        // not concerned with type here, just want to avoid duplicates
+        const key = ref.name;
+        if (!seen.has(key)) {
+          seen.set(key, ref);
+        }
+      });
+      externalReferences = Array.from(seen.values());
+    }
 
     // Find incoming references by searching the root node for references to BOI variables
     const incomingReferences = findIncomingReferences(

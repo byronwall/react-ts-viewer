@@ -13,15 +13,6 @@ exports[`reference finder – useKeyModifiers.handleKeyDown > should match exter
   },
   {
     "direction": "outgoing",
-    "name": "useCallback",
-    "position": {
-      "character": 16,
-      "line": 1,
-    },
-    "type": "variable_reference",
-  },
-  {
-    "direction": "outgoing",
     "name": "keysToTrack",
     "position": {
       "character": 11,
@@ -37,24 +28,6 @@ exports[`reference finder – useKeyModifiers.handleKeyDown > should match exter
       "line": 3,
     },
     "type": "function_call",
-  },
-  {
-    "direction": "outgoing",
-    "name": "setPressedModifiers",
-    "position": {
-      "character": 60,
-      "line": 3,
-    },
-    "type": "variable_reference",
-  },
-  {
-    "direction": "outgoing",
-    "name": "keysToTrack",
-    "position": {
-      "character": 6,
-      "line": 10,
-    },
-    "type": "variable_reference",
   },
 ]
 `;
