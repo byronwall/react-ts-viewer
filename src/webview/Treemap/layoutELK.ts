@@ -686,11 +686,6 @@ function getNodeSize(node: ScopeNode): number {
 
 // Analyze Block of Interest (BOI) for semantic references
 function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
-  console.log("🔬 Analyzing semantic references for:", {
-    id: focusNode.id,
-    label: focusNode.label,
-  });
-
   if (!focusNode.source || typeof focusNode.source !== "string") {
     console.warn("⚠️ No source code available for BOI analysis");
     return {
@@ -709,8 +704,6 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
     // Build variable scope for the BOI
     const boiScope = buildVariableScope(sourceFile, sourceFile);
 
-    console.log(`📊 Found ${boiScope.declarations.size} internal declarations`);
-
     // Extract semantic references
     const allReferences = extractSemanticReferences(
       sourceFile,
@@ -723,16 +716,12 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
     const externalReferences = allReferences.filter((ref) => !ref.isInternal);
     const recursiveReferences = allReferences.filter((ref) => ref.isInternal);
 
-    console.log(`📤 Found ${externalReferences.length} external references`);
-    console.log(`🔄 Found ${recursiveReferences.length} internal references`);
-
     // Find incoming references by searching the root node for references to BOI variables
     const incomingReferences = findIncomingReferences(
       focusNode,
       rootNode,
       boiScope
     );
-    console.log(`📥 Found ${incomingReferences.length} incoming references`);
 
     return {
       scopeBoundary: { start: 0, end: focusNode.source.length },
@@ -765,11 +754,6 @@ function findIncomingReferences(
   if (boiVariableNames.length === 0) {
     return incomingRefs;
   }
-
-  console.log(
-    "🔍 Searching for incoming references to BOI variables:",
-    boiVariableNames
-  );
 
   function searchNode(node: ScopeNode) {
     // Skip the focus node itself
@@ -862,12 +846,6 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
       const matched = isMatch || declaresHere;
 
       if (matched) {
-        console.log(`  🔎 candidate ➜`, {
-          id: node.id,
-          label: node.label,
-          category: node.category,
-          declares: declaresHere,
-        });
         matches.push(node);
       }
     }
@@ -959,8 +937,6 @@ function buildHierarchicalStructure(
   nodes: ScopeNode[],
   rootNode: ScopeNode
 ): ScopeNode {
-  console.log("🏗️ Building hierarchical structure for layout");
-
   const nodeIds = nodes.map((n) => n.id);
   const commonAncestor = findCommonAncestor(rootNode, nodeIds);
 
@@ -971,12 +947,6 @@ function buildHierarchicalStructure(
   const cloneNode = (n: ScopeNode): ScopeNode => ({
     ...n,
     children: n.children ? [] : [],
-  });
-
-  console.log("🔍 Common ancestor found:", {
-    id: commonAncestor.id,
-    label: commonAncestor.label,
-    targetNodes: nodeIds.length,
   });
 
   // Build a tree that includes all necessary nodes and their hierarchical relationships
@@ -999,7 +969,6 @@ function buildHierarchicalStructure(
     // 1. It's explicitly in our target nodes, OR
     // 2. It has children that need to be included (intermediate node)
     if (shouldInclude || includedChildren.length > 0) {
-      console.log(`📦 Including node in hierarchy: ${node.id} (${node.label})`);
       const result: ScopeNode = {
         ...node,
         children: includedChildren, // Always use the array, even if empty
@@ -1032,13 +1001,6 @@ function hierarchicalScopeNodeToELK(
   minWidth = 120,
   minHeight = 60
 ): ElkNode {
-  console.log("🔄 Converting hierarchical node to ELK format:", {
-    id: node.id,
-    label: node.label,
-    isTarget: targetNodeIds.has(node.id),
-    hasChildren: !!node.children?.length,
-  });
-
   // Calculate dimensions based on whether this is a target node or container
   const isTargetNode = targetNodeIds.has(node.id);
   const labelLength = (node.label || node.id.split(":").pop() || "Node").length;
@@ -1078,10 +1040,6 @@ function hierarchicalScopeNodeToELK(
       elkNode.children.push(childElkNode);
     }
 
-    console.log(
-      `  📦 Node ${node.id} has ${elkNode.children.length} children in hierarchy`
-    );
-
     // Set layout options for container nodes
     elkNode.layoutOptions = {
       "elk.algorithm": "layered",
@@ -1091,9 +1049,6 @@ function hierarchicalScopeNodeToELK(
     };
   }
 
-  console.log(
-    `  ✅ ELK hierarchical node created: ${node.id} (${width}x${height}, children: ${elkNode.children?.length || 0})`
-  );
   return elkNode;
 }
 
@@ -1110,17 +1065,12 @@ function buildSemanticReferenceGraph(
   references: SemanticReference[];
   hierarchicalRoot: ScopeNode;
 } {
-  console.log("🔬 Building semantic reference graph for:", focusNode.label);
-
   // Check if focus node has meaningful source code for analysis
   if (
     !focusNode.source ||
     typeof focusNode.source !== "string" ||
     focusNode.source.trim().length < 10
   ) {
-    console.log(
-      "ℹ️ Focus node has no meaningful source code - using simple visualization"
-    );
     return {
       nodes: [focusNode],
       references: [],
@@ -1129,7 +1079,6 @@ function buildSemanticReferenceGraph(
   }
 
   // Perform full BOI analysis for all cases (including JSX)
-  console.log("🔬 Performing full semantic analysis on focus node");
   const boiAnalysis = analyzeBOI(focusNode, rootNode);
 
   const allReferences = [
@@ -1137,10 +1086,6 @@ function buildSemanticReferenceGraph(
     ...boiAnalysis.incomingReferences,
     ...boiAnalysis.recursiveReferences,
   ];
-
-  console.log(
-    `📊 Found ${allReferences.length} total references (${boiAnalysis.externalReferences.length} external, ${boiAnalysis.incomingReferences.length} incoming, ${boiAnalysis.recursiveReferences.length} recursive)`
-  );
 
   // MUCH more restrictive filtering for focused analysis
   const maxNodes = 20; // Increase to accommodate individual variable declarations
@@ -1262,13 +1207,6 @@ function buildSemanticReferenceGraph(
         !isCommonProperty &&
         !isRecursive;
 
-      console.log(`🔍 Reference analysis: ${ref.name}`, {
-        type: ref.type,
-        isRelevantType,
-        isGenericName,
-        shouldInclude,
-      });
-
       return shouldInclude;
     })
     // Sort by relevance - prioritize variables that are likely state or props
@@ -1296,41 +1234,11 @@ function buildSemanticReferenceGraph(
     })
     .slice(0, maxReferences); // Take only the most relevant ones
 
-  console.log(
-    `🔍 Filtered to ${prioritizedReferences.length} most relevant references`
-  );
-  console.log(
-    `[REF_GRAPH] Prioritized references to resolve:`,
-    prioritizedReferences.map((r) => r.name)
-  );
-
   // Resolve semantic references to actual nodes (with strict limits)
   for (const ref of prioritizedReferences) {
-    const isTargetRef =
-      ref.name === "password" ||
-      ref.name === "setPassword" ||
-      ref.name === "Input";
-
-    if (isTargetRef) {
-      console.log(`[REF_GRAPH] Resolving reference: "${ref.name}"`);
-    }
     const matchingNodes = findNodesByName(rootNode, ref.name);
 
     if (matchingNodes.length > 0) {
-      if (isTargetRef) {
-        console.log(
-          `[REF_GRAPH] Found ${
-            matchingNodes.length
-          } candidates for "${ref.name}":`,
-          matchingNodes.map((n) => ({
-            id: n.id,
-            label: n.label,
-            category: n.category,
-            size: getNodeSize(n),
-          }))
-        );
-      }
-
       // Prefer real declaration nodes over incidental matches (e.g. an "if" clause that merely mentions the name)
       const declarationCategories = [
         "Variable",
@@ -1345,12 +1253,6 @@ function buildSemanticReferenceGraph(
           declarationCategories.includes(n.category) ||
           nodeDeclaresIdentifier(n, ref.name)
       );
-
-      if (declarationCandidates.length > 0) {
-        console.log(
-          `[REF_GRAPH] Filtering to ${declarationCandidates.length} declaration candidates for "${ref.name}"`
-        );
-      }
 
       // ------------------------------------------------------------------
       // Prioritize candidates that ACTUALLY declare the identifier and whose
@@ -1394,30 +1296,12 @@ function buildSemanticReferenceGraph(
       });
 
       const specificDeclarationNode = sortedMatchingNodes[0];
-      console.log(
-        `[REF_GRAPH] Final chosen node for "${ref.name}":`,
-        specificDeclarationNode
-          ? {
-              id: specificDeclarationNode.id,
-              label: specificDeclarationNode.label,
-              category: specificDeclarationNode.category,
-              size: getNodeSize(specificDeclarationNode),
-            }
-          : "NONE"
-      );
 
       if (!specificDeclarationNode) {
         continue;
       }
 
-      console.log(`🔍 Selected node for ${ref.name}:`, {
-        id: specificDeclarationNode.id,
-        label: specificDeclarationNode.label,
-        category: specificDeclarationNode.category,
-      });
-
       if (referencedNodes.length >= maxNodes) {
-        console.log(`⚠️ Reached maximum node limit (${maxNodes}), stopping`);
         break;
       }
 
@@ -1476,30 +1360,13 @@ function buildSemanticReferenceGraph(
               referencedNodes.push(usageNode);
             }
           }
-        } else {
-          console.log(
-            `⚠️ Skipped self-reference: ${specificDeclarationNode.id} (${specificDeclarationNode.label}) for reference: ${ref.name}`
-          );
         }
       }
-    } else {
-      console.log(`⚠️ No matching nodes found for reference: ${ref.name}`);
     }
   }
 
-  console.log(
-    `✅ Reference graph built: ${referencedNodes.length} nodes, ${resolvedReferences.length} references`
-  );
-
-  // Log all nodes that will be included
-  console.log("📋 Nodes to be included in reference graph:");
-  referencedNodes.forEach((node, index) => {
-    console.log(`  ${index + 1}. ${node.id} (${node.label})`);
-  });
-
   // If no edges could be resolved, fall back to minimal visualization
   if (resolvedReferences.length === 0) {
-    console.log("ℹ️ Only focus node found - creating minimal visualization");
     return {
       nodes: referencedNodes,
       references: [],
@@ -1562,8 +1429,6 @@ export async function layoutELKWithRoot(
   height: number,
   options: Partial<ELKLayoutOptions> = {}
 ): Promise<ELKGraph> {
-  console.log("🎯 ELK Reference Layout starting for:", focusNode.label);
-
   const defaultOptions: ELKLayoutOptions = {
     algorithm: "layered", // Use layered algorithm for hierarchical layouts
     direction: "DOWN",
@@ -1637,16 +1502,8 @@ export async function layoutELKWithRoot(
               name: ref.name,
               parentId: targetNode.id,
             });
-            console.log(`➕ Created synthetic param node for ${ref.name}`, {
-              parent: targetNode.label,
-              id: paramId,
-            });
           }
         }
-
-        console.log(
-          `🔍 Param decision for ${ref.name}: cat=${cat} => ${shouldTreatAsParam ? "treat-as-param" : "skip"}`
-        );
       }
     }
 
@@ -1692,10 +1549,6 @@ export async function layoutELKWithRoot(
             name: ref.name,
             parentId: usageNode.id,
           });
-          console.log(`➕ Created synthetic arg node for ${ref.name}`, {
-            parent: usageNode.label,
-            id: argId,
-          });
         }
       }
     }
@@ -1736,21 +1589,6 @@ export async function layoutELKWithRoot(
     }
   });
 
-  console.log("📊 Reference graph:", {
-    nodes: referenceNodes.length,
-    references: references.length,
-    syntheticParams: syntheticParams.length,
-    syntheticArgs: syntheticArgs.length,
-  });
-
-  if (
-    referenceNodes.length === 1 &&
-    syntheticParams.length === 0 &&
-    syntheticArgs.length === 0
-  ) {
-    console.log("ℹ️ Only focus node found - creating minimal visualization");
-  }
-
   // ----------------------------------------------------------------------
 
   // Convert hierarchical structure to ELK format
@@ -1789,7 +1627,6 @@ export async function layoutELKWithRoot(
         height: 60,
         labels: [{ text: leaf.name } as any],
       });
-      console.log(`🔧 Injected ${kind} node into ELK: ${leaf.name}`);
     };
 
     syntheticParams.forEach((p) => inject(p, "parameter"));
@@ -1844,24 +1681,13 @@ export async function layoutELKWithRoot(
         const isControlFlow = /If|Else/.test(cat);
         if (isControlFlow) {
           const actuallyUsed = nodeUsesIdentifier(tgtScope, ref.name);
-          console.log(
-            `[EDGE_FILTER] ${ref.name} ->`,
-            tgtScope.label,
-            `{cat:${cat}, used:${actuallyUsed}}`
-          );
 
           // Hard-skip edges that end on a *plain* Else wrapper – they never make good visual anchors
           if (cat.includes("Else") && !cat.includes("If")) {
-            console.log(
-              "[EDGE_FILTER] 🚫 Skipping edge – target is a bare Else block"
-            );
             return null;
           }
 
           if (!actuallyUsed) {
-            console.log(
-              `[EDGE_FILTER] ❌ Skipping edge (control-flow wrapper without direct identifier usage)`
-            );
             return null;
           }
 
@@ -1891,10 +1717,6 @@ export async function layoutELKWithRoot(
           })(tgtScope);
 
           if (findBestChild) {
-            console.log(
-              `[EDGE_FILTER] ↪️ Re-routing edge from wrapper to child node`,
-              { oldTarget: targetId, newTarget: findBestChild.id }
-            );
             targetId = findBestChild.id;
           } else {
             // Lastly, check for Call nodes whose label starts with the identifier
@@ -1908,9 +1730,6 @@ export async function layoutELKWithRoot(
             })(tgtScope);
 
             if (hasChildCall) {
-              console.log(
-                `[EDGE_FILTER] ⚠️ Skipping edge (dedicated Call child exists)`
-              );
               return null; // let the separate edge to the Call node cover this
             }
           }
@@ -1921,14 +1740,6 @@ export async function layoutELKWithRoot(
       if (!allElkNodeIds.has(sourceId) || !allElkNodeIds.has(targetId)) {
         return null;
       }
-
-      // Debug log
-      console.log("[EDGE_BUILD]", {
-        ref: ref.name,
-        dir: ref.direction,
-        src: sourceId,
-        tgt: targetId,
-      });
 
       const edgeId = `edge_${index}_${ref.direction}_${ref.type}`;
 
@@ -1942,10 +1753,6 @@ export async function layoutELKWithRoot(
       } as ElkExtendedEdge;
     })
     .filter((edge): edge is ElkExtendedEdge => edge !== null);
-
-  console.log(
-    `🔗 Created ${elkEdges.length} edges out of ${references.length} references`
-  );
 
   // ----------------------------------------------------------------------
 
@@ -1972,11 +1779,8 @@ export async function layoutELKWithRoot(
     } as LayoutOptions,
   };
 
-  console.log("🚀 Running ELK layout algorithm...");
-
   try {
     const layoutedGraph = await elk.layout(elkGraph);
-    console.log("✅ ELK layout completed successfully");
 
     // Instead of flattening, preserve the hierarchical structure
     const preserveHierarchicalNodes = (
@@ -2010,12 +1814,6 @@ export async function layoutELKWithRoot(
       ? preserveHierarchicalNodes(layoutedGraph.children)
       : [];
 
-    console.log(
-      "📍 Layout complete with",
-      hierarchicalNodes.length,
-      "top-level nodes"
-    );
-
     const result: ELKGraph = {
       id: layoutedGraph.id!,
       children: hierarchicalNodes, // Use hierarchical structure
@@ -2027,11 +1825,6 @@ export async function layoutELKWithRoot(
         })) || [],
       layoutOptions: elkGraph.layoutOptions,
     };
-
-    console.log("🎉 ELK layout complete:", {
-      nodes: result.children.length,
-      edges: result.edges.length,
-    });
 
     return result;
   } catch (error) {
@@ -2100,15 +1893,6 @@ function findInnermostNodeByOffset(
         }
       }
     }
-  }
-
-  // 🔍 Debug log to see which node the offset maps to
-  if (bestMatch) {
-    console.log("[OFFSET_MATCH]", {
-      offset,
-      matchedNodeId: bestMatch.id,
-      matchedLabel: bestMatch.label,
-    });
   }
 
   return bestMatch;
