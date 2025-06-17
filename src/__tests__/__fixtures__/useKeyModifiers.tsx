@@ -1,16 +1,3 @@
-# Problems with ELK LAyout and Reference + Scope Graph
-
-Review the problem description in this file and figure out how to fix it. Implement those fixes. I will update the MD and we'll iterate until things are completely solved. Place an emphasis on concise but well placed logs that will help spot problems. I will be pasting them back in here.
-
-## Problems
-
-- No arrow is drawn from `setPressedModifiers` to `handleCallback`. There should be an arrow to the `if` scope at minimum or the addition of a synthetic node for the function.
-
-## Test Scenario
-
-With the treemap loaded for the code below, I `SHIFT + CLICK` on the `handleKeyDown` scope.
-
-```tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -84,11 +71,4 @@ export const useKeyModifiers = (
   }, [keysToTrack]);
 
   return pressedModifiers;
-};
-```
-
-## Most recent logs
-
-```
-
-```
+}; 

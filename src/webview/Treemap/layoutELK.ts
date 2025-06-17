@@ -54,6 +54,7 @@ interface SemanticReference {
     | "destructured_variable";
   sourceNodeId: string;
   targetNodeId?: string;
+  targets?: string[];
   position: { line: number; character: number };
   /** Absolute character offset (from SourceFile) where this reference occurs */
   offset: number;
@@ -207,6 +208,7 @@ function extractSemanticReferences(
         offset: n.pos,
         isInternal,
         direction: isInternal ? "recursive" : "outgoing",
+        targets: [],
       });
     }
 
@@ -225,6 +227,7 @@ function extractSemanticReferences(
             offset: pa.pos,
             isInternal,
             direction: isInternal ? "recursive" : "outgoing",
+            targets: [],
           });
         }
       }
@@ -274,6 +277,7 @@ function extractSemanticReferences(
           offset: n.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
+          targets: [],
         });
       }
     }
@@ -302,6 +306,7 @@ function extractSemanticReferences(
           offset: n.pos,
           isInternal: false,
           direction: "outgoing",
+          targets: [],
         });
       }
 
@@ -318,6 +323,7 @@ function extractSemanticReferences(
               offset: n.pos,
               isInternal: false,
               direction: "outgoing",
+              targets: [],
             });
           });
         }
@@ -361,6 +367,7 @@ function extractJSXExpressionReferences(
           offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
+          targets: [],
         });
       }
     } else if (ts.isPropertyAccessExpression(expr)) {
@@ -377,6 +384,7 @@ function extractJSXExpressionReferences(
           offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
+          targets: [],
         });
       }
     } else if (ts.isCallExpression(expr)) {
@@ -391,6 +399,7 @@ function extractJSXExpressionReferences(
           offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
+          targets: [],
         });
       } else if (ts.isPropertyAccessExpression(expr.expression)) {
         const objectName = ts.isIdentifier(expr.expression.expression)
@@ -408,6 +417,7 @@ function extractJSXExpressionReferences(
           offset: expr.pos,
           isInternal,
           direction: isInternal ? "recursive" : "outgoing",
+          targets: [],
         });
       }
     }
@@ -712,9 +722,42 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
       boiScope
     );
 
-    // Categorize references by direction
-    const externalReferences = allReferences.filter((ref) => !ref.isInternal);
-    const recursiveReferences = allReferences.filter((ref) => ref.isInternal);
+    // ------------------------------------------------------------------
+    // Identify the variable name that *owns* the BOI (e.g. the variable to
+    // which an arrow-function is assigned).  Any reference to that variable
+    // is considered *internal* and should therefore be excluded from the
+    // "external" set.
+    // ------------------------------------------------------------------
+    const pathToFocus = getPathToNode(rootNode, focusNode.id);
+    const owningVarNode = [...pathToFocus].reverse().find((n) => {
+      return String(n.category) === "Variable";
+    });
+
+    const boiVarName = (() => {
+      if (!owningVarNode?.label) return null;
+      // Heuristic: first token of the label before whitespace or assignment
+      return owningVarNode.label.split(/[\s=:{[(]/)[0] ?? null;
+    })();
+
+    // Helper to de-duplicate references (name+type+offset)
+    const unique = new Map<string, SemanticReference>();
+    allReferences.forEach((ref) => {
+      const key = `${ref.name}|${ref.type}|${ref.offset}`;
+      if (!unique.has(key)) {
+        unique.set(key, ref);
+      }
+    });
+
+    const dedupedReferences = Array.from(unique.values());
+
+    // Categorize references by direction, excluding refs that point to the
+    // BOI's own variable name (if detected).
+    const externalReferences = dedupedReferences.filter(
+      (ref) => !ref.isInternal && ref.name !== boiVarName
+    );
+    const recursiveReferences = dedupedReferences.filter(
+      (ref) => ref.isInternal
+    );
 
     // Find incoming references by searching the root node for references to BOI variables
     const incomingReferences = findIncomingReferences(
@@ -780,7 +823,7 @@ function findIncomingReferences(
             incomingRefs.push({
               ...ref,
               direction: "incoming",
-              targetNodeId: focusNode.id,
+              targets: [focusNode.id],
             });
           }
         });
@@ -1313,7 +1356,7 @@ function buildSemanticReferenceGraph(
 
         resolvedReferences.push({
           ...ref,
-          targetNodeId: focusNode.id,
+          targets: [focusNode.id],
           usageNodeId,
         });
 
@@ -1338,7 +1381,7 @@ function buildSemanticReferenceGraph(
 
           resolvedReferences.push({
             ...ref,
-            targetNodeId: specificDeclarationNode.id,
+            targets: [focusNode.id],
             usageNodeId,
           });
 
@@ -1465,7 +1508,7 @@ export async function layoutELKWithRoot(
       (ref.type === "variable_reference" || ref.type === "function_call") &&
       ref.targetNodeId
     ) {
-      const targetNode = nodeById.get(ref.targetNodeId);
+      const targetNode = nodeById.get(ref.targetNodeId!);
       if (targetNode) {
         const cat = String(targetNode.category);
 
@@ -1587,6 +1630,26 @@ export async function layoutELKWithRoot(
         }
       }
     }
+
+    // ---------------- After processing, optionally re-route usage to nearest control-flow wrapper (If/Else) for clearer visuals ----------
+    if (
+      ref.direction === "outgoing" &&
+      ref.usageNodeId // ensure we have a usage anchor
+    ) {
+      const path = getPathToNode(rootNode, ref.usageNodeId);
+      for (let i = path.length - 2; i >= 0; i--) {
+        const anc = path[i];
+        if (anc && /If|Else/.test(String(anc.category))) {
+          ref.usageNodeId = anc.id;
+          break;
+        }
+      }
+    }
+
+    // 🔎  Emit a simple diagnostic for each resolved reference
+    console.log(
+      `🔎 ref ${ref.name} (${ref.type}/${ref.direction}) – target=${ref.targetNodeId ?? "?"} usage=${ref.usageNodeId ?? "?"}`
+    );
   });
 
   // ----------------------------------------------------------------------
@@ -1742,6 +1805,9 @@ export async function layoutELKWithRoot(
       }
 
       const edgeId = `edge_${index}_${ref.direction}_${ref.type}`;
+
+      // 🔗  Diagnostic log for each created edge
+      console.log(`🔗 edge ${sourceId} ➡️ ${targetId} (${ref.name})`);
 
       return {
         id: edgeId,
@@ -2062,3 +2128,5 @@ function nodeUsesIdentifier(node: ScopeNode, ident: string): boolean {
   perNode.set(ident, found);
   return found;
 }
+
+export { analyzeBOI, buildSemanticReferenceGraph };
