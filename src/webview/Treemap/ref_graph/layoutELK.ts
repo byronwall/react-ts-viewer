@@ -5,6 +5,7 @@ import ELK, {
 } from "elkjs/lib/elk.bundled.js";
 import type { ScopeNode } from "../../../types";
 import * as ts from "typescript";
+import { analyzeBOI } from "./analyzeBOI";
 
 // ELK instance
 const elk = new ELK();
@@ -44,7 +45,7 @@ export interface ELKLayoutOptions {
 }
 
 // Semantic reference types
-interface SemanticReference {
+export interface SemanticReference {
   name: string;
   type:
     | "function_call"
@@ -70,7 +71,7 @@ interface VariableScope {
   level: number;
 }
 
-interface BOIAnalysis {
+export interface BOIAnalysis {
   scopeBoundary: { start: number; end: number };
   internalDeclarations: Map<
     string,
@@ -82,7 +83,10 @@ interface BOIAnalysis {
 }
 
 // Helper function to create TypeScript source file from code
-function createSourceFile(source: string, fileName = "temp.ts"): ts.SourceFile {
+export function createSourceFile(
+  source: string,
+  fileName = "temp.ts"
+): ts.SourceFile {
   return ts.createSourceFile(
     fileName,
     source,
@@ -93,7 +97,7 @@ function createSourceFile(source: string, fileName = "temp.ts"): ts.SourceFile {
 }
 
 // Helper function to get line and character from position
-function getLineAndCharacter(
+export function getLineAndCharacter(
   sourceFile: ts.SourceFile,
   pos: number
 ): { line: number; character: number } {
@@ -102,7 +106,7 @@ function getLineAndCharacter(
 }
 
 // Build variable scope from AST
-function buildVariableScope(
+export function buildVariableScope(
   node: ts.Node,
   sourceFile: ts.SourceFile,
   parent?: VariableScope
@@ -184,7 +188,7 @@ function isVariableDeclaredInScope(
 }
 
 // Extract semantic references from AST
-function extractSemanticReferences(
+export function extractSemanticReferences(
   node: ts.Node,
   sourceFile: ts.SourceFile,
   sourceNodeId: string,
@@ -694,126 +698,8 @@ function getNodeSize(node: ScopeNode): number {
   return Infinity; // If no range, treat as largest
 }
 
-// Analyze Block of Interest (BOI) for semantic references
-function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
-  if (!focusNode.source || typeof focusNode.source !== "string") {
-    console.warn("⚠️ No source code available for BOI analysis");
-    return {
-      scopeBoundary: { start: 0, end: 0 },
-      internalDeclarations: new Map(),
-      externalReferences: [],
-      incomingReferences: [],
-      recursiveReferences: [],
-    };
-  }
-
-  try {
-    // Create TypeScript source file
-    const sourceFile = createSourceFile(focusNode.source);
-
-    // Build variable scope for the BOI
-    const boiScope = buildVariableScope(sourceFile, sourceFile);
-
-    // Extract semantic references
-    const allReferences = extractSemanticReferences(
-      sourceFile,
-      sourceFile,
-      focusNode.id,
-      boiScope
-    );
-
-    // ------------------------------------------------------------------
-    // Compute absolute position (line/character) across the FULL source file
-    // ------------------------------------------------------------------
-    const fullSourceFile: ts.SourceFile | null =
-      typeof rootNode.source === "string"
-        ? createSourceFile(rootNode.source)
-        : null;
-
-    // Identify the variable name that *owns* the BOI (e.g. the variable to
-    // which an arrow-function is assigned).  Any reference to that variable
-    // is considered *internal* and should therefore be excluded from the
-    // "external" set.
-    const pathToFocus = getPathToNode(rootNode, focusNode.id);
-    const owningVarNode = [...pathToFocus].reverse().find((n) => {
-      return String(n.category) === "Variable";
-    });
-
-    const boiVarName = (() => {
-      if (!owningVarNode?.label) return null;
-      // Heuristic: first token of the label before whitespace or assignment
-      return owningVarNode.label.split(/[\s=:{[(]/)[0] ?? null;
-    })();
-
-    // Helper to de-duplicate references (name+type+offset)
-    const unique = new Map<string, SemanticReference>();
-    allReferences.forEach((ref) => {
-      const key = `${ref.name}|${ref.type}|${ref.offset}`;
-      if (!unique.has(key)) {
-        unique.set(key, ref);
-      }
-    });
-
-    let dedupedReferences = Array.from(unique.values());
-
-    // Recalculate line/character using the full file so the positions are absolute
-    if (fullSourceFile) {
-      dedupedReferences = dedupedReferences.map((r) => ({
-        ...r,
-        position: getLineAndCharacter(fullSourceFile, r.offset),
-      }));
-    }
-
-    // Categorize references by direction, excluding refs that point to the
-    // BOI's own variable name (if detected).
-    let externalReferences = dedupedReferences.filter(
-      (ref) => !ref.isInternal && ref.name !== boiVarName
-    );
-    const recursiveReferences = dedupedReferences.filter(
-      (ref) => ref.isInternal
-    );
-
-    // Final de-duplication for external refs – one entry per (name,type)
-    {
-      const seen = new Map<string, SemanticReference>();
-      externalReferences.forEach((ref) => {
-        // not concerned with type here, just want to avoid duplicates
-        const key = ref.name;
-        if (!seen.has(key)) {
-          seen.set(key, ref);
-        }
-      });
-      externalReferences = Array.from(seen.values());
-    }
-
-    // Find incoming references by searching the root node for references to BOI variables
-    const incomingReferences = findIncomingReferences(
-      focusNode,
-      rootNode,
-      boiScope
-    );
-
-    return {
-      scopeBoundary: { start: 0, end: focusNode.source.length },
-      internalDeclarations: boiScope.declarations,
-      externalReferences,
-      incomingReferences,
-      recursiveReferences,
-    };
-  } catch (error) {
-    console.error("❌ Error in BOI analysis:", error);
-    return {
-      scopeBoundary: { start: 0, end: 0 },
-      internalDeclarations: new Map(),
-      externalReferences: [],
-      incomingReferences: [],
-      recursiveReferences: [],
-    };
-  }
-}
-
 // Find incoming references to the BOI from other nodes
-function findIncomingReferences(
+export function findIncomingReferences(
   focusNode: ScopeNode,
   rootNode: ScopeNode,
   boiScope: VariableScope
@@ -933,7 +819,10 @@ function findNodesByName(rootNode: ScopeNode, targetName: string): ScopeNode[] {
 }
 
 // Helper function to build hierarchical path from root to node
-function getPathToNode(rootNode: ScopeNode, targetNodeId: string): ScopeNode[] {
+export function getPathToNode(
+  rootNode: ScopeNode,
+  targetNodeId: string
+): ScopeNode[] {
   const path: ScopeNode[] = [];
 
   function findPath(node: ScopeNode, currentPath: ScopeNode[]): boolean {

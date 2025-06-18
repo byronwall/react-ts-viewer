@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 
 import { buildScopeTree } from "../../parsers/buildScopeTree";
-import { analyzeBOI } from "../../webview/Treemap/ref_graph/layoutELK";
+import { analyzeBOI } from "../../webview/Treemap/ref_graph/analyzeBOI";
 
 // Utility to recursively find a node by predicate
 function findNode(node: any, pred: (n: any) => boolean): any | null {
