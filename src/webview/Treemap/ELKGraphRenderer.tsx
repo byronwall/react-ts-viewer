@@ -3,13 +3,13 @@ import type { ScopeNode } from "../../types";
 import { NodeCategory } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { getContrastingTextColor } from "./getContrastingTextColor";
-import { ELKGraph, ELKLayoutNode } from "./ref_graph/layoutELK";
+import { ELKGraph, ELKLayoutNode } from "./ref_graph/layoutELKWithRoot";
 
 import { pastelSet } from "./pastelSet";
 import { lightenColor } from "./TreemapSVG";
 
 // React component for ELK graph rendering (proof of life)
-export interface ELKGraphRendererProps {
+interface ELKGraphRendererProps {
   elkGraph: ELKGraph;
   scopeNodes: Map<string, ScopeNode>; // Map from ID to ScopeNode for data lookup
   settings: TreemapSettings;

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { AnyLayoutFn, TreemapContent } from "./TreemapSVG";
-import { ELKGraph } from "./ref_graph/layoutELK";
+import { ELKGraph } from "./ref_graph/layoutELKWithRoot";
 
 interface ViewportState {
   scale: number;

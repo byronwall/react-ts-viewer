@@ -6,7 +6,7 @@ module.exports = {
     sourceType: "module",
     project: ["./tsconfig.json"], // Point to your tsconfig.json
   },
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "import"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -43,6 +43,40 @@ module.exports = {
         },
       },
     ],
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "@typescript-eslint/consistent-type-imports": [
+      "warn",
+      {
+        prefer: "type-imports",
+        fixStyle: "inline-type-imports",
+      },
+    ],
+
+    "import/order": [
+      "warn",
+      {
+        "newlines-between": "always",
+        groups: [
+          "builtin",
+          "external",
+          "internal",
+          "index",
+          "sibling",
+          "parent",
+          "object",
+          "type",
+        ],
+        alphabetize: {
+          order: "asc",
+          caseInsensitive: true,
+        },
+      },
+    ],
+    "import/no-duplicates": "warn",
+    "import/newline-after-import": "warn",
+    "import/no-unresolved": "warn",
+
+    "sort-imports": ["warn", { ignoreCase: true, ignoreDeclarationSort: true }],
 
     // Add more project-specific rules here
   },

@@ -1,15 +1,22 @@
-import * as ts from "typescript";
+import type * as ts from "typescript";
 import type { ScopeNode } from "../../../types";
-import {
-  BOIAnalysis,
-  createSourceFile,
-  buildVariableScope,
-  extractSemanticReferences,
-  getPathToNode,
-  SemanticReference,
-  getLineAndCharacter,
-  findIncomingReferences,
-} from "./layoutELK";
+import { type SemanticReference } from "./buildSemanticReferenceGraph";
+import { buildVariableScope } from "./buildVariableScope";
+import { extractSemanticReferences } from "./extractSemanticReferences";
+import { findIncomingReferences } from "./findIncomingReferences";
+import { getPathToNode } from "./graph_nodes";
+import { createSourceFile, getLineAndCharacter } from "./ts_ast";
+
+interface BOIAnalysis {
+  scopeBoundary: { start: number; end: number };
+  internalDeclarations: Map<
+    string,
+    { node: ts.Node; name: string; line: number }
+  >;
+  externalReferences: SemanticReference[];
+  incomingReferences: SemanticReference[];
+  recursiveReferences: SemanticReference[];
+}
 
 // Analyze Block of Interest (BOI) for semantic references
 export function analyzeBOI(

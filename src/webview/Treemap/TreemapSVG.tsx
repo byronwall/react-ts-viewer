@@ -10,10 +10,10 @@ import {
   HierarchicalLayoutOptions,
   layoutHierarchical,
 } from "./layoutHierarchical";
-import { ELKGraph } from "./ref_graph/layoutELK";
+import { ELKGraph } from "./ref_graph/layoutELKWithRoot";
 
-import { pastelSet } from "./pastelSet";
 import { ELKGraphRenderer } from "./ELKGraphRenderer";
+import { pastelSet } from "./pastelSet";
 
 // Stylesheet for treemap animations
 const treemapStyles = `

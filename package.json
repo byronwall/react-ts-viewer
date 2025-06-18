@@ -159,6 +159,7 @@
     "@vscode/vsce": "^2.24.0",
     "esbuild": "^0.x.x",
     "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.31.0",
     "glob": "^10.3.12",
     "mocha": "^10.4.0",
     "npm-run-all": "^4.1.5",

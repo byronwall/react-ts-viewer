@@ -1,29 +1,26 @@
+import { Popover } from "@headlessui/react";
+import { Code, FileImage, Gear } from "@phosphor-icons/react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { svgAsPngUri } from "save-svg-as-png";
-import { Popover } from "@headlessui/react";
-import { Code, FileImage, Gear } from "@phosphor-icons/react";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
-import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
-import {
-  TreemapSettings,
-  treemapSettingsConfig,
-  settingGroupOrder,
-} from "../settingsConfig"; // Added imports
-import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
 import CollapsibleSection from "../CollapsibleSection"; // Import CollapsibleSection
 import SettingsControl from "../SettingsControl"; // Import SettingsControl
+import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
+import {
+  settingGroupOrder,
+  TreemapSettings,
+  treemapSettingsConfig,
+} from "../settingsConfig"; // Added imports
+import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
 import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
 import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { AnyLayoutFn } from "./TreemapSVG"; // Added AnyLayoutFn
 import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
 import { layoutHierarchical } from "./layoutHierarchical";
-import {
-  layoutELKAsync,
-  ELKGraph,
-  layoutELKWithRoot,
-} from "./ref_graph/layoutELK";
+
 import { pastelSet } from "./pastelSet";
+import { ELKGraph, layoutELKWithRoot } from "./ref_graph/layoutELKWithRoot";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
