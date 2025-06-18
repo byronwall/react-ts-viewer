@@ -7,9 +7,26 @@ import { findNodesByName } from "./graph_nodes";
 import { getNodeSize } from "./getNodeSize";
 import { nodeDeclaresIdentifier } from "./ts_ast";
 
-// Helper function to extract the primary variable reference from JSX content
-// Helper function to build a simple variable-focused reference graph
-// Helper function to build a reference graph from a focus node using semantic analysis
+export interface SemanticReference {
+  name: string;
+  type:
+    | "function_call"
+    | "variable_reference"
+    | "import"
+    | "property_access"
+    | "destructured_variable";
+  sourceNodeId: string;
+  targetNodeId?: string;
+  targets?: string[];
+  position: { line: number; character: number };
+  /** Absolute character offset (from SourceFile) where this reference occurs */
+  offset: number;
+  /** ID of the innermost ScopeNode that contains the reference usage (filled later) */
+  usageNodeId?: string;
+  isInternal: boolean; // true if declared within BOI scope
+  direction: "outgoing" | "incoming" | "recursive";
+}
+
 export function buildSemanticReferenceGraph(
   focusNode: ScopeNode,
   rootNode: ScopeNode
@@ -341,23 +358,3 @@ export function buildSemanticReferenceGraph(
     hierarchicalRoot,
   };
 } // Semantic reference types
-
-export interface SemanticReference {
-  name: string;
-  type:
-    | "function_call"
-    | "variable_reference"
-    | "import"
-    | "property_access"
-    | "destructured_variable";
-  sourceNodeId: string;
-  targetNodeId?: string;
-  targets?: string[];
-  position: { line: number; character: number };
-  /** Absolute character offset (from SourceFile) where this reference occurs */
-  offset: number;
-  /** ID of the innermost ScopeNode that contains the reference usage (filled later) */
-  usageNodeId?: string;
-  isInternal: boolean; // true if declared within BOI scope
-  direction: "outgoing" | "incoming" | "recursive";
-}
