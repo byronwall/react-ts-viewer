@@ -1,13 +1,13 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`reference finder – useKeyModifiers.handleKeyDown > should match external references snapshot 1`] = `
+exports[`reference finder – useKeyModifiers.handleKeyDown > should detect the expected external references 1`] = `
 [
   {
     "direction": "outgoing",
     "name": "useCallback",
     "position": {
-      "character": 16,
-      "line": 1,
+      "character": 24,
+      "line": 17,
     },
     "type": "function_call",
   },
@@ -16,7 +16,7 @@ exports[`reference finder – useKeyModifiers.handleKeyDown > should match exter
     "name": "keysToTrack",
     "position": {
       "character": 11,
-      "line": 3,
+      "line": 19,
     },
     "type": "variable_reference",
   },
@@ -25,7 +25,7 @@ exports[`reference finder – useKeyModifiers.handleKeyDown > should match exter
     "name": "setPressedModifiers",
     "position": {
       "character": 60,
-      "line": 3,
+      "line": 19,
     },
     "type": "function_call",
   },

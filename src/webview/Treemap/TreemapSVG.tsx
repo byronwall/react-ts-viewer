@@ -10,7 +10,7 @@ import {
   HierarchicalLayoutOptions,
   layoutHierarchical,
 } from "./layoutHierarchical";
-import { ELKGraph } from "./layoutELK";
+import { ELKGraph } from "./ref_graph/layoutELK";
 
 import { pastelSet } from "./pastelSet";
 import { ELKGraphRenderer } from "./ELKGraphRenderer";

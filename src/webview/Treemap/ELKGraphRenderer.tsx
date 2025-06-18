@@ -3,7 +3,7 @@ import type { ScopeNode } from "../../types";
 import { NodeCategory } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { getContrastingTextColor } from "./getContrastingTextColor";
-import { ELKGraph, ELKLayoutNode } from "./layoutELK";
+import { ELKGraph, ELKLayoutNode } from "./ref_graph/layoutELK";
 
 import { pastelSet } from "./pastelSet";
 import { lightenColor } from "./TreemapSVG";

@@ -3,7 +3,7 @@ import ELK, {
   ElkExtendedEdge,
   LayoutOptions,
 } from "elkjs/lib/elk.bundled.js";
-import type { ScopeNode } from "../../types";
+import type { ScopeNode } from "../../../types";
 import * as ts from "typescript";
 
 // ELK instance
@@ -723,11 +723,17 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
     );
 
     // ------------------------------------------------------------------
+    // Compute absolute position (line/character) across the FULL source file
+    // ------------------------------------------------------------------
+    const fullSourceFile: ts.SourceFile | null =
+      typeof rootNode.source === "string"
+        ? createSourceFile(rootNode.source)
+        : null;
+
     // Identify the variable name that *owns* the BOI (e.g. the variable to
     // which an arrow-function is assigned).  Any reference to that variable
     // is considered *internal* and should therefore be excluded from the
     // "external" set.
-    // ------------------------------------------------------------------
     const pathToFocus = getPathToNode(rootNode, focusNode.id);
     const owningVarNode = [...pathToFocus].reverse().find((n) => {
       return String(n.category) === "Variable";
@@ -748,7 +754,15 @@ function analyzeBOI(focusNode: ScopeNode, rootNode: ScopeNode): BOIAnalysis {
       }
     });
 
-    const dedupedReferences = Array.from(unique.values());
+    let dedupedReferences = Array.from(unique.values());
+
+    // Recalculate line/character using the full file so the positions are absolute
+    if (fullSourceFile) {
+      dedupedReferences = dedupedReferences.map((r) => ({
+        ...r,
+        position: getLineAndCharacter(fullSourceFile, r.offset),
+      }));
+    }
 
     // Categorize references by direction, excluding refs that point to the
     // BOI's own variable name (if detected).
@@ -1292,6 +1306,7 @@ function buildSemanticReferenceGraph(
 
   // Resolve semantic references to actual nodes (with strict limits)
   for (const ref of prioritizedReferences) {
+    // TODO: need to refactor this code out then write tests to verify it's working
     const matchingNodes = findNodesByName(rootNode, ref.name);
 
     if (matchingNodes.length > 0) {
@@ -1369,6 +1384,7 @@ function buildSemanticReferenceGraph(
 
         resolvedReferences.push({
           ...ref,
+          targetNodeId: focusNode.id,
           targets: [focusNode.id],
           usageNodeId,
         });
@@ -1394,6 +1410,7 @@ function buildSemanticReferenceGraph(
 
           resolvedReferences.push({
             ...ref,
+            targetNodeId: specificDeclarationNode.id,
             targets: [focusNode.id],
             usageNodeId,
           });

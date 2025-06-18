@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 
 import { buildScopeTree } from "../../parsers/buildScopeTree";
-import { analyzeBOI } from "../../webview/Treemap/layoutELK";
+import { analyzeBOI } from "../../webview/Treemap/ref_graph/layoutELK";
 
 // Utility to recursively find a node by predicate
 function findNode(node: any, pred: (n: any) => boolean): any | null {
@@ -39,7 +39,7 @@ describe("reference finder – useKeyModifiers.handleKeyDown", () => {
     throw new Error("Failed to locate handleKeyDown node in scope tree");
   }
 
-  it("should match external references snapshot", () => {
+  it("should detect the expected external references", () => {
     const analysis = analyzeBOI(focusNode, rootNode);
 
     // Snapshot just the external references (makes diffs clean)

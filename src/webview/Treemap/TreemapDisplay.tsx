@@ -18,7 +18,11 @@ import { TreemapLegendPopover } from "./TreemapLegendPopover";
 import { AnyLayoutFn } from "./TreemapSVG"; // Added AnyLayoutFn
 import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
 import { layoutHierarchical } from "./layoutHierarchical";
-import { layoutELKAsync, ELKGraph, layoutELKWithRoot } from "./layoutELK";
+import {
+  layoutELKAsync,
+  ELKGraph,
+  layoutELKWithRoot,
+} from "./ref_graph/layoutELK";
 import { pastelSet } from "./pastelSet";
 
 interface TreemapDisplayProps {
