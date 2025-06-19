@@ -1,6 +1,12 @@
 import { Popover } from "@headlessui/react";
 import { Code, FileImage, Gear } from "@phosphor-icons/react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { svgAsPngUri } from "save-svg-as-png";
 import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
@@ -20,10 +26,8 @@ import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
 import { layoutHierarchical } from "./layoutHierarchical";
 
 import { pastelSet } from "./pastelSet";
-import { analyzeBOI } from "./ref_graph/analyzeBOI";
-import { resolveReferenceDeclarations } from "./ref_graph/resolveReferenceDeclarations";
-import { findInnermostNodeByOffset } from "./ref_graph/graph_nodes";
 import type { ReferenceEdge } from "./ViewportTreemapSVG";
+import { buildSemanticReferenceGraph } from "./ref_graph/buildSemanticReferenceGraph";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -155,6 +159,40 @@ function filterNodesForSearch(
   return {
     ...node,
     children: filteredChildren,
+  } as ScopeNode;
+}
+
+// Helper function to filter the tree so that only "relevant" nodes remain.
+// A node is considered relevant if its id is included in `relevantIds` OR it
+// is an ancestor of a relevant node. Irrelevant branches are pruned entirely.
+function filterNodesForRelevancy(
+  node: ScopeNode,
+  relevantIds: Set<string>,
+  focusId: string
+): ScopeNode | null {
+  // If this is the focus (BOI) node, keep its entire subtree unchanged
+  if (node.id === focusId) {
+    return node; // Return as-is to include all descendants
+  }
+
+  // Otherwise, recursively filter children
+  const filteredChildren =
+    node.children
+      ?.map((child) => filterNodesForRelevancy(child, relevantIds, focusId))
+      .filter((child): child is ScopeNode => child !== null) || [];
+
+  const isDirectlyRelevant = relevantIds.has(node.id);
+  const hasRelevantDescendant = filteredChildren.length > 0;
+
+  // If this node is neither directly relevant nor has any relevant
+  // descendants, prune it from the resulting tree.
+  if (!isDirectlyRelevant && !hasRelevantDescendant) {
+    return null;
+  }
+
+  return {
+    ...node,
+    children: filteredChildren.length > 0 ? filteredChildren : undefined,
   } as ScopeNode;
 }
 
@@ -425,35 +463,36 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 
         // ---- Build arrow edges synchronously ----
         try {
-          const { externalReferences } = analyzeBOI(
+          const { references } = buildSemanticReferenceGraph(
             fullNodeFromInitialTree,
-            initialData
-          );
-
-          const resolved = resolveReferenceDeclarations(
-            externalReferences,
             initialData
           );
 
           const edges: ReferenceEdge[] = [];
 
-          resolved.forEach((r) => {
-            if (!r.declaration) return;
-            const declNode = findInnermostNodeByOffset(
-              initialData,
-              r.declaration.offset
-            );
-            if (declNode) {
-              edges.push({
-                srcId: declNode.id,
-                dstId: fullNodeFromInitialTree.id,
-              });
+          references.forEach((ref) => {
+            if (!ref.targetNodeId) return; // declaration not found
+            const usageId = ref.usageNodeId || fullNodeFromInitialTree.id;
+            edges.push({
+              srcId: ref.targetNodeId,
+              dstId: usageId,
+            });
+          });
+
+          // Deduplicate edges (srcId+dstId pair)
+          const uniqueEdgesKey = new Set<string>();
+          const dedupedEdges: ReferenceEdge[] = [];
+          edges.forEach((e) => {
+            const key = `${e.srcId}->${e.dstId}`;
+            if (!uniqueEdgesKey.has(key)) {
+              uniqueEdgesKey.add(key);
+              dedupedEdges.push(e);
             }
           });
 
           setReferenceGraphState({
             focusNodeId: fullNodeFromInitialTree.id,
-            edges,
+            edges: dedupedEdges,
           });
         } catch (error) {
           console.error("❌ Failed to compute reference arrows:", error);
@@ -915,16 +954,42 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
     ? transformNodeForDepthLimit(baseDisplayData, 0, settings.maxDepth, true)
     : transformNodeForDepthLimit(baseDisplayData, 0, 0, false); // Apply visibility filters even if depth limit is off
 
+  // When in reference graph view, narrow the dataset to only the nodes that
+  // participate in the reference relationship (the focus node, all source
+  // declaration nodes, and every ancestor up to the root).
+  const relevantFilteredData = React.useMemo(() => {
+    if (viewMode !== "referenceGraph" || !referenceGraphState) {
+      return null;
+    }
+
+    const relevantIds = new Set<string>([
+      referenceGraphState.focusNodeId,
+      ...referenceGraphState.edges.map((e) => e.srcId),
+    ]);
+
+    return filterNodesForRelevancy(
+      baseDisplayData,
+      relevantIds,
+      referenceGraphState.focusNodeId
+    );
+  }, [viewMode, referenceGraphState, baseDisplayData]);
+
+  // Choose the base dataset for subsequent filters (search, etc.)
+  const preSearchDisplayData =
+    viewMode === "referenceGraph" && relevantFilteredData
+      ? relevantFilteredData
+      : depthFilteredData;
+
   // Apply search filtering if active
-  let finalDisplayData = depthFilteredData;
-  if (searchText.trim() && depthFilteredData) {
+  let finalDisplayData = preSearchDisplayData;
+  if (searchText.trim() && preSearchDisplayData) {
     const searchResult = findMatchingNodesAndPaths(
-      depthFilteredData,
+      preSearchDisplayData,
       searchText.trim()
     );
     if (searchResult.pathsToMatches.size > 0) {
       finalDisplayData = filterNodesForSearch(
-        depthFilteredData,
+        preSearchDisplayData,
         searchResult.pathsToMatches
       );
     } else {

@@ -160,28 +160,21 @@ export function buildSemanticReferenceGraph(
   //    tsconfig to keep things fast.  For same-file references this is
   //    more than enough; cross-file look-ups will gracefully fall back.
   const sourceFilePath: string = (focusNode.id.split(":")[0] ||
-    focusNode.id) as string; // Extract file path (portion before first colon)
+    focusNode.id) as string; // Extract an arbitrary path string (first colon-separated segment)
+
+  // Create an in-memory ts-morph project so we avoid filesystem access in the browser/webview environment.
   const project = new Project({
-    useInMemoryFileSystem: false,
+    useInMemoryFileSystem: true,
     skipAddingFilesFromTsConfig: true,
   });
 
-  let sourceFile;
-  try {
-    sourceFile = project.addSourceFileAtPath(sourceFilePath as string);
-  } catch (err) {
-    // On any failure (e.g. the file no longer exists), bail out and just
-    // return the minimal result so we don't crash the UI.
-    console.warn(
-      "⚠️ buildSemanticReferenceGraph – could not addSourceFile:",
-      err
-    );
-    return {
-      nodes: [focusNode],
-      references: [],
-      hierarchicalRoot: focusNode,
-    };
-  }
+  // Fall back to an empty string if the full source isn't available (should be rare).
+  const sourceText = typeof rootNode.source === "string" ? rootNode.source : "";
+
+  // Create (or overwrite) the virtual source file inside the project.
+  const sourceFile = project.createSourceFile(sourceFilePath, sourceText, {
+    overwrite: true,
+  });
 
   for (const ref of externalReferences) {
     // Locate the usage node by absolute character position.
