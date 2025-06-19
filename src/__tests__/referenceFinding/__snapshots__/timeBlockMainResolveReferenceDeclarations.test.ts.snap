@@ -95,38 +95,6 @@ exports[`reference declaration resolver – TimeBlock.<main> element > should ma
     },
   },
   {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "isClippedStart",
-      "offset": 2044,
-      "position": {
-        "character": 15,
-        "line": 78,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "isClippedEnd",
-      "offset": 2105,
-      "position": {
-        "character": 15,
-        "line": 79,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
     "declaration": {
       "kind": "variable",
       "offset": 1165,
@@ -166,38 +134,6 @@ exports[`reference declaration resolver – TimeBlock.<main> element > should ma
     },
   },
   {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "title",
-      "offset": 2707,
-      "position": {
-        "character": 22,
-        "line": 93,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "isFixedTime",
-      "offset": 2829,
-      "position": {
-        "character": 22,
-        "line": 96,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
     "declaration": {
       "kind": "import",
       "offset": 44,
@@ -214,38 +150,6 @@ exports[`reference declaration resolver – TimeBlock.<main> element > should ma
       "position": {
         "character": 38,
         "line": 96,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "taskAssignments",
-      "offset": 2895,
-      "position": {
-        "character": 22,
-        "line": 97,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "length",
-      "offset": 2912,
-      "position": {
-        "character": 39,
-        "line": 97,
       },
       "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
       "targets": [],

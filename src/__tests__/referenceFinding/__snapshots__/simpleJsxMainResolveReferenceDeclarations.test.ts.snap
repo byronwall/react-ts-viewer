@@ -5,6 +5,121 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
   {
     "declaration": {
       "kind": "variable",
+      "offset": 96,
+      "position": {
+        "character": 7,
+        "line": 5,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "cn",
+      "offset": 316,
+      "position": {
+        "character": 20,
+        "line": 14,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 178,
+      "position": {
+        "character": 27,
+        "line": 6,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isPreview",
+      "offset": 370,
+      "position": {
+        "character": 51,
+        "line": 15,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 178,
+      "position": {
+        "character": 27,
+        "line": 6,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isClipped",
+      "offset": 515,
+      "position": {
+        "character": 64,
+        "line": 18,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 178,
+      "position": {
+        "character": 27,
+        "line": 6,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "block",
+      "offset": 568,
+      "position": {
+        "character": 53,
+        "line": 19,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "variable",
+      "offset": 27,
+      "position": {
+        "character": 7,
+        "line": 2,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "handleMouseDown",
+      "offset": 724,
+      "position": {
+        "character": 22,
+        "line": 23,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "variable",
       "offset": 6,
       "position": {
         "character": 7,
@@ -15,12 +130,12 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
       "direction": "outgoing",
       "isInternal": false,
       "name": "name",
-      "offset": 77,
+      "offset": 758,
       "position": {
-        "character": 58,
-        "line": 2,
+        "character": 10,
+        "line": 25,
       },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:42-95",
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
       "targets": [],
       "type": "variable_reference",
     },

@@ -30,63 +30,317 @@ exports[`buildScopeTree - simpleJsx > should build a scope tree for the simpleJs
       "category": "Variable",
       "children": [
         {
-          "category": "JSXElementDOM",
+          "category": "ArrowFunction",
           "children": [
             {
-              "category": "JSXElementDOM",
+              "category": "Call",
               "children": [],
-              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:48-88",
-              "kind": 284,
-              "label": "<div> [2]",
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:55-85",
+              "kind": 213,
+              "label": "console.log [3]",
               "loc": {
                 "end": {
-                  "column": 68,
-                  "line": 2,
+                  "column": 32,
+                  "line": 3,
                 },
                 "start": {
-                  "column": 28,
-                  "line": 2,
+                  "column": 2,
+                  "line": 3,
                 },
               },
-              "source": "<div data-time-block="true">{name}</div>",
+              "source": "console.log("handleMouseDown")",
               "value": 1,
             },
           ],
-          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:42-95",
-          "kind": 284,
-          "label": "<main> [2]",
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:45-88",
+          "kind": 219,
+          "label": "() => {} [2-4]",
           "loc": {
             "end": {
-              "column": 75,
-              "line": 2,
+              "column": 1,
+              "line": 4,
             },
             "start": {
-              "column": 22,
+              "column": 24,
               "line": 2,
             },
           },
-          "source": "<main><div data-time-block="true">{name}</div></main>",
+          "meta": {
+            "call": "console.log [3]",
+            "collapsed": "arrowFunction",
+            "originalCategory": "ArrowFunction",
+          },
+          "source": "() => {
+  console.log("handleMouseDown");
+}",
           "value": 2,
         },
       ],
-      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:33-95",
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:27-88",
       "kind": 260,
-      "label": "output [2]",
+      "label": "handleMouseDown [2-4]",
       "loc": {
         "end": {
-          "column": 75,
-          "line": 2,
+          "column": 1,
+          "line": 4,
         },
         "start": {
-          "column": 13,
+          "column": 6,
           "line": 2,
         },
       },
       "meta": {
-        "initializer": "<main><div data-time-block="true">{name}</div></main>",
+        "initializer": "() => {
+  console.log("handleMouseDown");
+}",
       },
-      "source": "output = <main><div data-time-block="true">{name}</div></main>",
+      "source": "handleMouseDown = () => {
+  console.log("handleMouseDown");
+}",
       "value": 3,
+    },
+    {
+      "category": "Variable",
+      "children": [
+        {
+          "category": "ArrowFunction",
+          "children": [
+            {
+              "category": "Call",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:136-150",
+              "kind": 213,
+              "label": "args.join [5]",
+              "loc": {
+                "end": {
+                  "column": 60,
+                  "line": 5,
+                },
+                "start": {
+                  "column": 46,
+                  "line": 5,
+                },
+              },
+              "source": "args.join(" ")",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:101-150",
+          "kind": 219,
+          "label": "() => {} [5]",
+          "loc": {
+            "end": {
+              "column": 60,
+              "line": 5,
+            },
+            "start": {
+              "column": 11,
+              "line": 5,
+            },
+          },
+          "meta": {
+            "call": "args.join [5]",
+            "collapsed": "arrowFunction",
+            "originalCategory": "ArrowFunction",
+          },
+          "source": "(...args: (string | boolean)[]) => args.join(" ")",
+          "value": 2,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:96-150",
+      "kind": 260,
+      "label": "cn [5]",
+      "loc": {
+        "end": {
+          "column": 60,
+          "line": 5,
+        },
+        "start": {
+          "column": 6,
+          "line": 5,
+        },
+      },
+      "meta": {
+        "initializer": "(...args: (string | boolean)[]) => args.join(" ")",
+      },
+      "source": "cn = (...args: (string | boolean)[]) => args.join(" ")",
+      "value": 3,
+    },
+    {
+      "category": "Function",
+      "children": [
+        {
+          "category": "ReturnStatement",
+          "children": [
+            {
+              "category": "JSXElementDOM",
+              "children": [
+                {
+                  "category": "JSXElementDOM",
+                  "children": [
+                    {
+                      "category": "Call",
+                      "children": [],
+                      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:316-701",
+                      "kind": 213,
+                      "label": "cn [14-22]",
+                      "loc": {
+                        "end": {
+                          "column": 9,
+                          "line": 22,
+                        },
+                        "start": {
+                          "column": 19,
+                          "line": 14,
+                        },
+                      },
+                      "source": "cn(
+          "group absolute z-10 rounded-md border",
+          isPreview
+            ? "border-dashed border-gray-400 bg-gray-100/50"
+            : "border-solid bg-card shadow-sm hover:shadow-md",
+          isClipped && "rounded-none border-dashed",
+          block.isClippedStart && "rounded-t-none border-t-0",
+          block.isClippedEnd && "rounded-b-none border-b-0"
+        )",
+                      "value": 1,
+                    },
+                  ],
+                  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:292-776",
+                  "kind": 284,
+                  "label": "<div> [13-26]",
+                  "loc": {
+                    "end": {
+                      "column": 12,
+                      "line": 26,
+                    },
+                    "start": {
+                      "column": 6,
+                      "line": 13,
+                    },
+                  },
+                  "source": "<div
+        className={cn(
+          "group absolute z-10 rounded-md border",
+          isPreview
+            ? "border-dashed border-gray-400 bg-gray-100/50"
+            : "border-solid bg-card shadow-sm hover:shadow-md",
+          isClipped && "rounded-none border-dashed",
+          block.isClippedStart && "rounded-t-none border-t-0",
+          block.isClippedEnd && "rounded-b-none border-b-0"
+        )}
+        onMouseDown={handleMouseDown}
+      >
+        {name}
+      </div>",
+                  "value": 2,
+                },
+              ],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+              "kind": 284,
+              "label": "<main> [12-27]",
+              "loc": {
+                "end": {
+                  "column": 11,
+                  "line": 27,
+                },
+                "start": {
+                  "column": 4,
+                  "line": 12,
+                },
+              },
+              "source": "<main data-time-block="true">
+      <div
+        className={cn(
+          "group absolute z-10 rounded-md border",
+          isPreview
+            ? "border-dashed border-gray-400 bg-gray-100/50"
+            : "border-solid bg-card shadow-sm hover:shadow-md",
+          isClipped && "rounded-none border-dashed",
+          block.isClippedStart && "rounded-t-none border-t-0",
+          block.isClippedEnd && "rounded-b-none border-b-0"
+        )}
+        onMouseDown={handleMouseDown}
+      >
+        {name}
+      </div>
+    </main>",
+              "value": 3,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:243-793",
+          "kind": 253,
+          "label": "return (
+    <main data-time-block="t... [11-28]",
+          "loc": {
+            "end": {
+              "column": 4,
+              "line": 28,
+            },
+            "start": {
+              "column": 2,
+              "line": 11,
+            },
+          },
+          "source": "return (
+    <main data-time-block="true">
+      <div
+        className={cn(
+          "group absolute z-10 rounded-md border",
+          isPreview
+            ? "border-dashed border-gray-400 bg-gray-100/50"
+            : "border-solid bg-card shadow-sm hover:shadow-md",
+          isClipped && "rounded-none border-dashed",
+          block.isClippedStart && "rounded-t-none border-t-0",
+          block.isClippedEnd && "rounded-b-none border-b-0"
+        )}
+        onMouseDown={handleMouseDown}
+      >
+        {name}
+      </div>
+    </main>
+  );",
+          "value": 4,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+      "kind": 262,
+      "label": "TimeBlock() [6-29]",
+      "loc": {
+        "end": {
+          "column": 1,
+          "line": 29,
+        },
+        "start": {
+          "column": 0,
+          "line": 6,
+        },
+      },
+      "source": "export function TimeBlock({
+  block,
+  isPreview = false,
+  isClipped = false,
+}: any) {
+  return (
+    <main data-time-block="true">
+      <div
+        className={cn(
+          "group absolute z-10 rounded-md border",
+          isPreview
+            ? "border-dashed border-gray-400 bg-gray-100/50"
+            : "border-solid bg-card shadow-sm hover:shadow-md",
+          isClipped && "rounded-none border-dashed",
+          block.isClippedStart && "rounded-t-none border-t-0",
+          block.isClippedEnd && "rounded-b-none border-b-0"
+        )}
+        onMouseDown={handleMouseDown}
+      >
+        {name}
+      </div>
+    </main>
+  );
+}",
+      "value": 5,
     },
   ],
   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx",
@@ -94,16 +348,44 @@ exports[`buildScopeTree - simpleJsx > should build a scope tree for the simpleJs
   "label": "simpleJsx.tsx",
   "loc": {
     "end": {
-      "column": 76,
-      "line": 2,
+      "column": 0,
+      "line": 30,
     },
     "start": {
       "column": 0,
       "line": 1,
     },
   },
-  "source": "const name = "test"
-export const output = <main><div data-time-block="true">{name}</div></main>;",
-  "value": 5,
+  "source": "const name = "test";
+const handleMouseDown = () => {
+  console.log("handleMouseDown");
+};
+const cn = (...args: (string | boolean)[]) => args.join(" ");
+export function TimeBlock({
+  block,
+  isPreview = false,
+  isClipped = false,
+}: any) {
+  return (
+    <main data-time-block="true">
+      <div
+        className={cn(
+          "group absolute z-10 rounded-md border",
+          isPreview
+            ? "border-dashed border-gray-400 bg-gray-100/50"
+            : "border-solid bg-card shadow-sm hover:shadow-md",
+          isClipped && "rounded-none border-dashed",
+          block.isClippedStart && "rounded-t-none border-t-0",
+          block.isClippedEnd && "rounded-b-none border-b-0"
+        )}
+        onMouseDown={handleMouseDown}
+      >
+        {name}
+      </div>
+    </main>
+  );
+}
+",
+  "value": 13,
 }
 `;
