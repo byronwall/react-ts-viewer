@@ -1,9 +1,10 @@
 import type { ScopeNode } from "../../../types";
 import { analyzeBOI } from "./analyzeBOI";
 import { buildHierarchicalStructure } from "./buildHierarchicalStructure";
-import { getNodeSize } from "./getNodeSize";
-import { findInnermostNodeByOffset, findNodesByName } from "./graph_nodes";
-import { nodeDeclaresIdentifier } from "./ts_ast";
+import { findInnermostNodeByOffset } from "./graph_nodes";
+
+// New: rely on the TypeScript compiler API via ts-morph for declaration resolution
+import { Project } from "ts-morph";
 
 export interface SemanticReference {
   name: string;
@@ -149,104 +150,112 @@ export function buildSemanticReferenceGraph(
   const referencedNodes: ScopeNode[] = [focusNode]; // Always include the focus node
   const resolvedReferences: SemanticReference[] = [];
 
-  // Resolve semantic references to actual nodes (with strict limits)
+  /* ======================================================================
+     Leverage ts-morph to locate *actual* declaration nodes instead of our
+     previous ad-hoc heuristics.
+  ====================================================================== */
+
+  // 1. Create a lightweight ts-morph project containing the file we are
+  //    analysing.  We purposefully skip adding every file from the
+  //    tsconfig to keep things fast.  For same-file references this is
+  //    more than enough; cross-file look-ups will gracefully fall back.
+  const sourceFilePath: string = (focusNode.id.split(":")[0] ||
+    focusNode.id) as string; // Extract file path (portion before first colon)
+  const project = new Project({
+    useInMemoryFileSystem: false,
+    skipAddingFilesFromTsConfig: true,
+  });
+
+  let sourceFile;
+  try {
+    sourceFile = project.addSourceFileAtPath(sourceFilePath as string);
+  } catch (err) {
+    // On any failure (e.g. the file no longer exists), bail out and just
+    // return the minimal result so we don't crash the UI.
+    console.warn(
+      "⚠️ buildSemanticReferenceGraph – could not addSourceFile:",
+      err
+    );
+    return {
+      nodes: [focusNode],
+      references: [],
+      hierarchicalRoot: focusNode,
+    };
+  }
+
   for (const ref of externalReferences) {
-    const matchingNodes = findNodesByName(rootNode, ref.name);
+    // Locate the usage node by absolute character position.
+    const usageNodeTs = sourceFile.getDescendantAtPos(ref.offset);
 
-    if (matchingNodes.length <= 0) {
-      continue;
+    if (!usageNodeTs) {
+      continue; // Couldn't find node at offset (comment, whitespace, etc.)
     }
-    // Prefer real declaration nodes over incidental matches (e.g. an "if" clause that merely mentions the name)
-    const declarationCategories = [
-      "Variable",
-      "Parameter",
-      "Function",
-      "Import",
-      "Class",
-    ];
 
-    const declarationCandidates = matchingNodes.filter(
-      (n) =>
-        declarationCategories.includes(n.category) ||
-        nodeDeclaresIdentifier(n, ref.name)
+    // Resolve the symbol associated with this usage.
+    const symbol = usageNodeTs.getSymbol() ?? usageNodeTs.getType().getSymbol();
+
+    if (!symbol) {
+      continue; // Not all nodes have symbols (e.g. punctuation)
+    }
+
+    const declarations = symbol.getDeclarations();
+
+    if (!declarations || declarations.length === 0) {
+      continue; // No declaration found (should be rare)
+    }
+
+    // Prefer declarations that live in the same file – falling back to the
+    // first declaration if none match.
+    let declTs = declarations.find(
+      (d) => d.getSourceFile().getFilePath() === sourceFilePath
     );
 
-    // ------------------------------------------------------------------
-    // Prioritize candidates that ACTUALLY declare the identifier and whose
-    // category suggests a real declaration site (e.g. Parameter, Variable,
-    // Function).  If several such candidates exist, prefer the *smallest*
-    // node slice (most specific).  Only if **none** declare the identifier
-    // do we fall back to incidental matches (e.g. a JSX element that merely
-    // references the variable).
-    // ------------------------------------------------------------------
-    const declPriorityOrder = [
-      "Parameter",
-      "Variable",
-      "Function",
-      "ArrowFunction",
-      "Method",
-      "Import",
-      "Class",
-    ];
-
-    const categorize = (n: ScopeNode): number => {
-      const idx = declPriorityOrder.findIndex((c) =>
-        String(n.category).startsWith(c)
-      );
-      return idx === -1 ? declPriorityOrder.length : idx;
-    };
-
-    const poolToSort =
-      declarationCandidates.length > 0 ? declarationCandidates : matchingNodes;
-
-    const sortedMatchingNodes = poolToSort.sort((a, b) => {
-      // 1) Declaration category priority
-      const catA = categorize(a);
-      const catB = categorize(b);
-      if (catA !== catB) return catA - catB;
-
-      // 2) Slice size (smaller → more specific)
-      return getNodeSize(a) - getNodeSize(b);
-    });
-
-    const specificDeclarationNode = sortedMatchingNodes[0];
-
-    if (!specificDeclarationNode) {
+    if (!declTs) {
+      // Cross-file declaration – for now, we skip because we don't have a
+      // ScopeTree built for that file.  Future refactor could lazily build
+      // additional ScopeTrees.
       continue;
     }
 
-    // For outgoing and recursive references
-    if (specificDeclarationNode.id === focusNode.id) {
+    const declStart = declTs.getStart();
+
+    const declarationScopeNode = findInnermostNodeByOffset(rootNode, declStart);
+
+    if (!declarationScopeNode) {
+      continue; // Couldn't map ts-morph node back to scope tree
+    }
+
+    // Guard against self-references (e.g. recursive function calls)
+    if (declarationScopeNode.id === focusNode.id) {
       continue;
     }
 
-    const usageNodeId = ref.offset
-      ? findInnermostNodeByOffset(rootNode, ref.offset)?.id || focusNode.id
-      : focusNode.id;
+    const usageScopeNodeId =
+      findInnermostNodeByOffset(rootNode, ref.offset)?.id || focusNode.id;
 
     resolvedReferences.push({
       ...ref,
-      targetNodeId: specificDeclarationNode.id,
+      targetNodeId: declarationScopeNode.id,
       targets: [focusNode.id],
-      usageNodeId,
+      usageNodeId: usageScopeNodeId,
     });
 
-    // Ensure both the declaration and usage nodes are included in the graph
+    // Collect nodes for visualisation
     if (
       !referencedNodes.some(
-        (sn: ScopeNode) => sn.id === specificDeclarationNode.id
+        (sn: ScopeNode) => sn.id === declarationScopeNode.id
       )
     ) {
-      referencedNodes.push(specificDeclarationNode);
+      referencedNodes.push(declarationScopeNode);
     }
 
     if (
-      usageNodeId &&
-      !referencedNodes.some((sn: ScopeNode) => sn.id === usageNodeId)
+      usageScopeNodeId &&
+      !referencedNodes.some((sn: ScopeNode) => sn.id === usageScopeNodeId)
     ) {
-      const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
-      if (usageNode) {
-        referencedNodes.push(usageNode);
+      const usageScopeNode = findInnermostNodeByOffset(rootNode, ref.offset);
+      if (usageScopeNode) {
+        referencedNodes.push(usageScopeNode);
       }
     }
   }
