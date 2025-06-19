@@ -6,7 +6,7 @@ import type { ScopeNode } from "../../../types";
 import { Project, SyntaxKind, ts } from "ts-morph";
 import { findInnermostNodeByOffset } from "./graph_nodes";
 
-export interface SemanticReference {
+interface SemanticReference {
   name: string;
   type:
     | "function_call"
