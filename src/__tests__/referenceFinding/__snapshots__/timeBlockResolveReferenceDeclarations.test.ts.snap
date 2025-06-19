@@ -140,37 +140,5 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
       "type": "function_call",
     },
   },
-  {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "x",
-      "offset": 1677,
-      "position": {
-        "character": 30,
-        "line": 65,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
-  {
-    "declaration": null,
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "y",
-      "offset": 1689,
-      "position": {
-        "character": 42,
-        "line": 65,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
-      "targets": [],
-      "type": "variable_reference",
-    },
-  },
 ]
 `;

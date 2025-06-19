@@ -86,10 +86,14 @@ export function extractSemanticReferences(
       !isPartOfDeclaration(n) &&
       !isIdentifierTypePosition(n)
     ) {
-      // Skip identifiers that are *property names* in a property access expression
-      // e.g. the `includes` in `keysToTrack.includes`. We only want the root object
-      // (handled separately by `handlePropertyAccess`).
-      if (ts.isPropertyAccessExpression(n.parent) && n.parent.name === n) {
+      // Skip identifiers that are **property names** in:
+      //   1. A property access expression – e.g. the `includes` in `keysToTrack.includes`.
+      //   2. An object-literal property assignment – e.g. the `x` in `{ x: offsetX }`.
+      // Literal keys are not variable references; we only want actual value identifiers.
+      if (
+        (ts.isPropertyAccessExpression(n.parent) && n.parent.name === n) ||
+        (ts.isPropertyAssignment(n.parent) && n.parent.name === n)
+      ) {
         return; // ignore property name part
       }
 
