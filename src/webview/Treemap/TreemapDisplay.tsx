@@ -463,10 +463,13 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 
         // ---- Build arrow edges synchronously ----
         try {
-          const { references } = buildSemanticReferenceGraph(
+          const { references, nodes } = buildSemanticReferenceGraph(
             fullNodeFromInitialTree,
             initialData
           );
+
+          console.log("references", references);
+          console.log("nodes", nodes);
 
           const edges: ReferenceEdge[] = [];
 

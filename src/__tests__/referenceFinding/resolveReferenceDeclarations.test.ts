@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { analyzeBOI } from "../../webview/Treemap/ref_graph/analyzeBOI";
-import { resolveReferenceDeclarations } from "../../webview/Treemap/ref_graph/resolveReferenceDeclarations";
+import { buildSemanticReferenceGraph } from "../../webview/Treemap/ref_graph/buildSemanticReferenceGraph";
 import { createRefGraphObjs } from "./createRefGraphObjs";
 import path from "path";
 
@@ -19,11 +18,9 @@ describe("reference declaration resolver – useKeyModifiers.handleKeyDown", () 
       "handleKeyDown"
     );
 
-    const { externalReferences } = analyzeBOI(focusNode, rootNode);
-
-    const resolved = resolveReferenceDeclarations(externalReferences, rootNode);
+    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
 
     // Snapshot to keep output stable and easy to inspect
-    expect(resolved).toMatchSnapshot();
+    expect(references).toMatchSnapshot();
   });
 });

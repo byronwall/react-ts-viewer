@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { analyzeBOI } from "../../webview/Treemap/ref_graph/analyzeBOI";
+import { buildSemanticReferenceGraph } from "../../webview/Treemap/ref_graph/buildSemanticReferenceGraph";
 import { createRefGraphObjs } from "./createRefGraphObjs";
 import path from "path";
 
@@ -17,9 +17,9 @@ describe("reference finder – useKeyModifiers.handleKeyDown", () => {
       fixturePath,
       "handleKeyDown"
     );
-    const { externalReferences } = analyzeBOI(focusNode, rootNode);
+    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
 
-    // Snapshot just the external references (makes diffs clean)
-    expect(externalReferences).toMatchSnapshot();
+    // Snapshot just the references (makes diffs clean)
+    expect(references).toMatchSnapshot();
   });
 });

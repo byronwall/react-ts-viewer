@@ -3,142 +3,123 @@
 exports[`reference declaration resolver – simpleJsx.<main> > should map each external reference inside <main> to its declaration 1`] = `
 [
   {
-    "declaration": {
-      "kind": "variable",
-      "offset": 96,
-      "position": {
-        "character": 7,
-        "line": 5,
-      },
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "cn",
+    "offset": 316,
+    "position": {
+      "character": 19,
+      "line": 14,
     },
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "cn",
-      "offset": 316,
-      "position": {
-        "character": 20,
-        "line": 14,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
-      "targets": [],
-      "type": "function_call",
-    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:96-150",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:96-150",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
   },
   {
-    "declaration": {
-      "kind": "parameter",
-      "offset": 178,
-      "position": {
-        "character": 27,
-        "line": 6,
-      },
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "isPreview",
+    "offset": 381,
+    "position": {
+      "character": 10,
+      "line": 16,
     },
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "isPreview",
-      "offset": 370,
-      "position": {
-        "character": 51,
-        "line": 15,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
-      "targets": [],
-      "type": "variable_reference",
-    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
   },
   {
-    "declaration": {
-      "kind": "parameter",
-      "offset": 178,
-      "position": {
-        "character": 27,
-        "line": 6,
-      },
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "isClipped",
+    "offset": 526,
+    "position": {
+      "character": 10,
+      "line": 19,
     },
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "isClipped",
-      "offset": 515,
-      "position": {
-        "character": 64,
-        "line": 18,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
-      "targets": [],
-      "type": "variable_reference",
-    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
   },
   {
-    "declaration": {
-      "kind": "parameter",
-      "offset": 178,
-      "position": {
-        "character": 27,
-        "line": 6,
-      },
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "block",
+    "offset": 579,
+    "position": {
+      "character": 10,
+      "line": 20,
     },
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "block",
-      "offset": 568,
-      "position": {
-        "character": 53,
-        "line": 19,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
-      "targets": [],
-      "type": "variable_reference",
-    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
   },
   {
-    "declaration": {
-      "kind": "variable",
-      "offset": 27,
-      "position": {
-        "character": 7,
-        "line": 2,
-      },
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "block",
+    "offset": 642,
+    "position": {
+      "character": 10,
+      "line": 21,
     },
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "handleMouseDown",
-      "offset": 724,
-      "position": {
-        "character": 22,
-        "line": 23,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
-      "targets": [],
-      "type": "variable_reference",
-    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
   },
   {
-    "declaration": {
-      "kind": "variable",
-      "offset": 6,
-      "position": {
-        "character": 7,
-        "line": 1,
-      },
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "handleMouseDown",
+    "offset": 724,
+    "position": {
+      "character": 21,
+      "line": 23,
     },
-    "reference": {
-      "direction": "outgoing",
-      "isInternal": false,
-      "name": "name",
-      "offset": 758,
-      "position": {
-        "character": 10,
-        "line": 25,
-      },
-      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
-      "targets": [],
-      "type": "variable_reference",
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:27-88",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:27-88",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+  },
+  {
+    "direction": "outgoing",
+    "isInternal": false,
+    "name": "name",
+    "offset": 758,
+    "position": {
+      "character": 9,
+      "line": 25,
     },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:6-19",
+    "targets": [
+      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:6-19",
+    ],
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
   },
 ]
 `;

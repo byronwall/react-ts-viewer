@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import path from "path";
 
-import { analyzeBOI } from "../../webview/Treemap/ref_graph/analyzeBOI";
-import { resolveReferenceDeclarations } from "../../webview/Treemap/ref_graph/resolveReferenceDeclarations";
+import { buildSemanticReferenceGraph } from "../../webview/Treemap/ref_graph/buildSemanticReferenceGraph";
 import { createRefGraphObjs } from "./createRefGraphObjs";
 
 // This test mirrors the other reference-resolution suites but targets the
@@ -21,11 +20,9 @@ describe("reference declaration resolver – simpleJsx.<main>", () => {
 
     const { focusNode, rootNode } = createRefGraphObjs(fixturePath, "<main>");
 
-    const { externalReferences } = analyzeBOI(focusNode, rootNode);
-
-    const resolved = resolveReferenceDeclarations(externalReferences, rootNode);
+    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
 
     // Snapshot to keep output stable and easy to inspect
-    expect(resolved).toMatchSnapshot();
+    expect(references).toMatchSnapshot();
   });
 });

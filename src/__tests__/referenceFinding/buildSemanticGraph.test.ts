@@ -16,13 +16,12 @@ describe("buildSemanticReferenceGraph", () => {
       fixturePath,
       "handleKeyDown"
     );
-    const { references, nodes, hierarchicalRoot } = buildSemanticReferenceGraph(
+    const { references, nodes } = buildSemanticReferenceGraph(
       focusNode,
       rootNode
     );
 
     expect(references).toMatchSnapshot();
     expect(nodes).toMatchSnapshot();
-    expect(hierarchicalRoot).toMatchSnapshot();
   });
 });
