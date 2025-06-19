@@ -10,7 +10,7 @@ import {
 /**
  * Information about a declaration corresponding to a {@link SemanticReference}.
  */
-export interface ReferenceDeclarationInfo {
+interface ReferenceDeclarationInfo {
   /** Kind of declaration node that introduced the identifier */
   kind:
     | "import"
@@ -32,7 +32,7 @@ export interface ReferenceDeclarationInfo {
  * Combines an external {@link SemanticReference} with information about the
  * AST node that *declares* the referenced identifier (if resolvable).
  */
-export interface ResolvedReferenceDeclaration {
+interface ResolvedReferenceDeclaration {
   reference: SemanticReference;
   declaration: ReferenceDeclarationInfo | null;
 }
