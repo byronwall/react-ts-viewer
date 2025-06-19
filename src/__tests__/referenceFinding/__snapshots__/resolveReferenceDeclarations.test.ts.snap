@@ -1,0 +1,75 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > should map each external reference to its declaration 1`] = `
+[
+  {
+    "declaration": {
+      "kind": "import",
+      "offset": 24,
+      "position": {
+        "character": 10,
+        "line": 3,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "useCallback",
+      "offset": 436,
+      "position": {
+        "character": 24,
+        "line": 17,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 268,
+      "position": {
+        "character": 3,
+        "line": 11,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "keysToTrack",
+      "offset": 492,
+      "position": {
+        "character": 11,
+        "line": 19,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "destructuring",
+      "offset": 329,
+      "position": {
+        "character": 9,
+        "line": 13,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "setPressedModifiers",
+      "offset": 541,
+      "position": {
+        "character": 60,
+        "line": 19,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+]
+`;

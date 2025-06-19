@@ -144,112 +144,109 @@ export function buildSemanticReferenceGraph(
   }
 
   // Perform full BOI analysis for all cases (including JSX)
-  const boiAnalysis = analyzeBOI(focusNode, rootNode);
-
-  const allReferences = boiAnalysis.externalReferences;
-
-  // MUCH more restrictive filtering for focused analysis
+  const { externalReferences } = analyzeBOI(focusNode, rootNode);
 
   const referencedNodes: ScopeNode[] = [focusNode]; // Always include the focus node
   const resolvedReferences: SemanticReference[] = [];
 
   // Resolve semantic references to actual nodes (with strict limits)
-  for (const ref of allReferences) {
+  for (const ref of externalReferences) {
     const matchingNodes = findNodesByName(rootNode, ref.name);
 
-    if (matchingNodes.length > 0) {
-      // Prefer real declaration nodes over incidental matches (e.g. an "if" clause that merely mentions the name)
-      const declarationCategories = [
-        "Variable",
-        "Parameter",
-        "Function",
-        "Import",
-        "Class",
-      ];
+    if (matchingNodes.length <= 0) {
+      continue;
+    }
+    // Prefer real declaration nodes over incidental matches (e.g. an "if" clause that merely mentions the name)
+    const declarationCategories = [
+      "Variable",
+      "Parameter",
+      "Function",
+      "Import",
+      "Class",
+    ];
 
-      const declarationCandidates = matchingNodes.filter(
-        (n) =>
-          declarationCategories.includes(n.category) ||
-          nodeDeclaresIdentifier(n, ref.name)
+    const declarationCandidates = matchingNodes.filter(
+      (n) =>
+        declarationCategories.includes(n.category) ||
+        nodeDeclaresIdentifier(n, ref.name)
+    );
+
+    // ------------------------------------------------------------------
+    // Prioritize candidates that ACTUALLY declare the identifier and whose
+    // category suggests a real declaration site (e.g. Parameter, Variable,
+    // Function).  If several such candidates exist, prefer the *smallest*
+    // node slice (most specific).  Only if **none** declare the identifier
+    // do we fall back to incidental matches (e.g. a JSX element that merely
+    // references the variable).
+    // ------------------------------------------------------------------
+    const declPriorityOrder = [
+      "Parameter",
+      "Variable",
+      "Function",
+      "ArrowFunction",
+      "Method",
+      "Import",
+      "Class",
+    ];
+
+    const categorize = (n: ScopeNode): number => {
+      const idx = declPriorityOrder.findIndex((c) =>
+        String(n.category).startsWith(c)
       );
+      return idx === -1 ? declPriorityOrder.length : idx;
+    };
 
-      // ------------------------------------------------------------------
-      // Prioritize candidates that ACTUALLY declare the identifier and whose
-      // category suggests a real declaration site (e.g. Parameter, Variable,
-      // Function).  If several such candidates exist, prefer the *smallest*
-      // node slice (most specific).  Only if **none** declare the identifier
-      // do we fall back to incidental matches (e.g. a JSX element that merely
-      // references the variable).
-      // ------------------------------------------------------------------
-      const declPriorityOrder = [
-        "Parameter",
-        "Variable",
-        "Function",
-        "ArrowFunction",
-        "Method",
-        "Import",
-        "Class",
-      ];
+    const poolToSort =
+      declarationCandidates.length > 0 ? declarationCandidates : matchingNodes;
 
-      const categorize = (n: ScopeNode): number => {
-        const idx = declPriorityOrder.findIndex((c) =>
-          String(n.category).startsWith(c)
-        );
-        return idx === -1 ? declPriorityOrder.length : idx;
-      };
+    const sortedMatchingNodes = poolToSort.sort((a, b) => {
+      // 1) Declaration category priority
+      const catA = categorize(a);
+      const catB = categorize(b);
+      if (catA !== catB) return catA - catB;
 
-      const poolToSort =
-        declarationCandidates.length > 0
-          ? declarationCandidates
-          : matchingNodes;
+      // 2) Slice size (smaller → more specific)
+      return getNodeSize(a) - getNodeSize(b);
+    });
 
-      const sortedMatchingNodes = poolToSort.sort((a, b) => {
-        // 1) Declaration category priority
-        const catA = categorize(a);
-        const catB = categorize(b);
-        if (catA !== catB) return catA - catB;
+    const specificDeclarationNode = sortedMatchingNodes[0];
 
-        // 2) Slice size (smaller → more specific)
-        return getNodeSize(a) - getNodeSize(b);
-      });
+    if (!specificDeclarationNode) {
+      continue;
+    }
 
-      const specificDeclarationNode = sortedMatchingNodes[0];
+    // For outgoing and recursive references
+    if (specificDeclarationNode.id === focusNode.id) {
+      continue;
+    }
 
-      if (!specificDeclarationNode) {
-        continue;
-      }
+    const usageNodeId = ref.offset
+      ? findInnermostNodeByOffset(rootNode, ref.offset)?.id || focusNode.id
+      : focusNode.id;
 
-      // For outgoing and recursive references
-      if (specificDeclarationNode.id !== focusNode.id) {
-        const usageNodeId = ref.offset
-          ? findInnermostNodeByOffset(rootNode, ref.offset)?.id || focusNode.id
-          : focusNode.id;
+    resolvedReferences.push({
+      ...ref,
+      targetNodeId: specificDeclarationNode.id,
+      targets: [focusNode.id],
+      usageNodeId,
+    });
 
-        resolvedReferences.push({
-          ...ref,
-          targetNodeId: specificDeclarationNode.id,
-          targets: [focusNode.id],
-          usageNodeId,
-        });
+    // Ensure both the declaration and usage nodes are included in the graph
+    if (
+      !referencedNodes.some(
+        (sn: ScopeNode) => sn.id === specificDeclarationNode.id
+      )
+    ) {
+      referencedNodes.push(specificDeclarationNode);
+    }
 
-        // Ensure both the declaration and usage nodes are included in the graph
-        if (
-          !referencedNodes.some(
-            (sn: ScopeNode) => sn.id === specificDeclarationNode.id
-          )
-        ) {
-          referencedNodes.push(specificDeclarationNode);
-        }
-
-        if (
-          usageNodeId &&
-          !referencedNodes.some((sn: ScopeNode) => sn.id === usageNodeId)
-        ) {
-          const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
-          if (usageNode) {
-            referencedNodes.push(usageNode);
-          }
-        }
+    if (
+      usageNodeId &&
+      !referencedNodes.some((sn: ScopeNode) => sn.id === usageNodeId)
+    ) {
+      const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
+      if (usageNode) {
+        referencedNodes.push(usageNode);
       }
     }
   }
@@ -274,4 +271,4 @@ export function buildSemanticReferenceGraph(
     references: resolvedReferences,
     hierarchicalRoot,
   };
-} // Semantic reference types
+}

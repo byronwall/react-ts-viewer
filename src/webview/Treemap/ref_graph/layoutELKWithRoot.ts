@@ -475,4 +475,4 @@ export async function layoutELKWithRoot(
     console.error("❌ ELK layout failed:", error);
     throw error;
   }
-} // Data structures from the plan
+}

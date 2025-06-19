@@ -6,8 +6,13 @@ import { createRefGraphObjs } from "./createRefGraphObjs";
 describe("buildSemanticReferenceGraph", () => {
   it("should build a semantic graph", () => {
     const { focusNode, rootNode } = createRefGraphObjs();
-    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
+    const { references, nodes, hierarchicalRoot } = buildSemanticReferenceGraph(
+      focusNode,
+      rootNode
+    );
 
     expect(references).toMatchSnapshot();
+    expect(nodes).toMatchSnapshot();
+    expect(hierarchicalRoot).toMatchSnapshot();
   });
 });
