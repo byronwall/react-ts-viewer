@@ -1,0 +1,176 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reference declaration resolver – TimeBlock.handleMouseDown > should map each external reference to its declaration 1`] = `
+[
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isPreview",
+      "offset": 1218,
+      "position": {
+        "character": 9,
+        "line": 51,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "onResizeStart",
+      "offset": 1461,
+      "position": {
+        "character": 23,
+        "line": 60,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "block",
+      "offset": 1482,
+      "position": {
+        "character": 21,
+        "line": 61,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "variable",
+      "offset": 1092,
+      "position": {
+        "character": 9,
+        "line": 47,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "blockStart",
+      "offset": 1498,
+      "position": {
+        "character": 37,
+        "line": 61,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "variable",
+      "offset": 1130,
+      "position": {
+        "character": 9,
+        "line": 48,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "blockEnd",
+      "offset": 1510,
+      "position": {
+        "character": 49,
+        "line": 61,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "onDragStart",
+      "offset": 1647,
+      "position": {
+        "character": 13,
+        "line": 64,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "x",
+      "offset": 1677,
+      "position": {
+        "character": 30,
+        "line": 65,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "y",
+      "offset": 1689,
+      "position": {
+        "character": 42,
+        "line": 65,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+]
+`;

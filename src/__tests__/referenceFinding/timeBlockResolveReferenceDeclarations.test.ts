@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
+import path from "path";
 
 import { analyzeBOI } from "../../webview/Treemap/ref_graph/analyzeBOI";
 import { resolveReferenceDeclarations } from "../../webview/Treemap/ref_graph/resolveReferenceDeclarations";
 import { createRefGraphObjs } from "./createRefGraphObjs";
-import path from "path";
 
-describe("reference declaration resolver – useKeyModifiers.handleKeyDown", () => {
+describe("reference declaration resolver – TimeBlock.handleMouseDown", () => {
   it("should map each external reference to its declaration", () => {
     const fixturePath = path.join(
       __dirname,
       "..",
       "__fixtures__",
-      "useKeyModifiers.tsx"
+      "TimeBlock.tsx"
     );
 
     const { focusNode, rootNode } = createRefGraphObjs(
       fixturePath,
-      "handleKeyDown"
+      "handleMouseDown"
     );
 
     const { externalReferences } = analyzeBOI(focusNode, rootNode);
