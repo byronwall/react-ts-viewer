@@ -85,7 +85,7 @@ exports[`buildScopeTree - AdvancedComponent (Fixture File) > should build a scop
   id: string;
   onUpdate?: (count: number) => void;
 }",
-          "value": 1,
+          "value": 2,
         },
       ],
       "id": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:280-325",
@@ -118,7 +118,7 @@ interface AdvancedComponentProps {
   id: string;
   onUpdate?: (count: number) => void;
 }",
-      "value": 3,
+      "value": 5,
     },
     {
       "category": "Function",
@@ -193,7 +193,7 @@ interface AdvancedComponentProps {
                         "originalCategory": "ArrowFunction",
                       },
                       "source": "() => console.log(\`\${componentName} unmounted\`)",
-                      "value": 1,
+                      "value": 2,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:198-253",
@@ -210,7 +210,7 @@ interface AdvancedComponentProps {
                     },
                   },
                   "source": "return () => console.log(\`\${componentName} unmounted\`);",
-                  "value": 1,
+                  "value": 3,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:141-257",
@@ -230,7 +230,7 @@ interface AdvancedComponentProps {
     console.log(\`\${componentName} mounted\`);
     return () => console.log(\`\${componentName} unmounted\`);
   }",
-              "value": 2,
+              "value": 5,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:131-275",
@@ -253,7 +253,7 @@ interface AdvancedComponentProps {
     console.log(\`\${componentName} mounted\`);
     return () => console.log(\`\${componentName} unmounted\`);
   }, [componentName])",
-          "value": 2,
+          "value": 6,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:85-278",
@@ -275,7 +275,7 @@ interface AdvancedComponentProps {
     return () => console.log(\`\${componentName} unmounted\`);
   }, [componentName]);
 }",
-      "value": 2,
+      "value": 7,
     },
     {
       "category": "Variable",
@@ -343,7 +343,7 @@ interface AdvancedComponentProps {
               },
               "source": "case "INCREMENT":
       return { ...state, count: state.count + 1 };",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "ControlFlow",
@@ -383,7 +383,7 @@ interface AdvancedComponentProps {
               },
               "source": "case "SET_TEXT":
       return { ...state, text: action.payload };",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "ControlFlow",
@@ -423,7 +423,7 @@ interface AdvancedComponentProps {
               },
               "source": "default:
       return state;",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:515-717",
@@ -447,7 +447,7 @@ interface AdvancedComponentProps {
     default:
       return state;
   }",
-          "value": 3,
+          "value": 7,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:457-719",
@@ -473,7 +473,7 @@ interface AdvancedComponentProps {
       return state;
   }
 }",
-      "value": 3,
+      "value": 8,
     },
     {
       "category": "Variable",
@@ -546,7 +546,7 @@ interface AdvancedComponentProps {
                 "initializer": "useReducer(reducer, initialState)",
               },
               "source": "[state, dispatch] = useReducer(reducer, initialState)",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "Variable",
@@ -618,7 +618,7 @@ interface AdvancedComponentProps {
                           "source": "if (onUpdate) {
       onUpdate(state.count + 1);
     }",
-                          "value": 1,
+                          "value": 2,
                         },
                       ],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1042-1149",
@@ -640,7 +640,7 @@ interface AdvancedComponentProps {
       onUpdate(state.count + 1);
     }
   }",
-                      "value": 2,
+                      "value": 4,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1030-1175",
@@ -665,7 +665,7 @@ interface AdvancedComponentProps {
       onUpdate(state.count + 1);
     }
   }, [state.count, onUpdate])",
-                  "value": 2,
+                  "value": 5,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1012-1175",
@@ -695,7 +695,7 @@ interface AdvancedComponentProps {
       onUpdate(state.count + 1);
     }
   }, [state.count, onUpdate])",
-              "value": 2,
+              "value": 6,
             },
             {
               "category": "Variable",
@@ -744,7 +744,7 @@ interface AdvancedComponentProps {
                   "source": "(event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch({ type: "SET_TEXT", payload: event.target.value });
   }",
-                  "value": 1,
+                  "value": 2,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1186-1323",
@@ -768,7 +768,7 @@ interface AdvancedComponentProps {
               "source": "handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch({ type: "SET_TEXT", payload: event.target.value });
   }",
-              "value": 1,
+              "value": 3,
             },
             {
               "category": "Function",
@@ -815,7 +815,7 @@ interface AdvancedComponentProps {
                   "source": "if (value % 2 === 0) {
       return value * 2;
     }",
-                  "value": 1,
+                  "value": 2,
                 },
                 {
                   "category": "ReturnStatement",
@@ -856,7 +856,7 @@ interface AdvancedComponentProps {
     }
     return value * 3;
   }",
-              "value": 2,
+              "value": 4,
             },
             {
               "category": "ReactHook",
@@ -904,7 +904,7 @@ interface AdvancedComponentProps {
                         "initializer": "utilityFunction(state.count)",
                       },
                       "source": "result = utilityFunction(state.count)",
-                      "value": 1,
+                      "value": 2,
                     },
                     {
                       "category": "Call",
@@ -943,7 +943,7 @@ interface AdvancedComponentProps {
     const result = utilityFunction(state.count);
     console.log("Utility function result:", result);
   }",
-                  "value": 2,
+                  "value": 4,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1532-1671",
@@ -966,7 +966,7 @@ interface AdvancedComponentProps {
     const result = utilityFunction(state.count);
     console.log("Utility function result:", result);
   }, [state.count])",
-              "value": 2,
+              "value": 5,
             },
             {
               "category": "ReturnStatement",
@@ -1142,7 +1142,7 @@ interface AdvancedComponentProps {
                                         },
                                       },
                                       "source": "<p>You entered: {state.text.toUpperCase()}</p>",
-                                      "value": 1,
+                                      "value": 2,
                                     },
                                   ],
                                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2289-2343",
@@ -1159,7 +1159,7 @@ interface AdvancedComponentProps {
                                     },
                                   },
                                   "source": "return <p>You entered: {state.text.toUpperCase()}</p>;",
-                                  "value": 1,
+                                  "value": 3,
                                 },
                               ],
                               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2250-2353",
@@ -1181,7 +1181,7 @@ interface AdvancedComponentProps {
                               "source": "if (state.text.length > 0) {
           return <p>You entered: {state.text.toUpperCase()}</p>;
         }",
-                              "value": 1,
+                              "value": 4,
                             },
                             {
                               "category": "ReturnStatement",
@@ -1223,7 +1223,7 @@ interface AdvancedComponentProps {
         }
         return null;
       }",
-                          "value": 2,
+                          "value": 6,
                         },
                       ],
                       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:2185-2385",
@@ -1246,7 +1246,7 @@ interface AdvancedComponentProps {
         }
         return null;
       })()",
-                      "value": 2,
+                      "value": 7,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1689-2397",
@@ -1284,7 +1284,7 @@ interface AdvancedComponentProps {
         return null;
       })()}
     </div>",
-                  "value": 8,
+                  "value": 14,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:1676-2402",
@@ -1325,7 +1325,7 @@ interface AdvancedComponentProps {
       })()}
     </div>
   );",
-              "value": 8,
+              "value": 15,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:871-2404",
@@ -1397,7 +1397,7 @@ interface AdvancedComponentProps {
     </div>
   );
 }",
-          "value": 17,
+          "value": 37,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:817-2404",
@@ -1527,14 +1527,14 @@ interface AdvancedComponentProps {
     </div>
   );
 }",
-      "value": 17,
+      "value": 38,
     },
     {
       "category": "Import",
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/AdvancedComponent.tsx:0-66",
       "kind": 272,
-      "label": "import react [1]",
+      "label": "react [1]",
       "loc": {
         "end": {
           "column": 66,
@@ -1653,6 +1653,6 @@ const AdvancedComponent: React.FC<AdvancedComponentProps> = ({
 export { AdvancedComponent, useLogger };
 export default AdvancedComponent;
 ",
-  "value": 27,
+  "value": 61,
 }
 `;

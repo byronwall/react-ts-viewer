@@ -53,7 +53,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
                 "initializer": "useState(initialCount)",
               },
               "source": "[count, setCount] = useState(initialCount)",
-              "value": 1,
+              "value": 2,
             },
             {
               "category": "Variable",
@@ -102,7 +102,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
                   "source": "() => {
     setCount(count + 1);
   }",
-                  "value": 1,
+                  "value": 2,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:190-238",
@@ -126,7 +126,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
               "source": "increment = () => {
     setCount(count + 1);
   }",
-              "value": 1,
+              "value": 3,
             },
             {
               "category": "ReturnStatement",
@@ -190,7 +190,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
       <p>Count: {count}</p>
       <button onClick={increment}>Increment</button>
     </div>",
-                  "value": 2,
+                  "value": 3,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:243-358",
@@ -214,7 +214,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
       <button onClick={increment}>Increment</button>
     </div>
   );",
-              "value": 2,
+              "value": 4,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:102-360",
@@ -246,7 +246,7 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
     </div>
   );
 }",
-          "value": 4,
+          "value": 10,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:48-360",
@@ -296,14 +296,14 @@ exports[`buildScopeTree - Simple Component > should build a scope tree for a sim
     </div>
   );
 }",
-      "value": 4,
+      "value": 11,
     },
     {
       "category": "Import",
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/SimpleComponent.tsx:0-40",
       "kind": 272,
-      "label": "import react [1]",
+      "label": "react [1]",
       "loc": {
         "end": {
           "column": 40,
@@ -352,6 +352,6 @@ const SimpleComponent: React.FC<{ initialCount: number }> = ({
 
 export default SimpleComponent;
 ",
-  "value": 5,
+  "value": 13,
 }
 `;

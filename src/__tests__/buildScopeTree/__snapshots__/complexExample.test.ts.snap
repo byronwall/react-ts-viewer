@@ -44,7 +44,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
         "initializer": "createContext<string | null>(null)",
       },
       "source": "MyContext = createContext<string | null>(null)",
-      "value": 1,
+      "value": 2,
     },
     {
       "category": "Variable",
@@ -98,7 +98,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                     "initializer": "useContext(MyContext)",
                   },
                   "source": "contextValue = useContext(MyContext)",
-                  "value": 1,
+                  "value": 2,
                 },
                 {
                   "category": "ReturnStatement",
@@ -145,7 +145,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
       Inner: {text} (Context: {contextValue})
     </p>
   );",
-                  "value": 1,
+                  "value": 2,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:226-386",
@@ -169,7 +169,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     </p>
   );
 }",
-              "value": 2,
+              "value": 5,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:215-387",
@@ -193,7 +193,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     </p>
   );
 })",
-          "value": 2,
+          "value": 6,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:198-387",
@@ -227,7 +227,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     </p>
   );
 })",
-      "value": 2,
+      "value": 7,
     },
     {
       "category": "Class",
@@ -310,7 +310,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                 },
               },
               "source": "this.increment = this.increment.bind(this)",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:497-655",
@@ -331,7 +331,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     this.state = { value: 0 };
     this.increment = this.increment.bind(this); // binding 'this'
   }",
-          "value": 3,
+          "value": 5,
         },
         {
           "category": "Function",
@@ -378,7 +378,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                 },
               },
               "source": "this.setState((prev) => ({ value: prev.value + 1 }))",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:659-734",
@@ -397,7 +397,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
           "source": "increment() {
     this.setState((prev) => ({ value: prev.value + 1 }));
   }",
-          "value": 1,
+          "value": 3,
         },
         {
           "category": "Function",
@@ -528,7 +528,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
         <p>Value: {value}</p>
         <button onClick={this.increment}>Increment Class</button>
       </section>",
-                  "value": 3,
+                  "value": 4,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:821-1008",
@@ -553,7 +553,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
         <button onClick={this.increment}>Increment Class</button>
       </section>
     );",
-              "value": 3,
+              "value": 5,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:738-1012",
@@ -580,7 +580,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
       </section>
     );
   }",
-          "value": 5,
+          "value": 8,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:390-1014",
@@ -622,7 +622,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     );
   }
 }",
-      "value": 9,
+      "value": 17,
     },
     {
       "category": "Variable",
@@ -672,7 +672,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                 "originalCategory": "ArrowFunction",
               },
               "source": "() => import("./AdvancedComponent")",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1063-1110",
@@ -689,7 +689,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
             },
           },
           "source": "React.lazy(() => import("./AdvancedComponent"))",
-          "value": 1,
+          "value": 3,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1047-1110",
@@ -709,7 +709,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
         "initializer": "React.lazy(() => import("./AdvancedComponent"))",
       },
       "source": "LazyComponent = React.lazy(() => import("./AdvancedComponent"))",
-      "value": 1,
+      "value": 4,
     },
     {
       "category": "Function",
@@ -757,7 +757,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
             "initializer": "useState<string[]>([])",
           },
           "source": "[data, setData] = useState<string[]>([])",
-          "value": 1,
+          "value": 2,
         },
         {
           "category": "Variable",
@@ -802,7 +802,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
             "initializer": "useState(false)",
           },
           "source": "[isLoading, setIsLoading] = useState(false)",
-          "value": 1,
+          "value": 2,
         },
         {
           "category": "Variable",
@@ -871,7 +871,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                     "originalCategory": "ArrowFunction",
                   },
                   "source": "(resolve) => setTimeout(resolve, 500)",
-                  "value": 1,
+                  "value": 2,
                 },
                 {
                   "category": "Call",
@@ -932,7 +932,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
     setIsLoading(false);
   }",
-              "value": 4,
+              "value": 6,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1327-1555",
@@ -964,7 +964,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     setData([\`item1-\${filter}\`, \`item2-\${filter}\`]);
     setIsLoading(false);
   }",
-          "value": 4,
+          "value": 7,
         },
         {
           "category": "ReactHook",
@@ -1029,7 +1029,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     console.log("Theme changed:", theme);
     fetchData(theme);
   }",
-              "value": 2,
+              "value": 3,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1560-1702",
@@ -1053,7 +1053,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     console.log("Theme changed:", theme);
     fetchData(theme);
   }, [theme])",
-          "value": 2,
+          "value": 4,
         },
         {
           "category": "IfClause",
@@ -1095,7 +1095,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                 },
               },
               "source": "return <div>Loading data for {theme}...</div>;",
-              "value": 1,
+              "value": 2,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1707-1778",
@@ -1117,7 +1117,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
           "source": "if (isLoading) {
     return <div>Loading data for {theme}...</div>;
   }",
-          "value": 1,
+          "value": 3,
         },
         {
           "category": "Variable",
@@ -1165,7 +1165,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                         },
                       },
                       "source": "<li key={index}>{item.toUpperCase()}</li>",
-                      "value": 1,
+                      "value": 2,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1897-1946",
@@ -1182,7 +1182,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                     },
                   },
                   "source": "return <li key={index}>{item.toUpperCase()}</li>;",
-                  "value": 1,
+                  "value": 3,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1801-1950",
@@ -1208,7 +1208,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     // A render prop style function inside the component
     return <li key={index}>{item.toUpperCase()}</li>;
   }",
-              "value": 1,
+              "value": 4,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1788-1950",
@@ -1234,7 +1234,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     // A render prop style function inside the component
     return <li key={index}>{item.toUpperCase()}</li>;
   }",
-          "value": 1,
+          "value": 5,
         },
         {
           "category": "ReturnStatement",
@@ -1320,7 +1320,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                         },
                       },
                       "source": "<ul>{data.map(renderItem)}</ul>",
-                      "value": 1,
+                      "value": 2,
                     },
                     {
                       "category": "JSXElementCustom",
@@ -1399,7 +1399,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
                       "source": "<Suspense fallback={<div>Loading lazy component...</div>}>
           <LazyComponent id="lazy-1" />
         </Suspense>",
-                      "value": 2,
+                      "value": 3,
                     },
                   ],
                   "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:2009-2376",
@@ -1424,7 +1424,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
           <LazyComponent id="lazy-1" />
         </Suspense>
       </article>",
-                  "value": 6,
+                  "value": 9,
                 },
               ],
               "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1968-2402",
@@ -1451,7 +1451,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
         </Suspense>
       </article>
     </MyContext.Provider>",
-              "value": 6,
+              "value": 10,
             },
           ],
           "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1955-2407",
@@ -1481,7 +1481,7 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
       </article>
     </MyContext.Provider>
   );",
-          "value": 6,
+          "value": 11,
         },
       ],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:1159-2409",
@@ -1538,14 +1538,14 @@ exports[`buildScopeTree - Complex TSX > should handle a more complex TSX file wi
     </MyContext.Provider>
   );
 }",
-      "value": 16,
+      "value": 35,
     },
     {
       "category": "Import",
       "children": [],
       "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/ComplexExample.tsx:0-97",
       "kind": 272,
-      "label": "import react [1-7]",
+      "label": "react [1-7]",
       "loc": {
         "end": {
           "column": 15,
@@ -1673,6 +1673,6 @@ function ComplexExample({ theme }: { theme: string }) {
 
 export default ComplexExample;
 ",
-  "value": 30,
+  "value": 67,
 }
 `;
