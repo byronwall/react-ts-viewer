@@ -3,7 +3,6 @@ import type { ScopeNode } from "../../../types";
 import { type SemanticReference } from "./buildSemanticReferenceGraph";
 import { buildVariableScope } from "./buildVariableScope";
 import { extractSemanticReferences } from "./extractSemanticReferences";
-import { findIncomingReferences } from "./findIncomingReferences";
 import { getPathToNode } from "./graph_nodes";
 import { createSourceFile, getLineAndCharacter } from "./ts_ast";
 
@@ -14,8 +13,6 @@ interface BOIAnalysis {
     { node: ts.Node; name: string; line: number }
   >;
   externalReferences: SemanticReference[];
-  incomingReferences: SemanticReference[];
-  recursiveReferences: SemanticReference[];
 }
 
 // Analyze Block of Interest (BOI) for semantic references
@@ -29,8 +26,6 @@ export function analyzeBOI(
       scopeBoundary: { start: 0, end: 0 },
       internalDeclarations: new Map(),
       externalReferences: [],
-      incomingReferences: [],
-      recursiveReferences: [],
     };
   }
 
@@ -113,19 +108,10 @@ export function analyzeBOI(
       externalReferences = Array.from(seen.values());
     }
 
-    // Find incoming references by searching the root node for references to BOI variables
-    const incomingReferences = findIncomingReferences(
-      focusNode,
-      rootNode,
-      boiScope
-    );
-
     return {
       scopeBoundary: { start: 0, end: focusNode.source.length },
       internalDeclarations: boiScope.declarations,
       externalReferences,
-      incomingReferences,
-      recursiveReferences,
     };
   } catch (error) {
     console.error("❌ Error in BOI analysis:", error);
@@ -133,8 +119,6 @@ export function analyzeBOI(
       scopeBoundary: { start: 0, end: 0 },
       internalDeclarations: new Map(),
       externalReferences: [],
-      incomingReferences: [],
-      recursiveReferences: [],
     };
   }
 }

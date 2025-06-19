@@ -24,7 +24,7 @@ export interface SemanticReference {
   /** ID of the innermost ScopeNode that contains the reference usage (filled later) */
   usageNodeId?: string;
   isInternal: boolean; // true if declared within BOI scope
-  direction: "outgoing" | "incoming" | "recursive";
+  direction: "outgoing";
 }
 
 export function buildSemanticReferenceGraph(
@@ -35,6 +35,103 @@ export function buildSemanticReferenceGraph(
   references: SemanticReference[];
   hierarchicalRoot: ScopeNode;
 } {
+  /*
+  ============================================================
+   buildSemanticReferenceGraph – High-Level Summary & Review
+  ============================================================
+  Purpose
+  -------
+  Given a `focusNode` (the slice of AST the user clicked on) and the
+  `rootNode` (the full parsed file), this routine:
+  1. Runs a "Breadth-Of-Interest" analysis (`analyzeBOI`) to collect
+     external, incoming, and recursive identifier references relative to the
+     focus node.
+  2. Heuristically filters that raw reference list down to a *small* set of
+     the "most interesting" references (`maxReferences` ≤ 20) and the nodes
+     that declare / use them (`maxNodes` ≤ 20).
+  3. Attempts to resolve every kept reference to a concrete declaration
+     node via `findNodesByName`, `nodeDeclaresIdentifier`, and custom
+     category sorting.
+  4. Produces three artefacts for visualisation:
+      • `nodes`               – all ScopeNodes we decided are relevant
+      • `references`          – the resolved semantic edges (outgoing ↔ incoming)
+      • `hierarchicalRoot`    – a trimmed AST suitable for a tree-view
+
+  Where Things Get Hokey / Fragile
+  --------------------------------
+  • **Hard-coded magic numbers** – `maxNodes = 20`, `maxReferences = 20`.
+    These caps are baked-in; any dataset that legitimately needs more will
+    simply be truncated.
+
+  • **Brittle identifier filtering** – The `prioritizedReferences` filter:
+    – Maintains a *hand-written* list (`isGenericName`) of hundreds of common
+      words.  Easy to miss cases and creates maintenance burden.
+    – "LikelyTextToken" regex assumes English and specific casing.
+    – Length & single-character heuristics silently drop legitimate code
+      (e.g. loop indices `i`, `j`).
+
+  • **Ad-hoc declaration ranking** – Declaration categories are compared
+    by `String(n.category).startsWith(c)` instead of enums.  Ordering is
+    guessed, not documented.
+
+  • **Monolithic function** – ~300 lines mixing data collection, filtering,
+    resolution, and tree construction.  Hard to test & reason about.
+
+  • **TODO without follow-up** – Comment says "need to refactor this code
+    out then write tests to verify it's working" – but it never happens.
+
+  Quick Wins / Cleanup Ideas
+  --------------------------
+  1. **Extract Helpers**
+      • `filterRelevantReferences(allRefs): SemanticReference[]`
+      • `rankDeclarationCandidates(candidates): ScopeNode[]`
+      • `resolveReference(ref, rootNode): ResolvedReference | undefined`
+      Each isolated piece gets unit tests.
+
+  2. **Parameterise Caps**
+     Accept optional `{ maxNodes, maxReferences }` args so callers can tune
+     behaviour instead of editing source.
+
+  3. **Replace magic lists with Sets & config**
+     Move `genericIdentifiers` and `htmlAttributeNames` into a JSON / util
+     file.  Use `new Set([...])` for O(1) lookups.
+
+  4. **Introduce TypeScript enums** for `SemanticReference.type` and
+     declaration categories to avoid typo bugs and improve readability.
+
+  5. **Leverage real AST checks**
+     Instead of regex-based `isLikelyTextToken`, walk the parent JSX/Text
+     nodes to know if a token originated from plain text.
+
+  6. **Early exits for performance**
+     Short-circuit inside the `for` loop once `referencedNodes` hits
+     `maxNodes` *and* every remaining reference would only add more nodes.
+
+  Testing Strategy
+  ----------------
+  • **Unit tests per helper** – Feed synthetic AST fragments to make sure
+    filtering and ranking behave predictably (e.g. "i" is kept when inside
+    a `for` loop but dropped in JSX text).
+
+  • **Golden-file snapshots** – For a handful of real components, snapshot
+    the `{ nodes, references }` JSON and ensure it stays stable.
+
+  • **Property-based tests** – Randomly generate variable names to verify
+    generic-identifier filter never drops legal identifiers of varying
+    lengths/cases.
+
+  Refactor Roadmap
+  ----------------
+  Phase 1: Extract helpers & add tests (no behaviour change).
+  Phase 2: Replace hard-coded lists with injectable config.
+  Phase 3: Split semantic-graph building and hierarchical-tree building
+           into two discrete public functions.
+  Phase 4: Re-introduce smarter text-token detection using real AST info.
+
+  ============================================================
+   End of meta commentary – original source follows ↓
+  ============================================================
+  */
   // Check if focus node has meaningful source code for analysis
   if (
     !focusNode.source ||
@@ -51,162 +148,16 @@ export function buildSemanticReferenceGraph(
   // Perform full BOI analysis for all cases (including JSX)
   const boiAnalysis = analyzeBOI(focusNode, rootNode);
 
-  const allReferences = [
-    ...boiAnalysis.externalReferences,
-    ...boiAnalysis.incomingReferences,
-    ...boiAnalysis.recursiveReferences,
-  ];
+  const allReferences = boiAnalysis.externalReferences;
 
   // MUCH more restrictive filtering for focused analysis
   const maxNodes = 20; // Increase to accommodate individual variable declarations
-  const maxReferences = 20; // Allow more meaningful references
 
   const referencedNodes: ScopeNode[] = [focusNode]; // Always include the focus node
   const resolvedReferences: SemanticReference[] = [];
 
-  // Filter to only the most relevant references with better filtering
-  const prioritizedReferences = allReferences
-    .filter((ref) => {
-      // Focus on variable references and property access
-      const isRelevantType =
-        ref.type === "variable_reference" ||
-        ref.type === "property_access" ||
-        ref.type === "function_call";
-
-      // ================================================================
-      // Additional filtering to avoid bogus references that come from
-      // ordinary text content (e.g. words inside a static <h2>) or from
-      // partial substring matches inside longer identifiers.  For most
-      // real variable / function names we expect either camelCase, snake,
-      // or PascalCase identifiers *as-a-whole* – not a single English
-      // word plucked out of the middle.  A quick heuristic is:
-      //   1) Starts with an uppercase letter
-      //   2) Followed by only lowercase letters (i.e. a single word)
-      //   3) Not declared internally (so it would otherwise be treated as
-      //      an external reference)
-      // Such tokens frequently arise when plain JSX text like
-      // "Request Admin Access" is parsed – we see the words "Request",
-      // "Admin", "Access" even though they are not identifiers that are
-      // used in code.  We'll treat those as *generic* so they are filtered
-      // out just like "map", "length", etc.
-      const isLikelyTextToken =
-        /^[A-Z][a-z]+$/.test(ref.name) && !ref.isInternal;
-
-      const isGenericName =
-        [
-          "map",
-          "forEach",
-          "filter",
-          "length",
-          "push",
-          "pop",
-          "shift",
-          "unshift",
-          "className",
-          "style",
-          "onClick",
-          "onSubmit",
-          "onChange",
-          "onMouseEnter",
-          "onMouseLeave",
-          "value",
-          "id",
-          "key",
-          "children",
-          "props",
-          "state",
-          "ref",
-          "refs",
-          "type",
-          "name",
-          "title",
-          "text",
-          "data",
-          "index",
-          "item",
-          "items",
-          "e",
-          "event",
-          "target",
-          "currentTarget", // Common event parameter names
-          "undefined",
-          "null",
-          "true",
-          "false", // Literals
-
-          // JSX/HTML attribute names
-          "disabled",
-          "placeholder",
-          "autoComplete",
-          "form",
-          "input",
-          "button",
-          "div",
-          "span",
-          // React/Next.js common names
-          "React",
-          "useState",
-          "useEffect",
-          "useCallback",
-          "useMemo",
-          "Component",
-          // Treat likely text-only tokens as generic too
-        ].includes(ref.name) || isLikelyTextToken;
-
-      // Exclude very short names (likely not meaningful variables)
-      const isTooShort = ref.name.length < 2;
-
-      // Exclude single character variables unless they're likely meaningful
-      const isSingleChar = ref.name.length === 1 && !/[a-z]/.test(ref.name);
-
-      // Exclude common property names that appear in many contexts
-      const isCommonProperty =
-        ref.name.includes(".") &&
-        ["e.preventDefault", "e.target", "event.target", "target.value"].some(
-          (common) => ref.name.includes(common)
-        );
-
-      // Exclude references that are purely internal to the BOI (recursive)
-      const isRecursive = ref.direction === "recursive";
-
-      const shouldInclude =
-        isRelevantType &&
-        !isGenericName &&
-        !isTooShort &&
-        !isSingleChar &&
-        !isCommonProperty &&
-        !isRecursive;
-
-      return shouldInclude;
-    })
-    // Sort by relevance - prioritize variables that are likely state or props
-    .sort((a, b) => {
-      // Prioritize state variables (containing 'set' or ending patterns)
-      const aIsState =
-        a.name.startsWith("set") ||
-        a.name.includes("State") ||
-        /^[a-z]+$/.test(a.name);
-      const bIsState =
-        b.name.startsWith("set") ||
-        b.name.includes("State") ||
-        /^[a-z]+$/.test(b.name);
-
-      if (aIsState && !bIsState) return -1;
-      if (!aIsState && bIsState) return 1;
-
-      // Then prioritize by type - variables over property access
-      if (a.type === "variable_reference" && b.type !== "variable_reference")
-        return -1;
-      if (a.type !== "variable_reference" && b.type === "variable_reference")
-        return 1;
-
-      return 0;
-    })
-    .slice(0, maxReferences); // Take only the most relevant ones
-
   // Resolve semantic references to actual nodes (with strict limits)
-  for (const ref of prioritizedReferences) {
-    // TODO: need to refactor this code out then write tests to verify it's working
+  for (const ref of allReferences) {
     const matchingNodes = findNodesByName(rootNode, ref.name);
 
     if (matchingNodes.length > 0) {
@@ -275,62 +226,35 @@ export function buildSemanticReferenceGraph(
         break;
       }
 
-      // For incoming references, the target should be the focus node
-      if (ref.direction === "incoming") {
+      // For outgoing and recursive references
+      if (specificDeclarationNode.id !== focusNode.id) {
         const usageNodeId = ref.offset
           ? findInnermostNodeByOffset(rootNode, ref.offset)?.id || focusNode.id
           : focusNode.id;
 
         resolvedReferences.push({
           ...ref,
-          targetNodeId: focusNode.id,
+          targetNodeId: specificDeclarationNode.id,
           targets: [focusNode.id],
           usageNodeId,
         });
 
-        // Add the source node (the one containing the reference)
-        const sourceNode = findNodeById(rootNode, ref.sourceNodeId);
+        // Ensure both the declaration and usage nodes are included in the graph
         if (
-          sourceNode &&
-          !referencedNodes.some((sn: ScopeNode) => sn.id === sourceNode.id)
+          !referencedNodes.some(
+            (sn: ScopeNode) => sn.id === specificDeclarationNode.id
+          )
         ) {
-          referencedNodes.push(sourceNode);
+          referencedNodes.push(specificDeclarationNode);
         }
-      } else {
-        // For outgoing and recursive references
+
         if (
-          specificDeclarationNode.id !== focusNode.id ||
-          ref.direction === "recursive"
+          usageNodeId &&
+          !referencedNodes.some((sn: ScopeNode) => sn.id === usageNodeId)
         ) {
-          const usageNodeId = ref.offset
-            ? findInnermostNodeByOffset(rootNode, ref.offset)?.id ||
-              focusNode.id
-            : focusNode.id;
-
-          resolvedReferences.push({
-            ...ref,
-            targetNodeId: specificDeclarationNode.id,
-            targets: [focusNode.id],
-            usageNodeId,
-          });
-
-          // Ensure both the declaration and usage nodes are included in the graph
-          if (
-            !referencedNodes.some(
-              (sn: ScopeNode) => sn.id === specificDeclarationNode.id
-            )
-          ) {
-            referencedNodes.push(specificDeclarationNode);
-          }
-
-          if (
-            usageNodeId &&
-            !referencedNodes.some((sn: ScopeNode) => sn.id === usageNodeId)
-          ) {
-            const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
-            if (usageNode) {
-              referencedNodes.push(usageNode);
-            }
+          const usageNode = findInnermostNodeByOffset(rootNode, ref.offset);
+          if (usageNode) {
+            referencedNodes.push(usageNode);
           }
         }
       }

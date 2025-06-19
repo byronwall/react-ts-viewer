@@ -1,9 +1,10 @@
 import * as ts from "typescript";
-import { SemanticReference } from "./buildSemanticReferenceGraph";
+
 import { VariableScope } from "./graph_nodes";
 import { getLineAndCharacter } from "./ts_ast";
 import { isVariableDeclaredInScope } from "./graph_nodes";
 import { isIdentifierTypePosition, isKeyword } from "./ts_ast";
+import { SemanticReference } from "./buildSemanticReferenceGraph";
 
 // Helper function to extract references from JSX expressions
 
@@ -21,16 +22,19 @@ export function extractJSXExpressionReferences(
       const name = expr.text;
       if (!isKeyword(name)) {
         const isInternal = isVariableDeclaredInScope(name, boiScope);
-        references.push({
-          name,
-          type: "variable_reference",
-          sourceNodeId,
-          position,
-          offset: expr.pos,
-          isInternal,
-          direction: isInternal ? "recursive" : "outgoing",
-          targets: [],
-        });
+
+        if (!isInternal) {
+          references.push({
+            name,
+            type: "variable_reference",
+            sourceNodeId,
+            position,
+            offset: expr.pos,
+            isInternal,
+            direction: "outgoing",
+            targets: [],
+          });
+        }
       }
     } else if (ts.isPropertyAccessExpression(expr)) {
       // Capture only the root object identifier of the JSX property access
@@ -38,31 +42,35 @@ export function extractJSXExpressionReferences(
       if (ts.isIdentifier(rootObj)) {
         const name = rootObj.text;
         const isInternal = isVariableDeclaredInScope(name, boiScope);
-        references.push({
-          name,
-          type: "variable_reference",
-          sourceNodeId,
-          position,
-          offset: expr.pos,
-          isInternal,
-          direction: isInternal ? "recursive" : "outgoing",
-          targets: [],
-        });
+        if (!isInternal) {
+          references.push({
+            name,
+            type: "variable_reference",
+            sourceNodeId,
+            position,
+            offset: expr.pos,
+            isInternal,
+            direction: "outgoing",
+            targets: [],
+          });
+        }
       }
     } else if (ts.isCallExpression(expr)) {
       if (ts.isIdentifier(expr.expression)) {
         const name = expr.expression.text;
         const isInternal = isVariableDeclaredInScope(name, boiScope);
-        references.push({
-          name,
-          type: "function_call",
-          sourceNodeId,
-          position,
-          offset: expr.pos,
-          isInternal,
-          direction: isInternal ? "recursive" : "outgoing",
-          targets: [],
-        });
+        if (!isInternal) {
+          references.push({
+            name,
+            type: "function_call",
+            sourceNodeId,
+            position,
+            offset: expr.pos,
+            isInternal,
+            direction: "outgoing",
+            targets: [],
+          });
+        }
       } else if (ts.isPropertyAccessExpression(expr.expression)) {
         const objectName = ts.isIdentifier(expr.expression.expression)
           ? expr.expression.expression.text
@@ -70,17 +78,18 @@ export function extractJSXExpressionReferences(
         const propertyName = expr.expression.name.text;
         const name = `${objectName}.${propertyName}`;
         const isInternal = isVariableDeclaredInScope(objectName, boiScope);
-
-        references.push({
-          name,
-          type: "property_access",
-          sourceNodeId,
-          position,
-          offset: expr.pos,
-          isInternal,
-          direction: isInternal ? "recursive" : "outgoing",
-          targets: [],
-        });
+        if (!isInternal) {
+          references.push({
+            name,
+            type: "property_access",
+            sourceNodeId,
+            position,
+            offset: expr.pos,
+            isInternal,
+            direction: "outgoing",
+            targets: [],
+          });
+        }
       }
     }
 

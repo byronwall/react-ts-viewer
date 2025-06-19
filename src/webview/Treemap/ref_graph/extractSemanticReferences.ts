@@ -30,17 +30,18 @@ export function extractSemanticReferences(
     if (ts.isCallExpression(n) && ts.isIdentifier(n.expression)) {
       const name = n.expression.text;
       const isInternal = isVariableDeclaredInScope(name, boiScope);
-
-      references.push({
-        name,
-        type: "function_call",
-        sourceNodeId,
-        position,
-        offset: n.pos,
-        isInternal,
-        direction: isInternal ? "recursive" : "outgoing",
-        targets: [],
-      });
+      if (!isInternal) {
+        references.push({
+          name,
+          type: "function_call",
+          sourceNodeId,
+          position,
+          offset: n.pos,
+          isInternal,
+          direction: "outgoing",
+          targets: [],
+        });
+      }
     }
 
     // Property access (calls or plain) – capture ONLY the root object identifier
@@ -50,16 +51,18 @@ export function extractSemanticReferences(
         const name = root.text;
         if (!isKeyword(name)) {
           const isInternal = isVariableDeclaredInScope(name, boiScope);
-          references.push({
-            name,
-            type: "variable_reference",
-            sourceNodeId,
-            position,
-            offset: pa.pos,
-            isInternal,
-            direction: isInternal ? "recursive" : "outgoing",
-            targets: [],
-          });
+          if (!isInternal) {
+            references.push({
+              name,
+              type: "variable_reference",
+              sourceNodeId,
+              position,
+              offset: pa.pos,
+              isInternal,
+              direction: "outgoing",
+              targets: [],
+            });
+          }
         }
       }
     };
@@ -100,16 +103,18 @@ export function extractSemanticReferences(
       ) {
         const isInternal = isVariableDeclaredInScope(name, boiScope);
 
-        references.push({
-          name,
-          type: "variable_reference",
-          sourceNodeId,
-          position,
-          offset: n.pos,
-          isInternal,
-          direction: isInternal ? "recursive" : "outgoing",
-          targets: [],
-        });
+        if (!isInternal) {
+          references.push({
+            name,
+            type: "variable_reference",
+            sourceNodeId,
+            position,
+            offset: n.pos,
+            isInternal,
+            direction: "outgoing",
+            targets: [],
+          });
+        }
       }
     }
 

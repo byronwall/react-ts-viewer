@@ -4,29 +4,41 @@ exports[`reference finder – useKeyModifiers.handleKeyDown > should detect the 
 [
   {
     "direction": "outgoing",
+    "isInternal": false,
     "name": "useCallback",
+    "offset": 436,
     "position": {
       "character": 24,
       "line": 17,
     },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targets": [],
     "type": "function_call",
   },
   {
     "direction": "outgoing",
+    "isInternal": false,
     "name": "keysToTrack",
+    "offset": 492,
     "position": {
       "character": 11,
       "line": 19,
     },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targets": [],
     "type": "variable_reference",
   },
   {
     "direction": "outgoing",
+    "isInternal": false,
     "name": "setPressedModifiers",
+    "offset": 541,
     "position": {
       "character": 60,
       "line": 19,
     },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targets": [],
     "type": "function_call",
   },
 ]
