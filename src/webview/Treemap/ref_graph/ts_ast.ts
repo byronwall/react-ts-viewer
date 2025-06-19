@@ -118,14 +118,19 @@ const declarationCache: Map<
 
 export function createSourceFile(
   source: string,
-  fileName = "temp.ts"
+  fileName = "temp.tsx"
 ): ts.SourceFile {
+  // NOTE: We intentionally use `TSX` here because it is a superset of `TS`.
+  // This allows us to safely parse regular TypeScript *and* any JSX fragments
+  // that may appear inside a Block-Of-Interest (BOI) – for example when the
+  // BOI is a JSX element like `<main>` or `<div>`. Using `TS` would cause the
+  // parser to emit diagnostics or even fail when encountering raw JSX.
   return ts.createSourceFile(
     fileName,
     source,
     ts.ScriptTarget.Latest,
     true,
-    ts.ScriptKind.TS
+    ts.ScriptKind.TSX
   );
 } // Extract names from destructuring patterns
 
@@ -268,8 +273,64 @@ export function isIdentifierTypePosition(identifier: ts.Identifier): boolean {
   }
 
   return false;
-} // Helper function to check if an identifier is a JSX component name
+} // Returns true if the identifier is part of the *name* of a JSX attribute
+// (e.g. the segments "data", "time", "block" in `data-time-block`).
+// We climb ancestors until we either find a JsxAttribute or exit JSX context.
+export function isIdentifierPartOfJsxAttributeName(
+  identifier: ts.Identifier
+): boolean {
+  let current: ts.Node | undefined = identifier;
+  while (current) {
+    if (ts.isJsxAttribute(current)) return true;
 
+    if (
+      ts.isJsxExpression(current) ||
+      ts.isSourceFile(current) ||
+      ts.isBlock(current) ||
+      ts.isFunctionLike(current)
+    ) {
+      return false; // left JSX – not an attribute name
+    }
+
+    current = current.parent;
+  }
+  return false;
+}
+
+// Determines whether an identifier represents the tag *name* of a JSX element
+// (opening, closing, or self-closing) **and** is all lowercase – i.e. the tag
+// is an intrinsic/built-in HTML element such as <div>, <span>, etc.
+export function isIntrinsicJsxElementName(identifier: ts.Identifier): boolean {
+  // Ascend until we find the element node that owns this identifier, stopping
+  // if we leave JSX context.
+  let current: ts.Node | undefined = identifier.parent;
+  while (current) {
+    if (
+      ts.isJsxOpeningElement(current) ||
+      ts.isJsxClosingElement(current) ||
+      ts.isJsxSelfClosingElement(current)
+    ) {
+      const first = identifier.text.charAt(0);
+      return first === first.toLowerCase();
+    }
+
+    if (
+      ts.isSourceFile(current) ||
+      ts.isBlock(current) ||
+      ts.isFunctionLike(current)
+    ) {
+      break; // left JSX context
+    }
+
+    current = current.parent;
+  }
+  return false;
+}
+
+// NOTE: isJSXComponentName previously served as a blanket skip-condition for
+// *all* JSX tag names.  It remains useful elsewhere, but semantic-reference
+// extraction should now call `isIntrinsicJsxElementName` to decide whether to
+// ignore a tag name.
 export function isJSXComponentName(identifier: ts.Identifier): boolean {
   const parent = identifier.parent;
   return (

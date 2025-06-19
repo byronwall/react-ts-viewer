@@ -5,12 +5,13 @@ import { getLineAndCharacter } from "./ts_ast";
 import { isVariableDeclaredInScope } from "./graph_nodes";
 import { extractJSXExpressionReferences } from "./extractJSXExpressionReferences";
 import { getRangeFromNodeId } from "./graph_nodes";
-import { isJSXComponentName } from "./ts_ast";
 import {
   isIdentifierInsideJsxText,
   isIdentifierTypePosition,
   isKeyword,
   isPartOfDeclaration,
+  isIntrinsicJsxElementName,
+  isIdentifierPartOfJsxAttributeName,
 } from "./ts_ast";
 
 // Extract semantic references from AST
@@ -41,6 +42,7 @@ export function extractSemanticReferences(
           direction: "outgoing",
           targets: [],
         });
+        console.log("🔧 captured function call", name, position);
       }
     }
 
@@ -62,6 +64,7 @@ export function extractSemanticReferences(
               direction: "outgoing",
               targets: [],
             });
+            console.log("📦 captured property access root", name, position);
           }
         }
       }
@@ -99,12 +102,27 @@ export function extractSemanticReferences(
 
       const name = n.text;
 
+      // Skip identifiers that originate from within a string literal or template literal.
+      // These are merely lexed tokens inside class strings such as "rounded-none"
+      // or "border-dashed" and do not correspond to actual variable references.
+      if (ts.isStringLiteralLike(n.parent as ts.Node)) {
+        return;
+      }
+
+      // Ignore any identifier that belongs to a JSX attribute name (including
+      // dashed data/aria attributes).
+      if (isIdentifierPartOfJsxAttributeName(n)) {
+        return;
+      }
+
+      // Ignore built-in / intrinsic HTML tag names (e.g. <div>).  Custom
+      // components (capitalized) are allowed through so they can be tracked.
+      if (isIntrinsicJsxElementName(n)) {
+        return;
+      }
+
       // Skip common keywords and JSX component names
-      if (
-        !isKeyword(name) &&
-        !isJSXComponentName(n) &&
-        !isIdentifierInsideJsxText(n)
-      ) {
+      if (!isKeyword(name) && !isIdentifierInsideJsxText(n)) {
         const isInternal = isVariableDeclaredInScope(name, boiScope);
 
         if (!isInternal) {
@@ -118,6 +136,7 @@ export function extractSemanticReferences(
             direction: "outgoing",
             targets: [],
           });
+          console.log("📌 captured identifier", name, position);
         }
       }
     }

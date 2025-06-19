@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reference declaration resolver – simpleJsx.<main> > should map each external reference inside <main> to its declaration 1`] = `
+[
+  {
+    "declaration": {
+      "kind": "variable",
+      "offset": 6,
+      "position": {
+        "character": 7,
+        "line": 1,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "name",
+      "offset": 77,
+      "position": {
+        "character": 58,
+        "line": 2,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:42-95",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+]
+`;

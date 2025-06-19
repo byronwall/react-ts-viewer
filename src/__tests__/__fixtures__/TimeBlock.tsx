@@ -67,7 +67,7 @@ export function TimeBlock({
   };
 
   return (
-    <div
+    <main
       data-time-block="true"
       className={cn(
         "group absolute z-10 rounded-md border",
@@ -111,6 +111,6 @@ export function TimeBlock({
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 } 

@@ -1,0 +1,109 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildScopeTree - simpleJsx > should build a scope tree for the simpleJsx fixture and match snapshot > simpleJsx 1`] = `
+{
+  "category": "Program",
+  "children": [
+    {
+      "category": "Variable",
+      "children": [],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:6-19",
+      "kind": 260,
+      "label": "name [1]",
+      "loc": {
+        "end": {
+          "column": 19,
+          "line": 1,
+        },
+        "start": {
+          "column": 6,
+          "line": 1,
+        },
+      },
+      "meta": {
+        "initializer": ""test"",
+      },
+      "source": "name = "test"",
+      "value": 1,
+    },
+    {
+      "category": "Variable",
+      "children": [
+        {
+          "category": "JSXElementDOM",
+          "children": [
+            {
+              "category": "JSXElementDOM",
+              "children": [],
+              "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:48-88",
+              "kind": 284,
+              "label": "<div> [2]",
+              "loc": {
+                "end": {
+                  "column": 68,
+                  "line": 2,
+                },
+                "start": {
+                  "column": 28,
+                  "line": 2,
+                },
+              },
+              "source": "<div data-time-block="true">{name}</div>",
+              "value": 1,
+            },
+          ],
+          "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:42-95",
+          "kind": 284,
+          "label": "<main> [2]",
+          "loc": {
+            "end": {
+              "column": 75,
+              "line": 2,
+            },
+            "start": {
+              "column": 22,
+              "line": 2,
+            },
+          },
+          "source": "<main><div data-time-block="true">{name}</div></main>",
+          "value": 2,
+        },
+      ],
+      "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:33-95",
+      "kind": 260,
+      "label": "output [2]",
+      "loc": {
+        "end": {
+          "column": 75,
+          "line": 2,
+        },
+        "start": {
+          "column": 13,
+          "line": 2,
+        },
+      },
+      "meta": {
+        "initializer": "<main><div data-time-block="true">{name}</div></main>",
+      },
+      "source": "output = <main><div data-time-block="true">{name}</div></main>",
+      "value": 3,
+    },
+  ],
+  "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx",
+  "kind": 307,
+  "label": "simpleJsx.tsx",
+  "loc": {
+    "end": {
+      "column": 76,
+      "line": 2,
+    },
+    "start": {
+      "column": 0,
+      "line": 1,
+    },
+  },
+  "source": "const name = "test"
+export const output = <main><div data-time-block="true">{name}</div></main>;",
+  "value": 5,
+}
+`;

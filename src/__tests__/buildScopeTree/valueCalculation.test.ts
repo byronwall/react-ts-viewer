@@ -25,17 +25,19 @@ function test() {
     expect(functionNode!.children!.length).toBeGreaterThan(0);
 
     // Function should have a value that's the sum of its children
-    const expectedValue = functionNode!.children!.reduce(
+    const childrenTotal = functionNode!.children!.reduce(
       (sum, child) => sum + child.value,
       0
     );
+    const expectedValue = 1 + childrenTotal;
     expect(functionNode!.value).toBe(expectedValue);
 
     // Verify root value is sum of all its children
-    const rootExpectedValue = tree.children!.reduce(
+    const rootChildrenTotal = tree.children!.reduce(
       (sum, child) => sum + child.value,
       0
     );
+    const rootExpectedValue = 1 + rootChildrenTotal;
     expect(tree.value).toBe(rootExpectedValue);
 
     // Root should have value > 1 (since it has children)

@@ -1,0 +1,302 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reference declaration resolver – TimeBlock.<main> element > should map each external reference to its declaration 1`] = `
+[
+  {
+    "declaration": {
+      "kind": "import",
+      "offset": 139,
+      "position": {
+        "character": 10,
+        "line": 6,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "cn",
+      "offset": 1787,
+      "position": {
+        "character": 18,
+        "line": 72,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isPreview",
+      "offset": 1839,
+      "position": {
+        "character": 49,
+        "line": 73,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isClipped",
+      "offset": 1978,
+      "position": {
+        "character": 62,
+        "line": 76,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "parameter",
+      "offset": 912,
+      "position": {
+        "character": 27,
+        "line": 39,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "block",
+      "offset": 2029,
+      "position": {
+        "character": 51,
+        "line": 77,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isClippedStart",
+      "offset": 2044,
+      "position": {
+        "character": 15,
+        "line": 78,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isClippedEnd",
+      "offset": 2105,
+      "position": {
+        "character": 15,
+        "line": 79,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "variable",
+      "offset": 1165,
+      "position": {
+        "character": 9,
+        "line": 50,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "handleMouseDown",
+      "offset": 2178,
+      "position": {
+        "character": 20,
+        "line": 81,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "div",
+      "offset": 2295,
+      "position": {
+        "character": 14,
+        "line": 86,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "title",
+      "offset": 2707,
+      "position": {
+        "character": 22,
+        "line": 93,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "isFixedTime",
+      "offset": 2829,
+      "position": {
+        "character": 22,
+        "line": 96,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "import",
+      "offset": 44,
+      "position": {
+        "character": 16,
+        "line": 3,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "Lock",
+      "offset": 2845,
+      "position": {
+        "character": 38,
+        "line": 96,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "taskAssignments",
+      "offset": 2895,
+      "position": {
+        "character": 22,
+        "line": 97,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": null,
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "length",
+      "offset": 2912,
+      "position": {
+        "character": 39,
+        "line": 97,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "import",
+      "offset": 38,
+      "position": {
+        "character": 10,
+        "line": 3,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "Link",
+      "offset": 3312,
+      "position": {
+        "character": 20,
+        "line": 107,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "variable_reference",
+    },
+  },
+  {
+    "declaration": {
+      "kind": "variable",
+      "offset": 1026,
+      "position": {
+        "character": 9,
+        "line": 46,
+      },
+    },
+    "reference": {
+      "direction": "outgoing",
+      "isInternal": false,
+      "name": "openEditDialog",
+      "offset": 3092,
+      "position": {
+        "character": 60,
+        "line": 101,
+      },
+      "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1735-3458",
+      "targets": [],
+      "type": "function_call",
+    },
+  },
+]
+`;
