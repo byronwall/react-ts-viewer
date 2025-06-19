@@ -149,6 +149,7 @@ For performance, the system uses a flat rendering approach:
 ### Core Visualization
 
 - **Interactive Treemap**: Navigate code structure visually with proportional sizing
+- **Reference Arrows (NEW)**: Shift-click any node to overlay live arrows that show where external references originate versus the clicked block of interest – no external layout engine required.
 - **Multi-File Support**: View multiple files from the same folder in grid layout
 - **Responsive Design**: Automatically adapts to container size changes
 

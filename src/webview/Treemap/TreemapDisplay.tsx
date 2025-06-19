@@ -20,7 +20,10 @@ import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
 import { layoutHierarchical } from "./layoutHierarchical";
 
 import { pastelSet } from "./pastelSet";
-import { ELKGraph, layoutELKWithRoot } from "./ref_graph/layoutELKWithRoot";
+import { analyzeBOI } from "./ref_graph/analyzeBOI";
+import { resolveReferenceDeclarations } from "./ref_graph/resolveReferenceDeclarations";
+import { findInnermostNodeByOffset } from "./ref_graph/graph_nodes";
+import type { ReferenceEdge } from "./ViewportTreemapSVG";
 
 interface TreemapDisplayProps {
   data: ScopeNode;
@@ -160,8 +163,7 @@ type ViewMode = "treemap" | "referenceGraph";
 
 interface ReferenceGraphState {
   focusNodeId: string;
-  elkGraph: ELKGraph | null;
-  isLoading: boolean;
+  edges: ReferenceEdge[];
 }
 
 export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
@@ -420,54 +422,46 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
       } else {
         // Enter reference graph mode with this node as focus
         setViewMode("referenceGraph");
-        setReferenceGraphState({
-          focusNodeId: fullNodeFromInitialTree.id,
-          elkGraph: null,
-          isLoading: true,
-        });
 
+        // ---- Build arrow edges synchronously ----
         try {
-          // Add timeout to prevent hanging
-          const layoutPromise = layoutELKWithRoot(
-            fullNodeFromInitialTree, // Focus node (what was clicked)
-            initialData, // Root node (entire file tree for reference searching)
-            containerDimensions.width,
-            containerDimensions.height
+          const { externalReferences } = analyzeBOI(
+            fullNodeFromInitialTree,
+            initialData
           );
 
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => {
-              console.error("⏰ ELK layout timed out after 5 seconds");
-              reject(new Error("ELK layout timed out after 5 seconds"));
-            }, 5000);
+          const resolved = resolveReferenceDeclarations(
+            externalReferences,
+            initialData
+          );
+
+          const edges: ReferenceEdge[] = [];
+
+          resolved.forEach((r) => {
+            if (!r.declaration) return;
+            const declNode = findInnermostNodeByOffset(
+              initialData,
+              r.declaration.offset
+            );
+            if (declNode) {
+              edges.push({
+                srcId: declNode.id,
+                dstId: fullNodeFromInitialTree.id,
+              });
+            }
           });
 
-          const elkGraph = await Promise.race([layoutPromise, timeoutPromise]);
-
-          setReferenceGraphState((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  elkGraph,
-                  isLoading: false,
-                }
-              : null
-          );
+          setReferenceGraphState({
+            focusNodeId: fullNodeFromInitialTree.id,
+            edges,
+          });
         } catch (error) {
-          console.error("❌ Failed to generate reference graph:", error);
-          setReferenceGraphState((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  isLoading: false,
-                }
-              : null
-          );
-
-          // Show error message to user
+          console.error("❌ Failed to compute reference arrows:", error);
           vscodeApi.postMessage({
             command: "showErrorMessage",
-            text: `Failed to generate reference graph: ${error instanceof Error ? error.message : String(error)}`,
+            text: `Failed to compute reference arrows: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           });
         }
       }
@@ -1366,7 +1360,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
             maxFontSize={settings.selectedLayout === "hierarchical" ? 11 : 16}
             onResetViewport={resetViewportRef}
             viewMode={viewMode}
-            elkGraph={referenceGraphState?.elkGraph}
+            edges={referenceGraphState?.edges}
             originalFocusNodeId={referenceGraphState?.focusNodeId}
           />
         ) : (

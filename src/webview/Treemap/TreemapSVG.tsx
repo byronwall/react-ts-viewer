@@ -480,6 +480,14 @@ interface ContainerNodeProps {
   onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseLeave: () => void;
+  /**
+   * Optional callback fired once per render to inform parent components
+   * of the container rectangle (after layout, before viewport transform).
+   */
+  onNodeLayout?: (
+    id: string,
+    rect: { x: number; y: number; w: number; h: number }
+  ) => void;
 }
 
 const ContainerNode: React.FC<ContainerNodeProps> = ({
@@ -487,6 +495,7 @@ const ContainerNode: React.FC<ContainerNodeProps> = ({
   onNodeClick,
   onMouseEnter,
   onMouseLeave,
+  onNodeLayout,
 }) => {
   const {
     id,
@@ -516,6 +525,11 @@ const ContainerNode: React.FC<ContainerNodeProps> = ({
 
   const indicatorSize = Math.min(12, headerHeight * 0.4, fontSize * 0.8);
   const textY = Math.min(headerHeight - 2, fontSize + 2);
+
+  // Report layout on every render (cheap and keeps things in sync)
+  React.useEffect(() => {
+    onNodeLayout?.(node.id, { x, y, w, h });
+  }, [onNodeLayout, node.id, x, y, w, h]);
 
   return (
     <g
@@ -670,6 +684,10 @@ interface LeafNodeProps {
   onNodeClick: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseEnter: (node: ScopeNode, event: React.MouseEvent) => void;
   onMouseLeave: () => void;
+  onNodeLayout?: (
+    id: string,
+    rect: { x: number; y: number; w: number; h: number }
+  ) => void;
 }
 
 const LeafNode: React.FC<LeafNodeProps> = ({
@@ -677,6 +695,7 @@ const LeafNode: React.FC<LeafNodeProps> = ({
   onNodeClick,
   onMouseEnter,
   onMouseLeave,
+  onNodeLayout,
 }) => {
   const {
     id,
@@ -700,6 +719,10 @@ const LeafNode: React.FC<LeafNodeProps> = ({
   } = leaf;
 
   const indicatorSize = Math.min(10, h * 0.3, fontSize * 0.7);
+
+  React.useEffect(() => {
+    onNodeLayout?.(node.id, { x, y, w, h });
+  }, [onNodeLayout, node.id, x, y, w, h]);
 
   // Handle special styling for box mode (collapsed containers)
   if (!shouldShowLabel && fontSize === 0) {
@@ -952,6 +975,11 @@ interface TreemapSVGProps {
   viewMode?: ViewMode;
   elkGraph?: ELKGraph | null;
   originalFocusNodeId?: string;
+  /** receives absolute (pre-viewport) rects for every rendered node */
+  onNodeLayout?: (
+    id: string,
+    rect: { x: number; y: number; w: number; h: number }
+  ) => void;
 }
 
 /* ---------- component ------------ */
@@ -971,6 +999,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
   onNodeClick = () => {},
   onMouseEnter = () => {},
   onMouseLeave = () => {},
+  onNodeLayout,
   viewMode = "treemap",
   elkGraph = null,
   originalFocusNodeId,
@@ -1081,27 +1110,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
   };
 
   // Render based on view mode
-  if (viewMode === "referenceGraph") {
-    if (!elkGraph) {
-      // Show loading state for reference graph mode
-
-      return (
-        <>
-          <defs>
-            <style>{treemapStyles}</style>
-          </defs>
-          <text
-            x={width / 2}
-            y={height / 2}
-            textAnchor="middle"
-            fill="#cccccc"
-            fontSize="16"
-          >
-            Generating reference graph...
-          </text>
-        </>
-      );
-    }
+  if (viewMode === "referenceGraph" && elkGraph) {
     const scopeNodesMap = buildScopeNodeMap(root);
 
     return (
@@ -1149,6 +1158,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
             onNodeClick={onNodeClick}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            onNodeLayout={onNodeLayout}
           />
         ) : (
           <LeafNode
@@ -1157,6 +1167,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
             onNodeClick={onNodeClick}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            onNodeLayout={onNodeLayout}
           />
         )
       )}

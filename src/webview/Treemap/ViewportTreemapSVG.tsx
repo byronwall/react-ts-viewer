@@ -13,6 +13,12 @@ interface ViewportState {
 // View mode types
 type ViewMode = "treemap" | "referenceGraph";
 
+// Simple declaration→reference arrow edge
+export interface ReferenceEdge {
+  srcId: string;
+  dstId: string;
+}
+
 interface ViewportTreemapSVGProps {
   root: ScopeNode;
   width: number;
@@ -32,6 +38,8 @@ interface ViewportTreemapSVGProps {
   viewMode?: ViewMode;
   elkGraph?: ELKGraph | null;
   originalFocusNodeId?: string;
+  /** Edges (declaration ➜ reference) to visualise with arrows */
+  edges?: ReferenceEdge[];
 }
 
 export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
@@ -52,6 +60,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
   viewMode = "treemap",
   elkGraph = null,
   originalFocusNodeId,
+  edges = [],
 }) => {
   // Viewport state
   const [viewport, setViewport] = useState<ViewportState>({
@@ -186,6 +195,19 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
     [viewport.translateX, viewport.translateY, viewport.scale]
   );
 
+  // Map of nodeId -> rect (pre-viewport coordinates)
+  const nodeRectsRef = React.useRef(
+    new Map<string, { x: number; y: number; w: number; h: number }>()
+  );
+
+  // Callback receiving rectangles from TreemapContent
+  const handleNodeLayout = React.useCallback(
+    (id: string, rect: { x: number; y: number; w: number; h: number }) => {
+      nodeRectsRef.current.set(id, rect);
+    },
+    []
+  );
+
   // Memoize TreemapContent props to prevent unnecessary re-renders
   const treemapProps = useMemo(
     () => ({
@@ -205,6 +227,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       viewMode,
       elkGraph,
       originalFocusNodeId,
+      onNodeLayout: handleNodeLayout,
     }),
     [
       root,
@@ -222,6 +245,7 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       viewMode,
       elkGraph,
       originalFocusNodeId,
+      handleNodeLayout,
     ]
   );
 
@@ -277,6 +301,99 @@ Mode: ${isPanning ? "PANNING" : "IDLE"}`}
         <g transform={transform}>
           {/* Render the treemap content directly */}
           {memoizedTreemapContent}
+
+          {/* Draw arrows */}
+          {edges.map((edge) => {
+            const src = nodeRectsRef.current.get(edge.srcId);
+            const dst = nodeRectsRef.current.get(edge.dstId);
+            if (!src || !dst) return null;
+
+            // Start at top-center of declaration rectangle
+            const x1 = src.x + src.w / 2;
+            const y1 = src.y;
+
+            // End at top-center of BOI rectangle (focus node)
+            const x2 = dst.x + dst.w / 2;
+            const y2 = dst.y;
+
+            return (
+              <g key={`${edge.srcId}->${edge.dstId}`} pointerEvents="none">
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  fill="white"
+                  stroke="#ff9800"
+                  strokeWidth={2.5}
+                  markerEnd="url(#arrowhead-orange)"
+                />
+              </g>
+            );
+          })}
+
+          {/* Highlight BOI (focus) */}
+          {originalFocusNodeId &&
+            (() => {
+              const rect = nodeRectsRef.current.get(originalFocusNodeId);
+              if (!rect) return null;
+              return (
+                <rect
+                  x={rect.x}
+                  y={rect.y}
+                  width={rect.w}
+                  height={rect.h}
+                  fill="none"
+                  stroke="#ff9800"
+                  strokeWidth={2}
+                  strokeDasharray="4 3"
+                  pointerEvents="none"
+                />
+              );
+            })()}
+
+          {/* Highlight declaration/source nodes */}
+          {(() => {
+            const uniqueSrcIds = new Set(edges.map((e) => e.srcId));
+            return Array.from(uniqueSrcIds).map((id) => {
+              // Skip if the source is also the focus node – already highlighted
+              if (id === originalFocusNodeId) return null;
+              const rect = nodeRectsRef.current.get(id);
+              if (!rect) return null;
+              return (
+                <rect
+                  key={`src-highlight-${id}`}
+                  x={rect.x}
+                  y={rect.y}
+                  width={rect.w}
+                  height={rect.h}
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth={1.5}
+                  strokeDasharray="3 3"
+                  pointerEvents="none"
+                />
+              );
+            });
+          })()}
+
+          {/* Arrowhead marker definition (once) */}
+          {edges.length > 0 && (
+            <defs>
+              <marker
+                id="arrowhead-orange"
+                viewBox="0 0 6 6"
+                refX="5"
+                refY="3"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path d="M0,0 L6,3 L0,6 Z" fill="#ff9800" />
+              </marker>
+            </defs>
+          )}
         </g>
       </svg>
     </div>
