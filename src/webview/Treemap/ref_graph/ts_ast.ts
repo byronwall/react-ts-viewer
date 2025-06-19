@@ -5,7 +5,7 @@ import type { ScopeNode } from "../../../types";
  *  declaration (parameter, variable, function, import, class, enum, etc.) for
  *  the identifier.
  */
-export function nodeDeclaresIdentifier(
+function nodeDeclaresIdentifier(
   node: ScopeNode,
   ident: string
 ): boolean {
@@ -326,19 +326,6 @@ export function isIntrinsicJsxElementName(identifier: ts.Identifier): boolean {
   }
   return false;
 }
-
-// NOTE: isJSXComponentName previously served as a blanket skip-condition for
-// *all* JSX tag names.  It remains useful elsewhere, but semantic-reference
-// extraction should now call `isIntrinsicJsxElementName` to decide whether to
-// ignore a tag name.
-export function isJSXComponentName(identifier: ts.Identifier): boolean {
-  const parent = identifier.parent;
-  return (
-    ts.isJsxOpeningElement(parent) ||
-    ts.isJsxClosingElement(parent) ||
-    ts.isJsxSelfClosingElement(parent)
-  );
-} // Helper function to get line and character from position
 
 export function getLineAndCharacter(
   sourceFile: ts.SourceFile,

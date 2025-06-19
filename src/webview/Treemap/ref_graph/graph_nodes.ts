@@ -1,70 +1,8 @@
 import * as ts from "typescript";
 import type { ScopeNode } from "../../../types";
 
-import { nodeDeclaresIdentifier } from "./ts_ast";
-
 // Helper function to find a node by name in the entire tree
 
-export function findNodesByName(
-  rootNode: ScopeNode,
-  targetName: string
-): ScopeNode[] {
-  const matches: ScopeNode[] = [];
-
-  function searchRecursively(node: ScopeNode) {
-    if (node.label) {
-      // Escape any regex characters in the target name once so we can safely build patterns
-      const escaped = targetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-      // 1) Exact start (fast path – common for most declarations)
-      const exactStartRegex = new RegExp(`^${escaped}\\b`);
-
-      // 2) Anywhere within the label but on *word* boundaries so we still avoid
-      //    partial matches (e.g. `key` inside `monkey`). This captures array /
-      //    object destructuring labels like "[foo, bar]" or "{ foo, bar }".
-      const wordBoundaryRegex = new RegExp(`\\b${escaped}\\b`);
-
-      // ----------------------------------------------------------------
-      // Matching heuristics
-      // ----------------------------------------------------------------
-      // We want to find *proper* identifier matches while avoiding partial
-      // substring hits (e.g. the word "Access" inside "verifyAccess").  A
-      // match is considered valid when ONE of the following is true:
-      //   1) The label *starts* with the identifier followed by a word
-      //      boundary.  This covers most declarations like "password" or
-      //      "handleSubmit".
-      //   2) The entire label *is exactly* the identifier (rare but simple).
-      //   3) The identifier appears on its own word-boundary inside the
-      //      label (useful for destructuring labels such as "[foo, bar]").
-      //
-      // NOTE: We purposely *exclude* previously-used heuristics like
-      // `label.includes("${targetName}.")` because they allowed partial
-      // matches such as "Access" -> "verifyAccess.mutate", which produced
-      // spurious edges to unrelated nodes.
-      const isMatch =
-        exactStartRegex.test(node.label) ||
-        node.label === targetName ||
-        wordBoundaryRegex.test(node.label);
-
-      const declaresHere = nodeDeclaresIdentifier(node, targetName);
-      const matched = isMatch || declaresHere;
-
-      if (matched) {
-        matches.push(node);
-      }
-    }
-
-    // Recursively search children
-    if (node.children) {
-      for (const child of node.children) {
-        searchRecursively(child);
-      }
-    }
-  }
-
-  searchRecursively(rootNode);
-  return matches;
-} // Helper function to find common ancestor of multiple nodes
 export function findCommonAncestor(
   rootNode: ScopeNode,
   nodeIds: string[]
