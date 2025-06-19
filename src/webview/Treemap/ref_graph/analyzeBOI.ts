@@ -7,11 +7,6 @@ import { getPathToNode } from "./graph_nodes";
 import { createSourceFile, getLineAndCharacter } from "./ts_ast";
 
 interface BOIAnalysis {
-  scopeBoundary: { start: number; end: number };
-  internalDeclarations: Map<
-    string,
-    { node: ts.Node; name: string; line: number }
-  >;
   externalReferences: SemanticReference[];
 }
 
@@ -23,8 +18,6 @@ export function analyzeBOI(
   if (!focusNode.source || typeof focusNode.source !== "string") {
     console.warn("⚠️ No source code available for BOI analysis");
     return {
-      scopeBoundary: { start: 0, end: 0 },
-      internalDeclarations: new Map(),
       externalReferences: [],
     };
   }
@@ -91,33 +84,25 @@ export function analyzeBOI(
     let externalReferences = dedupedReferences.filter(
       (ref) => !ref.isInternal && ref.name !== boiVarName
     );
-    const recursiveReferences = dedupedReferences.filter(
-      (ref) => ref.isInternal
-    );
 
     // Final de-duplication for external refs – one entry per (name,type)
-    {
-      const seen = new Map<string, SemanticReference>();
-      externalReferences.forEach((ref) => {
-        // not concerned with type here, just want to avoid duplicates
-        const key = ref.name;
-        if (!seen.has(key)) {
-          seen.set(key, ref);
-        }
-      });
-      externalReferences = Array.from(seen.values());
-    }
+
+    const seen = new Map<string, SemanticReference>();
+    externalReferences.forEach((ref) => {
+      // not concerned with type here, just want to avoid duplicates
+      const key = ref.name;
+      if (!seen.has(key)) {
+        seen.set(key, ref);
+      }
+    });
+    externalReferences = Array.from(seen.values());
 
     return {
-      scopeBoundary: { start: 0, end: focusNode.source.length },
-      internalDeclarations: boiScope.declarations,
       externalReferences,
     };
   } catch (error) {
     console.error("❌ Error in BOI analysis:", error);
     return {
-      scopeBoundary: { start: 0, end: 0 },
-      internalDeclarations: new Map(),
       externalReferences: [],
     };
   }

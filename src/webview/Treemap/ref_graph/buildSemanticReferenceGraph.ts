@@ -1,10 +1,8 @@
 import type { ScopeNode } from "../../../types";
 import { analyzeBOI } from "./analyzeBOI";
-import { findInnermostNodeByOffset } from "./graph_nodes";
-import { findNodeById } from "./graph_nodes";
 import { buildHierarchicalStructure } from "./buildHierarchicalStructure";
-import { findNodesByName } from "./graph_nodes";
 import { getNodeSize } from "./getNodeSize";
+import { findInnermostNodeByOffset, findNodesByName } from "./graph_nodes";
 import { nodeDeclaresIdentifier } from "./ts_ast";
 
 export interface SemanticReference {
@@ -151,7 +149,6 @@ export function buildSemanticReferenceGraph(
   const allReferences = boiAnalysis.externalReferences;
 
   // MUCH more restrictive filtering for focused analysis
-  const maxNodes = 20; // Increase to accommodate individual variable declarations
 
   const referencedNodes: ScopeNode[] = [focusNode]; // Always include the focus node
   const resolvedReferences: SemanticReference[] = [];
@@ -220,10 +217,6 @@ export function buildSemanticReferenceGraph(
 
       if (!specificDeclarationNode) {
         continue;
-      }
-
-      if (referencedNodes.length >= maxNodes) {
-        break;
       }
 
       // For outgoing and recursive references
