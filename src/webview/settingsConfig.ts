@@ -1,9 +1,6 @@
 export interface TreemapSettings {
-  leavesOnly: boolean;
-  innerPadding: number;
   outerPadding: number;
   enableLabel: boolean;
-  labelSkipSize: number;
   nodeOpacity: number;
   borderWidth: number;
   enableTooltip: boolean;
@@ -12,7 +9,6 @@ export interface TreemapSettings {
   showTooltipValue: boolean;
   showTooltipLines: boolean;
   showTooltipSourceSnippet: boolean;
-  tooltipSourceSnippetLength: number;
   enableNodeFlattening: boolean;
   flattenBlocks: boolean;
   flattenArrowFunctions: boolean;
@@ -71,22 +67,6 @@ export type SettingConfig =
   | SelectSettingConfig<any>;
 
 export const treemapSettingsConfig: SettingConfig[] = [
-  // Treemap Display Settings
-  {
-    id: "leavesOnly",
-    label: "Show Leaves Only",
-    type: "boolean",
-    group: "Treemap Display",
-    disabled: (s) => s.selectedLayout !== "binary", // d3-hierarchy based layouts
-  },
-  {
-    id: "innerPadding",
-    label: "Inner Padding (px)",
-    type: "number",
-    group: "Treemap Display",
-    min: 0,
-    disabled: (s) => s.selectedLayout !== "binary", // d3-hierarchy based layouts
-  },
   {
     id: "outerPadding",
     label: "Outer Padding (px)",
@@ -118,14 +98,6 @@ export const treemapSettingsConfig: SettingConfig[] = [
     label: "Enable Labels",
     type: "boolean",
     group: "Label Rendering",
-  },
-  {
-    id: "labelSkipSize",
-    label: "Label Skip Size (px)",
-    type: "number",
-    group: "Label Rendering",
-    min: 0,
-    disabled: (s) => !s.enableLabel,
   },
   {
     id: "minLabelHeight",
@@ -280,16 +252,7 @@ export const treemapSettingsConfig: SettingConfig[] = [
     indent: true,
     disabled: (s) => !s.enableTooltip,
   },
-  {
-    id: "tooltipSourceSnippetLength",
-    label: "Snippet Length",
-    type: "number",
-    group: "Tooltip",
-    min: 0,
-    max: 1000,
-    indent: true,
-    disabled: (s) => !s.enableTooltip || !s.showTooltipSourceSnippet,
-  },
+
   // Layout Engines Group
   {
     id: "selectedLayout",
@@ -386,11 +349,8 @@ export const settingGroupOrder: string[] = [
 
 // Default Treemap settings, aligned with the interface
 export const defaultTreemapSettings: TreemapSettings = {
-  leavesOnly: false,
-  innerPadding: 2,
   outerPadding: 1,
   enableLabel: true,
-  labelSkipSize: 12,
   nodeOpacity: 0.9,
   borderWidth: 1.5,
   enableTooltip: true,
@@ -399,7 +359,6 @@ export const defaultTreemapSettings: TreemapSettings = {
   showTooltipValue: true,
   showTooltipLines: true,
   showTooltipSourceSnippet: true,
-  tooltipSourceSnippetLength: 250,
   enableNodeFlattening: true,
   flattenBlocks: true,
   flattenArrowFunctions: true,

@@ -1109,17 +1109,8 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
       );
       if (settingsInGroup.length === 0) return null;
 
-      const defaultOpenGroup =
-        groupName === "Treemap Display" ||
-        groupName === "Node Visibility" ||
-        groupName === "Node Structure";
-
       return (
-        <CollapsibleSection
-          title={groupName}
-          key={groupName}
-          defaultOpen={defaultOpenGroup}
-        >
+        <CollapsibleSection title={groupName} key={groupName}>
           {settingsInGroup.map((config) => (
             <SettingsControl
               key={config.id}
@@ -1354,7 +1345,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                             marginBottom: "15px",
                           }}
                         >
-                          <h4>Treemap Settings XXX</h4>
+                          <h4>Treemap Settings</h4>
                           {renderSettingsContent()}
                         </div>
                       </Popover.Panel>,
