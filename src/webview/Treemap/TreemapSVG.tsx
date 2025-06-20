@@ -10,9 +10,7 @@ import {
   HierarchicalLayoutOptions,
   layoutHierarchical,
 } from "./layoutHierarchical";
-import { ELKGraph } from "./ref_graph/layoutELKWithRoot";
 
-import { ELKGraphRenderer } from "./ELKGraphRenderer";
 import { pastelSet } from "./pastelSet";
 
 // Stylesheet for treemap animations
@@ -29,7 +27,7 @@ const treemapStyles = `
 /* ---------- utility functions ------------ */
 
 // Function to lighten a hex color by a percentage
-export const lightenColor = (hex: string, percent: number): string => {
+const lightenColor = (hex: string, percent: number): string => {
   // Remove the hash if present
   const cleanHex = hex.replace("#", "");
 
@@ -973,7 +971,6 @@ interface TreemapSVGProps {
   onMouseLeave?: () => void;
   // New props for reference graph mode
   viewMode?: ViewMode;
-  elkGraph?: ELKGraph | null;
   originalFocusNodeId?: string;
   /** receives absolute (pre-viewport) rects for every rendered node */
   onNodeLayout?: (
@@ -1001,7 +998,7 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
   onMouseLeave = () => {},
   onNodeLayout,
   viewMode = "treemap",
-  elkGraph = null,
+
   originalFocusNodeId,
 }) => {
   // Determine which layout options to use based on the layout function
@@ -1108,31 +1105,6 @@ export const TreemapContent: React.FC<TreemapSVGProps> = ({
     }
     return map;
   };
-
-  // Render based on view mode
-  if (viewMode === "referenceGraph" && elkGraph) {
-    const scopeNodesMap = buildScopeNodeMap(root);
-
-    return (
-      <>
-        {/* Stylesheet for transitions */}
-        <defs>
-          <style>{treemapStyles}</style>
-        </defs>
-
-        <ELKGraphRenderer
-          elkGraph={elkGraph}
-          scopeNodes={scopeNodesMap}
-          settings={settings}
-          onNodeClick={onNodeClick}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          selectedNodeId={selectedNodeId}
-          originalFocusNodeId={originalFocusNodeId}
-        />
-      </>
-    );
-  }
 
   // Default treemap rendering
 

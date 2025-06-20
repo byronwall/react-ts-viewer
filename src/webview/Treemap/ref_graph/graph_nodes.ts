@@ -1,33 +1,4 @@
-import * as ts from "typescript";
 import type { ScopeNode } from "../../../types";
-
-// Helper function to find a node by name in the entire tree
-
-function getPathToNode(rootNode: ScopeNode, targetNodeId: string): ScopeNode[] {
-  const path: ScopeNode[] = [];
-
-  function findPath(node: ScopeNode, currentPath: ScopeNode[]): boolean {
-    const newPath = [...currentPath, node];
-
-    if (node.id === targetNodeId) {
-      path.splice(0, path.length, ...newPath);
-      return true;
-    }
-
-    if (node.children) {
-      for (const child of node.children) {
-        if (findPath(child, newPath)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  findPath(rootNode, []);
-  return path;
-} // Recursively find the smallest (innermost) ScopeNode that spans the given character offset
 
 export function findInnermostNodeByOffset(
   node: ScopeNode,
@@ -85,10 +56,4 @@ function getRangeFromNodeId(
   const end = parseInt(m[2]!, 10);
   if (isNaN(start) || isNaN(end)) return null;
   return { start, end };
-} // Check if a variable is declared within a scope (including parent scopes)
-
-interface VariableScope {
-  declarations: Map<string, { node: ts.Node; name: string; line: number }>;
-  parent?: VariableScope;
-  level: number;
 }

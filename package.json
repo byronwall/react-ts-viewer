@@ -144,7 +144,8 @@
     "pretest": "npm run compile-ext && npm run lint",
     "lint": "eslint src --ext ts,tsx",
     "test": "vitest",
-    "test:once": "vitest run"
+    "test:once": "vitest run",
+    "knip": "npx knip --fix --allow-remove-files"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -155,12 +156,10 @@
     "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
-    "@vscode/test-electron": "^2.3.9",
     "@vscode/vsce": "^2.24.0",
     "esbuild": "^0.x.x",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.31.0",
-    "glob": "^10.3.12",
     "mocha": "^10.4.0",
     "npm-run-all": "^4.1.5",
     "prettier": "3.5.3",
@@ -172,7 +171,6 @@
   "dependencies": {
     "@headlessui/react": "^2.2.2",
     "@phosphor-icons/react": "^2.1.7",
-    "elkjs": "^0.10.0",
     "mdast-util-from-markdown": "^2.0.2",
     "mdast-util-gfm": "^3.1.0",
     "micromark-extension-gfm": "^3.0.0",

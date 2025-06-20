@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { ScopeNode } from "../../types";
 import { TreemapSettings } from "../settingsConfig";
 import { AnyLayoutFn, TreemapContent } from "./TreemapSVG";
-import { ELKGraph } from "./ref_graph/layoutELKWithRoot";
 
 interface ViewportState {
   scale: number;
@@ -36,7 +35,7 @@ interface ViewportTreemapSVGProps {
   onResetViewport?: React.MutableRefObject<(() => void) | undefined>; // Ref to expose reset function
   // New props for reference graph mode
   viewMode?: ViewMode;
-  elkGraph?: ELKGraph | null;
+
   originalFocusNodeId?: string;
   /** Edges (declaration ➜ reference) to visualise with arrows */
   edges?: ReferenceEdge[];
@@ -58,7 +57,6 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
   onMouseLeave,
   onResetViewport,
   viewMode = "treemap",
-  elkGraph = null,
   originalFocusNodeId,
   edges = [],
 }) => {
@@ -225,7 +223,6 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       onMouseEnter,
       onMouseLeave: () => {}, // Handle mouse leave at viewport level
       viewMode,
-      elkGraph,
       originalFocusNodeId,
       onNodeLayout: handleNodeLayout,
     }),
@@ -243,7 +240,6 @@ export const ViewportTreemapSVG: React.FC<ViewportTreemapSVGProps> = ({
       onNodeClick,
       onMouseEnter,
       viewMode,
-      elkGraph,
       originalFocusNodeId,
       handleNodeLayout,
     ]
