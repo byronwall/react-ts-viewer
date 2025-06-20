@@ -1,8 +1,5 @@
 import type { ScopeNode } from "../../../types";
-// Removed complex BOI analysis helpers – we now rely solely on a lightweight
-// ts-morph pass to gather lexical dependencies.
 
-// New: rely on the TypeScript compiler API via ts-morph for declaration resolution
 import { Project, SyntaxKind, ts } from "ts-morph";
 import { findInnermostNodeByOffset } from "./graph_nodes";
 
@@ -16,14 +13,11 @@ interface SemanticReference {
     | "destructured_variable";
   sourceNodeId: string;
   targetNodeId?: string;
-  targets?: string[];
   position: { line: number; character: number };
   /** Absolute character offset (from SourceFile) where this reference occurs */
   offset: number;
   /** ID of the innermost ScopeNode that contains the reference usage (filled later) */
   usageNodeId?: string;
-  isInternal: boolean; // true if declared within BOI scope
-  direction: "outgoing";
 }
 
 export function buildSemanticReferenceGraph(
@@ -32,7 +26,6 @@ export function buildSemanticReferenceGraph(
 ): {
   nodes: ScopeNode[];
   references: SemanticReference[];
-  hierarchicalRoot: ScopeNode;
 } {
   // Guard against missing or trivial source text
   if (
@@ -43,7 +36,6 @@ export function buildSemanticReferenceGraph(
     return {
       nodes: [focusNode],
       references: [],
-      hierarchicalRoot: focusNode,
     };
   }
 
@@ -212,18 +204,14 @@ export function buildSemanticReferenceGraph(
       type: "variable_reference",
       sourceNodeId: focusNode.id,
       targetNodeId,
-      targets: targetNodeId ? [targetNodeId] : undefined,
       position,
       offset,
       usageNodeId: focusNode.id,
-      isInternal: false,
-      direction: "outgoing",
     });
   }
 
   return {
     nodes,
     references,
-    hierarchicalRoot: focusNode,
   };
 }

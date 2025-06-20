@@ -3,8 +3,6 @@
 exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > should map each external reference to its declaration 1`] = `
 [
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "useCallback",
     "offset": 437,
     "position": {
@@ -13,15 +11,10 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:15-72",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:15-72",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "KeyboardEvent",
     "offset": 462,
     "position": {
@@ -30,15 +23,10 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "keysToTrack",
     "offset": 492,
     "position": {
@@ -47,15 +35,10 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "ModifierKey",
     "offset": 526,
     "position": {
@@ -64,15 +47,10 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
-    "targets": [
-      "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "setPressedModifiers",
     "offset": 550,
     "position": {
@@ -81,15 +59,10 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:329-410",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:329-410",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "ModifierKey",
     "offset": 626,
     "position": {
@@ -98,15 +71,10 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
-    "targets": [
-      "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "keysToTrack",
     "offset": 679,
     "position": {
@@ -115,9 +83,6 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
   },

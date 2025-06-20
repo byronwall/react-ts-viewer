@@ -3,8 +3,6 @@
 exports[`reference declaration resolver – TimeBlock.handleMouseDown > should map each external reference to its declaration 1`] = `
 [
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "React",
     "offset": 1187,
     "position": {
@@ -13,13 +11,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": undefined,
-    "targets": undefined,
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "MouseEvent",
     "offset": 1193,
     "position": {
@@ -28,13 +23,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": undefined,
-    "targets": undefined,
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "isPreview",
     "offset": 1218,
     "position": {
@@ -43,15 +35,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "onResizeStart",
     "offset": 1468,
     "position": {
@@ -60,15 +47,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "block",
     "offset": 1482,
     "position": {
@@ -77,15 +59,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "blockStart",
     "offset": 1499,
     "position": {
@@ -94,15 +71,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1092-1120",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1092-1120",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "blockEnd",
     "offset": 1511,
     "position": {
@@ -111,15 +83,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1130-1154",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1130-1154",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "onResizeStart",
     "offset": 1575,
     "position": {
@@ -128,15 +95,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "block",
     "offset": 1589,
     "position": {
@@ -145,15 +107,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "blockStart",
     "offset": 1609,
     "position": {
@@ -162,15 +119,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1092-1120",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1092-1120",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "blockEnd",
     "offset": 1621,
     "position": {
@@ -179,15 +131,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1130-1154",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1130-1154",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "onDragStart",
     "offset": 1654,
     "position": {
@@ -196,15 +143,10 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
   {
-    "direction": "outgoing",
-    "isInternal": false,
     "name": "block",
     "offset": 1666,
     "position": {
@@ -213,9 +155,6 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     },
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    "targets": [
-      "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
-    ],
     "type": "variable_reference",
     "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
   },
