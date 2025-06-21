@@ -12,7 +12,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:15-72",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
   },
   {
     "name": "KeyboardEvent",
@@ -24,7 +24,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:454-672",
   },
   {
     "name": "keysToTrack",
@@ -36,7 +36,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
   },
   {
     "name": "ModifierKey",
@@ -48,7 +48,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
   },
   {
     "name": "setPressedModifiers",
@@ -60,7 +60,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:329-410",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
   },
   {
     "name": "ModifierKey",
@@ -72,7 +72,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
   },
   {
     "name": "keysToTrack",
@@ -84,7 +84,7 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 1`] = `
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
   },
 ]
 `;
@@ -295,6 +295,149 @@ exports[`buildSemanticReferenceGraph > should build a semantic graph 2`] = `
     },
     "source": "import { useCallback, useEffect, useState } from "react";",
     "value": 1,
+  },
+  {
+    "category": "ReactHook",
+    "children": [
+      {
+        "category": "ArrowFunction",
+        "children": [
+          {
+            "category": "IfClause",
+            "children": [
+              {
+                "category": "Call",
+                "children": [
+                  {
+                    "category": "ArrowFunction",
+                    "children": [],
+                    "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
+                    "kind": 219,
+                    "label": "() => {} [20-23]",
+                    "loc": {
+                      "end": {
+                        "column": 10,
+                        "line": 23,
+                      },
+                      "start": {
+                        "column": 28,
+                        "line": 20,
+                      },
+                    },
+                    "meta": {
+                      "call": undefined,
+                      "collapsed": "arrowFunction",
+                      "originalCategory": "ArrowFunction",
+                    },
+                    "source": "(prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        })",
+                    "value": 1,
+                  },
+                ],
+                "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
+                "kind": 213,
+                "label": "setPressedModifiers [20-23]",
+                "loc": {
+                  "end": {
+                    "column": 11,
+                    "line": 23,
+                  },
+                  "start": {
+                    "column": 8,
+                    "line": 20,
+                  },
+                },
+                "source": "setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }))",
+                "value": 2,
+              },
+            ],
+            "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
+            "kind": 245,
+            "label": "if (keysToTrack.includes(event.key as ModifierKey))",
+            "loc": {
+              "end": {
+                "column": 7,
+                "line": 24,
+              },
+              "start": {
+                "column": 6,
+                "line": 19,
+              },
+            },
+            "meta": {
+              "condition": "keysToTrack.includes(event.key as ModifierKey)",
+            },
+            "source": "if (keysToTrack.includes(event.key as ModifierKey)) {
+        setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }));
+      }",
+            "value": 3,
+          },
+        ],
+        "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:454-672",
+        "kind": 219,
+        "label": "() => {} [18-25]",
+        "loc": {
+          "end": {
+            "column": 5,
+            "line": 25,
+          },
+          "start": {
+            "column": 4,
+            "line": 18,
+          },
+        },
+        "meta": {
+          "call": "setPressedModifiers [20-23]",
+          "collapsed": "arrowFunction",
+          "originalCategory": "ArrowFunction",
+        },
+        "source": "(event: KeyboardEvent) => {
+      if (keysToTrack.includes(event.key as ModifierKey)) {
+        setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }));
+      }
+    }",
+        "value": 4,
+      },
+    ],
+    "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
+    "kind": 213,
+    "label": "useCallback [17-27]",
+    "loc": {
+      "end": {
+        "column": 3,
+        "line": 27,
+      },
+      "start": {
+        "column": 24,
+        "line": 17,
+      },
+    },
+    "meta": {
+      "hookName": "useCallback",
+    },
+    "source": "useCallback(
+    (event: KeyboardEvent) => {
+      if (keysToTrack.includes(event.key as ModifierKey)) {
+        setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }));
+      }
+    },
+    [keysToTrack]
+  )",
+    "value": 5,
   },
   {
     "category": "Program",
@@ -1743,6 +1886,116 @@ export const useKeyModifiers = (
     "category": "ArrowFunction",
     "children": [
       {
+        "category": "IfClause",
+        "children": [
+          {
+            "category": "Call",
+            "children": [
+              {
+                "category": "ArrowFunction",
+                "children": [],
+                "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
+                "kind": 219,
+                "label": "() => {} [20-23]",
+                "loc": {
+                  "end": {
+                    "column": 10,
+                    "line": 23,
+                  },
+                  "start": {
+                    "column": 28,
+                    "line": 20,
+                  },
+                },
+                "meta": {
+                  "call": undefined,
+                  "collapsed": "arrowFunction",
+                  "originalCategory": "ArrowFunction",
+                },
+                "source": "(prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        })",
+                "value": 1,
+              },
+            ],
+            "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
+            "kind": 213,
+            "label": "setPressedModifiers [20-23]",
+            "loc": {
+              "end": {
+                "column": 11,
+                "line": 23,
+              },
+              "start": {
+                "column": 8,
+                "line": 20,
+              },
+            },
+            "source": "setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }))",
+            "value": 2,
+          },
+        ],
+        "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
+        "kind": 245,
+        "label": "if (keysToTrack.includes(event.key as ModifierKey))",
+        "loc": {
+          "end": {
+            "column": 7,
+            "line": 24,
+          },
+          "start": {
+            "column": 6,
+            "line": 19,
+          },
+        },
+        "meta": {
+          "condition": "keysToTrack.includes(event.key as ModifierKey)",
+        },
+        "source": "if (keysToTrack.includes(event.key as ModifierKey)) {
+        setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }));
+      }",
+        "value": 3,
+      },
+    ],
+    "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:454-672",
+    "kind": 219,
+    "label": "() => {} [18-25]",
+    "loc": {
+      "end": {
+        "column": 5,
+        "line": 25,
+      },
+      "start": {
+        "column": 4,
+        "line": 18,
+      },
+    },
+    "meta": {
+      "call": "setPressedModifiers [20-23]",
+      "collapsed": "arrowFunction",
+      "originalCategory": "ArrowFunction",
+    },
+    "source": "(event: KeyboardEvent) => {
+      if (keysToTrack.includes(event.key as ModifierKey)) {
+        setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }));
+      }
+    }",
+    "value": 4,
+  },
+  {
+    "category": "ArrowFunction",
+    "children": [
+      {
         "category": "Variable",
         "children": [
           {
@@ -2852,6 +3105,84 @@ export const useKeyModifiers = (
     "value": 39,
   },
   {
+    "category": "IfClause",
+    "children": [
+      {
+        "category": "Call",
+        "children": [
+          {
+            "category": "ArrowFunction",
+            "children": [],
+            "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
+            "kind": 219,
+            "label": "() => {} [20-23]",
+            "loc": {
+              "end": {
+                "column": 10,
+                "line": 23,
+              },
+              "start": {
+                "column": 28,
+                "line": 20,
+              },
+            },
+            "meta": {
+              "call": undefined,
+              "collapsed": "arrowFunction",
+              "originalCategory": "ArrowFunction",
+            },
+            "source": "(prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        })",
+            "value": 1,
+          },
+        ],
+        "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
+        "kind": 213,
+        "label": "setPressedModifiers [20-23]",
+        "loc": {
+          "end": {
+            "column": 11,
+            "line": 23,
+          },
+          "start": {
+            "column": 8,
+            "line": 20,
+          },
+        },
+        "source": "setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }))",
+        "value": 2,
+      },
+    ],
+    "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
+    "kind": 245,
+    "label": "if (keysToTrack.includes(event.key as ModifierKey))",
+    "loc": {
+      "end": {
+        "column": 7,
+        "line": 24,
+      },
+      "start": {
+        "column": 6,
+        "line": 19,
+      },
+    },
+    "meta": {
+      "condition": "keysToTrack.includes(event.key as ModifierKey)",
+    },
+    "source": "if (keysToTrack.includes(event.key as ModifierKey)) {
+        setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }));
+      }",
+    "value": 3,
+  },
+  {
     "category": "SyntheticGroup",
     "children": [
       {
@@ -2969,6 +3300,83 @@ type KeyModifiersState = Partial<Record<ModifierKey, boolean>>;",
     {}
   )",
     "value": 2,
+  },
+  {
+    "category": "Call",
+    "children": [
+      {
+        "category": "ArrowFunction",
+        "children": [],
+        "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
+        "kind": 219,
+        "label": "() => {} [20-23]",
+        "loc": {
+          "end": {
+            "column": 10,
+            "line": 23,
+          },
+          "start": {
+            "column": 28,
+            "line": 20,
+          },
+        },
+        "meta": {
+          "call": undefined,
+          "collapsed": "arrowFunction",
+          "originalCategory": "ArrowFunction",
+        },
+        "source": "(prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        })",
+        "value": 1,
+      },
+    ],
+    "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
+    "kind": 213,
+    "label": "setPressedModifiers [20-23]",
+    "loc": {
+      "end": {
+        "column": 11,
+        "line": 23,
+      },
+      "start": {
+        "column": 8,
+        "line": 20,
+      },
+    },
+    "source": "setPressedModifiers((prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        }))",
+    "value": 2,
+  },
+  {
+    "category": "ArrowFunction",
+    "children": [],
+    "id": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
+    "kind": 219,
+    "label": "() => {} [20-23]",
+    "loc": {
+      "end": {
+        "column": 10,
+        "line": 23,
+      },
+      "start": {
+        "column": 28,
+        "line": 20,
+      },
+    },
+    "meta": {
+      "call": undefined,
+      "collapsed": "arrowFunction",
+      "originalCategory": "ArrowFunction",
+    },
+    "source": "(prev) => ({
+          ...prev,
+          [event.key as ModifierKey]: true,
+        })",
+    "value": 1,
   },
 ]
 `;

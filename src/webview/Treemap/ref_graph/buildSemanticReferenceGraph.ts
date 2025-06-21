@@ -199,6 +199,20 @@ export function buildSemanticReferenceGraph(
     const offset = node.getStart();
     const position = offsetToLineChar(fullSource, offset);
 
+    // Determine the *innermost* scope node that contains this usage so we can
+    // point the arrow to the exact box instead of the BOI header.
+    let usageNodeId = focusNode.id;
+    const usageScope = findInnermostNodeByOffset(focusNode, offset);
+    if (usageScope) {
+      usageNodeId = usageScope.id;
+
+      // Ensure this scope is included in the returned node set so the caller
+      // can reliably locate it when drawing arrows.
+      if (!nodes.some((n) => n.id === usageScope.id)) {
+        nodes.push(usageScope);
+      }
+    }
+
     references.push({
       name,
       type: "variable_reference",
@@ -206,7 +220,7 @@ export function buildSemanticReferenceGraph(
       targetNodeId,
       position,
       offset,
-      usageNodeId: focusNode.id,
+      usageNodeId,
     });
   }
 

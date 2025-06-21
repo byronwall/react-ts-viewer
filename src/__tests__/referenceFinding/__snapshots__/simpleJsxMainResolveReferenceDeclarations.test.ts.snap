@@ -12,7 +12,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:96-150",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:316-701",
   },
   {
     "name": "isPreview",
@@ -24,7 +24,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:316-701",
   },
   {
     "name": "isClipped",
@@ -36,7 +36,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:316-701",
   },
   {
     "name": "block",
@@ -48,7 +48,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:316-701",
   },
   {
     "name": "block",
@@ -60,7 +60,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:152-795",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:316-701",
   },
   {
     "name": "handleMouseDown",
@@ -72,7 +72,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:27-88",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:292-776",
   },
   {
     "name": "name",
@@ -84,7 +84,7 @@ exports[`reference declaration resolver – simpleJsx.<main> > should map each e
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:6-19",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:256-788",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/simpleJsx.tsx:292-776",
   },
 ]
 `;

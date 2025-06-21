@@ -12,7 +12,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:15-72",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
   },
   {
     "name": "KeyboardEvent",
@@ -24,7 +24,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:454-672",
   },
   {
     "name": "keysToTrack",
@@ -36,7 +36,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
   },
   {
     "name": "ModifierKey",
@@ -48,7 +48,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
   },
   {
     "name": "setPressedModifiers",
@@ -60,7 +60,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:329-410",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
   },
   {
     "name": "ModifierKey",
@@ -72,7 +72,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "synthetic:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:Type defs:/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:74-130",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:570-656",
   },
   {
     "name": "keysToTrack",
@@ -84,7 +84,7 @@ exports[`reference declaration resolver – useKeyModifiers.handleKeyDown > shou
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
   },
 ]
 `;

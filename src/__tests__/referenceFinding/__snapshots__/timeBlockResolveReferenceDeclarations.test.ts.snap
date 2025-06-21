@@ -12,7 +12,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": undefined,
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1183-1717",
   },
   {
     "name": "MouseEvent",
@@ -24,7 +24,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": undefined,
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1183-1717",
   },
   {
     "name": "isPreview",
@@ -36,7 +36,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1214-1250",
   },
   {
     "name": "onResizeStart",
@@ -48,7 +48,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1468-1523",
   },
   {
     "name": "block",
@@ -60,7 +60,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1468-1523",
   },
   {
     "name": "blockStart",
@@ -72,7 +72,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1092-1120",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1468-1523",
   },
   {
     "name": "blockEnd",
@@ -84,7 +84,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1130-1154",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1468-1523",
   },
   {
     "name": "onResizeStart",
@@ -96,7 +96,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1575-1633",
   },
   {
     "name": "block",
@@ -108,7 +108,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1575-1633",
   },
   {
     "name": "blockStart",
@@ -120,7 +120,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1092-1120",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1575-1633",
   },
   {
     "name": "blockEnd",
@@ -132,7 +132,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1130-1154",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1575-1633",
   },
   {
     "name": "onDragStart",
@@ -144,7 +144,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1654-1706",
   },
   {
     "name": "block",
@@ -156,7 +156,7 @@ exports[`reference declaration resolver – TimeBlock.handleMouseDown > should m
     "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
     "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:886-3465",
     "type": "variable_reference",
-    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1165-1717",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/TimeBlock.tsx:1654-1706",
   },
 ]
 `;
