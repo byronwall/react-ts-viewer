@@ -178,6 +178,7 @@
     "save-svg-as-png": "^1.4.17",
     "ts-morph": "^22.0.0",
     "typescript": "^5.4.5",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "eslint-plugin-unused-imports": "^4.1.4"
   }
 }
