@@ -1,12 +1,12 @@
 // CodeBlock.tsx  (React 18+, ESM)
-import React, { useState, useEffect } from "react";
+import babelParser from "prettier/plugins/babel"; // For JS/TSX/JSX
+import estreeParser from "prettier/plugins/estree"; // estree is a dependency for babel/ts
+import tsParser from "prettier/plugins/typescript";
+import prettier from "prettier/standalone";
+import React, { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-import prettier from "prettier/standalone";
-import tsParser from "prettier/plugins/typescript";
-import babelParser from "prettier/plugins/babel"; // For JS/TSX/JSX
-import estreeParser from "prettier/plugins/estree"; // estree is a dependency for babel/ts
 
 export function CodeBlock({
   raw,

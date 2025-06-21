@@ -3,31 +3,33 @@ import { Code, FileImage, Gear } from "@phosphor-icons/react";
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
 import { svgAsPngUri } from "save-svg-as-png";
-import { NodeCategory, ScopeNode } from "../../types"; // Assuming src/types.ts
+
+import { layoutHierarchical } from "./layoutHierarchical";
+import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
+import { pastelSet } from "./pastelSet";
+import { buildSemanticReferenceGraph } from "./ref_graph/buildSemanticReferenceGraph";
+import { TreemapLegendPopover } from "./TreemapLegendPopover";
+import { type AnyLayoutFn } from "./TreemapSVG"; // Added AnyLayoutFn
+import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
+
+import { NodeCategory, type ScopeNode } from "../../types"; // Assuming src/types.ts
 import CollapsibleSection from "../CollapsibleSection"; // Import CollapsibleSection
-import SettingsControl from "../SettingsControl"; // Import SettingsControl
 import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
 import {
   settingGroupOrder,
-  TreemapSettings,
+  type TreemapSettings,
   treemapSettingsConfig,
 } from "../settingsConfig"; // Added imports
+import SettingsControl from "../SettingsControl"; // Import SettingsControl
 import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
-import { NodeDetailDrawer } from "./NodeDetailDrawer"; // Import the new drawer component
-import { TreemapLegendPopover } from "./TreemapLegendPopover";
-import { AnyLayoutFn } from "./TreemapSVG"; // Added AnyLayoutFn
-import { ViewportTreemapSVG } from "./ViewportTreemapSVG";
-import { layoutHierarchical } from "./layoutHierarchical";
 
-import { pastelSet } from "./pastelSet";
 import type { ReferenceEdge } from "./ViewportTreemapSVG";
-import { buildSemanticReferenceGraph } from "./ref_graph/buildSemanticReferenceGraph";
+
 
 interface TreemapDisplayProps {
   data: ScopeNode;

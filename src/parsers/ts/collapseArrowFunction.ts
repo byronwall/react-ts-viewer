@@ -1,4 +1,4 @@
-import { ScopeNode, NodeCategory } from "../../types";
+import { NodeCategory, type ScopeNode } from "../../types";
 
 export function collapseArrowFunction(
   node: ScopeNode,

@@ -1,9 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
-import { ScopeNode, BuildScopeTreeOptions } from "../types";
+
+import { buildScopeTreeCss } from "./css/buildScopeTreeCss";
 import { buildScopeTreeForMarkdown } from "./md/buildScopeTreeForMarkdown";
 import { buildScopeTreeTs } from "./ts/buildScopeTreeTs";
-import { buildScopeTreeCss } from "./css/buildScopeTreeCss";
+
+import { type BuildScopeTreeOptions, type ScopeNode } from "../types";
 
 export function buildScopeTree(
   filePath: string,

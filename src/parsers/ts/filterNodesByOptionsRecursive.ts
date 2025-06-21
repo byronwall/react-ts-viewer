@@ -1,4 +1,4 @@
-import { ScopeNode, BuildScopeTreeOptions, NodeCategory } from "../../types";
+import { type BuildScopeTreeOptions, NodeCategory, type ScopeNode } from "../../types";
 
 // --- END: Node Flattening and Grouping Logic ---
 // --- START: Node Filtering Logic ---

@@ -1,8 +1,9 @@
-import { ScopeNode, BuildScopeTreeOptions, NodeCategory } from "../../types";
 import { collapseArrowFunction } from "./collapseArrowFunction";
-import { shouldCollapseArrowFunction } from "./shouldCollapseArrowFunction";
 import { collapseBlockNode } from "./collapseBlockNode";
+import { shouldCollapseArrowFunction } from "./shouldCollapseArrowFunction";
 import { shouldCollapseBlock } from "./shouldCollapseBlock";
+
+import { type BuildScopeTreeOptions, NodeCategory, type ScopeNode } from "../../types";
 
 export function flattenNode(
   node: ScopeNode,

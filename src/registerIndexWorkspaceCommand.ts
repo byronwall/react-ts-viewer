@@ -1,7 +1,8 @@
 import * as path from "path";
 import * as vscode from "vscode";
+
+import { type IndexerService } from "./IndexerService";
 import { outputChannel } from "./initializeExtension";
-import { IndexerService } from "./IndexerService";
 
 // --- Command Registrations ---
 export function registerIndexWorkspaceCommand(

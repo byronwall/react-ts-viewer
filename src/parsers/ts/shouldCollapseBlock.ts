@@ -1,5 +1,6 @@
 import * as ts from "typescript";
-import { ScopeNode, BuildScopeTreeOptions, NodeCategory } from "../../types";
+
+import { type BuildScopeTreeOptions, NodeCategory, type ScopeNode } from "../../types";
 
 export function shouldCollapseBlock(
   node: ScopeNode,

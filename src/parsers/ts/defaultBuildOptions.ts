@@ -1,4 +1,4 @@
-import { BuildScopeTreeOptions } from "../../types";
+import { type BuildScopeTreeOptions } from "../../types";
 
 // Default options for buildScopeTree
 

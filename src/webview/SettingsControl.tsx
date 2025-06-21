@@ -1,9 +1,10 @@
 import * as React from "react";
+
 import {
-  TreemapSettings,
-  SettingConfig,
-  NumberSettingConfig,
-  SelectSettingConfig,
+  type NumberSettingConfig,
+  type SelectSettingConfig,
+  type SettingConfig,
+  type TreemapSettings,
 } from "./settingsConfig";
 
 interface SettingsControlProps {

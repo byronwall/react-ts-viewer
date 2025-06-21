@@ -1,4 +1,5 @@
 import React from "react";
+
 import { NodeCategory } from "../../types";
 
 interface TreemapLegendContentProps {

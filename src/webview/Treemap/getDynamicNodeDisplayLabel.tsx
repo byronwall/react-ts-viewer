@@ -1,6 +1,6 @@
-import { ScopeNode } from "../../types";
+import { type ScopeNode } from "../../types";
 import { getNodeDisplayLabel } from "../getNodeDisplayLabel";
-import { TreemapSettings } from "../settingsConfig";
+import { type TreemapSettings } from "../settingsConfig";
 
 export const getDynamicNodeDisplayLabel = (
   parts: NodePartsForLabeling,

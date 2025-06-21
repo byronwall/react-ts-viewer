@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 
-// Import the new tree builder
 import {
   indexerService,
   initializeExtension,

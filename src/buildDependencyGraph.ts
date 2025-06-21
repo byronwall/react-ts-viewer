@@ -1,9 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { Edge, Node } from "reactflow";
+
 import * as ts from "typescript"; // Need typescript for tsconfig parsing
-import { IndexerService } from "./IndexerService";
+
+import { type IndexerService } from "./IndexerService";
 import { outputChannel } from "./initializeExtension";
+
 import type {
   ComponentNode,
   DependencyInfo,
@@ -11,6 +13,7 @@ import type {
   HookUsage,
   ImportData,
 } from "./types";
+import type { Edge, Node } from "reactflow";
 
 // New type for enhanced node data
 interface GraphNodeData {

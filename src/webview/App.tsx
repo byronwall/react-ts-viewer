@@ -5,16 +5,16 @@ import "@reactflow/controls/dist/style.css";
 import "@reactflow/minimap/dist/style.css";
 import "reactflow/dist/style.css";
 import "./App.css";
+import {
+  defaultTreemapSettings as newDefaultTreemapSettings,
+  type TreemapSettings,
+} from "./settingsConfig";
 import { TreemapDisplay } from "./Treemap/TreemapDisplay";
 import { vscodeApi } from "./vscodeApi";
 
-import {
-  defaultTreemapSettings as newDefaultTreemapSettings,
-  TreemapSettings,
-} from "./settingsConfig";
 
 // Import custom node components
-import { ScopeNode } from "../types";
+import { type ScopeNode } from "../types";
 
 // Global declarations specific to App.tsx initialization
 declare global {

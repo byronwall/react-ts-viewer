@@ -1,8 +1,9 @@
-import React, { useState } from "react";
 import { ArrowSquareOut, FunnelSimple, X } from "@phosphor-icons/react";
-import { ScopeNode } from "../../types";
-import { TreemapSettings } from "../settingsConfig";
+import React, { useState } from "react";
+
+import { type ScopeNode } from "../../types";
 import { CodeBlock } from "../CodeBlock";
+import { type TreemapSettings } from "../settingsConfig";
 
 interface NodeDetailDrawerProps {
   node: ScopeNode | null;

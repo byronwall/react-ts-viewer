@@ -1,12 +1,15 @@
+import * as path from "path";
+
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import * as path from "path";
-import { visit, SKIP } from "unist-util-visit";
-import { ScopeNode, NodeCategory } from "../../types";
-import { unistPositionToScopePosition } from "./unistPositionToScopePosition";
-import { mapMdastTypeToCategory } from "./mapMdastTypeToCategory";
+import { SKIP, visit } from "unist-util-visit";
+
 import { deriveMarkdownLabel } from "./deriveMarkdownLabel";
+import { mapMdastTypeToCategory } from "./mapMdastTypeToCategory";
+import { unistPositionToScopePosition } from "./unistPositionToScopePosition";
+
+import { NodeCategory, type ScopeNode } from "../../types";
 
 export function buildScopeTreeForMarkdown(
   filePath: string,

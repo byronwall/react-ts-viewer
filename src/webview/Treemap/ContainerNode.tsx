@@ -1,5 +1,6 @@
 import React from "react";
-import { ContainerNodeProps } from "./TreemapSVG";
+
+import { type ContainerNodeProps } from "./TreemapSVG";
 
 export const ContainerNode: React.FC<ContainerNodeProps> = ({
   container,

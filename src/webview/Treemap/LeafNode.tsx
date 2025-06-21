@@ -1,4 +1,5 @@
 import React from "react";
+
 import type { ScopeNode } from "../../types";
 
 export interface FlatLeafNode {

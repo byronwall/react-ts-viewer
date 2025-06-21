@@ -1,4 +1,4 @@
-import { ScopeNode } from "../../types";
+import { type ScopeNode } from "../../types";
 
 export function collapseBlockNode(
   node: ScopeNode,

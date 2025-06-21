@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+
 import { NodeCategory } from "../../types";
 
 export function collectMeta(

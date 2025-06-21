@@ -1,6 +1,8 @@
 import fs from "fs";
-import { buildScopeTree } from "../../parsers/buildScopeTree";
+
 import { findNode } from "./findNode";
+
+import { buildScopeTree } from "../../parsers/buildScopeTree";
 
 // Create the focus and root scope node objects needed for reference-graph tests.
 //

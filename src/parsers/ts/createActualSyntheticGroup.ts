@@ -1,5 +1,6 @@
 import * as ts from "typescript";
-import { ScopeNode, NodeCategory } from "../../types";
+
+import { NodeCategory, type ScopeNode } from "../../types";
 
 // Helper function to create a synthetic group
 

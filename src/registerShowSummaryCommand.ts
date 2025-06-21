@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
+
+import { type IndexerService } from "./IndexerService";
 import { outputChannel } from "./initializeExtension";
-import { IndexerService } from "./IndexerService";
 
 export function registerShowSummaryCommand(
   context: vscode.ExtensionContext,

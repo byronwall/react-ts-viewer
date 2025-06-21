@@ -115,6 +115,7 @@ module.exports = {
     ".vscode-test/",
     "**/*.test.ts", // Adjust if test files have different naming
     "**/runTest.ts",
+    "**/__fixtures__/**",
   ],
   overrides: [
     {

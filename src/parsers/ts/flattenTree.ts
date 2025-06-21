@@ -1,5 +1,6 @@
-import { ScopeNode, BuildScopeTreeOptions } from "../../types";
 import { flattenNode } from "./flattenNode";
+
+import { type BuildScopeTreeOptions, type ScopeNode } from "../../types";
 
 // Example Usage (for testing - remove or comment out in production extension code):
 // if (require.main === module) {

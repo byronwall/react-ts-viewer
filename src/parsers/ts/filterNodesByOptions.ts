@@ -1,5 +1,6 @@
-import { ScopeNode, BuildScopeTreeOptions } from "../../types";
 import { filterNodesByOptionsRecursive } from "./filterNodesByOptionsRecursive";
+
+import { type BuildScopeTreeOptions, type ScopeNode } from "../../types";
 
 export function filterNodesByOptions(
   rootNode: ScopeNode,

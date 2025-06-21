@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
+
 import {
-  BuildScopeTreeOptions,
-  ScopeNode,
+  type BuildScopeTreeOptions,
   NodeCategory,
-  Position,
+  type Position,
+  type ScopeNode,
 } from "../../types";
 
 // CSS/SCSS specific node categories

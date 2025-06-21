@@ -1,4 +1,4 @@
-import { Position } from "../../types";
+import { type Position } from "../../types";
 
 // Helper to convert micromark/unist Position to our Position
 export function unistPositionToScopePosition(unistPos: any): Position {

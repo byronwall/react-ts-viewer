@@ -1,16 +1,19 @@
 import React, { useMemo } from "react";
-import type { ScopeNode } from "../../types";
-import { TreemapSettings } from "../settingsConfig";
-import {
-  HierarchicalLayoutFn,
-  HierarchicalLayoutNode,
-  HierarchicalLayoutOptions,
-  layoutHierarchical,
-} from "./layoutHierarchical";
+
 
 import { collectAllNodes } from "./collectAllNodes";
 import { ContainerNode } from "./ContainerNode";
+import {
+  type HierarchicalLayoutFn,
+  type HierarchicalLayoutNode,
+  type HierarchicalLayoutOptions,
+  layoutHierarchical,
+} from "./layoutHierarchical";
 import { LeafNode } from "./LeafNode";
+
+import { type TreemapSettings } from "../settingsConfig";
+
+import type { ScopeNode } from "../../types";
 
 // Stylesheet for treemap animations
 const treemapStyles = `

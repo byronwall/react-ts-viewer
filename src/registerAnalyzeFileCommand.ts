@@ -1,12 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { buildDependencyGraph } from "./buildDependencyGraph";
-import { buildScopeTree } from "./parsers/buildScopeTree";
 
-import { outputChannel } from "./initializeExtension";
+import { buildDependencyGraph } from "./buildDependencyGraph";
 import { getWebviewContent } from "./getWebviewContent";
-import { IndexerService } from "./IndexerService";
+import { type IndexerService } from "./IndexerService";
+import { outputChannel } from "./initializeExtension";
+import { buildScopeTree } from "./parsers/buildScopeTree";
 
 let webviewPanel: vscode.WebviewPanel | undefined;
 

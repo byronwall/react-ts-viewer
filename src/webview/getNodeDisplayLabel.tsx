@@ -1,4 +1,4 @@
-import { ScopeNode } from "../types";
+import { type ScopeNode } from "../types";
 
 // Helper function to generate display labels based on node category and PRD notes
 export const getNodeDisplayLabel = (nodeData: ScopeNode): string => {

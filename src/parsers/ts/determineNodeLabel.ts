@@ -1,7 +1,10 @@
 import * as path from "path";
+
 import * as ts from "typescript";
-import { ScopeNode, NodeCategory } from "../../types";
+
 import { isAssignmentOperatorKind } from "./isAssignmentOperatorKind";
+
+import { NodeCategory, type ScopeNode } from "../../types";
 
 export function determineNodeLabel(
   item: ts.Node | ScopeNode, // Can be a TS AST node or a ScopeNode (for synthetic/post-processed nodes)

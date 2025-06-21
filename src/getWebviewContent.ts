@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { outputChannel } from "./initializeExtension";
+
 import { getNonce } from "./getNonce";
-import * as path from "path";
+import { outputChannel } from "./initializeExtension";
 
 export function getWebviewContent(
   context: vscode.ExtensionContext,

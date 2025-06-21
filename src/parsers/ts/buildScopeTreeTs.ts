@@ -1,17 +1,20 @@
 import * as fs from "fs";
 import * as path from "path";
+
 import * as ts from "typescript";
-import { BuildScopeTreeOptions, ScopeNode, NodeCategory } from "../../types";
-import { defaultBuildOptions } from "./defaultBuildOptions";
-import { mapKindToCategory } from "./mapKindToCategory";
-import { formatScopeNodeLabel } from "./formatScopeNodeLabel";
-import { determineNodeLabel } from "./determineNodeLabel";
+
 import { collectMeta } from "./collectMeta";
-import { lineColOfPos } from "./lineColOfPos";
-import { filterNodesByOptions } from "./filterNodesByOptions";
 import { createSyntheticGroups } from "./createSyntheticGroups";
+import { defaultBuildOptions } from "./defaultBuildOptions";
+import { determineNodeLabel } from "./determineNodeLabel";
+import { filterNodesByOptions } from "./filterNodesByOptions";
 import { flattenTree } from "./flattenTree";
+import { formatScopeNodeLabel } from "./formatScopeNodeLabel";
 import { isScopeBoundary } from "./isScopeBoundary";
+import { lineColOfPos } from "./lineColOfPos";
+import { mapKindToCategory } from "./mapKindToCategory";
+
+import { type BuildScopeTreeOptions, NodeCategory, type ScopeNode } from "../../types";
 
 export function buildScopeTreeTs(
   filePath: string,

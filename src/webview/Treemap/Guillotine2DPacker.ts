@@ -1,7 +1,7 @@
 import {
-  FreeRectangle,
-  PackerPlacement,
-  PackerInputItem,
+  type FreeRectangle,
+  type PackerInputItem,
+  type PackerPlacement,
 } from "./layoutHierarchical";
 
 export class Guillotine2DPacker {

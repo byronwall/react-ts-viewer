@@ -1,5 +1,7 @@
-import * as ts from "typescript";
-import { Position } from "../../types";
+import { type Position } from "../../types";
+
+import type * as ts from "typescript";
+
 
 export function lineColOfPos(sourceFile: ts.SourceFile, pos: number): Position {
   const lc = sourceFile.getLineAndCharacterOfPosition(pos);

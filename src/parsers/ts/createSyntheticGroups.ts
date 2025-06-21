@@ -1,6 +1,9 @@
-import * as ts from "typescript";
-import { ScopeNode } from "../../types";
+
 import { groupRelatedNodes } from "./groupRelatedNodes";
+
+import { type ScopeNode } from "../../types";
+
+import type * as ts from "typescript";
 
 export function createSyntheticGroups(
   rootNode: ScopeNode,

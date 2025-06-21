@@ -1,5 +1,6 @@
 import * as ts from "typescript";
-import { ScopeNode, NodeCategory } from "../../types";
+
+import { NodeCategory, type ScopeNode } from "../../types";
 
 // New function to format the display label, incorporating logic previously in getNodeDisplayLabel.tsx
 

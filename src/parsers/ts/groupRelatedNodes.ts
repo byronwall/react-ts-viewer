@@ -1,5 +1,6 @@
-import { ScopeNode, NodeCategory } from "../../types";
 import { createActualSyntheticGroup } from "./createActualSyntheticGroup";
+
+import { NodeCategory, type ScopeNode } from "../../types";
 
 export function groupRelatedNodes(
   nodes: ScopeNode[],

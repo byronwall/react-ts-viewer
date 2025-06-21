@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { Popover } from "@headlessui/react";
 import { Palette } from "@phosphor-icons/react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+
 import { TreemapLegendContent } from "./TreemapLegendContent";
-import { NodeCategory } from "../../types";
+
+import { type NodeCategory } from "../../types";
 
 interface TreemapLegendPopoverProps {
   activePalette: Record<NodeCategory, string>;

@@ -1,6 +1,8 @@
 import * as ts from "typescript";
-import { NodeCategory } from "../../types";
+
 import { isAssignmentOperatorKind } from "./isAssignmentOperatorKind";
+
+import { NodeCategory } from "../../types";
 
 export function mapKindToCategory(
   node: ts.Node,

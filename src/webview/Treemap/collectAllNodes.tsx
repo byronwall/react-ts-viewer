@@ -1,16 +1,17 @@
-import { NodeCategory } from "../../types";
-import { TreemapSettings } from "../settingsConfig";
 import { getContrastingTextColor } from "./getContrastingTextColor";
 import { getDynamicNodeDisplayLabel } from "./getDynamicNodeDisplayLabel";
-import { HierarchicalLayoutNode } from "./layoutHierarchical";
+import { type HierarchicalLayoutNode } from "./layoutHierarchical";
+import { type FlatLeafNode } from "./LeafNode";
 import { pastelSet } from "./pastelSet";
 import {
-  AnyLayoutNode,
-  FlatContainerNode,
+  type AnyLayoutNode,
+  type FlatContainerNode,
   hasUnrenderedChildrenHelper,
   lightenColor,
 } from "./TreemapSVG";
-import { FlatLeafNode } from "./LeafNode";
+
+import { NodeCategory } from "../../types";
+import { type TreemapSettings } from "../settingsConfig";
 
 export const collectAllNodes = (
   layoutRoot: AnyLayoutNode,

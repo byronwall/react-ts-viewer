@@ -1,23 +1,25 @@
 import * as path from "path";
+import * as vscode from "vscode";
+
 import {
-  ClassDeclaration,
-  FunctionDeclaration,
-  Identifier,
+  type ClassDeclaration,
+  type FunctionDeclaration,
+  type Identifier,
   Node,
   Project,
-  SourceFile,
+  type SourceFile,
   SyntaxKind,
-  VariableDeclaration,
+  type VariableDeclaration,
 } from "ts-morph";
-import * as vscode from "vscode";
+
 import {
-  ComponentNode,
-  DependencyInfo,
-  FileNode,
-  HookNode,
-  HookUsage,
-  ImportData,
-  SymbolLocation,
+  type ComponentNode,
+  type DependencyInfo,
+  type FileNode,
+  type HookNode,
+  type HookUsage,
+  type ImportData,
+  type SymbolLocation,
 } from "./types";
 
 // Event emitter for index updates

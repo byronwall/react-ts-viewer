@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+
 import { expect } from "vitest";
+
 import { buildScopeTree } from "../../parsers/buildScopeTree";
 
 const getFixturePath = (fileName: string) =>
