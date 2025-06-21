@@ -1,0 +1,54 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reference finder – useKeyModifiers.handleKeyDown (no type references) > should detect external references but ignore type-only identifiers 1`] = `
+[
+  {
+    "name": "useCallback",
+    "offset": 437,
+    "position": {
+      "character": 24,
+      "line": 17,
+    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:15-72",
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
+  },
+  {
+    "name": "keysToTrack",
+    "offset": 492,
+    "position": {
+      "character": 10,
+      "line": 19,
+    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:488-666",
+  },
+  {
+    "name": "setPressedModifiers",
+    "offset": 550,
+    "position": {
+      "character": 8,
+      "line": 20,
+    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:329-410",
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:550-657",
+  },
+  {
+    "name": "keysToTrack",
+    "offset": 679,
+    "position": {
+      "character": 5,
+      "line": 26,
+    },
+    "sourceNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:421-695",
+    "targetNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:264-2102",
+    "type": "variable_reference",
+    "usageNodeId": "/Users/byronwall/Projects/react-ts-viewer/src/__tests__/__fixtures__/useKeyModifiers.tsx:437-695",
+  },
+]
+`;

@@ -18,7 +18,9 @@ describe("reference declaration resolver – TimeBlock.handleMouseDown", () => {
       "handleMouseDown"
     );
 
-    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
+    const { references } = buildSemanticReferenceGraph(focusNode, rootNode, {
+      includeTypeReferences: true,
+    });
 
     // Snapshot to keep output stable and easy to inspect
     expect(references).toMatchSnapshot();

@@ -465,7 +465,8 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
         try {
           const { references, nodes } = buildSemanticReferenceGraph(
             fullNodeFromInitialTree,
-            initialData
+            initialData,
+            { includeTypeReferences: settings.includeTypeReferences }
           );
 
           console.log("references", references);

@@ -83,9 +83,7 @@
 
 ## Reference view + ELK layout
 
-- Something is off about imported JSX references - should include as an external reference
-- Still brokenness on the useKeyModifiers around incoming prop/parameter references
-- Clicking on a synthetic node should show the relevant code (currently nothing)
+- Add a list of references in the sidebar
 - Need to give some special distinction to function declarations - ensure its clear that it is a func
 - Give some way to emphasize the incoming parameters from a declared function - especially when destructing
 

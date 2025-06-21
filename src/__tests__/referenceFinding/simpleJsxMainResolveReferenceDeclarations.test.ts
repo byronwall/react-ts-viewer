@@ -20,7 +20,9 @@ describe("reference declaration resolver – simpleJsx.<main>", () => {
 
     const { focusNode, rootNode } = createRefGraphObjs(fixturePath, "<main>");
 
-    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
+    const { references } = buildSemanticReferenceGraph(focusNode, rootNode, {
+      includeTypeReferences: true,
+    });
 
     // Snapshot to keep output stable and easy to inspect
     expect(references).toMatchSnapshot();

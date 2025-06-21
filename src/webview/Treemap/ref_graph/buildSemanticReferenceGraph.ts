@@ -22,11 +22,14 @@ interface SemanticReference {
 
 export function buildSemanticReferenceGraph(
   focusNode: ScopeNode,
-  rootNode: ScopeNode
+  rootNode: ScopeNode,
+  options: { includeTypeReferences?: boolean } = {}
 ): {
   nodes: ScopeNode[];
   references: SemanticReference[];
 } {
+  const { includeTypeReferences = false } = options;
+
   // Guard against missing or trivial source text
   if (
     !focusNode.source ||
@@ -145,6 +148,36 @@ export function buildSemanticReferenceGraph(
         if (nameNode && nameNode.getStart() === id.getStart()) {
           return;
         }
+      }
+    }
+
+    // 5) Skip identifiers that appear only in *type* positions (e.g., in a
+    //    type assertion `as SomeType`, generic parameter `<T>`, or other
+    //    TypeReference usage) **unless** the caller explicitly opts in via
+    //    includeTypeReferences.
+    if (!includeTypeReferences) {
+      const isTypePosition = (() => {
+        let current: import("ts-morph").Node | undefined = id.getParent();
+        const typePositionKinds = new Set([
+          SyntaxKind.TypeReference,
+          SyntaxKind.TypePredicate,
+          SyntaxKind.TypeLiteral,
+          SyntaxKind.ImportType,
+          SyntaxKind.UnionType,
+          SyntaxKind.IntersectionType,
+          SyntaxKind.AsExpression,
+          SyntaxKind.TypeQuery,
+          SyntaxKind.ExpressionWithTypeArguments,
+        ]);
+        while (current) {
+          if (typePositionKinds.has(current.getKind())) return true;
+          current = current.getParent();
+        }
+        return false;
+      })();
+
+      if (isTypePosition) {
+        return; // skip type-only reference
       }
     }
 

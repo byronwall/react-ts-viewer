@@ -17,7 +17,9 @@ describe("reference declaration resolver – TimeBlock.<main> element", () => {
     // Locate the first <main> element within the TimeBlock component.
     const { focusNode, rootNode } = createRefGraphObjs(fixturePath, "<main>");
 
-    const { references } = buildSemanticReferenceGraph(focusNode, rootNode);
+    const { references } = buildSemanticReferenceGraph(focusNode, rootNode, {
+      includeTypeReferences: true,
+    });
 
     // Snapshot keeps output stable and easy to inspect.
     expect(references).toMatchSnapshot();

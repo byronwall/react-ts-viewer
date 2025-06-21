@@ -17,6 +17,7 @@ export interface TreemapSettings {
   showTypes: boolean;
   showLiterals: boolean;
   showComments: boolean;
+  includeTypeReferences: boolean;
   minLabelHeight: number;
   truncateLabel: boolean;
   labelMaxChars: number;
@@ -204,6 +205,12 @@ export const treemapSettingsConfig: SettingConfig[] = [
     type: "boolean",
     group: "Node Visibility",
   },
+  {
+    id: "includeTypeReferences",
+    label: "Include Type References",
+    type: "boolean",
+    group: "Node Visibility",
+  },
 
   // Tooltip Settings
   {
@@ -367,6 +374,7 @@ export const defaultTreemapSettings: TreemapSettings = {
   showTypes: true,
   showLiterals: false,
   showComments: false,
+  includeTypeReferences: false,
   minLabelHeight: 12,
   truncateLabel: true,
   labelMaxChars: 200,

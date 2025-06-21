@@ -165,6 +165,7 @@ For performance, the system uses a flat rendering approach:
 - **Depth Control**: Adjust maximum tree depth (keys 1-9, 0 for unlimited)
 - **Visual Settings**: Customize colors, borders, opacity, and layout options
 - **Node Filtering**: Show/hide imports, types, literals, and other categories
+- **Type Reference Control (NEW)**: Toggle whether identifiers that appear **only** in type positions (e.g., `as SomeType`, generic parameters) are treated as runtime references. Disabled by default so the reference graph focuses on real execution-time dependencies.
 - **Export Options**: Save as PNG or export underlying JSON data
 
 ### Color Scheme

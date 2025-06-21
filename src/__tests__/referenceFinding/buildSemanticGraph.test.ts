@@ -18,7 +18,8 @@ describe("buildSemanticReferenceGraph", () => {
     );
     const { references, nodes } = buildSemanticReferenceGraph(
       focusNode,
-      rootNode
+      rootNode,
+      { includeTypeReferences: true }
     );
 
     expect(references).toMatchSnapshot();
