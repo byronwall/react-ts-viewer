@@ -1,9 +1,6 @@
 import * as vscode from "vscode";
 
-import { IndexerService } from "./IndexerService";
-
 export let outputChannel: vscode.OutputChannel;
-export let indexerService: IndexerService;
 
 // --- Initialization ---
 export function initializeExtension(context: vscode.ExtensionContext) {
@@ -17,7 +14,4 @@ export function initializeExtension(context: vscode.ExtensionContext) {
     "React TS Code Analysis extension activated. " + Math.random()
   );
   context.subscriptions.push(outputChannel);
-
-  indexerService = new IndexerService();
-  context.subscriptions.push(indexerService); // Assuming IndexerService has a dispose method
 }

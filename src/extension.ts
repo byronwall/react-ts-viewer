@@ -1,13 +1,7 @@
 import * as vscode from "vscode";
 
-import {
-  indexerService,
-  initializeExtension,
-  outputChannel,
-} from "./initializeExtension";
+import { initializeExtension, outputChannel } from "./initializeExtension";
 import { registerAnalyzeFileCommand } from "./registerAnalyzeFileCommand";
-import { registerIndexWorkspaceCommand } from "./registerIndexWorkspaceCommand";
-import { registerShowSummaryCommand } from "./registerShowSummaryCommand";
 
 // Keep track of the status bar item
 let analyzeFileStatusBarItem: vscode.StatusBarItem;
@@ -15,9 +9,7 @@ let analyzeFileStatusBarItem: vscode.StatusBarItem;
 export function activate(context: vscode.ExtensionContext) {
   initializeExtension(context); // This should set up webview panel handling
 
-  registerIndexWorkspaceCommand(context, indexerService);
-  registerShowSummaryCommand(context, indexerService);
-  registerAnalyzeFileCommand(context, indexerService);
+  registerAnalyzeFileCommand(context);
 
   // Create status bar item
   analyzeFileStatusBarItem = vscode.window.createStatusBarItem(
