@@ -1,6 +1,6 @@
-import * as fs from "fs"; // Import fs for reading file content
 import * as vscode from "vscode";
-import { buildScopeTree } from "./parsers/buildScopeTree"; // Import the new tree builder
+
+// Import the new tree builder
 import {
   indexerService,
   initializeExtension,
@@ -9,14 +9,13 @@ import {
 import { registerAnalyzeFileCommand } from "./registerAnalyzeFileCommand";
 import { registerIndexWorkspaceCommand } from "./registerIndexWorkspaceCommand";
 import { registerShowSummaryCommand } from "./registerShowSummaryCommand";
-import { setupTreeView } from "./setupTreeView";
 
 // Keep track of the status bar item
 let analyzeFileStatusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
   initializeExtension(context); // This should set up webview panel handling
-  setupTreeView(context, indexerService);
+
   registerIndexWorkspaceCommand(context, indexerService);
   registerShowSummaryCommand(context, indexerService);
   registerAnalyzeFileCommand(context, indexerService);

@@ -7,7 +7,7 @@ export interface SymbolLocation {
 }
 
 /** Base interface for all nodes in our analysis graph. */
-export interface BaseNode {
+interface BaseNode {
   id: string; // Unique identifier (e.g., filePath + ':' + name)
   name: string;
   kind: string; // e.g., 'Component', 'Hook', 'File', 'Variable'

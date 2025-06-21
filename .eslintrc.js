@@ -77,8 +77,12 @@ module.exports = {
     "import/no-unresolved": "warn",
 
     "sort-imports": ["warn", { ignoreCase: true, ignoreDeclarationSort: true }],
-
-    // Add more project-specific rules here
+  },
+  settings: {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.organizeImports": true,
+    },
   },
   ignorePatterns: [
     "node_modules/",
