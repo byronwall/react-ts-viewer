@@ -4,7 +4,9 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: "module",
-    project: ["./tsconfig.json"], // Point to your tsconfig.json
+    project: ["./tsconfig.json"],
+    tsconfigRootDir: __dirname,
+    createDefaultProgram: true,
   },
   plugins: ["@typescript-eslint", "import"],
   extends: [
@@ -79,6 +81,14 @@ module.exports = {
     "sort-imports": ["warn", { ignoreCase: true, ignoreDeclarationSort: true }],
   },
   settings: {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx"],
+    },
+    "import/resolver": {
+      node: {
+        extensions: [".js", ".jsx", ".ts", ".tsx", ".d.ts"],
+      },
+    },
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": true,
       "source.organizeImports": true,
