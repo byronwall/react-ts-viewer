@@ -14,7 +14,11 @@ import { isScopeBoundary } from "./isScopeBoundary";
 import { lineColOfPos } from "./lineColOfPos";
 import { mapKindToCategory } from "./mapKindToCategory";
 
-import { type BuildScopeTreeOptions, NodeCategory, type ScopeNode } from "../../types";
+import {
+  type BuildScopeTreeOptions,
+  NodeCategory,
+  type ScopeNode,
+} from "../../types";
 
 export function buildScopeTreeTs(
   filePath: string,

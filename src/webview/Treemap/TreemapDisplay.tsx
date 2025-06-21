@@ -1,11 +1,6 @@
 import { Popover } from "@headlessui/react";
 import { Code, FileImage, Gear } from "@phosphor-icons/react";
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { svgAsPngUri } from "save-svg-as-png";
 
@@ -29,7 +24,6 @@ import SettingsControl from "../SettingsControl"; // Import SettingsControl
 import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
 
 import type { ReferenceEdge } from "./ViewportTreemapSVG";
-
 
 interface TreemapDisplayProps {
   data: ScopeNode;

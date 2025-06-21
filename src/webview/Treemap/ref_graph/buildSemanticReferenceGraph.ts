@@ -1,5 +1,4 @@
-
-import { Project, SyntaxKind, ts } from "ts-morph";
+import { type Node, Project, SyntaxKind, ts } from "ts-morph";
 
 import { findInnermostNodeByOffset } from "./graph_nodes";
 
@@ -159,7 +158,7 @@ export function buildSemanticReferenceGraph(
     //    includeTypeReferences.
     if (!includeTypeReferences) {
       const isTypePosition = (() => {
-        let current: import("ts-morph").Node | undefined = id.getParent();
+        let current: Node | undefined = id.getParent();
         const typePositionKinds = new Set([
           SyntaxKind.TypeReference,
           SyntaxKind.TypePredicate,

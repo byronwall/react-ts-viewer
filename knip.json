@@ -1,12 +1,6 @@
 {
-    "$schema": "https://unpkg.com/knip@5/schema.json",
-    "project": [
-        "**/*.{js,ts,tsx}"
-    ],
-    "ignore": [
-        "src/__tests__/**"
-    ],
-    "ignoreDependencies": [
-        "@vscode/vsce"
-    ]
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "project": ["**/*.{js,ts,tsx}"],
+  "ignore": ["src/__tests__/**"],
+  "ignoreDependencies": ["@vscode/vsce"]
 }

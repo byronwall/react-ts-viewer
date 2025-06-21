@@ -1,4 +1,3 @@
-
 import { groupRelatedNodes } from "./groupRelatedNodes";
 
 import { type ScopeNode } from "../../types";

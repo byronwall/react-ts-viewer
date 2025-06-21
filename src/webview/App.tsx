@@ -12,7 +12,6 @@ import {
 import { TreemapDisplay } from "./Treemap/TreemapDisplay";
 import { vscodeApi } from "./vscodeApi";
 
-
 // Import custom node components
 import { type ScopeNode } from "../types";
 
