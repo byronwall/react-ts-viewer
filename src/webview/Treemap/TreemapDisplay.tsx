@@ -1547,12 +1547,7 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                 onJumpToSource={handleJumpToSource}
                 onDrillIntoNode={handleDrillIntoNode}
                 width={drawerWidth}
-                references={
-                  referenceGraphState &&
-                  referenceGraphState.focusNodeId === selectedNodeForDrawer.id
-                    ? referenceGraphState.references
-                    : undefined
-                }
+                references={referenceGraphState?.references}
               />
             </div>
           </>

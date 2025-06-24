@@ -54,7 +54,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         color: "#cccccc",
         borderLeft: "1px solid #333333",
         padding: "10px",
-        overflowY: "auto",
+        overflowY: "auto", // Allow entire drawer to scroll
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
@@ -62,10 +62,12 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       }}
       className="node-detail-drawer"
     >
+      {/* Sticky header containing action buttons and (optionally) references */}
       <div
         style={{
           marginBottom: "8px",
-          flexShrink: 0, // Prevent header from shrinking
+          flexShrink: 0,
+          paddingBottom: "8px",
         }}
       >
         {/* References list (if provided) */}
@@ -178,8 +180,13 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         Node Details: {node.id.split(":").pop()}
       </h4>
 
-      {/* Content div to handle overflow for the rest of the items */}
-      <div style={{ overflowY: "auto", flexGrow: 1 }}>
+      {/* Content area follows header; overall drawer handles scrolling */}
+      <div
+        style={{
+          flexGrow: 1,
+          paddingRight: "4px", // space for scrollbar so code doesn't get hidden
+        }}
+      >
         {settings.showTooltipId && (
           <>
             <strong>ID: {node.id.split(":").pop()}</strong>
