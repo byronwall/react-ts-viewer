@@ -1,5 +1,5 @@
 import { ArrowSquareOut, FunnelSimple, X } from "@phosphor-icons/react";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 
@@ -81,71 +81,167 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             <h4 style={{ margin: 0, fontSize: "0.9em" }}>
               References ({references.length})
             </h4>
-            <ul
-              style={{
-                listStyle: "none",
-                padding: 0,
-                marginTop: "6px",
-              }}
-            >
-              {references.map((ref, idx) => (
-                <li key={idx} style={{ marginBottom: "4px" }}>
-                  <span
-                    data-tooltip-id={`ref-tip-${idx}`}
-                    style={{ cursor: "pointer", color: "#4fc3f7" }}
-                  >
-                    {ref.name}
-                  </span>
-                  {createPortal(
-                    <Tooltip
-                      id={`ref-tip-${idx}`}
-                      place="left"
-                      delayShow={100}
-                      delayHide={100}
+
+            {(() => {
+              // Group references by name and sort alphabetically
+              const grouped = useMemo(() => {
+                const map = new Map<string, typeof references>();
+                references.forEach((ref) => {
+                  if (!map.has(ref.name)) {
+                    map.set(ref.name, []);
+                  }
+                  map.get(ref.name)!.push(ref);
+                });
+                return Array.from(map.entries()).sort((a, b) =>
+                  a[0].localeCompare(b[0])
+                );
+              }, [references]);
+
+              return (
+                <ul
+                  style={{
+                    listStyle: "none",
+                    padding: 0,
+                    marginTop: "6px",
+                  }}
+                >
+                  {grouped.map(([name, refs], groupIdx) => (
+                    <li
+                      key={name}
                       style={{
-                        backgroundColor: "#111111",
-                        color: "#f0f0f0",
-                        border: "1px solid #555555",
-                        borderRadius: "4px",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
-                        maxWidth: "420px",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        fontSize: "11px",
-                        lineHeight: 1.3,
-                        padding: "6px 8px",
-                        zIndex: 100000,
+                        marginBottom: "4px",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
                       }}
                     >
-                      <pre
-                        style={{
-                          margin: 0,
-                          padding: 0,
-                          backgroundColor: "transparent",
-                          color: "#f0f0f0",
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                          fontSize: "11px",
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {ref.snippet || "(no snippet)"}
-                      </pre>
-                    </Tooltip>,
-                    document.body
-                  )}
-                  <span
-                    style={{
-                      marginLeft: "6px",
-                      fontSize: "0.8em",
-                      color: "#999",
-                    }}
-                  >
-                    @{ref.position.line}:{ref.position.character}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                      {(() => {
+                        const singleRef = refs.length === 1 ? refs[0] : null;
+                        const tooltipId = `single-ref-tip-${groupIdx}`;
+                        return (
+                          <>
+                            <span
+                              data-tooltip-id={
+                                singleRef ? tooltipId : undefined
+                              }
+                              style={{
+                                color: "#4fc3f7",
+                                marginRight: "6px",
+                                whiteSpace: "nowrap",
+                                cursor: singleRef ? "pointer" : "default",
+                              }}
+                            >
+                              {name}
+                            </span>
+                            {singleRef &&
+                              createPortal(
+                                <Tooltip
+                                  id={tooltipId}
+                                  place="left"
+                                  delayShow={100}
+                                  delayHide={100}
+                                  style={{
+                                    backgroundColor: "#111111",
+                                    color: "#f0f0f0",
+                                    border: "1px solid #555555",
+                                    borderRadius: "4px",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
+                                    maxWidth: "420px",
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                    fontSize: "11px",
+                                    lineHeight: 1.3,
+                                    padding: "6px 8px",
+                                    zIndex: 100000,
+                                  }}
+                                >
+                                  <pre
+                                    style={{
+                                      margin: 0,
+                                      padding: 0,
+                                      backgroundColor: "transparent",
+                                      color: "#f0f0f0",
+                                      whiteSpace: "pre-wrap",
+                                      wordBreak: "break-word",
+                                      fontSize: "11px",
+                                      lineHeight: 1.3,
+                                    }}
+                                  >
+                                    {singleRef.snippet || "(no snippet)"}
+                                  </pre>
+                                </Tooltip>,
+                                document.body
+                              )}
+                          </>
+                        );
+                      })()}
+
+                      {/* Render line-number links for each reference */}
+                      {refs.map((ref, refIdx) => {
+                        const id = `ref-tip-${groupIdx}-${refIdx}`;
+                        return (
+                          <span
+                            key={refIdx}
+                            style={{
+                              marginRight: "6px",
+                              fontSize: "0.8em",
+                              color: "#999",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <span
+                              data-tooltip-id={id}
+                              style={{ cursor: "pointer", color: "#999" }}
+                            >
+                              @{ref.position.line}:{ref.position.character}
+                            </span>
+                            {createPortal(
+                              <Tooltip
+                                id={id}
+                                place="left"
+                                delayShow={100}
+                                delayHide={100}
+                                style={{
+                                  backgroundColor: "#111111",
+                                  color: "#f0f0f0",
+                                  border: "1px solid #555555",
+                                  borderRadius: "4px",
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
+                                  maxWidth: "420px",
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                  fontSize: "11px",
+                                  lineHeight: 1.3,
+                                  padding: "6px 8px",
+                                  zIndex: 100000,
+                                }}
+                              >
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    padding: 0,
+                                    backgroundColor: "transparent",
+                                    color: "#f0f0f0",
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                    fontSize: "11px",
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  {ref.snippet || "(no snippet)"}
+                                </pre>
+                              </Tooltip>,
+                              document.body
+                            )}
+                          </span>
+                        );
+                      })}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+
             <hr style={{ borderColor: "#444" }} />
           </div>
         )}
