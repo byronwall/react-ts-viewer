@@ -1,5 +1,7 @@
 import { ArrowSquareOut, FunnelSimple, X } from "@phosphor-icons/react";
 import React, { useState } from "react";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 
 import { type ScopeNode } from "../../types";
 import { CodeBlock } from "../CodeBlock";
@@ -85,11 +87,13 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
               {references.map((ref, idx) => (
                 <li key={idx} style={{ marginBottom: "4px" }}>
                   <span
-                    title={ref.snippet || ""}
-                    style={{ cursor: "help", color: "#4fc3f7" }}
+                    data-tooltip-id={`ref-tip-${idx}`}
+                    data-tooltip-content={ref.snippet || "(no snippet)"}
+                    style={{ cursor: "pointer", color: "#4fc3f7" }}
                   >
                     {ref.name}
                   </span>
+                  <Tooltip id={`ref-tip-${idx}`} place="top" />
                   <span
                     style={{
                       marginLeft: "6px",
