@@ -7,6 +7,8 @@ import { type ScopeNode } from "../../types";
 import { CodeBlock } from "../CodeBlock";
 import { type TreemapSettings } from "../settingsConfig";
 
+import { createPortal } from "react-dom";
+
 interface NodeDetailDrawerProps {
   node: ScopeNode | null;
   isOpen: boolean;
@@ -88,12 +90,48 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 <li key={idx} style={{ marginBottom: "4px" }}>
                   <span
                     data-tooltip-id={`ref-tip-${idx}`}
-                    data-tooltip-content={ref.snippet || "(no snippet)"}
                     style={{ cursor: "pointer", color: "#4fc3f7" }}
                   >
                     {ref.name}
                   </span>
-                  <Tooltip id={`ref-tip-${idx}`} place="top" />
+                  {createPortal(
+                    <Tooltip
+                      id={`ref-tip-${idx}`}
+                      place="left"
+                      delayShow={100}
+                      delayHide={100}
+                      style={{
+                        backgroundColor: "#111111",
+                        color: "#f0f0f0",
+                        border: "1px solid #555555",
+                        borderRadius: "4px",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
+                        maxWidth: "420px",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        fontSize: "11px",
+                        lineHeight: 1.3,
+                        padding: "6px 8px",
+                        zIndex: 100000,
+                      }}
+                    >
+                      <pre
+                        style={{
+                          margin: 0,
+                          padding: 0,
+                          backgroundColor: "transparent",
+                          color: "#f0f0f0",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          fontSize: "11px",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {ref.snippet || "(no snippet)"}
+                      </pre>
+                    </Tooltip>,
+                    document.body
+                  )}
                   <span
                     style={{
                       marginLeft: "6px",
