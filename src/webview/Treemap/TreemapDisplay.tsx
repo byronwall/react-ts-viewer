@@ -23,6 +23,7 @@ import {
 import SettingsControl from "../SettingsControl"; // Import SettingsControl
 import { vscodeApi } from "../vscodeApi"; // Import the shared vscodeApi singleton
 
+import type { SemanticReference } from "./ref_graph/buildSemanticReferenceGraph";
 import type { ReferenceEdge } from "./ViewportTreemapSVG";
 
 interface TreemapDisplayProps {
@@ -198,6 +199,7 @@ type ViewMode = "treemap" | "referenceGraph";
 interface ReferenceGraphState {
   focusNodeId: string;
   edges: ReferenceEdge[];
+  references: (SemanticReference & { snippet: string })[];
 }
 
 export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
@@ -459,18 +461,36 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
 
         // ---- Build arrow edges synchronously ----
         try {
-          const { references, nodes } = buildSemanticReferenceGraph(
+          const { references } = buildSemanticReferenceGraph(
             fullNodeFromInitialTree,
             initialData,
             { includeTypeReferences: settings.includeTypeReferences }
           );
 
           console.log("references", references);
-          console.log("nodes", nodes);
 
           const edges: ReferenceEdge[] = [];
 
-          references.forEach((ref) => {
+          // Helper to create a short inline snippet for tooltip display
+          const createSnippet = (
+            src: string,
+            offset: number,
+            context: number = 50
+          ): string => {
+            if (!src) return "";
+            const start = Math.max(0, offset - context);
+            const end = Math.min(src.length, offset + context);
+            return src.slice(start, end).replace(/\s+/g, " ").trim();
+          };
+
+          const referencesWithSnippet: (SemanticReference & {
+            snippet: string;
+          })[] = references.map((ref) => ({
+            ...ref,
+            snippet: createSnippet(initialData.source, ref.offset),
+          }));
+
+          referencesWithSnippet.forEach((ref) => {
             if (!ref.targetNodeId) return; // declaration not found
             const usageId = ref.usageNodeId || fullNodeFromInitialTree.id;
             edges.push({
@@ -493,7 +513,12 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
           setReferenceGraphState({
             focusNodeId: fullNodeFromInitialTree.id,
             edges: dedupedEdges,
+            references: referencesWithSnippet,
           });
+
+          // Ensure the sidebar is visible with focus node details + references
+          setSelectedNodeForDrawer(fullNodeFromInitialTree);
+          setIsDrawerOpen(true);
         } catch (error) {
           console.error("❌ Failed to compute reference arrows:", error);
           vscodeApi.postMessage({
@@ -1522,6 +1547,12 @@ export const TreemapDisplay: React.FC<TreemapDisplayProps> = ({
                 onJumpToSource={handleJumpToSource}
                 onDrillIntoNode={handleDrillIntoNode}
                 width={drawerWidth}
+                references={
+                  referenceGraphState &&
+                  referenceGraphState.focusNodeId === selectedNodeForDrawer.id
+                    ? referenceGraphState.references
+                    : undefined
+                }
               />
             </div>
           </>

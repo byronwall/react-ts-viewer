@@ -4,7 +4,7 @@ import { findInnermostNodeByOffset } from "./graph_nodes";
 
 import type { ScopeNode } from "../../../types";
 
-interface SemanticReference {
+export interface SemanticReference {
   name: string;
   type:
     | "function_call"

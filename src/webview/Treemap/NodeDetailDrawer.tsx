@@ -14,6 +14,9 @@ interface NodeDetailDrawerProps {
   onJumpToSource: (node: ScopeNode) => void;
   onDrillIntoNode: (node: ScopeNode) => void;
   width: number;
+  references?: (import("./ref_graph/buildSemanticReferenceGraph").SemanticReference & {
+    snippet?: string;
+  })[];
 }
 
 export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
@@ -25,6 +28,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   onJumpToSource,
   onDrillIntoNode,
   width,
+  references,
 }) => {
   const [wordWrapEnabled, setWordWrapEnabled] = useState<boolean>(true);
 
@@ -60,6 +64,48 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           flexShrink: 0, // Prevent header from shrinking
         }}
       >
+        {/* References list (if provided) */}
+        {references && references.length > 0 && (
+          <div
+            style={{
+              marginBottom: "10px",
+              width: "100%",
+            }}
+          >
+            <h4 style={{ margin: 0, fontSize: "0.9em" }}>
+              References ({references.length})
+            </h4>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                marginTop: "6px",
+              }}
+            >
+              {references.map((ref, idx) => (
+                <li key={idx} style={{ marginBottom: "4px" }}>
+                  <span
+                    title={ref.snippet || ""}
+                    style={{ cursor: "help", color: "#4fc3f7" }}
+                  >
+                    {ref.name}
+                  </span>
+                  <span
+                    style={{
+                      marginLeft: "6px",
+                      fontSize: "0.8em",
+                      color: "#999",
+                    }}
+                  >
+                    @{ref.position.line}:{ref.position.character}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <hr style={{ borderColor: "#444" }} />
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           <button
             onClick={() => onJumpToSource(node)}
